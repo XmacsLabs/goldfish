@@ -29,6 +29,14 @@
    vector-index vector-index-right vector-partition
    vector-swap!))
 
+(check-true (vector? (int-vector 1 2 3)))
+(check-catch 'wrong-type-arg (int-vector 1 2 'a))
+
+(let1 v (int-vector 1 2 3)
+  (check (vector-ref v 0) => 1)
+  (check (vector-ref v 1) => 2)
+  (check (vector-ref v 2) => 3))
+
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
 (check (vector-copy #(0 1 2 3) 3) => #(3))
@@ -46,6 +54,9 @@
 (check (vector-copy #(0 1 2 3) 1 1) => #())
 (check (vector-copy #(0 1 2 3) 1 2) => #(1))
 (check (vector-copy #(0 1 2 3) 1 4) => #(1 2 3))
+
+(check-true (int-vector? (int-vector 1 2 3)))
+(check-false (int-vector? (vector 1 2 3)))
 
 (check-true (vector-empty? (vector)))
 (check-false (vector-empty? (vector 1)))
