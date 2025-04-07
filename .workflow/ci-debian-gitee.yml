@@ -1,6 +1,6 @@
 version: '1.0'
-name: ci-debian
-displayName: ci-debian
+name: ci-debian-gitee
+displayName: ci-debian-gitee
 triggers:
   trigger: auto
   push:

@@ -867,12 +867,12 @@
 
   \;
 
-  <\verbatim-chunk|.workflow/ci-debian.yml|false|true>
+  <\verbatim-chunk|.workflow/ci-debian-gitee.yml|false|true>
     version: '1.0'
 
-    name: ci-debian
+    name: ci-debian-gitee
 
-    displayName: ci-debian
+    displayName: ci-debian-gitee
 
     triggers:
 
@@ -931,7 +931,7 @@
 
   <paragraph|环境变量>
 
-  <\verbatim-chunk|.workflow/ci-debian.yml|true|true>
+  <\verbatim-chunk|.workflow/ci-debian-gitee.yml|true|true>
     variables:
 
     \ \ XMAKE_MAIN_REPO: https://gitee.com/tboox/xmake-repo.git
@@ -945,7 +945,7 @@
 
   <paragraph|具体任务>
 
-  <\verbatim-chunk|.workflow/ci-debian.yml|true|false>
+  <\verbatim-chunk|.workflow/ci-debian-gitee.yml|true|false>
     stages:
 
     \ \ - name: build_and_test
