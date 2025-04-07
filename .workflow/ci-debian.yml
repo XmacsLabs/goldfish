@@ -2,7 +2,7 @@ version: '1.0'
 name: ci-debian
 displayName: ci-debian
 triggers:
-  trigger: manual
+  trigger: auto
   push:
     branches:
       precise:
@@ -44,7 +44,7 @@ stages:
         name: execute_by_docker
         displayName: 构建并测试
         certificate: ''
-        image: hub.atomgit.com/amd64/debian:bookworm
+        image: docker.1ms.run/amd64/debian:bookworm
         command:
           - bash .workflow/ustc_debian822_setup.sh
           - apt-get update

@@ -876,7 +876,7 @@
 
     triggers:
 
-    \ \ trigger: manual
+    \ \ trigger: auto
 
     \ \ push:
 
@@ -968,7 +968,7 @@
 
     \ \ \ \ \ \ \ \ certificate: ''
 
-    \ \ \ \ \ \ \ \ image: hub.atomgit.com/amd64/debian:bookworm
+    \ \ \ \ \ \ \ \ image: docker.1ms.run/amd64/debian:bookworm
 
     \ \ \ \ \ \ \ \ command:
 
