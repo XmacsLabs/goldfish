@@ -9644,6 +9644,8 @@
 
     \ \ arithmetic-shift integer-length bitwise-if
 
+    \ \ bit-set?
+
     \ \ ; S7 built-in
 
     \ \ lognot logand logior logxor
@@ -9669,6 +9671,8 @@
     \ \ bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
 
     \ \ arithmetic-shift integer-length bitwise-if
+
+    \ \ bit-set?
 
     )
 
@@ -10202,6 +10206,38 @@
   </scm-chunk>
 
   <subsection|单位运算>
+
+  <paragraph|<value|srfi>bit-set?><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((index integer?) (i integer?)) =\<gtr\> boolean?>
+
+  <strong|bit-set?> 用于检查整数 <strong|i> 的第 <strong|index> 位是否为 1（从右往左，最低位为 <strong|index>=0）。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-set? index i)
+
+    \ \ (if (negative? i)
+
+    \ \ \ \ \ \ #t
+
+    \ \ \ \ \ \ (not (zero? (bitwise-and i (arithmetic-shift 1 index))))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bit-set? 1 1) =\<gtr\> #f) \ \ \ \ \ \ \ ; 1 的二进制是 #b0001，第 1 位是 0
+
+    (check (bit-set? 0 1) =\<gtr\> #t) \ \ \ \ \ \ \ ; 1 的二进制是 #b0001，第 0 位是 1
+
+    (check (bit-set? 3 10) =\<gtr\> #t) \ \ \ \ \ \ ; 10 的二进制是 #b1010，第 3 位是 1
+
+    (check (bit-set? 1000000 -1) =\<gtr\> #t) ; -1 的补码所有位为 1，第 1000000 位也是 1
+
+    (check (bit-set? 2 6) =\<gtr\> #t) \ \ \ \ \ \ \ ; 6 的二进制是 #b0110，第 2 位是 1
+
+    (check (bit-set? 0 6) =\<gtr\> #f) \ \ \ \ \ \ \ ; 6 的二进制是 #b0110，第 0 位是 0
+
+    \;
+  </scm-chunk>
 
   <subsection|按位运算>
 
