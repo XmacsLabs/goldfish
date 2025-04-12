@@ -117,5 +117,10 @@
 (check (integer-length -5) => 3)    ; -101 (长度为3)
 (check (integer-length #xFFFF) => 16) ; 16位二进制
 
+(check (bitwise-if 3 1 8) => 9)  ; #b011 #001 #100 => #101
+(check (bitwise-if 3 8 1) => 0)  ; #011 #100 #001 => #000
+(check (bitwise-if 1 1 2) => 3)  ; #001 #001 #010 => #011
+(check (bitwise-if #b00111100 #b11110000 #b00001111) => #b00110011)  ; 60 240 15 => 51
+
 (check-report)
 

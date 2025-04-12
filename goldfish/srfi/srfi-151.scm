@@ -19,7 +19,7 @@
 (export
   bitwise-not bitwise-and bitwise-ior bitwise-xor bitwise-eqv bitwise-nor bitwise-nand 
   bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
-  arithmetic-shift integer-length
+  arithmetic-shift integer-length bitwise-if
 )
 (begin
 
@@ -74,6 +74,10 @@
                count
                (loop (ash value -1) (+ count 1))))))
 
+(define (bitwise-if mask a b)
+  (bitwise-ior
+   (bitwise-and mask a)
+   (bitwise-and (bitwise-not mask) b)))
 ) ; end of begin
 ) ; end of define-library
 

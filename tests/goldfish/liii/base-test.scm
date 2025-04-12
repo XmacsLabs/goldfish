@@ -145,7 +145,6 @@
          (let inner ((y 3))
            (+ x y))) => 5)
 
-
 ;; 基础测试 - 验证顺序绑定的功能
 (check
   (let* ((x 10)
@@ -229,7 +228,6 @@
               (+ a b))))
     y)
   => 25)  ; 10 + (10+5) = 25
-
 
 (define (test-letrec)
   (letrec ((even?

@@ -1044,7 +1044,7 @@
 
     \ \ \ \ \ \ (+ a b c d)))
 
-    \ \ =\<gtr\> 12) \ ; 1 + 2 + 3 + (1*2*3) = 12
+    \ \ =\<gtr\> 12) \ ; 1 + 2 + 3 + (1*2*3) = 12\ 
 
     \;
   </scm-chunk>
@@ -9642,7 +9642,7 @@
 
     \ \ bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
 
-    \ \ arithmetic-shift integer-length
+    \ \ arithmetic-shift integer-length bitwise-if
 
     \ \ ; S7 built-in
 
@@ -9668,7 +9668,7 @@
 
     \ \ bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
 
-    \ \ arithmetic-shift integer-length
+    \ \ arithmetic-shift integer-length bitwise-if
 
     )
 
@@ -10169,6 +10169,34 @@
     (check (integer-length -5) =\<gtr\> 3) \ \ \ ; -101 (长度为3)
 
     (check (integer-length #xFFFF) =\<gtr\> 16) ; 16位二进制
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>bitwise-if><index|<typehint|bitwise-if>><typehint|((mask integer?) (a integer?) (b integer?)) =\<gtr\> integer?>
+
+  <strong|bitwise-if> 是一种按位进行的条件选择操作，根据一个掩码（mask）的每一位值，从两个输入数（a 和 b）中选择对应位作为结果。若掩码的某一位为<strong| 1>，则结果的对应位取自第一个输入数（a）的相应位；若掩码的某一位为 <strong|0>，则结果的对应位取自第二个输入数（b）的相应位。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bitwise-if mask a b)
+
+    \ \ (bitwise-ior
+
+    \ \ \ (bitwise-and mask a)
+
+    \ \ \ (bitwise-and (bitwise-not mask) b)))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bitwise-if 3 1 8) =\<gtr\> 9) \ ; #b011 #001 #100 =\<gtr\> #101
+
+    (check (bitwise-if 3 8 1) =\<gtr\> 0) \ ; #011 #100 #001 =\<gtr\> #000
+
+    (check (bitwise-if 1 1 2) =\<gtr\> 3) \ ; #001 #001 #010 =\<gtr\> #011
+
+    (check (bitwise-if #b00111100 #b11110000 #b00001111) =\<gtr\> #b00110011) \ ; 60 240 15 =\<gtr\> 51
 
     \;
   </scm-chunk>

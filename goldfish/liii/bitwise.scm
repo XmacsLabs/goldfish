@@ -21,7 +21,7 @@
   ; from (srfi srfi-151)
   bitwise-not bitwise-and bitwise-ior bitwise-xor bitwise-eqv  bitwise-or bitwise-nor bitwise-nand
   bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
-  arithmetic-shift integer-length
+  arithmetic-shift integer-length bitwise-if
   ; S7 built-in
   lognot logand logior logxor
   ash
