@@ -10207,7 +10207,7 @@
 
   <subsection|单位运算>
 
-  <paragraph|<value|srfi>bit-set?><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((index integer?) (i integer?)) =\<gtr\> boolean?>
+  <paragraph|<value|srfi>bit-set?><index|bit-set?><typehint|((index integer?) (i integer?)) =\<gtr\> boolean?>
 
   <strong|bit-set?> 用于检查整数 <strong|i> 的第 <strong|index> 位是否为 1（从右往左，最低位为 <strong|index>=0）。
 
