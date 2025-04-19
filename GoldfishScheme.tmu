@@ -9644,6 +9644,8 @@
 
     \ \ arithmetic-shift integer-length bitwise-if
 
+    \ \ bit-set?
+
     \ \ ; S7 built-in
 
     \ \ lognot logand logior logxor
@@ -9669,6 +9671,8 @@
     \ \ bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
 
     \ \ arithmetic-shift integer-length bitwise-if
+
+    \ \ bit-set?
 
     )
 
@@ -10202,6 +10206,56 @@
   </scm-chunk>
 
   <subsection|单位运算>
+
+  <paragraph|<value|srfi>bit-set?><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((index integer?) (n integer?)) =\<gtr\> boolean?>
+
+  <strong|bit-set?> 用于检查整数 <strong|n> 的第 <strong|index> 位是否被设置为 1（从右往左，最低位为 <strong|index>=0）。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-set? index n)
+
+    \ \ (cond
+
+    \ \ \ \ ((\<less\> index 0)
+
+    \ \ \ \ \ (error 'out-of-range "bit-set?: Index cannot be negative" index))
+
+    \ \ \ \ ((\<gtr\>= index 63)
+
+    \ \ \ \ \ (if (\<less\> n 0)
+
+    \ \ \ \ \ \ \ #t
+
+    \ \ \ \ \ \ \ #f))
+
+    \ \ \ \ (else
+
+    \ \ \ \ \ (not (zero? (bitwise-and n (arithmetic-shift 1 index)))))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bit-set? 1 1) =\<gtr\> #f) \ \ \ \ \ \ \ ; 1 的二进制是 #b0001，第 1 位是 0
+
+    (check (bit-set? 0 1) =\<gtr\> #t) \ \ \ \ \ \ \ ; 1 的二进制是 #b0001，第 0 位是 1
+
+    (check (bit-set? 3 10) =\<gtr\> #t) \ \ \ \ \ \ ; 10 的二进制是 #b1010，第 3 位是 1
+
+    (check (bit-set? 1000000 -1) =\<gtr\> #t) ; -1 为负数，负数在 63 位之后的补码所有位为 1，第 1000000 位也是 1
+
+    (check (bit-set? 1000000 1) =\<gtr\> #f) \ ; 1 为正数，正数在 63 位之后的补码所有位为 0，第 1000000 位也是 0
+
+    (check (bit-set? 2 6) =\<gtr\> #t) \ \ \ \ \ \ \ ; 6 的二进制是 #b0110，第 2 位是 1
+
+    (check (bit-set? 0 6) =\<gtr\> #f) \ \ \ \ \ \ \ ; 6 的二进制是 #b0110，第 0 位是 0
+
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-set? -1 1)) \ \ \ \ \ \ ; index 不能为负数
+
+    \;
+  </scm-chunk>
 
   <subsection|按位运算>
 
