@@ -122,15 +122,47 @@
 (check (bitwise-if 1 1 2) => 3)  ; #001 #001 #010 => #011
 (check (bitwise-if #b00111100 #b11110000 #b00001111) => #b00110011)  ; 60 240 15 => 51
 
-(check (bit-set? 1 1) => #f)        ; 1 的二进制是 #b0001，第 1 位是 0
-(check (bit-set? 0 1) => #t)        ; 1 的二进制是 #b0001，第 0 位是 1
-(check (bit-set? 3 10) => #t)       ; 10 的二进制是 #b1010，第 3 位是 1
-(check (bit-set? 1000000 -1) => #t) ; -1 为负数，负数在 63 位之后的补码所有位为 1，第 1000000 位也是 1
-(check (bit-set? 1000000 1) => #f)  ; 1 为正数，正数在 63 位之后的补码所有位为 0，第 1000000 位也是 0
-(check (bit-set? 2 6) => #t)        ; 6 的二进制是 #b0110，第 2 位是 1
-(check (bit-set? 0 6) => #f)        ; 6 的二进制是 #b0110，第 0 位是 0
+(check (bit-set? 1 1) => #f)        ; Binary of 1 is #b0001, bit 1 is 0
+(check (bit-set? 0 1) => #t)        ; Binary of 1 is #b0001, bit 0 is 1
+(check (bit-set? 3 10) => #t)       ; Binary of 10 is #b1010, bit 3 is 1
+(check (bit-set? 1000000 -1) => #t) ; -1 is negative, all bits beyond 63 in two's complement are 1, bit 1000000 is also 1
+(check (bit-set? 1000000 1) => #f)  ; 1 is positive, all bits beyond 63 in two's complement are 0, bit 1000000 is also 0
+(check (bit-set? 2 6) => #t)        ; Binary of 6 is #b0110, bit 2 is 1
+(check (bit-set? 0 6) => #f)        ; Binary of 6 is #b0110, bit 0 is 0
 (check-catch 'out-of-range
-             (bit-set? -1 1))       ; index 不能为负数
+             (bit-set? -1 1))       ; index cannot be negative
+
+(check (copy-bit 0 0 #t) => #b1)         ; Set bit 0 of 0 to 1, result is #b1
+(check (copy-bit 2 0 #t) => #b100)       ; Set bit 2 of #000 to 1, result is #b100
+(check (copy-bit 2 #b1111 #f) => #b1011) ; Set bit 2 of #b1111 to 0, result is #b1011
+(check (copy-bit 62 0 #t) => #x4000000000000000)
+; Indexes greater than or equal to 63 are considered meaningful and always treat the index as 63 (sign bit)
+(check (copy-bit 63 1 #t) => #x8000000000000001)
+(check (copy-bit 10000 1 #t) => #x8000000000000001)
+(check (copy-bit 63 -1 #f) => #x7FFFFFFFFFFFFFFF)
+(check (copy-bit 10000 -1 #f) => #x7FFFFFFFFFFFFFFF)
+(check-catch 'out-of-range
+             (copy-bit -1 1 #t))         ; index cannot be negative
+
+(check (bit-swap 0 2 4) => #b1)
+(check (bit-swap 3 0 5) => #b1100)
+(check (bit-swap 63 0 1) => #x8000000000000000)
+(check (bit-swap 64 0 1) => #x8000000000000000)
+(check-catch 'out-of-range
+             (bit-swap -1 1 3))          ; index cannot be negative    
+
+(check (any-bit-set? 3 6) => #t)
+(check (any-bit-set? 3 12) => #f)
+(check (every-bit-set? 4 6) => #t)
+(check (every-bit-set? 7 6) => #f)
+
+(check (first-set-bit 1) => 0)
+(check (first-set-bit 2) => 1)
+(check (first-set-bit 0) => -1)
+(check (first-set-bit 40) => 3)
+(check (first-set-bit -28) => 2)
+(check (first-set-bit (expt  2 62)) => 62)
+(check (first-set-bit (expt -2 62)) => 62)
 
 (check-report)
 

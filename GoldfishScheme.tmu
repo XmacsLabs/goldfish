@@ -9644,7 +9644,7 @@
 
     \ \ arithmetic-shift integer-length bitwise-if
 
-    \ \ bit-set?
+    \ \ bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 
     \ \ ; S7 built-in
 
@@ -9672,7 +9672,7 @@
 
     \ \ arithmetic-shift integer-length bitwise-if
 
-    \ \ bit-set?
+    \ \ bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 
     )
 
@@ -10216,17 +10216,13 @@
 
     \ \ (cond
 
-    \ \ \ \ ((\<less\> index 0)
+    \ \ \ \ ((negative? index)
 
     \ \ \ \ \ (error 'out-of-range "bit-set?: Index cannot be negative" index))
 
     \ \ \ \ ((\<gtr\>= index 63)
 
-    \ \ \ \ \ (if (\<less\> n 0)
-
-    \ \ \ \ \ \ \ #t
-
-    \ \ \ \ \ \ \ #f))
+    \ \ \ \ \ (negative? n))
 
     \ \ \ \ (else
 
@@ -10236,23 +10232,193 @@
   <paragraph|测试>
 
   <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
-    (check (bit-set? 1 1) =\<gtr\> #f) \ \ \ \ \ \ \ ; 1 的二进制是 #b0001，第 1 位是 0
+    (check (bit-set? 1 1) =\<gtr\> #f) \ \ \ \ \ \ \ ; Binary of 1 is #b0001, bit 1 is 0
 
-    (check (bit-set? 0 1) =\<gtr\> #t) \ \ \ \ \ \ \ ; 1 的二进制是 #b0001，第 0 位是 1
+    (check (bit-set? 0 1) =\<gtr\> #t) \ \ \ \ \ \ \ ; Binary of 1 is #b0001, bit 0 is 1
 
-    (check (bit-set? 3 10) =\<gtr\> #t) \ \ \ \ \ \ ; 10 的二进制是 #b1010，第 3 位是 1
+    (check (bit-set? 3 10) =\<gtr\> #t) \ \ \ \ \ \ ; Binary of 10 is #b1010, bit 3 is 1
 
-    (check (bit-set? 1000000 -1) =\<gtr\> #t) ; -1 为负数，负数在 63 位之后的补码所有位为 1，第 1000000 位也是 1
+    (check (bit-set? 1000000 -1) =\<gtr\> #t) ; -1 is negative, all bits beyond 63 in two's complement are 1, bit 1000000 is also 1
 
-    (check (bit-set? 1000000 1) =\<gtr\> #f) \ ; 1 为正数，正数在 63 位之后的补码所有位为 0，第 1000000 位也是 0
+    (check (bit-set? 1000000 1) =\<gtr\> #f) \ ; 1 is positive, all bits beyond 63 in two's complement are 0, bit 1000000 is also 0
 
-    (check (bit-set? 2 6) =\<gtr\> #t) \ \ \ \ \ \ \ ; 6 的二进制是 #b0110，第 2 位是 1
+    (check (bit-set? 2 6) =\<gtr\> #t) \ \ \ \ \ \ \ ; Binary of 6 is #b0110, bit 2 is 1
 
-    (check (bit-set? 0 6) =\<gtr\> #f) \ \ \ \ \ \ \ ; 6 的二进制是 #b0110，第 0 位是 0
+    (check (bit-set? 0 6) =\<gtr\> #f) \ \ \ \ \ \ \ ; Binary of 6 is #b0110, bit 0 is 0
 
     (check-catch 'out-of-range
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-set? -1 1)) \ \ \ \ \ \ ; index 不能为负数
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-set? -1 1)) \ \ \ \ \ \ ; index cannot be negative
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>copy-bit><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((index integer?) (n integer?)(boolean boolean?) =\<gtr\> integer?>
+
+  copy-bit 返回一个整数，与 n 在第 index 位外的所有位上相同，但在第 index 位上，如果 boolean 是 <code*|#t> 则为 1，如果 boolean 是 <code*|#f> 则为 0。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (copy-bit index n boolean)
+
+    \ \ (cond
+
+    \ \ \ \ ((negative? index)
+
+    \ \ \ \ \ (error 'out-of-range "copy-bit: Index cannot be negative" index))
+
+    \ \ \ \ ((\<gtr\>= index 63)
+
+    \ \ \ \ \ (if boolean
+
+    \ \ \ \ \ \ \ \ \ (bitwise-ior n #x8000000000000000)
+
+    \ \ \ \ \ \ \ \ \ (bitwise-and n #x7FFFFFFFFFFFFFFF)))
+
+    \ \ \ \ (else
+
+    \ \ \ \ \ (if boolean
+
+    \ \ \ \ \ \ \ \ \ (bitwise-ior n (arithmetic-shift 1 index))
+
+    \ \ \ \ \ \ \ \ \ (bitwise-and n (bitwise-not (arithmetic-shift 1 index)))))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (copy-bit 0 0 #t) =\<gtr\> #b1) \ \ \ \ \ \ \ \ ; Set bit 0 of 0 to 1, result is #b1
+
+    (check (copy-bit 2 0 #t) =\<gtr\> #b100) \ \ \ \ \ \ ; Set bit 2 of #000 to 1, result is #b100
+
+    (check (copy-bit 2 #b1111 #f) =\<gtr\> #b1011) ; Set bit 2 of #b1111 to 0, result is #b1011
+
+    (check (copy-bit 62 0 #t) =\<gtr\> #x4000000000000000)
+
+    ; Indexes greater than or equal to 63 are considered meaningful and always treat the index as 63 (sign bit)
+
+    (check (copy-bit 63 1 #t) =\<gtr\> #x8000000000000001)
+
+    (check (copy-bit 10000 1 #t) =\<gtr\> #x8000000000000001)
+
+    (check (copy-bit 63 -1 #f) =\<gtr\> #x7FFFFFFFFFFFFFFF)
+
+    (check (copy-bit 10000 -1 #f) =\<gtr\> #x7FFFFFFFFFFFFFFF)
+
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (copy-bit -1 1 #t)) \ \ \ \ \ \ \ \ ; index cannot be negative
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>bit-swap><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((index1 integer?) (index2 integer?)(n integer?)) =\<gtr\> integer?>
+
+  <strong|bit-swap> 返回一个整数，其值与整数 n 第 index1 位与 第 index2 位交换后的值相等。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-swap index1 index2 n)
+
+    \ \ (copy-bit index2
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (copy-bit index1 n (bit-set? index2 n))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (bit-set? index1 n)))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bit-swap 0 2 4) =\<gtr\> #b1)
+
+    (check (bit-swap 3 0 5) =\<gtr\> #b1100)
+
+    (check (bit-swap 63 0 1) =\<gtr\> #x8000000000000000)
+
+    (check (bit-swap 64 0 1) =\<gtr\> #x8000000000000000)
+
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-swap -1 1 3)) \ \ \ \ \ \ \ \ \ ; index cannot be negative \ \ 
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>any-bit-set?><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((test-bits integer?) (n integer?)) =\<gtr\> boolean?>
+
+  <strong|any-bit-set?> 确定在整数 test-bits 中设置的任何位是否也在整数 n 中设置。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (any-bit-set? test-bits n)
+
+    \ \ (not (zero? (bitwise-and test-bits n))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (any-bit-set? 3 6) =\<gtr\> #t)
+
+    (check (any-bit-set? 3 12) =\<gtr\> #f)
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi><code*|every-bit-set?>><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((test-bits integer?) (n integer?)) =\<gtr\> boolean?>
+
+  <strong|every-bit-set?> 确定在整数 test-bits 中设置的所有位是否也在整数 n 中设置。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (every-bit-set? test-bits n)
+
+    \ \ (= (bitwise-and test-bits n) test-bits))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (every-bit-set? 4 6) =\<gtr\> #t)
+
+    (check (every-bit-set? 7 6) =\<gtr\> #f)
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>first-set-bit><index|bit-set><index|bit-set><typehint|><index|bit-set?><typehint|((n integer?)) =\<gtr\> integer?>
+
+  <strong|first-set-bit> 返回一个整数，其值是整数 <strong|n> 作为比特串里的第一个 1 所在位置的索引，如果整数 n 作为比特串不包含任何 1 则返回 -1。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (first-set-bit n)
+
+    \ \ (if (zero? n)
+
+    \ \ \ \ \ \ -1
+
+    \ \ \ \ \ \ (let loop ((index 0))
+
+    \ \ \ \ \ \ \ \ (if (bit-set? index n)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ index
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ index 1))))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (first-set-bit 1) =\<gtr\> 0)
+
+    (check (first-set-bit 2) =\<gtr\> 1)
+
+    (check (first-set-bit 0) =\<gtr\> -1)
+
+    (check (first-set-bit 40) =\<gtr\> 3)
+
+    (check (first-set-bit -28) =\<gtr\> 2)
+
+    (check (first-set-bit (expt \ 2 62)) =\<gtr\> 62)
+
+    (check (first-set-bit (expt -2 62)) =\<gtr\> 62)
 
     \;
   </scm-chunk>

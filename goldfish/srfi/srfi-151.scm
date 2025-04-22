@@ -19,7 +19,8 @@
 (export
   bitwise-not bitwise-and bitwise-ior bitwise-xor bitwise-eqv bitwise-nor bitwise-nand 
   bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
-  arithmetic-shift integer-length bitwise-if bit-set?
+  arithmetic-shift integer-length bitwise-if
+  bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 )
 (begin
 
@@ -81,14 +82,44 @@
 
 (define (bit-set? index n)
   (cond
-    ((< index 0)
+    ((negative? index)
      (error 'out-of-range "bit-set?: Index cannot be negative" index))
     ((>= index 63)
-     (if (< n 0)
-       #t
-       #f))
+     (negative? n))
     (else
      (not (zero? (bitwise-and n (arithmetic-shift 1 index)))))))
+
+(define (copy-bit index n boolean)
+  (cond
+    ((negative? index)
+     (error 'out-of-range "copy-bit: Index cannot be negative" index))
+    ((>= index 63)
+     (if boolean
+         (bitwise-ior n #x8000000000000000)
+         (bitwise-and n #x7FFFFFFFFFFFFFFF)))
+    (else
+     (if boolean
+         (bitwise-ior n (arithmetic-shift 1 index))
+         (bitwise-and n (bitwise-not (arithmetic-shift 1 index)))))))
+
+(define (bit-swap index1 index2 n)
+  (copy-bit index2
+            (copy-bit index1 n (bit-set? index2 n))
+            (bit-set? index1 n)))
+
+(define (any-bit-set? test-bits n)
+  (not (zero? (bitwise-and test-bits n))))
+
+(define (every-bit-set? test-bits n)
+  (= (bitwise-and test-bits n) test-bits))
+
+(define (first-set-bit n)
+  (if (zero? n)
+      -1
+      (let loop ((index 0))
+        (if (bit-set? index n)
+            index
+            (loop (+ index 1))))))
 ) ; end of begin
 ) ; end of define-library
 
