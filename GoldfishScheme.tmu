@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.6>>
+<TMU|<tuple|1.1.0|2025.0.7>>
 
 <style|<tuple|book|chinese|literate|goldfish|reduced-margins|guile|smart-ref|preview-ref|python|elvish>>
 
@@ -458,6 +458,128 @@
   原语表达式可以分为：变量、字面量、函数的应用、匿名函数、分支表达式、赋值表达式、文件包含表达式。
 
   <paragraph|lambda>
+
+  <code*|lambda> 是一个关键字，用于定义函数。它允许你创建一个没有名字的函数，并且这个函数可以像其他值一样传递和使用。例如，<code*|(lambda (x) (* x x))> 就是一个函数，它接收一个参数 x，然后返回 x 的平方。这种匿名函数在函数式编程中非常有用，因为它可以让你在不需要给函数命名的情况下，快速定义和使用简单的计算规则。
+
+  基本 lambda 表达式测试
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check ((lambda (x) (* x x)) 5) =\<gtr\> 25)
+
+    (check ((lambda (x) (* x x)) 0) =\<gtr\> 0)
+
+    (check ((lambda (x) (* x x)) -3) =\<gtr\> 9)
+
+    \;
+  </scm-chunk>
+
+  多参数 lambda 表达式
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check ((lambda (x y) (+ x y)) 3 5) =\<gtr\> 8)
+
+    (check ((lambda (x y) (* x y)) 4 6) =\<gtr\> 24)
+
+    \;
+  </scm-chunk>
+
+  无参数 lambda 表达式
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check ((lambda () 42)) =\<gtr\> 42)
+
+    \;
+  </scm-chunk>
+
+  嵌套 lambda 表达式
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check ((lambda (x) ((lambda (y) (+ x y)) 5)) 3) =\<gtr\> 8)
+
+    \;
+  </scm-chunk>
+
+  lambda 表达式作为高阶函数参数
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (define (apply-function f x) (f x))
+
+    (check (apply-function (lambda (x) (* x x)) 5) =\<gtr\> 25)
+
+    (check (apply-function (lambda (x) (+ x 1)) 10) =\<gtr\> 11)
+
+    \;
+  </scm-chunk>
+
+  lambda 表达式在 map 函数中的使用
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (define (filter pred lst)
+
+    \ \ (cond ((null? lst) '())
+
+    \ \ \ \ \ \ \ \ ((pred (car lst)) (cons (car lst) (filter pred (cdr lst))))
+
+    \ \ \ \ \ \ \ \ (else (filter pred (cdr lst)))))
+
+    (check (map (lambda (x) (* x 2)) '(1 2 3 4)) =\<gtr\> '(2 4 6 8))
+
+    (check (map (lambda (x) (+ x 1)) '(0 1 2 3)) =\<gtr\> '(1 2 3 4))
+
+    \;
+  </scm-chunk>
+
+  lambda 表达式在 filter 函数中的使用
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check (filter (lambda (x) (\<gtr\> x 2)) '(1 2 3 4 5)) =\<gtr\> '(3 4 5))
+
+    \;
+  </scm-chunk>
+
+  条件表达式中的 lambda 表达式
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check (if (\<gtr\> 3 2) ((lambda () 3)) ((lambda () 2))) =\<gtr\> 3)
+
+    (check (if (\<less\> 3 2) ((lambda () 3)) ((lambda () 2))) =\<gtr\> 2)
+
+    \;
+  </scm-chunk>
+
+  lambda 表达式在 cond 中的使用
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check (cond ((\<gtr\> 3 2) ((lambda () 3))) (else ((lambda () 2)))) =\<gtr\> 3)
+
+    (check (cond ((\<less\> 3 2) ((lambda () 3))) (else ((lambda () 2)))) =\<gtr\> 2)
+
+    \;
+  </scm-chunk>
+
+  测试 lambda 表达式的闭包性质
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (let ((create-counter (lambda () (let ((count 0)) (lambda () (set! count (+ count 1)) count)))))
+
+    \ \ (let ((counter1 (create-counter)) (counter2 (create-counter)))
+
+    \ \ \ \ (counter1) (counter1) (counter2) (check (counter1) =\<gtr\> 3) (check (counter2) =\<gtr\> 2)))
+
+    \;
+  </scm-chunk>
+
+  测试 lambda 表达式中的错误处理
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check-catch 'unbound-variable ((lambda (x) y) 5))
+
+    (check-catch 'wrong-type-arg (map (lambda (x) (+ x 1)) '(1 2 a 4)))
+
+    \;
+  </scm-chunk>
+
+  \;
 
   <paragraph|quote>
 
@@ -1728,6 +1850,8 @@
   </goldfish-chunk>
 
   <paragraph|real?>
+
+  判断一个数是否是实数。
 
   <\goldfish-chunk|tests/goldfish/liii/base-test.scm|true|true>
     (check-true (real? 123)) \ \ \ \ \ \ \ \ \ \ \ ; 整数
@@ -3314,6 +3438,8 @@
 
     \;
   </scm-chunk>
+
+  \;
 
   <paragraph|exact-integer-sqrt>
 
@@ -17590,7 +17716,7 @@
 
     (define-library (scheme inexact)
 
-    (export acos asin atan cos exp finite? infinite? log nan? sin sqrt tan)
+    (export acos asin atan cos exp finite? infinite? log nan? sin sqrt s7-sqrt tan)
 
     (begin
 
@@ -17680,6 +17806,80 @@
   \;
 
   <value|r7rs><paragraph|sqrt><index| sqrt>
+
+  用于计算数值的主平方根。目前只接受实数（支持精确数和非精确数），若输入为精准非负实数，返回精准非负实数平方根，若输入为非精准非负实数，返回非精准非负实数平方根；若输入为负数（支持精确数和非精确数），目前我们只支持返回非精准复数。注意：我们的exact函数后续需要改进，在测试里(check-true (inexact? 1+2i)) 是通过的，但是在R7RS中应该要求exact的。
+
+  <\scm-chunk|goldfish/scheme/inexact.scm|true|true>
+    (define s7-sqrt sqrt)
+
+    \;
+
+    (define (sqrt x)
+
+    \ \ (if (and (exact? x) (negative? x))
+
+    \ \ \ \ \ \ \ \ (s7-sqrt (inexact x))
+
+    \ \ \ \ \ \ (s7-sqrt x)))
+
+    \;
+  </scm-chunk>
+
+  \;
+
+  <\scm-chunk|tests/goldfish/scheme/inexact-test.scm|true|true>
+    (check (sqrt 9) =\<gtr\> 3) \ \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    (check (sqrt 25.0) =\<gtr\> 5.0)
+
+    (check (sqrt 9/4) =\<gtr\> 3/2)\ 
+
+    (check (\<less\> (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-10) =\<gtr\> #t)
+
+    \ \ \ \ \ \ \ 
+  </scm-chunk>
+
+  测试负实数
+
+  <\scm-chunk|tests/goldfish/scheme/inexact-test.scm|true|true>
+    (check (sqrt -1.0) =\<gtr\> 0.0+1.0i)
+
+    (check (sqrt -1) =\<gtr\> 0.0+1.0i)
+
+    \ \ \ \ \ \ \ 
+  </scm-chunk>
+
+  测试零
+
+  <\scm-chunk|tests/goldfish/scheme/inexact-test.scm|true|true>
+    (check (sqrt 0) =\<gtr\> 0)
+
+    (check (sqrt 0.0) =\<gtr\> 0.0)
+
+    \ \ \ \ \ \ \ 
+  </scm-chunk>
+
+  测试精确性转换
+
+  <\scm-chunk|tests/goldfish/scheme/inexact-test.scm|true|true>
+    (check (exact? (sqrt 2.0)) =\<gtr\> #f)\ 
+
+    (check (exact? (sqrt -1)) =\<gtr\> #f)\ 
+
+    (check (exact? (sqrt -1.0)) =\<gtr\> #f)\ 
+
+    \ \ \ \ \ \ \ 
+  </scm-chunk>
+
+  测试错误处理
+
+  <\scm-chunk|tests/goldfish/scheme/inexact-test.scm|true|true>
+    (check-catch 'wrong-type-arg \ (sqrt "hello"))
+
+    (check-catch 'wrong-type-arg \ (sqrt 'symbol))
+
+    \ \ \ \ \ \ \ 
+  </scm-chunk>
 
   \;
 

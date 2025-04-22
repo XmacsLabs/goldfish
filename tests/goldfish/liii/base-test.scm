@@ -22,6 +22,43 @@
 
 (check-set-mode! 'report-failed)
 
+(check ((lambda (x) (* x x)) 5) => 25)
+(check ((lambda (x) (* x x)) 0) => 0)
+(check ((lambda (x) (* x x)) -3) => 9)
+
+(check ((lambda (x y) (+ x y)) 3 5) => 8)
+(check ((lambda (x y) (* x y)) 4 6) => 24)
+
+(check ((lambda () 42)) => 42)
+
+(check ((lambda (x) ((lambda (y) (+ x y)) 5)) 3) => 8)
+
+(define (apply-function f x) (f x))
+(check (apply-function (lambda (x) (* x x)) 5) => 25)
+(check (apply-function (lambda (x) (+ x 1)) 10) => 11)
+
+(define (filter pred lst)
+  (cond ((null? lst) '())
+        ((pred (car lst)) (cons (car lst) (filter pred (cdr lst))))
+        (else (filter pred (cdr lst)))))
+(check (map (lambda (x) (* x 2)) '(1 2 3 4)) => '(2 4 6 8))
+(check (map (lambda (x) (+ x 1)) '(0 1 2 3)) => '(1 2 3 4))
+
+(check (filter (lambda (x) (> x 2)) '(1 2 3 4 5)) => '(3 4 5))
+
+(check (if (> 3 2) ((lambda () 3)) ((lambda () 2))) => 3)
+(check (if (< 3 2) ((lambda () 3)) ((lambda () 2))) => 2)
+
+(check (cond ((> 3 2) ((lambda () 3))) (else ((lambda () 2)))) => 3)
+(check (cond ((< 3 2) ((lambda () 3))) (else ((lambda () 2)))) => 2)
+
+(let ((create-counter (lambda () (let ((count 0)) (lambda () (set! count (+ count 1)) count)))))
+  (let ((counter1 (create-counter)) (counter2 (create-counter)))
+    (counter1) (counter1) (counter2) (check (counter1) => 3) (check (counter2) => 2)))
+
+(check-catch 'unbound-variable ((lambda (x) y) 5))
+(check-catch 'wrong-type-arg (map (lambda (x) (+ x 1)) '(1 2 a 4)))
+
 (check (if (> 3 2) 3 2) => 3)
 (check (if (< 3 2) 3 2) => 2)
 

@@ -27,4 +27,22 @@
 (check (nan? +inf.0) => #f)
 (check (nan? -inf.0) => #f)
        
+(check (sqrt 9) => 3)              
+(check (sqrt 25.0) => 5.0)
+(check (sqrt 9/4) => 3/2) 
+(check (< (abs (- (sqrt 2.0) 1.4142135623730951)) 1e-10) => #t)
+       
+(check (sqrt -1.0) => 0.0+1.0i)
+(check (sqrt -1) => 0.0+1.0i)
+       
+(check (sqrt 0) => 0)
+(check (sqrt 0.0) => 0.0)
+       
+(check (exact? (sqrt 2.0)) => #f) 
+(check (exact? (sqrt -1)) => #f) 
+(check (exact? (sqrt -1.0)) => #f) 
+       
+(check-catch 'wrong-type-arg  (sqrt "hello"))
+(check-catch 'wrong-type-arg  (sqrt 'symbol))
+       
 (check-report)
