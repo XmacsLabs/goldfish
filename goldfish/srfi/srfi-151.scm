@@ -116,10 +116,8 @@
 (define (first-set-bit n)
   (if (zero? n)
       -1
-      (let loop ((index 0))
-        (if (bit-set? index n)
-            index
-            (loop (+ index 1))))))
+      (let ((lsb (bitwise-and n (- n))))
+        (- (integer-length lsb) 1))))
 ) ; end of begin
 ) ; end of define-library
 

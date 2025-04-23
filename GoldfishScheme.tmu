@@ -10520,13 +10520,9 @@
 
     \ \ \ \ \ \ -1
 
-    \ \ \ \ \ \ (let loop ((index 0))
+    \ \ \ \ \ \ (let ((lsb (bitwise-and n (- n))))
 
-    \ \ \ \ \ \ \ \ (if (bit-set? index n)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ index
-
-    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ index 1))))))
+    \ \ \ \ \ \ \ \ (- (integer-length lsb) 1))))
   </scm-chunk>
 
   <paragraph|测试>
