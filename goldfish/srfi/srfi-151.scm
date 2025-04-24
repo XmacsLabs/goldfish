@@ -107,9 +107,15 @@
          (bitwise-and n (bitwise-not (arithmetic-shift 1 index)))))))
 
 (define (bit-swap index1 index2 n)
-  (copy-bit index2
-            (copy-bit index1 n (bit-set? index2 n))
-            (bit-set? index1 n)))
+ (cond
+  ((or (negative? index1) (negative? index2))
+   (error 'out-of-range "bit-swap: Index cannot be negative" index1 index2))
+  ((or (> index1 63) (> index2 63))
+   (error 'out-of-range "bit-swap: Index cannot exceed 63" index1 index2))
+  (else 
+   (copy-bit index2
+        (copy-bit index1 n (bit-set? index2 n))
+        (bit-set? index1 n)))))
 
 (define (any-bit-set? test-bits n)
   (not (zero? (bitwise-and test-bits n))))
