@@ -84,7 +84,9 @@
   (cond
     ((negative? index)
      (error 'out-of-range "bit-set?: Index cannot be negative" index))
-    ((>= index 63)
+    ((> index 63)
+     (error 'out-of-range "bit-set?: Index cannot exceed 63" index))
+    ((= index 63)
      (negative? n))
     (else
      (not (zero? (bitwise-and n (arithmetic-shift 1 index)))))))
@@ -93,7 +95,9 @@
   (cond
     ((negative? index)
      (error 'out-of-range "copy-bit: Index cannot be negative" index))
-    ((>= index 63)
+    ((> index 63)
+     (error 'out-of-range "copy-bit: Index cannot exceed 63" index))
+    ((= index 63)
      (if boolean
          (bitwise-ior n #x8000000000000000)
          (bitwise-and n #x7FFFFFFFFFFFFFFF)))

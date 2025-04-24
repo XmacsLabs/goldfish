@@ -10346,7 +10346,11 @@
 
     \ \ \ \ \ (error 'out-of-range "bit-set?: Index cannot be negative" index))
 
-    \ \ \ \ ((\<gtr\>= index 63)
+    \ \ \ \ ((\<gtr\> index 63)
+
+    \ \ \ \ \ (error 'out-of-range "bit-set?: Index cannot exceed 63" index))
+
+    \ \ \ \ ((= index 63)
 
     \ \ \ \ \ (negative? n))
 
@@ -10364,17 +10368,21 @@
 
     (check (bit-set? 3 10) =\<gtr\> #t) \ \ \ \ \ \ ; Binary of 10 is #b1010, bit 3 is 1
 
-    (check (bit-set? 1000000 -1) =\<gtr\> #t) ; -1 is negative, all bits beyond 63 in two's complement are 1, bit 1000000 is also 1
-
-    (check (bit-set? 1000000 1) =\<gtr\> #f) \ ; 1 is positive, all bits beyond 63 in two's complement are 0, bit 1000000 is also 0
-
     (check (bit-set? 2 6) =\<gtr\> #t) \ \ \ \ \ \ \ ; Binary of 6 is #b0110, bit 2 is 1
 
     (check (bit-set? 0 6) =\<gtr\> #f) \ \ \ \ \ \ \ ; Binary of 6 is #b0110, bit 0 is 0
 
+    (check (bit-set? 63 -1) =\<gtr\> #t)
+
+    (check (bit-set? 63 1) =\<gtr\> #f)
+
     (check-catch 'out-of-range
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-set? -1 1)) \ \ \ \ \ \ ; index cannot be negative
+
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-set? 64 1)) \ \ \ \ \ \ ; index cannot exceed 63
 
     \;
   </scm-chunk>
@@ -10392,7 +10400,11 @@
 
     \ \ \ \ \ (error 'out-of-range "copy-bit: Index cannot be negative" index))
 
-    \ \ \ \ ((\<gtr\>= index 63)
+    \ \ \ \ ((\<gtr\> index 63)
+
+    \ \ \ \ \ (error 'out-of-range "copy-bit: Index cannot exceed 63" index))
+
+    \ \ \ \ ((= index 63)
 
     \ \ \ \ \ (if boolean
 
@@ -10420,15 +10432,17 @@
 
     (check (copy-bit 62 0 #t) =\<gtr\> #x4000000000000000)
 
-    ; Indexes greater than or equal to 63 are considered meaningful and always treat the index as 63 (sign bit)
-
     (check (copy-bit 63 1 #t) =\<gtr\> #x8000000000000001)
-
-    (check (copy-bit 10000 1 #t) =\<gtr\> #x8000000000000001)
 
     (check (copy-bit 63 -1 #f) =\<gtr\> #x7FFFFFFFFFFFFFFF)
 
-    (check (copy-bit 10000 -1 #f) =\<gtr\> #x7FFFFFFFFFFFFFFF)
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (copy-bit 64 -1 #f)) \ \ \ \ \ \ \ ; index cannot exceed 63
+
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (copy-bit 10000 -1 #f)) \ \ \ \ ; index cannot exceed 63
 
     (check-catch 'out-of-range
 

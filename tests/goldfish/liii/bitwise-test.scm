@@ -125,29 +125,33 @@
 (check (bit-set? 1 1) => #f)        ; Binary of 1 is #b0001, bit 1 is 0
 (check (bit-set? 0 1) => #t)        ; Binary of 1 is #b0001, bit 0 is 1
 (check (bit-set? 3 10) => #t)       ; Binary of 10 is #b1010, bit 3 is 1
-(check (bit-set? 1000000 -1) => #t) ; -1 is negative, all bits beyond 63 in two's complement are 1, bit 1000000 is also 1
-(check (bit-set? 1000000 1) => #f)  ; 1 is positive, all bits beyond 63 in two's complement are 0, bit 1000000 is also 0
 (check (bit-set? 2 6) => #t)        ; Binary of 6 is #b0110, bit 2 is 1
 (check (bit-set? 0 6) => #f)        ; Binary of 6 is #b0110, bit 0 is 0
+(check (bit-set? 63 -1) => #t)
+(check (bit-set? 63 1) => #f)
 (check-catch 'out-of-range
              (bit-set? -1 1))       ; index cannot be negative
+(check-catch 'out-of-range
+             (bit-set? 64 1))       ; index cannot exceed 63
 
 (check (copy-bit 0 0 #t) => #b1)         ; Set bit 0 of 0 to 1, result is #b1
 (check (copy-bit 2 0 #t) => #b100)       ; Set bit 2 of #000 to 1, result is #b100
 (check (copy-bit 2 #b1111 #f) => #b1011) ; Set bit 2 of #b1111 to 0, result is #b1011
 (check (copy-bit 62 0 #t) => #x4000000000000000)
-; Indexes greater than or equal to 63 are considered meaningful and always treat the index as 63 (sign bit)
 (check (copy-bit 63 1 #t) => #x8000000000000001)
-(check (copy-bit 10000 1 #t) => #x8000000000000001)
 (check (copy-bit 63 -1 #f) => #x7FFFFFFFFFFFFFFF)
-(check (copy-bit 10000 -1 #f) => #x7FFFFFFFFFFFFFFF)
+(check-catch 'out-of-range
+             (copy-bit 64 -1 #f))        ; index cannot exceed 63
+(check-catch 'out-of-range
+             (copy-bit 10000 -1 #f))     ; index cannot exceed 63
 (check-catch 'out-of-range
              (copy-bit -1 1 #t))         ; index cannot be negative
 
 (check (bit-swap 0 2 4) => #b1)
 (check (bit-swap 3 0 5) => #b1100)
 (check (bit-swap 63 0 1) => #x8000000000000000)
-(check (bit-swap 64 0 1) => #x8000000000000000)
+(check-catch 'out-of-range
+             (bit-swap 64 0 1))          ; index cannot exceed 63
 (check-catch 'out-of-range
              (bit-swap -1 1 3))          ; index cannot be negative    
 
