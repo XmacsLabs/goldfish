@@ -132,5 +132,15 @@
 (check-catch 'out-of-range
              (bit-set? -1 1))       ; index 不能为负数
 
+(check (bit-field #b1101101010 0 4) => #b1010)
+(check (bit-field #b1101101010 3 9) => #b101101)
+(check (bit-field #b1101101010 4 9) => #b10110)
+(check (bit-field #b1101101010 4 10) => #b110110)
+(check (bit-field 6 0 1) => 0)    ; #110 => #0
+(check (bit-field 6 1 3) => 3)    ; #110 => #11
+(check (bit-field 6 2 999) => 1)  ; 超出整数长度的部分截断
+(check-catch 'out-of-range
+             (bit-field #x100000000000000000000000000000000 128 129))       ; start 超过64位整数范围
+
 (check-report)
 

@@ -9772,6 +9772,8 @@
 
     \ \ bit-set?
 
+    \ \ bit-field
+
     \ \ ; S7 built-in
 
     \ \ lognot logand logior logxor
@@ -9799,6 +9801,8 @@
     \ \ arithmetic-shift integer-length bitwise-if
 
     \ \ bit-set?
+
+    \ \ bit-field
 
     )
 
@@ -10384,6 +10388,56 @@
   </scm-chunk>
 
   <subsection|按位运算>
+
+  <paragraph|<value|srfi>bit-field><index|bit-field><typehint|((i integer?) (start integer?) (end integer?)) =\<gtr\> integer?>
+
+  <strong|bit-field?> 用于从一个给定的整数 <strong|i> 中提取从 <strong|start> 位到 <strong|end - 1> 位的连续位域，并将这个位域右移到最低有效位的位置。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-field i start end)
+
+    \ \ (let* ((bits (integer-length i)))
+
+    \ \ \ \ (if (\<gtr\>= start bits)
+
+    \ \ \ \ \ \ \ \ (error 'out-of-range "bit-field: Start cannot be greater than or equal to the integer length" start)
+
+    \ \ \ \ \ \ \ \ (let* ((end (min end bits))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (width (- end start)))
+
+    \ \ \ \ \ \ \ \ \ \ (if (\<less\>= width 0)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (let ((mask (arithmetic-shift (- (expt 2 width) 1) start)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (arithmetic-shift (bitwise-and i mask) (- start))))))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    <code|(check (bit-field #b1101101010 0 4) =\<gtr\> #b1010>)
+
+    <code|(check (bit-field #b1101101010 3 9) =\<gtr\> #b101101>)
+
+    <code|(check (bit-field #b1101101010 4 9) =\<gtr\> #b10110>)
+
+    <code|(check (bit-field #b1101101010 4 10) =\<gtr\> #b110110>)
+
+    <code|(check (bit-field 6 0 1) =\<gtr\> 0>) \ \ \ ; #110 =\<gtr\> #0
+
+    <code|(check (bit-field 6 1 3) =\<gtr\> 3>) \ \ \ ; #110 =\<gtr\> #11
+
+    <code|(check (bit-field 6 2 999) =\<gtr\> 1>) \ ; 超出整数长度的部分截断
+
+    (check-catch 'out-of-range
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-field #x100000000000000000000000000000000 128 129)) \ \ \ \ \ \ ; start 超过64位整数范围
+
+    \;
+  </scm-chunk>
 
   <subsection|按位转换>
 

@@ -21,6 +21,7 @@
   bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
   arithmetic-shift integer-length bitwise-if
   bit-set?
+  bit-field
 )
 (begin
 
@@ -89,6 +90,16 @@
        #f))
     (else
      (not (zero? (bitwise-and n (arithmetic-shift 1 index)))))))
+(define (bit-field i start end)
+  (let* ((bits (integer-length i)))
+    (if (>= start bits)
+        (error 'out-of-range "bit-field: Start cannot be greater than or equal to the integer length" start)
+        (let* ((end (min end bits))
+               (width (- end start)))
+          (if (<= width 0)
+              0
+              (let ((mask (arithmetic-shift (- (expt 2 width) 1) start)))
+                (arithmetic-shift (bitwise-and i mask) (- start))))))))
 ) ; end of begin
 ) ; end of define-library
 
