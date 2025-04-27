@@ -1079,6 +1079,13 @@
 
 (check ($ #("a" "b" "c") :make-string) => "abc")
 
+(let ((vec (rich-vector #(1 2 3))))
+  (check (vec :to-list) => '(1 2 3)))
+
+(let ((vec (rich-vector #(1 2 3))))
+  (check (vec :to-rich-list) => (rich-list '(1 2 3)))
+  (check ((vec :to-rich-list) :collect) => '(1 2 3)))
+
 (let1 v ($ #(1 2 3))
   (v :set! 0 2)
   (check (v 0) => 2)

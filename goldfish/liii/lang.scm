@@ -1196,6 +1196,12 @@
            (middle (string-join (map as-string (vector->list data)) sep)))
       (rich-string (string-append start middle end)))))
 
+(define (%to-list)
+  (vector->list data))
+
+(define (%to-rich-list)
+  (rich-list (vector->list data)))
+
 (define (%set! i x)
   (when (or (< i 0) (>= i (length data)))
     (error 'out-of-range "rich-vector%set! out of range at index" i))

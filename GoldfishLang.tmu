@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.5>>
+<TMU|<tuple|1.1.0|2025.0.7>>
 
 <style|<tuple|book|goldfish|literate|reduced-margins|python|padded-paragraphs|chinese>>
 
@@ -7065,6 +7065,44 @@
     \;
 
     (check ($ #("a" "b" "c") :make-string) =\<gtr\> "abc")
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-vector%to-list>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%to-list)
+
+    \ \ (vector-\<gtr\>list data))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let ((vec (rich-vector #(1 2 3))))
+
+    \ \ (check (vec :to-list) =\<gtr\> '(1 2 3)))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-vector%to-rich-list>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%to-rich-list)
+
+    \ \ (rich-list (vector-\<gtr\>list data)))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let ((vec (rich-vector #(1 2 3))))
+
+    \ \ (check (vec :to-rich-list) =\<gtr\> (rich-list '(1 2 3)))
+
+    \ \ (check ((vec :to-rich-list) :collect) =\<gtr\> '(1 2 3)))
 
     \;
   </goldfish-chunk>
