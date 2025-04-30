@@ -31,33 +31,6 @@
   (type path-type)
   (drive path-drive))
 
-(define (%check-posix-parts parts)
-  (when (vector-empty? parts)
-    (value-error "make-path: parts must not be emtpy for posix path"))
-  (let1 N (vector-length parts)
-    (let loop ((i 0))
-      (when (< i (- N 1))
-            (when (string-null? (parts i))
-                  (value-error "make-path: part of path must not be empty string, index" i))
-            (loop (+ i 1))))
-    (let loop ((i 1))
-      (when (< i N)
-            (when (string-index (parts i) #\/)
-                  (value-error "make-path: non-first part of path must not contains /"))
-            (loop (+ i 1))))))
-
-(define* (make-path parts (type 'posix) (drive ""))
-  (when (not (vector? parts))
-    (type-error "make-path: parts must be a vector"))
-
-  (case type
-    ((posix) (%check-posix-parts parts)))
-  
-  (case type
-    ((posix)
-     (%make-path parts type drive))
-    (else (value-error "make-path: invalid type" type))))
-
 (define (path-dir? path)
   (g_isdir path))
 
@@ -97,16 +70,30 @@
    (type symbol? 'posix)
    (drive string? ""))
 
-(define (@cwd)
-  (@from-string (getcwd)))
-
 (define (%dir?)
+  (display (%to-string))
+  (newline)
   (path-dir? (%to-string)))
 
 (define (%absolute?)
   (if (eq? type 'posix)
       (string-starts? (parts 0) "/")
       (???)))
+
+(define (%check-posix-parts parts)
+  (when (vector-empty? parts)
+    (value-error "make-path: parts must not be emtpy for posix path"))
+  (let1 N (vector-length parts)
+    (let loop ((i 0))
+      (when (< i (- N 1))
+            (when (string-null? (parts i))
+                  (value-error "make-path: part of path must not be empty string, index" i))
+            (loop (+ i 1))))
+    (let loop ((i 1))
+      (when (< i N)
+            (when (string-index (parts i) #\/)
+                  (value-error "make-path: non-first part of path must not contains /"))
+            (loop (+ i 1))))))
 
 (define (@from-vector v)
   (cond ((vector? v) (path v))
@@ -117,7 +104,8 @@
 (define (@from-string s)
   (cond ((os-linux?)
          (if (string-starts? s "/")
-             (@from-vector ($ s :drop 1 :split "/"))
+             (@from-vector (append #("/")
+                                   (($ (string-drop s 1) :split "/") :collect)))
              (@from-vector ($ s :split "/"))))
         (else (???))))
 
@@ -128,6 +116,15 @@
             (string-drop s 1)
             s))
       (value-error "invalid type of path" type)))
+
+(define (@cwd)
+  (@from-string (getcwd)))
+
+(chained-define (@/ x)
+  (path (append #("/") (vector x))))
+
+(chained-define (%/ x)
+  (path (append parts (vector x))))
 
 )
 

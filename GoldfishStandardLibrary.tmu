@@ -2527,7 +2527,7 @@
     \;
   </goldfish-chunk>
 
-  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|true>
+  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|false>
     (check-report)
 
     \;
@@ -2766,70 +2766,12 @@
 
     \;
 
-    (check-set-mode! 'report-failed)
+    ; (check-set-mode! 'report-failed)
 
     \;
   </scm-chunk>
 
   <section|实现>
-
-  <paragraph|make-path>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define (%check-posix-parts parts)
-
-    \ \ (when (vector-empty? parts)
-
-    \ \ \ \ (value-error "make-path: parts must not be emtpy for posix path"))
-
-    \ \ (let1 N (vector-length parts)
-
-    \ \ \ \ (let loop ((i 0))
-
-    \ \ \ \ \ \ (when (\<less\> i (- N 1))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ (when (string-null? (parts i))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "make-path: part of path must not be empty string, index" i))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1))))
-
-    \ \ \ \ (let loop ((i 1))
-
-    \ \ \ \ \ \ (when (\<less\> i N)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ (when (string-index (parts i) #\\/)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "make-path: non-first part of path must not contains /"))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1))))))
-
-    \;
-
-    (define* (make-path parts (type 'posix) (drive ""))
-
-    \ \ (when (not (vector? parts))
-
-    \ \ \ \ (type-error "make-path: parts must be a vector"))
-
-    \;
-
-    \ \ (case type
-
-    \ \ \ \ ((posix) (%check-posix-parts parts)))
-
-    \ \ 
-
-    \ \ (case type
-
-    \ \ \ \ ((posix)
-
-    \ \ \ \ \ (%make-path parts type drive))
-
-    \ \ \ \ (else (value-error "make-path: invalid type" type))))
-
-    \;
-  </goldfish-chunk>
 
   <paragraph|path-dir?>
 
@@ -3503,32 +3445,14 @@
     \;
   </goldfish-chunk>
 
-  <subsection|静态方法>
-
-  <paragraph|path@cwd>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define (@cwd)
-
-    \ \ (@from-string (getcwd)))
-
-    \;
-  </goldfish-chunk>
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|false>
-    (when (os-linux?)
-
-    \ \ (check-true ((path :cwd) :dir?)))
-
-    \;
-  </scm-chunk>
-
   <subsection|谓词>
 
   <paragraph|path%dir?>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (%dir?)
+
+    \ \ (newline)
 
     \ \ (path-dir? (%to-string)))
 
@@ -3564,6 +3488,36 @@
   <paragraph|path@from-vector>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%check-posix-parts parts)
+
+    \ \ (when (vector-empty? parts)
+
+    \ \ \ \ (value-error "make-path: parts must not be emtpy for posix path"))
+
+    \ \ (let1 N (vector-length parts)
+
+    \ \ \ \ (let loop ((i 0))
+
+    \ \ \ \ \ \ (when (\<less\> i (- N 1))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (when (string-null? (parts i))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "make-path: part of path must not be empty string, index" i))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1))))
+
+    \ \ \ \ (let loop ((i 1))
+
+    \ \ \ \ \ \ (when (\<less\> i N)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (when (string-index (parts i) #\\/)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "make-path: non-first part of path must not contains /"))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1))))))
+
+    \;
+
     (define (@from-vector v)
 
     \ \ (cond ((vector? v) (path v))
@@ -3586,7 +3540,9 @@
 
     \ \ \ \ \ \ \ \ \ (if (string-starts? s "/")
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ s :drop 1 :split "/"))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector (append #("/")
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (($ (string-drop s 1) :split "/") :collect)))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ s :split "/"))))
 
@@ -3624,6 +3580,54 @@
   </scm-chunk>
 
   \;
+
+  \;
+
+  <subsection|静态方法>
+
+  <paragraph|path@cwd>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (@cwd)
+
+    \ \ (@from-string (getcwd)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (when (os-linux?)
+
+    \ \ (check-true ((path :cwd) :dir?)))
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path%/>
+
+  <paragraph|path@/>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@/ x)
+
+    \ \ (path (append #("/") (vector x))))
+
+    \;
+
+    (chained-define (%/ x)
+
+    \ \ (path (append parts (vector x))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+
+    \;
+  </scm-chunk>
+
+  <subsection|path样本类结尾>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     )
