@@ -2730,7 +2730,9 @@
 
     )
 
-    (import (liii base) (liii error) (liii vector) (liii string) (liii list))
+    (import (liii base) (liii error) (liii vector) (liii string) (liii list)
+
+    \ \ \ \ \ \ \ \ (liii os))
 
     (begin
 
@@ -3501,7 +3503,37 @@
     \;
   </goldfish-chunk>
 
+  <subsection|静态方法>
+
+  <paragraph|path@cwd>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (@cwd)
+
+    \ \ (@from-string (getcwd)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|false>
+    (when (os-linux?)
+
+    \ \ (check-true ((path :cwd) :dir?)))
+
+    \;
+  </scm-chunk>
+
   <subsection|谓词>
+
+  <paragraph|path%dir?>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|false>
+    (define (%dir?)
+
+    \ \ (path-dir? (%to-string)))
+
+    \;
+  </goldfish-chunk>
 
   <paragraph|path%absolute?>
 
@@ -3528,6 +3560,40 @@
   </scm-chunk>
 
   <subsection|转换器>
+
+  <paragraph|path@from-vector>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (@from-vector v)
+
+    \ \ (cond ((vector? v) (path v))
+
+    \ \ \ \ \ \ \ \ ((rich-vector :is-type-of v)
+
+    \ \ \ \ \ \ \ \ \ (path (v :collect)))
+
+    \ \ \ \ \ \ \ \ (else (type-error "input must be vector or rich-vector"))))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|path@from-string>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (@from-string s)
+
+    \ \ (cond ((os-linux?)
+
+    \ \ \ \ \ \ \ \ \ (if (string-starts? s "/")
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ s :drop 1 :split "/"))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ s :split "/"))))
+
+    \ \ \ \ \ \ \ \ (else (???))))
+
+    \;
+  </goldfish-chunk>
 
   <paragraph|path%to-string>
 

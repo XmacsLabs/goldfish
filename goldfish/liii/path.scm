@@ -20,7 +20,8 @@
   path-getsize path-read-text path-read-bytes path-write-text
   path
 )
-(import (liii base) (liii error) (liii vector) (liii string) (liii list))
+(import (liii base) (liii error) (liii vector) (liii string) (liii list)
+        (liii os))
 (begin
 
 (define-record-type :path
@@ -96,10 +97,29 @@
    (type symbol? 'posix)
    (drive string? ""))
 
+(define (@cwd)
+  (@from-string (getcwd)))
+
+(define (%dir?)
+  (path-dir? (%to-string)))
+
 (define (%absolute?)
   (if (eq? type 'posix)
       (string-starts? (parts 0) "/")
       (???)))
+
+(define (@from-vector v)
+  (cond ((vector? v) (path v))
+        ((rich-vector :is-type-of v)
+         (path (v :collect)))
+        (else (type-error "input must be vector or rich-vector"))))
+
+(define (@from-string s)
+  (cond ((os-linux?)
+         (if (string-starts? s "/")
+             (@from-vector ($ s :drop 1 :split "/"))
+             (@from-vector ($ s :split "/"))))
+        (else (???))))
 
 (define (%to-string)
   (if (eq? type 'posix)

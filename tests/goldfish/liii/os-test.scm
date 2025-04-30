@@ -99,3 +99,6 @@
 
 (check-report)
 
+(when (os-linux?)
+  (check-true ((path :cwd) :dir?)))
+
