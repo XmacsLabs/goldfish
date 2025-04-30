@@ -2527,7 +2527,7 @@
     \;
   </goldfish-chunk>
 
-  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|false>
+  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|true>
     (check-report)
 
     \;
@@ -3527,7 +3527,7 @@
 
   <paragraph|path%dir?>
 
-  <\goldfish-chunk|goldfish/liii/path.scm|true|false>
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (%dir?)
 
     \ \ (path-dir? (%to-string)))
