@@ -71,7 +71,6 @@
    (drive string? ""))
 
 (define (%dir?)
-  (display (%to-string))
   (newline)
   (path-dir? (%to-string)))
 
@@ -80,7 +79,7 @@
       (string-starts? (parts 0) "/")
       (???)))
 
-(define (%check-posix-parts parts)
+(define (check-posix-parts parts)
   (when (vector-empty? parts)
     (value-error "make-path: parts must not be emtpy for posix path"))
   (let1 N (vector-length parts)

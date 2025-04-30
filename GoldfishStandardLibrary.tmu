@@ -3488,7 +3488,7 @@
   <paragraph|path@from-vector>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define (%check-posix-parts parts)
+    (define (check-posix-parts parts)
 
     \ \ (when (vector-empty? parts)
 
