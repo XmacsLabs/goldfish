@@ -3515,7 +3515,7 @@
     \;
   </goldfish-chunk>
 
-  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|false>
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|false>
     (when (os-linux?)
 
     \ \ (check-true ((path :cwd) :dir?)))

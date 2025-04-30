@@ -75,6 +75,9 @@
   
   (delete-file file-path))
 
+(when (os-linux?)
+  (check-true ((path :cwd) :dir?)))
+
 (check-true ((path #("/")) :absolute?))
 (check-true ((path #("/" "tmp")) :absolute?))
 (check-false ((path #("tmp")) :absolute?))
