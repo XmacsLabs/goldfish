@@ -3452,8 +3452,6 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (%dir?)
 
-    \ \ (newline)
-
     \ \ (path-dir? (%to-string)))
 
     \;

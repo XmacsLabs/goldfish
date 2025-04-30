@@ -71,7 +71,6 @@
    (drive string? ""))
 
 (define (%dir?)
-  (newline)
   (path-dir? (%to-string)))
 
 (define (%absolute?)
