@@ -801,10 +801,20 @@
       (right (f value))
       (%this)))
 
+(chained-define (%flat-map f)
+  (if (%right?)
+      (f value)
+      (%this)))
+
 (typed-define (%forall (pred procedure?))
   (if (%right?)
       (pred value)
       #t))
+
+(typed-define (%exists (pred procedure?))
+  (if (%right?)
+      (pred value)
+      #f))
 
 )
 

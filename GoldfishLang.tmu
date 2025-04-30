@@ -5249,6 +5249,30 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|either%flat-map>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (chained-define (%flat-map f)
+
+    \ \ (if (%right?)
+
+    \ \ \ \ \ \ (f value)
+
+    \ \ \ \ \ \ (%this)))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let1 r ((right 1) :flat-map (lambda (x) (right (+ x 1))))
+
+    \ \ (check-true (r :right?))
+
+    \ \ (check (r :get-or-else 0) =\<gtr\> 2))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|either%forall>
 
   如果是左值直接跳过返回真，如果是右值执行谓词判断，参数必须是一个过程。
@@ -5273,6 +5297,32 @@
     (check-false ((right 43) :forall even?))
 
     (check-false ((right "not-a-number") :forall number?))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|either%exists>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (typed-define (%exists (pred procedure?))
+
+    \ \ (if (%right?)
+
+    \ \ \ \ \ \ (pred value)
+
+    \ \ \ \ \ \ #f))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (check-false ((left "error") :exists even?))
+
+    (check-true ((right 42) :exists even?))
+
+    (check-false ((right 43) :exists even?))
+
+    (check-false ((right "not-a-number") :exists number?))
 
     \;
   </goldfish-chunk>

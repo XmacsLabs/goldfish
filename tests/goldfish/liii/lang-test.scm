@@ -740,10 +740,19 @@
   (check-true (r :right?))
   (check (r :get-or-else 0) => 2))
 
+(let1 r ((right 1) :flat-map (lambda (x) (right (+ x 1))))
+  (check-true (r :right?))
+  (check (r :get-or-else 0) => 2))
+
 (check-true ((left "error") :forall even?))
 (check-true ((right 42) :forall even?))
 (check-false ((right 43) :forall even?))
 (check-false ((right "not-a-number") :forall number?))
+
+(check-false ((left "error") :exists even?))
+(check-true ((right 42) :exists even?))
+(check-false ((right 43) :exists even?))
+(check-false ((right "not-a-number") :exists number?))
 
 (check (rich-list :range 1 5) => ($ (list 1 2 3 4)))
 (check (rich-list :range 1 5 2) => ($ (list 1 3)))
