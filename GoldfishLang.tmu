@@ -128,7 +128,7 @@
 
     \;
 
-    ; (check-set-mode! 'report-failed)
+    (check-set-mode! 'report-failed)
 
     \;
   </scm-chunk>

@@ -19,7 +19,7 @@
         (liii cut)
         (liii case))
 
-; (check-set-mode! 'report-failed)
+(check-set-mode! 'report-failed)
 
 (check ((@ + _ 2) 1) => 3)
 (check ((@ list 1 _ 3 _ 5) 2 4) => (list 1 2 3 4 5))
