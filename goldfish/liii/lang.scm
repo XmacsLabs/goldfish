@@ -319,7 +319,7 @@
   (cond ((integer? x) (rich-integer x))
         ((rational? x) (rich-rational x))
         ((float? x) (rich-float x))
-        ((char? x) (rich-char (char->integer x)))
+        ((char? x) (rich-char x))
         ((string? x) (rich-string x))
         ((list? x) (rich-list x))
         ((vector? x) (rich-vector x))
@@ -405,6 +405,12 @@
         (else
          (type-error "rich-char: only accept char and integer"))))
 
+(define (%equals that)
+  (cond ((char? that)
+         (= code-point (char->integer that)))
+        ((rich-char :is-type-of that)
+         (= code-point (that :to-integer)))
+        (else #f)))
 (define (%ascii?)
   (and (>= code-point 0) (<= code-point 127)))
 
@@ -526,6 +532,9 @@
 
 (chained-define (@from-integer x)
   (rich-char x))
+
+(chained-define (%to-integer)
+  code-point)
 
 )
 

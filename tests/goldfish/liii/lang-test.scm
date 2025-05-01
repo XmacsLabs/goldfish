@@ -555,6 +555,10 @@
   (check (v 0) => (rich-char :from-string "#\\中"))
   (check (v 1) => (rich-char :from-string "#\\文")))
 
+(let1 v ($ "hello" :to-vector)
+  (check (v 0) => (box #\h))
+  (check (v :last) => (rich-char #\o)))
+
 (let1 v ($ "中文的" :to-rich-vector)
   (check (v :length) => 3)
   (check (v 0) => (rich-char :from-string "#\\中"))

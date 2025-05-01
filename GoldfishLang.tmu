@@ -2036,7 +2036,7 @@
 
     \ \ \ \ \ \ \ \ ((float? x) (rich-float x))
 
-    \ \ \ \ \ \ \ \ ((char? x) (rich-char (char-\<gtr\>integer x)))
+    \ \ \ \ \ \ \ \ ((char? x) (rich-char x))
 
     \ \ \ \ \ \ \ \ ((string? x) (rich-string x))
 
@@ -2817,7 +2817,21 @@
 
   <paragraph|rich-char%equals>
 
-  该函数由<scm|define-case-class>自动生成。
+  重写define-case-class自动生成equals函数。
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%equals that)
+
+    \ \ (cond ((char? that)
+
+    \ \ \ \ \ \ \ \ \ (= code-point (char-\<gtr\>integer that)))
+
+    \ \ \ \ \ \ \ \ ((rich-char :is-type-of that)
+
+    \ \ \ \ \ \ \ \ \ (= code-point (that :to-integer)))
+
+    \ \ \ \ \ \ \ \ (else #f)))
+  </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     (check-true ((rich-char #x30) :equals (rich-char #x30)))
@@ -3579,6 +3593,16 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|rich-char%to-integer>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (chained-define (%to-integer)
+
+    \ \ code-point)
+
+    \;
+  </goldfish-chunk>
+
   <section|结尾>
 
   \;
@@ -4263,6 +4287,14 @@
     \ \ (check (v 0) =\<gtr\> (rich-char :from-string "#\\\\中"))
 
     \ \ (check (v 1) =\<gtr\> (rich-char :from-string "#\\\\文")))
+
+    \;
+
+    (let1 v ($ "hello" :to-vector)
+
+    \ \ (check (v 0) =\<gtr\> (box #\\h))
+
+    \ \ (check (v :last) =\<gtr\> (rich-char #\\o)))
 
     \;
   </goldfish-chunk>
