@@ -191,12 +191,8 @@
   (cond ((or (os-linux?) (os-macos?))
          (path :from-string (getenv "HOME")))
         ((os-windows?)
-         (path (($ (getenv "HOMEPATH") 
-                   :strip-prefix (string (os-sep))
-                   :split (string (os-sep)))
-                :collect)
-               'windows
-               ($ (getenv "HOMEDRIVE") :drop-right 1 :get)))
+         (path :of-drive ((getenv "HOMEDRIVE") 0)
+               :/ (path :from-string (getenv "HOMEPATH"))))
         (else (value-error "path@home: unknown type"))))
 
 )

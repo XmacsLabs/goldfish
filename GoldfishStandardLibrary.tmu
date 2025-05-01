@@ -3882,17 +3882,9 @@
 
     \ \ \ \ \ \ \ \ ((os-windows?)
 
-    \ \ \ \ \ \ \ \ \ (path (($ (getenv "HOMEPATH")\ 
+    \ \ \ \ \ \ \ \ \ (path :of-drive ((getenv "HOMEDRIVE") 0)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :strip-prefix (string (os-sep))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :split (string (os-sep)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :collect)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 'windows
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ($ (getenv "HOMEDRIVE") :drop-right 1 :get)))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (path :from-string (getenv "HOMEPATH"))))
 
     \ \ \ \ \ \ \ \ (else (value-error "path@home: unknown type"))))
 
