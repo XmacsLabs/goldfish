@@ -89,7 +89,14 @@
 (when (os-linux?)
   (check-true (path :/ "tmp" :exists?)))
 
-; (check (path :from-string "C://"))
+(check (path :from-string "C:\\") => (path :of-drive #\C))
+
+(when (os-windows?)
+  (check (path :from-string "a\\b") => (path :./ "a" :/ "b")))
+
+(when (or (os-linux?) (os-macos?))
+  (check (path :from "a/b") => (path :./ "a" :/ "b")))
+
 
 (check ((path #("/" "etc" "passwd")) :to-string) => "/etc/passwd")
 (check ((path #("/" "tmp" "")) :to-string) => "/tmp/")
@@ -104,7 +111,7 @@
 (check (path :/ "root" :to-string) => "/root")
 
 (check (path :./ "a" :to-string) => "a")
-(check (path :relative "a" :/ "b" :/ "c" :to-string) => "a/b/c")
+(check (path :./ "a" :/ "b" :/ "c" :to-string) => "a/b/c")
 
 (when (os-linux?)
   (check-true (path :cwd :dir?)))

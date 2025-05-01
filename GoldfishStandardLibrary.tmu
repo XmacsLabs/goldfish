@@ -3612,33 +3612,55 @@
   <paragraph|path@from-string>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define (@from-string s)
+    (chained-define (@from-string s)
 
-    \ \ (cond ((or (os-linux?) (os-macos?))
+    \ \ (cond ((and (or (os-linux?) (os-macos?))
 
-    \ \ \ \ \ \ \ \ \ (if (string-starts? s "/")
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-starts? s "/"))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector (append #("/")
+    \ \ \ \ \ \ \ \ \ (path :/ (@from-string ($ s :drop 1 :get))))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (($ (string-drop s 1) :split "/") :collect)))
+    \ \ \ \ \ \ \ \ ((and (os-windows?)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ s :split "/"))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\<gtr\>= (string-length s) 2)
 
-    \ \ \ \ \ \ \ \ ((os-windows?)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 1) #\\:))
 
-    \ \ \ \ \ \ \ \ \ (if (and (\<gtr\>= (string-length s) 2) (char=? (s 1) #\\:))
+    \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (???)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@from-string ($ s :drop 2 :get))))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (???)))
+    \ \ \ \ \ \ \ \ (else
 
-    \ \ \ \ \ \ \ \ (else (??? "path@from-string: unknown OS type"))))
+    \ \ \ \ \ \ \ \ \ (let loop ((str s))
+
+    \ \ \ \ \ \ \ \ \ \ \ (cond ((string-null? s) (@from-vector (vector ".")))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((not (char=? (str 0) (os-sep)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ str :split (string (os-sep)))))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (loop ($ s :drop 1 :get))))))))
 
     \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    ; (check (path :from-string "C://"))
+    (check (path :from-string "C:\\\\") =\<gtr\> (path :of-drive #\\C))
+
+    \;
+
+    (when (os-windows?)
+
+    \ \ (check (path :from-string "a\\\\b") =\<gtr\> (path :./ "a" :/ "b")))
+
+    \;
+
+    (when (or (os-linux?) (os-macos?))
+
+    \ \ (check (path :from "a/b") =\<gtr\> (path :./ "a" :/ "b")))
+
+    \;
 
     \;
   </scm-chunk>
@@ -3767,22 +3789,30 @@
 
   <paragraph|path@root>
 
+  返回根目录。
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@root)
+
+    \ \ (path #("/")))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|path@/>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@root x)
-
-    \ \ (if (and (string-ends? x ":") (= (string-length x) 2))
-
-    \ \ \ \ \ \ (path :of-drive (x 0))
-
-    \ \ \ \ \ \ (path (vector-append #("/") (vector x)))))
-
-    \;
-
     (chained-define (@/ x)
 
-    \ \ (@root x))
+    \ \ (cond ((and (string-ends? x ":") (= (string-length x) 2))
+
+    \ \ \ \ \ \ \ \ \ (path :of-drive (x 0)))
+
+    \ \ \ \ \ \ \ \ ((string=? x "/")
+
+    \ \ \ \ \ \ \ \ \ (path :root))
+
+    \ \ \ \ \ \ \ \ (else (path (vector-append #("/") (vector x))))))
 
     \;
   </goldfish-chunk>
@@ -3797,17 +3827,9 @@
     \;
   </scm-chunk>
 
-  <paragraph|path@relative>
-
   <paragraph|path@./>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@relative x)
-
-    \ \ (path (vector x)))
-
-    \;
-
     (chained-define (@./ x)
 
     \ \ (@relative x))
@@ -3818,7 +3840,7 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (check (path :./ "a" :to-string) =\<gtr\> "a")
 
-    (check (path :relative "a" :/ "b" :/ "c" :to-string) =\<gtr\> "a/b/c")
+    (check (path :./ "a" :/ "b" :/ "c" :to-string) =\<gtr\> "a/b/c")
 
     \;
   </scm-chunk>

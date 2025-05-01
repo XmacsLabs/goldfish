@@ -116,17 +116,21 @@
          (@from-vector (v :collect)))
         (else (type-error "input must be vector or rich-vector"))))
 
-(define (@from-string s)
-  (cond ((or (os-linux?) (os-macos?))
-         (if (string-starts? s "/")
-             (@from-vector (append #("/")
-                                   (($ (string-drop s 1) :split "/") :collect)))
-             (@from-vector ($ s :split "/"))))
-        ((os-windows?)
-         (if (and (>= (string-length s) 2) (char=? (s 1) #\:))
-             (???)
-             (???)))
-        (else (??? "path@from-string: unknown OS type"))))
+(chained-define (@from-string s)
+  (cond ((and (or (os-linux?) (os-macos?))
+              (string-starts? s "/"))
+         (path :/ (@from-string ($ s :drop 1 :get))))
+        ((and (os-windows?)
+              (>= (string-length s) 2)
+              (char=? (s 1) #\:))
+         (path :of-drive (s 0)
+               :/ (@from-string ($ s :drop 2 :get))))
+        (else
+         (let loop ((str s))
+           (cond ((string-null? s) (@from-vector (vector ".")))
+                 ((not (char=? (str 0) (os-sep)))
+                  (@from-vector ($ str :split (string (os-sep)))))
+                 (else (loop ($ s :drop 1 :get))))))))
 
 (define (%to-string)
   (case type
@@ -163,16 +167,15 @@
 
   (path #() 'windows ($ ch :to-upper :make-string)))
 
-(chained-define (@root x)
-  (if (and (string-ends? x ":") (= (string-length x) 2))
-      (path :of-drive (x 0))
-      (path (vector-append #("/") (vector x)))))
+(chained-define (@root)
+  (path #("/")))
 
 (chained-define (@/ x)
-  (@root x))
-
-(chained-define (@relative x)
-  (path (vector x)))
+  (cond ((and (string-ends? x ":") (= (string-length x) 2))
+         (path :of-drive (x 0)))
+        ((string=? x "/")
+         (path :root))
+        (else (path (vector-append #("/") (vector x))))))
 
 (chained-define (@./ x)
   (@relative x))
