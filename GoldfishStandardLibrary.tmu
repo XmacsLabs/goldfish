@@ -3525,6 +3525,16 @@
     \;
   </scm-chunk>
 
+  <paragraph|path%relative?>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%relative)
+
+    \ \ (not (%absolute?)))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|path%exists?>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
@@ -3596,28 +3606,6 @@
 
     \;
   </goldfish-chunk>
-
-  <paragraph|path@of-drive>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@of-drive ch)
-
-    \ \ (when (not (char? ch))
-
-    \ \ \ \ (type-error "path@of-drive must take char? as input"))
-
-    \;
-
-    \ \ (path #() 'windows ($ ch :to-upper :make-string)))
-
-    \;
-  </goldfish-chunk>
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\")
-
-    \;
-  </scm-chunk>
 
   \;
 
@@ -3719,12 +3707,70 @@
     \;
   </goldfish-chunk>
 
+  <subsection|修改器>
+
+  <paragraph|path%/>
+
+  在当前路径下追加目录、文件或者路径。
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (%/ x)
+
+    \ \ (cond ((string? x)
+
+    \ \ \ \ \ \ \ \ \ ((%this) :parts (vector-append parts (vector x))))
+
+    \ \ \ \ \ \ \ \ ((path :is-type-of x)
+
+    \ \ \ \ \ \ \ \ \ (if (x :absolute?)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "path to append must not be absolute path: " (x :to-string))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ ((:this) :parts (vector-append parts (x 'parts)))))
+
+    \ \ \ \ \ \ \ \ (else (type-error "only string?, path is allowed"))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+
+    \;
+  </scm-chunk>
+
   <subsection|静态方法>
+
+  <paragraph|path@of-drive>
+
+  在Windows系统上，盘符只有26中可能。
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@of-drive ch)
+
+    \ \ (when (not (char? ch))
+
+    \ \ \ \ (type-error "path@of-drive must take char? as input"))
+
+    \;
+
+    \ \ (path #() 'windows ($ ch :to-upper :make-string)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\")
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path@root>
 
   <paragraph|path@/>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@/ x)
+    (chained-define (@root x)
 
     \ \ (if (string-ends? x ":")
 
@@ -3733,28 +3779,46 @@
     \ \ \ \ \ \ (path (append #("/") (vector x)))))
 
     \;
+
+    (chained-define (@/ x)
+
+    \ \ (@root x))
+
+    \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
+    (check (path :root "C:" :to-string) =\<gtr\> "C:\\\\")
+
+    (check (path :root "root" :to-string) =\<gtr\> "/root")
 
     (check (path :/ "root" :to-string) =\<gtr\> "/root")
 
     \;
   </scm-chunk>
 
-  <paragraph|path%/>
+  <paragraph|path@relative>
+
+  <paragraph|path@./>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (%/ x)
+    (chained-define (@relative x)
 
-    \ \ ((%this) :parts (append parts (vector x))))
+    \ \ (path (vector x)))
+
+    \;
+
+    (chained-define (@./ x)
+
+    \ \ (@relative x))
 
     \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+    (check (path :./ "a" :to-string) =\<gtr\> "a")
+
+    (check (path :relative "a" :/ "b" :/ "c" :to-string) =\<gtr\> "a/b/c")
 
     \;
   </scm-chunk>

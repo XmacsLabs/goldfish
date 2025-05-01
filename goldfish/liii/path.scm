@@ -86,6 +86,9 @@
      (value-error
       (string-append "path%absolute?: unknown type" (symbol->string type))))))
 
+(define (%relative)
+  (not (%absolute?)))
+
 (define (%exists?)
   (path-exists? (%to-string)))
 
@@ -112,12 +115,6 @@
         ((rich-vector :is-type-of v)
          (@from-vector (v :collect)))
         (else (type-error "input must be vector or rich-vector"))))
-
-(chained-define (@of-drive ch)
-  (when (not (char? ch))
-    (type-error "path@of-drive must take char? as input"))
-
-  (path #() 'windows ($ ch :to-upper :make-string)))
 
 (define (@from-string s)
   (cond ((or (os-linux?) (os-macos?))
@@ -151,13 +148,34 @@
 (typed-define (%write-text (content string?))
   (path-write-text (%to-string) content))
 
-(chained-define (@/ x)
+(chained-define (%/ x)
+  (cond ((string? x)
+         ((%this) :parts (vector-append parts (vector x))))
+        ((path :is-type-of x)
+         (if (x :absolute?)
+             (value-error "path to append must not be absolute path: " (x :to-string))
+             ((:this) :parts (vector-append parts (x 'parts)))))
+        (else (type-error "only string?, path is allowed"))))
+
+(chained-define (@of-drive ch)
+  (when (not (char? ch))
+    (type-error "path@of-drive must take char? as input"))
+
+  (path #() 'windows ($ ch :to-upper :make-string)))
+
+(chained-define (@root x)
   (if (string-ends? x ":")
       (path #() 'windows ($ x :drop-right 1 :get))
       (path (append #("/") (vector x)))))
 
-(chained-define (%/ x)
-  ((%this) :parts (append parts (vector x))))
+(chained-define (@/ x)
+  (@root x))
+
+(chained-define (@relative x)
+  (path (vector x)))
+
+(chained-define (@./ x)
+  (@relative x))
 
 (chained-define (@cwd)
   (@from-string (getcwd)))
