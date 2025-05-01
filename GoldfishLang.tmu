@@ -4746,7 +4746,7 @@
 
     \ \ (let ((str-len ($ data :length))
 
-    \ \ \ \ \ \ \ \ (sep-len (string-length sep)))
+    \ \ \ \ \ \ \ \ (sep-len ($ sep :length)))
 
     \ \ \ \ 
 
@@ -4759,10 +4759,6 @@
     \ \ \ \ \ \ \ \ \ \ \ \ (cons (%drop start :get) acc)
 
     \ \ \ \ \ \ \ \ \ \ \ \ (split-helper (+ next-pos sep-len) (cons (%slice start next-pos :get) acc)))))
-
-    \ \ \ \ 
-
-    \ \ \ \ (display* sep-len) (newline)
 
     \ \ \ \ 
 

@@ -729,15 +729,13 @@
 
 (define (%split sep)
   (let ((str-len ($ data :length))
-        (sep-len (string-length sep)))
+        (sep-len ($ sep :length)))
     
     (define (split-helper start acc)
       (let ((next-pos (%index-of sep start)))
         (if (= next-pos -1)
             (cons (%drop start :get) acc)
             (split-helper (+ next-pos sep-len) (cons (%slice start next-pos :get) acc)))))
-    
-    (display* sep-len) (newline)
     
     (if (zero? sep-len)
         ((%to-rich-vector) :map (lambda (c) (c :make-string)))
