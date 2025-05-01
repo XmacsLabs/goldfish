@@ -604,24 +604,30 @@
          (string-contains data (string elem)))
         (else (type-error "elem must be char or string"))))
 
-;; Find the index for the char or substring in rich-string (from start-index), else return -1
-(define (%index-of sub . start-index)
-  (let1 start (if (null? start-index) 0 (car start-index))
+(define* (%index-of ch/str (start 0))
   (cond
-    ((string? sub)
-     (let ((str-len (string-length data))
-           (sub-len (string-length sub)))
+    ((or (string? ch/str) (char? ch/str))
+     (%index-of (box ch/str) start)))
+    ((rich-string :is-type-of ch/str)
+     (let* ((target-data (ch/str :get))
+            (target-len (ch/str :length))
+            (max-start (- N target-len)))
        (let loop ((i start))
          (cond
-           ((> (+ i sub-len) str-len) -1)
-           ((equal? (substring data i (+ i sub-len)) sub) i)
+           ((> i max-start) -1)
+           ((let ((slice (%slice i (+ i target-len))))
+              (slice :equals ch/str))
+            i)
            (else (loop (+ i 1)))))))
-    ((char? sub)
-     (let loop ((lst (string->list (substring data start))) (index start))
-       (cond
-       ((null? lst) -1)
-       ((char=? (car lst) sub) index)
-       (else (loop (cdr lst) (+ index 1)))))))))
+    ((rich-char :is-type-of ch/str)
+     (let loop ((i start))
+       (if (>= i N)
+           -1
+           (let ((c (%char-at i)))
+             (if (c :equals ch/str)
+                 i
+                 (loop (+ i 1)))))))
+    (else (type-error "rich-string%index-of only accept search string/char/rich-string/rich-char")))
 
 (chained-define (%map f)
   (box ((%to-rich-vector)

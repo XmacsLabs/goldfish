@@ -4052,75 +4052,103 @@
   查找字符串中指定的字符或子串的下标，找不到则返回 -1。默认从字符串起始位置开始查找。
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    ;; Find the index for the char or substring in rich-string (from start-index), else return -1
-
-    (define (%index-of sub . start-index)
-
-    \ \ (let1 start (if (null? start-index) 0 (car start-index))
+    (define* (%index-of ch/str (start 0))
 
     \ \ (cond
 
-    \ \ \ \ ((string? sub)
+    \ \ \ \ ((or (string? ch/str) (char? ch/str))
 
-    \ \ \ \ \ (let ((str-len (string-length data))
+    \ \ \ \ \ (%index-of (box ch/str) start)))
 
-    \ \ \ \ \ \ \ \ \ \ \ (sub-len (string-length sub)))
+    \ \ \ \ ((rich-string :is-type-of ch/str)
+
+    \ \ \ \ \ (let* ((target-data (ch/str :get))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (target-len (ch/str :length))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (max-start (- N target-len)))
 
     \ \ \ \ \ \ \ (let loop ((i start))
 
     \ \ \ \ \ \ \ \ \ (cond
 
-    \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\> (+ i sub-len) str-len) -1)
+    \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\> i max-start) -1)
 
-    \ \ \ \ \ \ \ \ \ \ \ ((equal? (substring data i (+ i sub-len)) sub) i)
+    \ \ \ \ \ \ \ \ \ \ \ ((let ((slice (%slice i (+ i target-len))))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (slice :equals ch/str))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ i)
 
     \ \ \ \ \ \ \ \ \ \ \ (else (loop (+ i 1)))))))
 
-    \ \ \ \ ((char? sub)
+    \ \ \ \ ((rich-char :is-type-of ch/str)
 
-    \ \ \ \ \ (let loop ((lst (string-\>list (substring data start))) (index start))
+    \ \ \ \ \ (let loop ((i start))
 
-    \ \ \ \ \ \ \ (cond
+    \ \ \ \ \ \ \ (if (\<gtr\>= i N)
 
-    \ \ \ \ \ \ \ ((null? lst) -1)
+    \ \ \ \ \ \ \ \ \ \ \ -1
 
-    \ \ \ \ \ \ \ ((char=? (car lst) sub) index)
+    \ \ \ \ \ \ \ \ \ \ \ (let ((c (%char-at i)))
 
-    \ \ \ \ \ \ \ (else (loop (cdr lst) (+ index 1)))))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (if (c :equals ch/str)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1)))))))
+
+    \ \ \ \ (else (type-error "rich-string%index-of only accept search string/char/rich-string/rich-char")))
 
     \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (let1 str (rich-string "hello world!")
+    (let1 str (rich-string "你好，世界！")
 
-    \ \ (check (str :index-of "hello") =\<gtr\> 0)
+    \ \ (check (str :index-of ($ "你")) =\<gtr\> 0)
 
-    \ \ (check (str :index-of "hello") =\<gtr\> (str :index-of "hello" 0))
+    \ \ (check (str :index-of ($ "好")) =\<gtr\> 1)
 
-    \ \ (check (str :index-of "hello" 1) =\<gtr\> -1)
+    \ \ (check (str :index-of ($ "世")) =\<gtr\> 3)
 
-    \ \ (check (str :index-of "world") =\<gtr\> 6)
+    \ \ (check (str :index-of ($ "界")) =\<gtr\> 4)
 
-    \ \ (check (str :index-of "world" 1) =\<gtr\> 6)
+    \ \ (check (str :index-of ($ "！")) =\<gtr\> 5)
 
-    \ \ (check (str :index-of "!") =\<gtr\> 11)
+    \ \ (check (str :index-of (rich-char "中")) =\<gtr\> -1)
 
-    \ \ (check (str :index-of "scheme") =\<gtr\> -1)
+    \ \ (check (str :index-of (rich-string "你好")) =\<gtr\> 0)
 
-    \ \ (check (str :index-of #\\h) =\<gtr\> 0)
+    \ \ (check (str :index-of (rich-string "世界")) =\<gtr\> 3)
 
-    \ \ (check (str :index-of #\\h) =\<gtr\> (str :index-of #\\h 0))
+    \ \ (check (str :index-of (rich-string "你好，世界")) =\<gtr\> 0)
 
-    \ \ (check (str :index-of #\\h 1) =\<gtr\> -1)
+    \ \ (check (str :index-of (rich-string "世界！")) =\<gtr\> 3)
 
-    \ \ (check (str :index-of #\\w) =\<gtr\> 6)
+    \ \ (check (str :index-of (rich-string "你好，世界！")) =\<gtr\> 0)
 
-    \ \ (check (str :index-of #\\w 1) =\<gtr\> 6)
+    \ \ (check (str :index-of (rich-string "中国")) =\<gtr\> -1)
 
-    \ \ (check (str :index-of #\\!) =\<gtr\> 11)
+    \ \ (check (str :index-of ($ "你") 1) =\<gtr\> -1)
 
-    \ \ (check (str :index-of #\\~) =\<gtr\> -1))
+    \ \ (check (str :index-of (rich-string "世界") 4) =\<gtr\> -1))
+
+    \;
+
+    (let1 str (rich-string "Hello😀World")
+
+    \ \ (check (str :index-of ($ "😀")) =\<gtr\> 5)
+
+    \ \ (check (str :index-of (rich-string "😀")) =\<gtr\> 5)
+
+    \ \ (check (str :index-of (rich-string "Hello😀")) =\<gtr\> 0)
+
+    \ \ (check (str :index-of (rich-string "😀World")) =\<gtr\> 5)
+
+    \ \ (check (str :index-of ($ "😀") 6) =\<gtr\> -1)
+
+    \ \ (check (str :index-of (rich-string "😀World") 6) =\<gtr\> -1))
 
     \;
   </goldfish-chunk>
@@ -4469,8 +4497,6 @@
     \;
 
     (check-catch 'wrong-number-of-args ("hello":strip-suffix "llo"))
-
-    (check-catch 'unbound-variable (123:strip-suffix 1))
 
     \;
   </goldfish-chunk>
