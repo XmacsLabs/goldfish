@@ -3774,7 +3774,7 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (when (not (os-windows?))
 
-    \ \ (check (path :home) =\<gtr\> (path :/ "home" :/ (getenv "USER"))))
+    \ \ (check ((path :home) :to-string) =\<gtr\> (getenv "HOME")))
 
     \;
 

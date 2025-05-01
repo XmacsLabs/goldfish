@@ -102,7 +102,7 @@
   (check-true (path :cwd :dir?)))
 
 (when (not (os-windows?))
-  (check (path :home) => (path :/ "home" :/ (getenv "USER"))))
+  (check ((path :home) :to-string) => (getenv "HOME")))
 
 (when (os-windows?)
   (check (path :home)
