@@ -4741,6 +4741,8 @@
 
   <paragraph|rich-string%split>
 
+  富字符串按照分隔符分割之后，得到的是富向量，且富向量里面的每一个元素都是基础字符串。
+
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%split sep)
 
