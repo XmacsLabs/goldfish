@@ -4710,9 +4710,9 @@
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%split sep)
 
-    \ \ (let ((str-len (string-length data))
+    \ \ (let ((str-len ($ data :length))
 
-    \ \ \ \ \ \ \ \ (sep-len (string-length sep)))
+    \ \ \ \ \ \ \ \ (sep-len ($ sep :length)))
 
     \;
 

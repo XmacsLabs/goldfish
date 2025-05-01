@@ -719,8 +719,8 @@
         (apply result args))))
 
 (define (%split sep)
-  (let ((str-len (string-length data))
-        (sep-len (string-length sep)))
+  (let ((str-len ($ data :length))
+        (sep-len ($ sep :length)))
 
     (define (split-helper start acc)
       (let ((next-pos (%index-of sep start)))
