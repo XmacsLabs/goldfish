@@ -3772,11 +3772,11 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (@root x)
 
-    \ \ (if (string-ends? x ":")
+    \ \ (if (and (string-ends? x ":") (= (string-length x) 2))
 
-    \ \ \ \ \ \ (path #() 'windows ($ x :drop-right 1 :get))
+    \ \ \ \ \ \ (path :of-drive (x 0))
 
-    \ \ \ \ \ \ (path (append #("/") (vector x)))))
+    \ \ \ \ \ \ (path (vector-append #("/") (vector x)))))
 
     \;
 

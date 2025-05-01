@@ -164,9 +164,9 @@
   (path #() 'windows ($ ch :to-upper :make-string)))
 
 (chained-define (@root x)
-  (if (string-ends? x ":")
-      (path #() 'windows ($ x :drop-right 1 :get))
-      (path (append #("/") (vector x)))))
+  (if (and (string-ends? x ":") (= (string-length x) 2))
+      (path :of-drive (x 0))
+      (path (vector-append #("/") (vector x)))))
 
 (chained-define (@/ x)
   (@root x))
