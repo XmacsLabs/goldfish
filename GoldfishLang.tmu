@@ -3676,9 +3676,9 @@
 
     \ \ \ \ \ \ \ \ ((string? v) (rich-string v))
 
-    \ \ \ \ \ \ \ \ ((and (case-class? v) (v :is-instance-of 'rich-char))
+    \ \ \ \ \ \ \ \ ((rich-char :is-type-of v)
 
-    \ \ \ \ \ \ \ \ \ (box (v :make-string)))
+    \ \ \ \ \ \ \ \ \ (rich-string (v :make-string)))
 
     \ \ \ \ \ \ \ \ (else (type-error "Expected types are char, rich-char, number, symbol or string"))))
 

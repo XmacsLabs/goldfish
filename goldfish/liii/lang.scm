@@ -551,8 +551,8 @@
         ((number? v) (rich-string (number->string v)))
         ((symbol? v) (rich-string (symbol->string v)))
         ((string? v) (rich-string v))
-        ((and (case-class? v) (v :is-instance-of 'rich-char))
-         (box (v :make-string)))
+        ((rich-char :is-type-of v)
+         (rich-string (v :make-string)))
         (else (type-error "Expected types are char, rich-char, number, symbol or string"))))
 
 (define (%get) data)
