@@ -1042,6 +1042,7 @@
 (check (bytevector-append #u8(1) #u8()) => #u8(1))
 
 (check (u8-string-length "中文") => 2)
+(check (u8-string-length "") => 0)
 
 (check (utf8->string (bytevector #x48 #x65 #x6C #x6C #x6F)) => "Hello")
 (check (utf8->string #u8(#xC3 #xA4)) => "ä")
