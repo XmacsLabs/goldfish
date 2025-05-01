@@ -2831,6 +2831,8 @@
     \ \ \ \ \ \ \ \ \ (= code-point (that :to-integer)))
 
     \ \ \ \ \ \ \ \ (else #f)))
+
+    \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
@@ -3596,7 +3598,7 @@
   <paragraph|rich-char%to-integer>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%to-integer)
+    (define (%to-integer)
 
     \ \ code-point)
 
