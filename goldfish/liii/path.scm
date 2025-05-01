@@ -82,7 +82,9 @@
      (string-starts? (parts 0) "/"))
     ((windows)
      (not ($ drive :empty?)))
-    (else (value-error "path%absolute?: unknown type" type))))
+    (else
+     (value-error
+      (string-append "path%absolute?: unknown type" (symbol->string type))))))
 
 (define (%exists?)
   (path-exists? (%to-string)))
@@ -160,7 +162,7 @@
                 :collect)
                'windows
                ($ (getenv "HOMEDRIVE") :drop-right 1 :get)))
-        (else (???))))
+        (else (value-error "path@home: unknown type"))))
 
 )
 

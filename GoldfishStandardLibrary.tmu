@@ -3504,7 +3504,11 @@
 
     \ \ \ \ \ (not ($ drive :empty?)))
 
-    \ \ \ \ (else (value-error "path%absolute?: unknown type" type))))
+    \ \ \ \ (else
+
+    \ \ \ \ \ (value-error
+
+    \ \ \ \ \ \ (string-append "path%absolute?: unknown type" (symbol-\<gtr\>string type))))))
 
     \;
   </goldfish-chunk>
@@ -3760,7 +3764,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ($ (getenv "HOMEDRIVE") :drop-right 1 :get)))
 
-    \ \ \ \ \ \ \ \ (else (???))))
+    \ \ \ \ \ \ \ \ (else (value-error "path@home: unknown type"))))
 
     \;
   </goldfish-chunk>
