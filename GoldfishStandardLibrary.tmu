@@ -3504,7 +3504,7 @@
 
     \ \ \ \ \ (not ($ drive :empty?)))
 
-    \ \ \ \ (else (???))))
+    \ \ \ \ (else (value-error "path%absolute?: unknown type" type))))
 
     \;
   </goldfish-chunk>
@@ -3598,7 +3598,7 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (@from-string s)
 
-    \ \ (cond ((and (os-linux?) (os-macos?))
+    \ \ (cond ((or (os-linux?) (os-macos?))
 
     \ \ \ \ \ \ \ \ \ (if (string-starts? s "/")
 
@@ -3742,7 +3742,7 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (@home)
 
-    \ \ (cond ((and (os-linux?) (os-macos?))
+    \ \ (cond ((or (os-linux?) (os-macos?))
 
     \ \ \ \ \ \ \ \ \ (path :from-string (getenv "HOME")))
 
