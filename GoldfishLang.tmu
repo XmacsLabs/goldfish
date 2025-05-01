@@ -128,8 +128,6 @@
 
     \;
 
-    \;
-
     (check-set-mode! 'report-failed)
 
     \;
