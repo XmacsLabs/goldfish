@@ -3598,7 +3598,7 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (@from-string s)
 
-    \ \ (cond ((os-linux?)
+    \ \ (cond ((and (os-linux?) (os-macos?))
 
     \ \ \ \ \ \ \ \ \ (if (string-starts? s "/")
 
