@@ -1203,19 +1203,19 @@
 (define (%exists p)
   (vector-any p data))
 
-  (chained-define (%map x)
-    (rich-vector (vector-map x data)))
+(chained-define (%map x)
+  (rich-vector (vector-map x data)))
 
-  (chained-define (%filter x)
-    (rich-vector (vector-filter x data)))
+(chained-define (%filter x)
+  (rich-vector (vector-filter x data)))
 
-  (define (%for-each x)
-    (vector-for-each x data))
+(define (%for-each x)
+  (vector-for-each x data))
 
-  (define (%count . xs)
-    (cond ((null? xs) (vector-length data))
-          ((length=? 1 xs) (vector-count (car xs) data))
-          (else (error 'wrong-number-of-args "rich-vector%count" xs))))
+(define (%count . xs)
+  (cond ((null? xs) (vector-length data))
+        ((length=? 1 xs) (vector-count (car xs) data))
+        (else (error 'wrong-number-of-args "rich-vector%count" xs))))
 
 (chained-define (%take n)
   (typed-define (scala-take (data vector?) (n integer?))

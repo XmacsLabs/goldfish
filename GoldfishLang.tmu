@@ -7191,32 +7191,46 @@
 
   <section|高阶函数>
 
+  <paragraph|rich-vector%map>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (chained-define (%map x)
+
+    \ \ (rich-vector (vector-map x data)))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-vector%filter>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (chained-define (%filter x)
+
+    \ \ (rich-vector (vector-filter x data)))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-vector%for-each>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%for-each x)
+
+    \ \ (vector-for-each x data))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-vector%count>
+
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
-    \ \ (chained-define (%map x)
+    (define (%count . xs)
 
-    \ \ \ \ (rich-vector (vector-map x data)))
+    \ \ (cond ((null? xs) (vector-length data))
 
-    \;
+    \ \ \ \ \ \ \ \ ((length=? 1 xs) (vector-count (car xs) data))
 
-    \ \ (chained-define (%filter x)
-
-    \ \ \ \ (rich-vector (vector-filter x data)))
-
-    \;
-
-    \ \ (define (%for-each x)
-
-    \ \ \ \ (vector-for-each x data))
-
-    \;
-
-    \ \ (define (%count . xs)
-
-    \ \ \ \ (cond ((null? xs) (vector-length data))
-
-    \ \ \ \ \ \ \ \ \ \ ((length=? 1 xs) (vector-count (car xs) data))
-
-    \ \ \ \ \ \ \ \ \ \ (else (error 'wrong-number-of-args "rich-vector%count" xs))))
+    \ \ \ \ \ \ \ \ (else (error 'wrong-number-of-args "rich-vector%count" xs))))
 
     \;
   </scm-chunk>
