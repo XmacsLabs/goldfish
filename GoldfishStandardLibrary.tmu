@@ -2739,22 +2739,6 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define-record-type :path
-
-    \ \ (%make-path parts type drive)
-
-    \ \ path?
-
-    \ \ (parts path-parts)
-
-    \ \ (type path-type)
-
-    \ \ (drive path-drive))
-
-    \;
-  </goldfish-chunk>
-
   <section|测试>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
@@ -3727,6 +3711,28 @@
     (typed-define (%write-text (content string?))
 
     \ \ (path-write-text (%to-string) content))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|path%list>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%list)
+
+    \ \ (box (listdir (%to-string))))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|path%list-path>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%list-path)
+
+    \ \ ((box (listdir (%to-string)))
+
+    \ \ \ :map (lambda (x) ((%this) :/ x))))
 
     \;
   </goldfish-chunk>

@@ -24,13 +24,6 @@
         (liii os))
 (begin
 
-(define-record-type :path
-  (%make-path parts type drive)
-  path?
-  (parts path-parts)
-  (type path-type)
-  (drive path-drive))
-
 (define (path-dir? path)
   (g_isdir path))
 
@@ -153,6 +146,13 @@
 
 (typed-define (%write-text (content string?))
   (path-write-text (%to-string) content))
+
+(define (%list)
+  (box (listdir (%to-string))))
+
+(define (%list-path)
+  ((box (listdir (%to-string)))
+   :map (lambda (x) ((%this) :/ x))))
 
 (chained-define (%/ x)
   (cond ((string? x)
