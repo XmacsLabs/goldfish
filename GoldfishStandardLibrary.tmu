@@ -3602,6 +3602,8 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (@from-string s)
 
+    \ \ (display* s "\\n")
+
     \ \ (cond ((or (os-linux?) (os-macos?))
 
     \ \ \ \ \ \ \ \ \ (if (string-starts? s "/")
@@ -3772,7 +3774,7 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (when (not (os-windows?))
 
-    \ \ (check (path :home) =\<gtr\> (path :/ "home" / (getenv "USER"))))
+    \ \ (check (path :home) =\<gtr\> (path :/ "home" :/ (getenv "USER"))))
 
     \;
 

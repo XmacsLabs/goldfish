@@ -114,6 +114,7 @@
         (else (type-error "input must be vector or rich-vector"))))
 
 (define (@from-string s)
+  (display* s "\n")
   (cond ((or (os-linux?) (os-macos?))
          (if (string-starts? s "/")
              (@from-vector (append #("/")
