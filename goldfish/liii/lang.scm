@@ -738,7 +738,7 @@
             (split-helper (+ next-pos sep-len) (cons (%slice start next-pos :get) acc)))))
     
     (if (zero? sep-len)
-        ((%to-rich-vector) :map (lambda (c) (rich-string :value-of c :get)) :collect)
+        ((%to-rich-vector) :map (lambda (c) (c :make-string)))
         (rich-vector (reverse-list->vector (split-helper 0 '()))))))
 
 )
