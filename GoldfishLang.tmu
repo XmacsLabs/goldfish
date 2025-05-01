@@ -4116,7 +4116,7 @@
 
     \ \ (check (str :index-of ($ "！")) =\<gtr\> 5)
 
-    \ \ (check (str :index-of (rich-char "中")) =\<gtr\> -1)
+    \ \ (check (str :index-of ($ "中" 0)) =\<gtr\> -1)
 
     \ \ (check (str :index-of (rich-string "你好")) =\<gtr\> 0)
 
@@ -4722,9 +4722,9 @@
 
     \ \ \ \ \ \ \ \ (if (= next-pos -1)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (cons (substring data start) acc)
+    \ \ \ \ \ \ \ \ \ \ \ \ (cons (%drop start :get) acc)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (split-helper (+ next-pos sep-len) (cons (substring data start next-pos) acc)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ (split-helper (+ next-pos sep-len) (cons (%slice start next-pos :get) acc)))))
 
     \ \ \ \ 
 

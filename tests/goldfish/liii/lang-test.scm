@@ -521,7 +521,7 @@
   (check (str :index-of ($ "世")) => 3)
   (check (str :index-of ($ "界")) => 4)
   (check (str :index-of ($ "！")) => 5)
-  (check (str :index-of (rich-char "中")) => -1)
+  (check (str :index-of ($ "中" 0)) => -1)
   (check (str :index-of (rich-string "你好")) => 0)
   (check (str :index-of (rich-string "世界")) => 3)
   (check (str :index-of (rich-string "你好，世界")) => 0)

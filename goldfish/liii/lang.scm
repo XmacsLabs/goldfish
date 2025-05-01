@@ -725,8 +725,8 @@
     (define (split-helper start acc)
       (let ((next-pos (%index-of sep start)))
         (if (= next-pos -1)
-            (cons (substring data start) acc)
-            (split-helper (+ next-pos sep-len) (cons (substring data start next-pos) acc)))))
+            (cons (%drop start :get) acc)
+            (split-helper (+ next-pos sep-len) (cons (%slice start next-pos :get) acc)))))
     
     (if (zero? sep-len)
         ((%to-rich-vector) :map (lambda (c) (rich-string :value-of c :get)) :collect)
