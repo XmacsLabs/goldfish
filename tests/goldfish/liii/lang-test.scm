@@ -668,8 +668,6 @@
 
 (check ($ "da@liii.pro" :split "@") => #("da" "liii.pro"))
 (check ($ "da@liii.pro" :split ".") => #("da@liii" "pro"))
-(display* ($ "test" :split ""))
-(newline)
 (check ($ "test" :split "") => #("t" "e" "s" "t"))
 (check ($ "aXXbXXcXX" :split "XX") => #("a" "b" "c" ""))
 (check ($ "a||b||c" :split "||") => #("a" "b" "c"))

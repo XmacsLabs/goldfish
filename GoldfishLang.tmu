@@ -4776,10 +4776,6 @@
 
     (check ($ "da@liii.pro" :split ".") =\<gtr\> #("da@liii" "pro"))
 
-    (display* ($ "test" :split ""))
-
-    (newline)
-
     (check ($ "test" :split "") =\<gtr\> #("t" "e" "s" "t"))
 
     (check ($ "aXXbXXcXX" :split "XX") =\<gtr\> #("a" "b" "c" ""))
