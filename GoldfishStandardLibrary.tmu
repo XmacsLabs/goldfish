@@ -3650,19 +3650,17 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :from-string "C:\\\\") =\<gtr\> (path :of-drive #\\C))
-
-    \;
-
     (when (os-windows?)
 
-    \ \ (check (path :from-string "a\\\\b") =\<gtr\> (path :./ "a" :/ "b")))
+    \ \ (check (path :from-string "a\\\\b") =\<gtr\> (path :./ "a" :/ "b"))
+
+    \ \ (check (path :from-string "C:\\\\") =\<gtr\> (path :of-drive #\\C)))
 
     \;
 
     (when (or (os-linux?) (os-macos?))
 
-    \ \ (check (path :from "a/b") =\<gtr\> (path :./ "a" :/ "b")))
+    \ \ (check (path :from-string "a/b") =\<gtr\> (path :./ "a" :/ "b")))
 
     \;
 
@@ -3812,15 +3810,19 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (@/ x)
 
-    \ \ (cond ((and (string-ends? x ":") (= (string-length x) 2))
+    \ \ (if (path :is-type-of x)
 
-    \ \ \ \ \ \ \ \ \ (path :of-drive (x 0)))
+    \ \ \ \ \ \ (path :root :/ x)
 
-    \ \ \ \ \ \ \ \ ((string=? x "/")
+    \ \ \ \ \ \ (cond ((and (string-ends? x ":") (= (string-length x) 2))
 
-    \ \ \ \ \ \ \ \ \ (path :root))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (path :of-drive (x 0)))
 
-    \ \ \ \ \ \ \ \ (else (path (vector-append #("/") (vector x))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ ((string=? x "/")
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (path :root))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (else (path (vector-append #("/") (vector x)))))))
 
     \;
   </goldfish-chunk>

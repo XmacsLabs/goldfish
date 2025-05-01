@@ -175,11 +175,13 @@
   (path #("/")))
 
 (chained-define (@/ x)
-  (cond ((and (string-ends? x ":") (= (string-length x) 2))
-         (path :of-drive (x 0)))
-        ((string=? x "/")
-         (path :root))
-        (else (path (vector-append #("/") (vector x))))))
+  (if (path :is-type-of x)
+      (path :root :/ x)
+      (cond ((and (string-ends? x ":") (= (string-length x) 2))
+             (path :of-drive (x 0)))
+            ((string=? x "/")
+             (path :root))
+            (else (path (vector-append #("/") (vector x)))))))
 
 (chained-define (@./ x)
   (path (vector x)))
