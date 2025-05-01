@@ -3632,15 +3632,19 @@
 
     \ \ \ \ \ \ \ \ (else
 
-    \ \ \ \ \ \ \ \ \ (let loop ((str s))
+    \ \ \ \ \ \ \ \ \ (let loop ((iter s))
 
-    \ \ \ \ \ \ \ \ \ \ \ (cond ((string-null? s) (@from-vector (vector ".")))
+    \ \ \ \ \ \ \ \ \ \ \ (cond ((or (string-null? iter) (string=? iter "."))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((not (char=? (str 0) (os-sep)))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector (vector ".")))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ str :split (string (os-sep)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((not (char=? (iter 0) (os-sep)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (loop ($ s :drop 1 :get))))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ iter :split (string (os-sep)))))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop ($ iter :drop 1 :get))))))))
 
     \;
   </goldfish-chunk>
@@ -3744,11 +3748,15 @@
 
     \ \ \ \ \ \ \ \ ((path :is-type-of x)
 
-    \ \ \ \ \ \ \ \ \ (if (x :absolute?)
+    \ \ \ \ \ \ \ \ \ (cond ((x :absolute?)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "path to append must not be absolute path: " (x :to-string))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "path to append must not be absolute path: " (x :to-string)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ ((:this) :parts (vector-append parts (x 'parts)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((x :equals (path (vector ".")))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (%this))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else ((%this) :parts (vector-append parts (x 'parts))))))
 
     \ \ \ \ \ \ \ \ (else (type-error "only string?, path is allowed"))))
 
@@ -3818,9 +3826,7 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :root "C:" :to-string) =\<gtr\> "C:\\\\")
-
-    (check (path :root "root" :to-string) =\<gtr\> "/root")
+    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
 
     (check (path :/ "root" :to-string) =\<gtr\> "/root")
 
@@ -3832,7 +3838,7 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (@./ x)
 
-    \ \ (@relative x))
+    \ \ (path (vector x)))
 
     \;
   </goldfish-chunk>

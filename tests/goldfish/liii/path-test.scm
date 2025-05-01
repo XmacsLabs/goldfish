@@ -106,8 +106,7 @@
 
 (check (path :of-drive #\C :to-string) => "C:\\")
 
-(check (path :root "C:" :to-string) => "C:\\")
-(check (path :root "root" :to-string) => "/root")
+(check (path :/ "C:" :to-string) => "C:\\")
 (check (path :/ "root" :to-string) => "/root")
 
 (check (path :./ "a" :to-string) => "a")

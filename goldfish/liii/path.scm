@@ -126,11 +126,13 @@
          (path :of-drive (s 0)
                :/ (@from-string ($ s :drop 2 :get))))
         (else
-         (let loop ((str s))
-           (cond ((string-null? s) (@from-vector (vector ".")))
-                 ((not (char=? (str 0) (os-sep)))
-                  (@from-vector ($ str :split (string (os-sep)))))
-                 (else (loop ($ s :drop 1 :get))))))))
+         (let loop ((iter s))
+           (cond ((or (string-null? iter) (string=? iter "."))
+                  (@from-vector (vector ".")))
+                 ((not (char=? (iter 0) (os-sep)))
+                  (@from-vector ($ iter :split (string (os-sep)))))
+                 (else
+                  (loop ($ iter :drop 1 :get))))))))
 
 (define (%to-string)
   (case type
@@ -156,9 +158,11 @@
   (cond ((string? x)
          ((%this) :parts (vector-append parts (vector x))))
         ((path :is-type-of x)
-         (if (x :absolute?)
-             (value-error "path to append must not be absolute path: " (x :to-string))
-             ((:this) :parts (vector-append parts (x 'parts)))))
+         (cond ((x :absolute?)
+                (value-error "path to append must not be absolute path: " (x :to-string)))
+               ((x :equals (path (vector ".")))
+                (%this))
+               (else ((%this) :parts (vector-append parts (x 'parts))))))
         (else (type-error "only string?, path is allowed"))))
 
 (chained-define (@of-drive ch)
@@ -178,7 +182,7 @@
         (else (path (vector-append #("/") (vector x))))))
 
 (chained-define (@./ x)
-  (@relative x))
+  (path (vector x)))
 
 (chained-define (@cwd)
   (@from-string (getcwd)))
