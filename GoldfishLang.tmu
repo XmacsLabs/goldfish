@@ -3736,6 +3736,8 @@
 
     (check ((rich-string "中文") :length) =\<gtr\> 2)
 
+    (check (rich-string :empty :length) =\<gtr\> 0)
+
     \;
   </scm-chunk>
 
@@ -4744,9 +4746,9 @@
 
     \ \ (let ((str-len ($ data :length))
 
-    \ \ \ \ \ \ \ \ (sep-len ($ sep :length)))
+    \ \ \ \ \ \ \ \ (sep-len (string-length sep)))
 
-    \;
+    \ \ \ \ 
 
     \ \ \ \ (define (split-helper start acc)
 
@@ -4757,6 +4759,10 @@
     \ \ \ \ \ \ \ \ \ \ \ \ (cons (%drop start :get) acc)
 
     \ \ \ \ \ \ \ \ \ \ \ \ (split-helper (+ next-pos sep-len) (cons (%slice start next-pos :get) acc)))))
+
+    \ \ \ \ 
+
+    \ \ \ \ (display* sep-len) (newline)
 
     \ \ \ \ 
 
@@ -4773,6 +4779,10 @@
     (check ($ "da@liii.pro" :split "@") =\<gtr\> #("da" "liii.pro"))
 
     (check ($ "da@liii.pro" :split ".") =\<gtr\> #("da@liii" "pro"))
+
+    (display* ($ "test" :split ""))
+
+    (newline)
 
     (check ($ "test" :split "") =\<gtr\> #("t" "e" "s" "t"))
 

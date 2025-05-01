@@ -445,6 +445,7 @@
 
 (check ((rich-string "abc") :length) => 3)
 (check ((rich-string "中文") :length) => 2)
+(check (rich-string :empty :length) => 0)
 
 (let1 str ($ "你好，世界")
   (check (str :char-at 0) => (rich-char #x4F60))  ;; "你" 的 Unicode 码点
@@ -667,6 +668,8 @@
 
 (check ($ "da@liii.pro" :split "@") => #("da" "liii.pro"))
 (check ($ "da@liii.pro" :split ".") => #("da@liii" "pro"))
+(display* ($ "test" :split ""))
+(newline)
 (check ($ "test" :split "") => #("t" "e" "s" "t"))
 (check ($ "aXXbXXcXX" :split "XX") => #("a" "b" "c" ""))
 (check ($ "a||b||c" :split "||") => #("a" "b" "c"))
