@@ -113,14 +113,23 @@
          (@from-vector (v :collect)))
         (else (type-error "input must be vector or rich-vector"))))
 
+(chained-define (@of-drive ch)
+  (when (not (char? ch))
+    (type-error "path@of-drive must take char? as input"))
+
+  (path #() 'windows ($ ch :to-upper :make-string)))
+
 (define (@from-string s)
-  (display* s "\n")
   (cond ((or (os-linux?) (os-macos?))
          (if (string-starts? s "/")
              (@from-vector (append #("/")
                                    (($ (string-drop s 1) :split "/") :collect)))
              (@from-vector ($ s :split "/"))))
-        (else (???))))
+        ((os-windows?)
+         (if (and (>= (string-length s) 2) (char=? (s 1) #\:))
+             (???)
+             (???)))
+        (else (??? "path@from-string: unknown OS type"))))
 
 (define (%to-string)
   (case type

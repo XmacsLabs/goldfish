@@ -3597,12 +3597,34 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|path@of-drive>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@of-drive ch)
+
+    \ \ (when (not (char? ch))
+
+    \ \ \ \ (type-error "path@of-drive must take char? as input"))
+
+    \;
+
+    \ \ (path #() 'windows ($ ch :to-upper :make-string)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\")
+
+    \;
+  </scm-chunk>
+
+  \;
+
   <paragraph|path@from-string>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (@from-string s)
-
-    \ \ (display* s "\\n")
 
     \ \ (cond ((or (os-linux?) (os-macos?))
 
@@ -3614,10 +3636,24 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ s :split "/"))))
 
-    \ \ \ \ \ \ \ \ (else (???))))
+    \ \ \ \ \ \ \ \ ((os-windows?)
+
+    \ \ \ \ \ \ \ \ \ (if (and (\<gtr\>= (string-length s) 2) (char=? (s 1) #\\:))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (???)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (???)))
+
+    \ \ \ \ \ \ \ \ (else (??? "path@from-string: unknown OS type"))))
 
     \;
   </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    ; (check (path :from-string "C://"))
+
+    \;
+  </scm-chunk>
 
   <paragraph|path%to-string>
 
