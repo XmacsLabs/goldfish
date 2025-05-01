@@ -84,6 +84,7 @@
 (check-true ((path #("/")) :absolute?))
 (check-true ((path #("/" "tmp")) :absolute?))
 (check-false ((path #("tmp")) :absolute?))
+(check-true (path :/ "C:" :absolute?))
 
 (when (os-linux?)
   (check-true (path :/ "tmp" :exists?)))
@@ -92,13 +93,20 @@
 (check ((path #("/" "tmp" "")) :to-string) => "/tmp/")
 (check ((path #("Users") 'windows "C") :to-string) => "C:\\Users")
 
-(when (os-linux?)
-  (check-true (path :cwd :dir?)))
-
 (check (path :/ "C:" :to-string) => "C:\\")
 (check (path :/ "root" :to-string) => "/root")
 
 (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
+
+(when (os-linux?)
+  (check-true (path :cwd :dir?)))
+
+(when (not (os-windows?))
+  (check (path :home) => (path :/ "home" / (getenv "USER"))))
+
+(when (os-windows?)
+  (check (path :home)
+   =>    (path :/ (getenv "HOMEDRIVE") :/ "Users" :/ (getenv "USERNAME"))))
 
 (check-report)
 
