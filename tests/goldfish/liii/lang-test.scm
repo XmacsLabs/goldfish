@@ -557,7 +557,7 @@
 
 (let1 v ($ "hello" :to-vector)
   (check (v 0) => (box #\h))
-  (check (v :last) => (rich-char #\o)))
+  (check (v 4) => (rich-char #\o)))
 
 (let1 v ($ "中文的" :to-rich-vector)
   (check (v :length) => 3)

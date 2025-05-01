@@ -4294,7 +4294,7 @@
 
     \ \ (check (v 0) =\<gtr\> (box #\\h))
 
-    \ \ (check (v :last) =\<gtr\> (rich-char #\\o)))
+    \ \ (check (v 4) =\<gtr\> (rich-char #\\o)))
 
     \;
   </goldfish-chunk>
