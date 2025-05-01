@@ -357,9 +357,9 @@
   (when (not (string? str))
     (error 'type-error "str must be string"))
   (let ((N (u8-string-length str)))
-    (when (or (< start 0) (>= start N))
+    (when (or (< start 0) (> start N))
         (error 'out-of-range
-               (string-append "start must >= 0 and < " (number->string N))))
+               (string-append "start must >= 0 and <= " (number->string N))))
     (when (and (integer? end) (or (< end 0) (>= end (+ N 1))))
           (error 'out-of-range
                  (string-append "end must >= 0 and < " (number->string (+ N 1)))))         

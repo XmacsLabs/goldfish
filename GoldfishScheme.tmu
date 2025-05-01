@@ -4252,11 +4252,11 @@
 
     \ \ (let ((N (u8-string-length str)))
 
-    \ \ \ \ (when (or (\<less\> start 0) (\<gtr\>= start N))
+    \ \ \ \ (when (or (\<less\> start 0) (\<gtr\> start N))
 
     \ \ \ \ \ \ \ \ (error 'out-of-range
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-append "start must \<gtr\>= 0 and \<less\> " (number-\<gtr\>string N))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-append "start must \<gtr\>= 0 and \<less\>= " (number-\<gtr\>string N))))
 
     \ \ \ \ (when (and (integer? end) (or (\<less\> end 0) (\<gtr\>= end (+ N 1))))
 
@@ -4315,6 +4315,10 @@
     (check (string-\<gtr\>utf8 "中") =\<gtr\> #u8(#xE4 #xB8 #xAD))
 
     (check (string-\<gtr\>utf8 "👍") =\<gtr\> #u8(#xF0 #x9F #x91 #x8D))
+
+    \;
+
+    (check (string-\<gtr\>utf8 "") =\<gtr\> #u8())
 
     \;
   </scm-chunk>
