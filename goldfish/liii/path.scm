@@ -112,7 +112,7 @@
         (else (type-error "input must be vector or rich-vector"))))
 
 (define (@from-string s)
-  (cond ((os-linux?)
+  (cond ((and (os-linux?) (os-macos?))
          (if (string-starts? s "/")
              (@from-vector (append #("/")
                                    (($ (string-drop s 1) :split "/") :collect)))
