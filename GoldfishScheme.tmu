@@ -4252,11 +4252,11 @@
 
     \ \ (let ((N (u8-string-length str)))
 
-    \ \ \ \ (when (or (\<less\> start 0) (\<gtr\> start N))
+    \ \ \ \ (when (and (\<gtr\> N 0) (or (\<less\> start 0) (\<gtr\>= start N)))
 
     \ \ \ \ \ \ \ \ (error 'out-of-range
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-append "start must \<gtr\>= 0 and \<less\>= " (number-\<gtr\>string N))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-append "start must \<gtr\>= 0 and \<less\> " (number-\<gtr\>string N))))
 
     \ \ \ \ (when (and (integer? end) (or (\<less\> end 0) (\<gtr\>= end (+ N 1))))
 
