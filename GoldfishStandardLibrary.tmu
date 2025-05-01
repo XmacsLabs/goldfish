@@ -3489,14 +3489,22 @@
 
   <paragraph|path%absolute?>
 
+  判断当前的路径是否是绝对路径。
+
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (%absolute?)
 
-    \ \ (if (eq? type 'posix)
+    \ \ (case type
 
-    \ \ \ \ \ \ (string-starts? (parts 0) "/")
+    \ \ \ \ ((posix)
 
-    \ \ \ \ \ \ (???)))
+    \ \ \ \ \ (string-starts? (parts 0) "/"))
+
+    \ \ \ \ ((windows)
+
+    \ \ \ \ \ (not ($ drive :empty?)))
+
+    \ \ \ \ (else (???))))
 
     \;
   </goldfish-chunk>
@@ -3507,6 +3515,8 @@
     (check-true ((path #("/" "tmp")) :absolute?))
 
     (check-false ((path #("tmp")) :absolute?))
+
+    (check-true (path :/ "C:" :absolute?))
 
     \;
   </scm-chunk>
@@ -3669,24 +3679,6 @@
 
   <subsection|静态方法>
 
-  <paragraph|path@cwd>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@cwd)
-
-    \ \ (@from-string (getcwd)))
-
-    \;
-  </goldfish-chunk>
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (when (os-linux?)
-
-    \ \ (check-true (path :cwd :dir?)))
-
-    \;
-  </scm-chunk>
-
   <paragraph|path@/>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
@@ -3714,13 +3706,77 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (%/ x)
 
-    \ \ (path (append parts (vector x))))
+    \ \ ((%this) :parts (append parts (vector x))))
 
     \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path@cwd>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@cwd)
+
+    \ \ (@from-string (getcwd)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (when (os-linux?)
+
+    \ \ (check-true (path :cwd :dir?)))
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path@home>
+
+  获取当前系统的家目录，在macOS和Linux上采用HOME环境变量，在Windows上采用HOMEDRIVE和HOMEPATH的组合。
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@home)
+
+    \ \ (cond ((and (os-linux?) (os-macos?))
+
+    \ \ \ \ \ \ \ \ \ (path :from-string (getenv "HOME")))
+
+    \ \ \ \ \ \ \ \ ((os-windows?)
+
+    \ \ \ \ \ \ \ \ \ (path (($ (getenv "HOMEPATH")\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :strip-prefix (string (os-sep))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :split (string (os-sep)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :collect)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 'windows
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ($ (getenv "HOMEDRIVE") :drop-right 1 :get)))
+
+    \ \ \ \ \ \ \ \ (else (???))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (when (not (os-windows?))
+
+    \ \ (check (path :home) =\<gtr\> (path :/ "home" / (getenv "USER"))))
+
+    \;
+
+    (when (os-windows?)
+
+    \ \ (check (path :home)
+
+    \ \ \ =\<gtr\> \ \ \ (path :/ (getenv "HOMEDRIVE") :/ "Users" :/ (getenv "USERNAME"))))
 
     \;
   </scm-chunk>
