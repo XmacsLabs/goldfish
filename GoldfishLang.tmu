@@ -4058,7 +4058,7 @@
 
     \ \ \ \ ((or (string? ch/str) (char? ch/str))
 
-    \ \ \ \ \ (%index-of (box ch/str) start)))
+    \ \ \ \ \ (%index-of (box ch/str) start))
 
     \ \ \ \ ((rich-string :is-type-of ch/str)
 
@@ -4098,7 +4098,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1)))))))
 
-    \ \ \ \ (else (type-error "rich-string%index-of only accept search string/char/rich-string/rich-char")))
+    \ \ \ \ (else (type-error "rich-string%index-of only accept search string/char/rich-string/rich-char"))))
 
     \;
   </goldfish-chunk>

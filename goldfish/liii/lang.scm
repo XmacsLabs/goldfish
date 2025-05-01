@@ -607,7 +607,7 @@
 (define* (%index-of ch/str (start 0))
   (cond
     ((or (string? ch/str) (char? ch/str))
-     (%index-of (box ch/str) start)))
+     (%index-of (box ch/str) start))
     ((rich-string :is-type-of ch/str)
      (let* ((target-data (ch/str :get))
             (target-len (ch/str :length))
@@ -627,7 +627,7 @@
              (if (c :equals ch/str)
                  i
                  (loop (+ i 1)))))))
-    (else (type-error "rich-string%index-of only accept search string/char/rich-string/rich-char")))
+    (else (type-error "rich-string%index-of only accept search string/char/rich-string/rich-char"))))
 
 (chained-define (%map f)
   (box ((%to-rich-vector)
