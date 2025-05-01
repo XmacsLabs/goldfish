@@ -2817,7 +2817,7 @@
 
   <paragraph|rich-char%equals>
 
-  重写define-case-class自动生成equals函数。
+  重写define-case-class自动生成equals函数。因为rich-char的默认构造函数可以接受整数和字符两种类型，我们需要保证<scm|(rich-char #\\a)>和<scm|(rich-char 65)>是相等的。
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%equals that)
