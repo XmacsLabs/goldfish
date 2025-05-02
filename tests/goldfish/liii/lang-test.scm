@@ -1130,6 +1130,12 @@
 (let ((empty-vec (array #())))
   (check (empty-vec :forall (lambda (x) (> x 0))) => #t))
 
+(let1 vec (array #(1 2 3 4 5))
+  (check (vec :map (lambda (x) (vector x x))) => #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))))
+
+(let1 vec (array #(1 2 3 4 5))
+  (check (vec :flat-map (lambda (x) (vector x x))) => #(1 1 2 2 3 3 4 4 5 5)))
+
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :take -1 :collect) => #())
   (check (vec :take 0 :collect) => #())
@@ -1220,6 +1226,14 @@
 (check ($ #(1 2 3 4) :reduce +) => 10)  ; 1 + 2 + 3 + 4 = 10
 (check ($ #(5) :reduce *) => 5)         ; 单个元素直接返回
 (check-catch 'value-error ($ #() :reduce +)) ; 空向量应该报错
+(check ($ #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))
+       :map vector-length
+       :reduce +)
+=> 10)
+(check ($ #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))
+       :map identity  ; 保持子向量不变
+       :reduce vector-append)
+       => #(1 1 2 2 3 3 4 4 5 5))
 
 (check (object->string ($ #(1 2 3))) => "#(1 2 3)")
 

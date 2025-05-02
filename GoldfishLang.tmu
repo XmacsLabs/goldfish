@@ -7259,6 +7259,30 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|rich-vector%flat-map>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (chained-define (%flat-map f)
+
+    \ \ (rich-vector ((rich-vector (vector-map f data)) :reduce vector-append)))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let1 vec (array #(1 2 3 4 5))
+
+    \ \ (check (vec :map (lambda (x) (vector x x))) =\<gtr\> #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))))
+
+    \;
+
+    (let1 vec (array #(1 2 3 4 5))
+
+    \ \ (check (vec :flat-map (lambda (x) (vector x x))) =\<gtr\> #(1 1 2 2 3 3 4 4 5 5)))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|rich-vector%filter>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
@@ -7783,6 +7807,22 @@
     (check ($ #(5) :reduce *) =\<gtr\> 5) \ \ \ \ \ \ \ \ ; 单个元素直接返回
 
     (check-catch 'value-error ($ #() :reduce +)) ; 空向量应该报错
+
+    (check ($ #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))
+
+    \ \ \ \ \ \ \ :map vector-length
+
+    \ \ \ \ \ \ \ :reduce +)
+
+    =\<gtr\> 10)
+
+    (check ($ #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))
+
+    \ \ \ \ \ \ \ :map identity \ ; 保持子向量不变
+
+    \ \ \ \ \ \ \ :reduce vector-append)
+
+    \ \ \ \ \ \ \ =\<gtr\> #(1 1 2 2 3 3 4 4 5 5))
 
     \;
   </goldfish-chunk>
