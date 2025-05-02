@@ -1206,8 +1206,13 @@
 (chained-define (%map x)
   (rich-vector (vector-map x data)))
 
-(chained-define (%flat-map x)
-  (vector-map x data))
+(chained-define (%flat-map f)
+  (rich-vector
+    (list->vector
+      (append-map 
+        (lambda (x) 
+          (vector->list (f x))) 
+        (vector->list data)))))                  
 
 (chained-define (%filter x)
   (rich-vector (vector-filter x data)))

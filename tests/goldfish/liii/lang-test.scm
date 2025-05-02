@@ -1123,10 +1123,10 @@
   (check (empty-vec :forall (lambda (x) (> x 0))) => #t))
 
 (let1 vec (array #(1 2 3 4 5))
-  (check (vec :map (lambda (x) (+ x 1))) => #(2 3 4 5 6)))
+  (check (vec :map (lambda (x) (vector x x))) => #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))))
 
 (let1 vec (array #(1 2 3 4 5))
-  (check (vec :flat-map (lambda (x) (+ x 1))) => #(2 3 4 5 6)))
+  (check (vec :flat-map (lambda (x) (vector x x))) => #(1 1 2 2 3 3 4 4 5 5)))
 
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :take -1 :collect) => #())

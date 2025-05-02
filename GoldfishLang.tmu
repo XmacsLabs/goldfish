@@ -7204,9 +7204,19 @@
   <paragraph|rich-vector%flat-map>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%flat-map x)
+    (chained-define (%flat-map f)
 
-    \ \ (vector-map x data))
+    \ \ (rich-vector
+
+    \ \ \ \ (list-\<gtr\>vector
+
+    \ \ \ \ \ \ (append-map\ 
+
+    \ \ \ \ \ \ \ \ (lambda (x)\ 
+
+    \ \ \ \ \ \ \ \ \ \ (vector-\<gtr\>list (f x)))\ 
+
+    \ \ \ \ \ \ \ \ (vector-\<gtr\>list data))))) \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
     \;
   </goldfish-chunk>
@@ -7214,13 +7224,13 @@
   <\scm-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     (let1 vec (array #(1 2 3 4 5))
 
-    \ \ (check (vec :map (lambda (x) (+ x 1))) =\<gtr\> #(2 3 4 5 6)))
+    \ \ (check (vec :map (lambda (x) (vector x x))) =\<gtr\> #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))))
 
     \;
 
     (let1 vec (array #(1 2 3 4 5))
 
-    \ \ (check (vec :flat-map (lambda (x) (+ x 1))) =\<gtr\> #(2 3 4 5 6)))
+    \ \ (check (vec :flat-map (lambda (x) (vector x x))) =\<gtr\> #(1 1 2 2 3 3 4 4 5 5)))
 
     \;
   </scm-chunk>
