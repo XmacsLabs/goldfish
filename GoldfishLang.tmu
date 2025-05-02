@@ -7264,7 +7264,7 @@
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (chained-define (%flat-map f)
 
-    \ \ (rich-vector ((rich-vector (vector-map f data)) :reduce vector-append)))
+    \ \ ((%this) :map f :reduce vector-append))
 
     \;
   </goldfish-chunk>

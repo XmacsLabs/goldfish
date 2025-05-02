@@ -1227,7 +1227,7 @@
   (rich-vector (vector-map x data)))
 
 (chained-define (%flat-map f)
-  (rich-vector ((rich-vector (vector-map f data)) :reduce vector-append)))
+  ((%this) :map f :reduce vector-append))
 
 (chained-define (%filter x)
   (rich-vector (vector-filter x data)))
