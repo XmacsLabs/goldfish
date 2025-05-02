@@ -1206,6 +1206,9 @@
 (chained-define (%map x)
   (rich-vector (vector-map x data)))
 
+(chained-define (%flat-map x)
+  (vector-map x data))
+
 (chained-define (%filter x)
   (rich-vector (vector-filter x data)))
 
