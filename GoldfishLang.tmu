@@ -7753,6 +7753,40 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|rich-vector%reduce>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%reduce f)
+
+    \ \ (let ((len (vector-length data)))
+
+    \ \ \ \ (if (zero? len)
+
+    \ \ \ \ \ \ \ \ (value-error "rich-vector%reduce: empty vector is not allowed to reduce")
+
+    \ \ \ \ \ \ \ \ (let loop ((acc (vector-ref data 0))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (i 1))
+
+    \ \ \ \ \ \ \ \ \ \ (if (\<gtr\>= i len)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ acc
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (f acc (vector-ref data i)) (+ i 1)))))))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (check ($ #(1 2 3 4) :reduce +) =\<gtr\> 10) \ ; 1 + 2 + 3 + 4 = 10
+
+    (check ($ #(5) :reduce *) =\<gtr\> 5) \ \ \ \ \ \ \ \ ; 单个元素直接返回
+
+    (check-catch 'value-error ($ #() :reduce +)) ; 空向量应该报错
+
+    \;
+  </goldfish-chunk>
+
   <section|转换器>
 
   <paragraph|rich-vector%to-string>

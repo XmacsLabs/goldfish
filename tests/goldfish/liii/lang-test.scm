@@ -1217,6 +1217,10 @@
 (check  ($ #() :distinct :collect) 
         => #())
 
+(check ($ #(1 2 3 4) :reduce +) => 10)  ; 1 + 2 + 3 + 4 = 10
+(check ($ #(5) :reduce *) => 5)         ; 单个元素直接返回
+(check-catch 'value-error ($ #() :reduce +)) ; 空向量应该报错
+
 (check (object->string ($ #(1 2 3))) => "#(1 2 3)")
 
 (let ((vec ($ #("Hello" "World"))))

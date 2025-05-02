@@ -1340,6 +1340,16 @@
                   (loop (cons elem result) (+ index 1)))
                 (loop result (+ index 1))))))))
 
+(define (%reduce f)
+  (let ((len (vector-length data)))
+    (if (zero? len)
+        (value-error "rich-vector%reduce: empty vector is not allowed to reduce")
+        (let loop ((acc (vector-ref data 0))
+                   (i 1))
+          (if (>= i len)
+              acc
+              (loop (f acc (vector-ref data i)) (+ i 1)))))))
+
 (define (%to-string)
   ((%map object->string)
    :make-string "#(" " " ")"))
