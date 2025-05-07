@@ -143,7 +143,7 @@
 
   \;
 
-  <strong|通过示例和机制分步解释>
+  <subparagraph|通过示例和机制分步解释>
 
   <\goldfish-code>
     (let ((a 10))
@@ -155,8 +155,8 @@
     \ \ (add10 5)) ; =\<gtr\> 15（而不是 105）
   </goldfish-code>
 
-  <\enumerate>
-    <item><strong|宏展开阶段>：
+  <\description>
+    <item*|宏展开阶段 >
 
     当 <scm|(@ + a _)> 被展开时，宏会立即对非占位符参数（此处为 <scm|a>）进行求值。此时 <scm|a> 的值为 <scm|10>，所以宏生成的代码类似：
 
@@ -166,15 +166,17 @@
 
     占位符 <scm|_> 对应后续传入的参数。
 
-    <item><strong|运行时阶段>：
+    <item*|运行时阶段 >
 
     即使后续通过 <scm|(set! a 100)> 修改了 <code*|<scm|a>>，<scm|add10> 内部已经固定为 <scm|10>，因此 <scm|(add10 5)> 等价于 <scm|(+ 10 5)>，结果为 <scm|15>。
-  </enumerate>
+  </description>
 
-  <strong|与普通闭包的区别>
+  \;
 
-  <\itemize>
-    若不用 <scm|@>，直接使用 <scm|lambda>：
+  <subparagraph|与普通闭包的区别>
+
+  <\description>
+    <item*|若不用 <scm|@>，直接使用 <scm|lambda> >
 
     <\goldfish-code>
       (let ((a 10))
@@ -186,36 +188,46 @@
       \ \ (add10 5)) ; 结果为 105
     </goldfish-code>
 
-    <strong|闭包行为>：<scm|lambda> 捕获的是变量 <scm|a> 的引用，而非其当前值。因此 <scm|a><verbatim|> 的修改会影响闭包的结果。
-  </itemize>
+    <item*|闭包行为 >
+
+    <scm|lambda> 捕获的是变量 <scm|a> 的引用，而非其当前值。因此 <scm|a><verbatim|> 的修改会影响闭包的结果。
+  </description>
 
   \;
 
-  <strong|宏 <scm|@> 的核心机制>
+  <subparagraph|宏 <scm|@> 的核心机制>
 
-  <\enumerate>
-    <item><strong|静态求值>：
+  <\description>
+    <item*|静态求值 >
 
     在宏展开阶段，所有非占位符参数（如 <code*|<scm|a>>）会被立即求值，结果直接嵌入生成的代码中。这类似于 <strong|“值捕获”>。
 
-    <item><strong|占位符 <scm|_>>：
+    <item*|占位符 <scm|_ >>
 
     表示参数位置由后续调用时传入的值填充，类似 Scala 的 <scm|_> 占位符。例如 <scm|(@ f _ b _)> 会生成一个接受两个参数的函数。
 
-    <item><strong|与 <scm|cute> 宏的区别>：
+    <item*|与 <scm|cute> 宏的区别 >
 
     <scm|cute> 宏支持更复杂的模式（如 <scm|\<...\>> 表示未定参数序列），而 <scm|@> 仅支持固定位置的 <scm|_>，且不延迟求值。
-  </enumerate>
+  </description>
 
-  <strong|设计意义>
+  \;
 
-  <\itemize-minus>
-    <item><strong|性能优化>：若部分参数是常量或昂贵的计算，<scm|@> 可避免重复求值。
+  <subparagraph|设计意义>
 
-    <item><strong|语义确定性>：部分应用的结果在定义时即固定，不受后续环境变化影响。
-  </itemize-minus>
+  <\description>
+    <item*|性能优化 >
 
-  <strong|实现函数>
+    若部分参数是常量或昂贵的计算，<scm|@> 可避免重复求值。
+
+    <item*|语义确定性 >
+
+    部分应用的结果在定义时即固定，不受后续环境变化影响。
+  </description>
+
+  \;
+
+  <subparagraph|实现函数>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define-macro (@ . paras)
@@ -275,7 +287,7 @@
     \;
   </goldfish-chunk>
 
-  <strong|测试用例>
+  <subparagraph|测试用例>
 
   测试：基本部分应用
 
@@ -355,63 +367,75 @@
 
   \;
 
-  <strong|概述>
+  <subparagraph|概述>
 
   <scm|typed-define> 是一个宏，用于在 Goldfish Scheme 中定义带有类型检查和默认值的函数。它允许你在定义函数时指定每个参数的类型和可选的默认值，并在函数调用时自动进行类型检查。如果参数类型不匹配，<scm|typed-define> 会抛出一个类型错误。
 
   \;
 
-  <strong|函数签名>
+  <subparagraph|函数签名>
 
   <\goldfish-code>
     (typed-define (name (param1 type1? [default1]) (param2 type2? [default2]) ...) body ...)
   </goldfish-code>
 
-  <\itemize-minus>
-    <item><strong|name>: 函数的名称。
+  <\description>
+    <item*|name >函数的名称。
 
-    <item><strong|param1, param2, ...>: 函数的参数名。
+    <item*|param1, param2, ... >函数的参数名。
 
-    <item><strong|type1?, type2?, ...>: 参数的谓词函数，用于检查参数的类型。例如，<scm|integer?> 用于检查参数是否为整数。
+    <item*|type1?, type2?, ... >参数的谓词函数，用于检查参数的类型。例如，<scm|integer?> 用于检查参数是否为整数。
 
-    <item><strong|[default1], [default2], ...>: 可选的默认值。如果调用函数时未提供该参数，则使用默认值。
+    <item*|<strong|[default1], [default2], ...> >可选的默认值。如果调用函数时未提供该参数，则使用默认值。
 
-    <item><strong|body>: 函数的主体部分。
-  </itemize-minus>
-
-  \;
-
-  <strong|功能>
-
-  <\enumerate-numeric>
-    <item><with|font-series|bold|类型检查>: 在函数调用时，<scm|typed-define> 会自动检查每个参数的类型是否符合预期。如果不符合，会抛出一个类型错误。
-
-    <item><with|font-series|bold|默认值>: 如果参数有默认值，调用函数时可以省略该参数，函数会自动使用默认值。
-
-    <item><with|font-series|bold|错误信息>: 如果类型检查失败，<scm|typed-define> 会生成详细的错误信息，指出哪个参数的类型不匹配。
-  </enumerate-numeric>
+    <item*|body >函数的主体部分。
+  </description>
 
   \;
 
-  <strong|设计意义>\ 
+  <subparagraph|功能>
 
-  <\itemize-minus>
-    <item><strong|类型安全>: <scm|typed-define> 提供了编译时的类型检查，确保函数在运行时不会因为类型错误而崩溃。
+  <\description>
+    <item*|类型检查 >
 
-    <item><strong|灵活性>: 通过支持默认值，<scm|typed-define> 使得函数调用更加灵活，减少了冗余代码。
+    在函数调用时，<scm|typed-define> 会自动检查每个参数的类型是否符合预期。如果不符合，会抛出一个类型错误。
 
-    <item><strong|可读性>: 通过显式地指定参数类型和默认值，代码的可读性和可维护性得到了提升。
-  </itemize-minus>
+    <item*|默认值 >
+
+    如果参数有默认值，调用函数时可以省略该参数，函数会自动使用默认值。
+
+    <item*|错误信息 >
+
+    如果类型检查失败，<scm|typed-define> 会生成详细的错误信息，指出哪个参数的类型不匹配。
+  </description>
 
   \;
 
-  <strong|实现细节>\ 
+  <subparagraph|设计意义>\ 
+
+  <\description>
+    <item*|类型安全>
+
+    <scm|typed-define> 提供了编译时的类型检查，确保函数在运行时不会因为类型错误而崩溃。
+
+    <item*|灵活性>
+
+    通过支持默认值，<scm|typed-define> 使得函数调用更加灵活，减少了冗余代码。
+
+    <item*|可读性>
+
+    通过显式地指定参数类型和默认值，代码的可读性和可维护性得到了提升。
+  </description>
+
+  \;
+
+  <subparagraph|实现细节>
 
   <scm|typed-define> 在宏展开时会生成类型检查代码，并在运行时对每个参数进行类型验证。如果参数类型不匹配，会抛出一个类型错误，错误信息中会包含参数名、期望的类型和实际的值。
 
   \;
 
-  <strong|实现函数>
+  <subparagraph|实现函数>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define-macro (typed-define name-and-params body . rest)
@@ -499,7 +523,7 @@
     \;
   </goldfish-chunk>
 
-  <strong|测试用例>
+  <subparagraph|测试用例>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     (typed-define (person (name string? "Bob") (age integer?))
@@ -521,7 +545,7 @@
 
   本节函数和相关功能如下表所示：
 
-  <\big-table|<tabular|<tformat|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|1|-1|cell-background|>|<table|<row|<cell|函数名>|<cell|功能>>|<row|<cell|<scm|define-case-class>>|<cell|用于定义样本类的宏>>|<row|<cell|<scm|case-class?>>|<cell|用于判断某个对象是否为样本类>>|<row|<cell|<scm|==> 和 <scm|!=>>|<cell|样本类的相等性判断函数>>|<row|<cell|<scm|chained-define>>|<cell|简化了在样本类中定义方法的语法，使方法可以链式调用>>|<row|<cell|<scm|display*>>|<cell|正确处理样本类对象>>|<row|<cell|<scm|object-<textgreater|>string>>|<cell|样本类的字符串表示函数>>|<row|<cell|<verbatim|box>>|<cell|将基础类型的值装箱为样本类的函数>>|<row|<cell|<scm|$>>|<cell|用于简化样本类的创建和操作>>>>>>
+  <\big-table|<tabular|<tformat|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|1|-1|cell-background|>|<table|<row|<cell|函数名>|<cell|功能>>|<row|<cell|<scm|define-case-class>>|<cell|用于定义数据+行为的不可变样本类（支持类型化字段和方法）>>|<row|<cell|<scm|define-object>>|<cell|用于定义纯行为的不可变对象（仅包含方法）>>|<row|<cell|<scm|define-class>>|<cell|>>|<row|<cell|<scm|case-class?>>|<cell|用于判断某个对象是否为样本类>>|<row|<cell|<scm|==> 和 <scm|!=>>|<cell|样本类的相等性判断函数>>|<row|<cell|<scm|chained-define>>|<cell|简化了在样本类中定义方法的语法，使方法可以链式调用>>|<row|<cell|<scm|display*>>|<cell|正确处理样本类对象>>|<row|<cell|<scm|object-<textgreater|>string>>|<cell|样本类的字符串表示函数>>|<row|<cell|<verbatim|box>>|<cell|将基础类型的值装箱为样本类的函数>>|<row|<cell|<scm|$>>|<cell|用于简化样本类的创建和操作>>>>>>
     样本类相关函数和功能
   </big-table>
 
@@ -553,19 +577,21 @@
     )
   </goldfish-code>
 
-  <\itemize-minus>
-    <item><with|font-series|bold|class-name>: 样本类的名称。
+  <\description>
+    <item*|class-name >样本类的名称。
 
-    <item><with|font-series|bold|field1, field2, ...>: 样本类的字段名。
+    <item*|<with|font-series|bold|field1, field2, ...> >样本类的字段名。
 
-    <item><with|font-series|bold|type1?, type2?, ...>: 字段的类型谓词函数，用于类型检查。例如，<scm|string?> 用于检查字段是否为字符串。
+    <item*|<with|font-series|bold|type1?, type2?, ...> >字段的类型谓词函数，用于类型检查。例如，<scm|string?> 用于检查字段是否为字符串。
 
-    <item><with|font-series|bold|@static-method-name>: 静态方法，以 <scm|@> 开头，只能通过类名调用。
+    <item*|@static-method-name >静态方法，以 <scm|@> 开头，只能通过类名调用。
 
-    <item><with|font-series|bold|%instance-method-name>: 实例方法，以 <scm|%> 开头，只能通过实例调用。
+    <item*|<with|font-series|bold|%instance-method-name> >实例方法，以 <scm|%> 开头，只能通过实例调用。
 
-    <item><with|font-series|bold|internal-method-name>: 内部方法，没有前缀，只能在样本类内部调用。
-  </itemize-minus>
+    <item*|internal-method-name >内部方法，没有前缀，只能在样本类内部调用。
+  </description>
+
+  \;
 
   <subparagraph|示例>
 
@@ -619,49 +645,53 @@
 
   另外一种是将字段名用做实例方法名，表示拷贝一个对象，并修改相应的字段。在下面的示例中，<scm|bob_2024>这个对象的实例方法接受一个整数作为输入，返回的是新的对象<scm|bob_2025>，这两个对象是完全不同的对象，他们的区别仅仅在于age字段的值。
 
-  <\scm-code>
+  <\goldfish-code>
     (define person ((name string?) (age integer?)))
 
     (define bob_2024 (person "Bob" 24))
 
     (define bob_2025 (bob_2024 :age (+ 1 (bob_2024 'age))))
-  </scm-code>
+  </goldfish-code>
 
   样本类的默认构造函数有类型校验，但不做任何值校验。如果需要做值校验，那么需要使用同名的函数覆盖<scm|define-case-class>生成的默认实现。该同名函数可称为该样本类的伴生函数。
 
   <subparagraph|功能>
 
-  <\enumerate>
-    <item><with|font-series|bold|字段访问>: 样本类的字段可以通过字段名直接访问，例如 (<scm|instance 'field-name>)。
+  <\description>
+    <item*|字段访问 >样本类的字段可以通过字段名直接访问，例如 (<scm|instance 'field-name>)。
 
-    <item><with|font-series|bold|方法调用>: 样本类支持实例方法和静态方法。实例方法通过 :<scm|method-name> 调用，静态方法通过 <scm|class-name :method-name> 调用。
+    <item*|方法调用 >样本类支持实例方法和静态方法。实例方法通过 :<scm|method-name> 调用，静态方法通过 <scm|class-name :method-name> 调用。
 
-    <item><with|font-series|bold|链式操作>: 实例方法支持链式调用，例如 (<verbatim|instance :method1 :method2>)。
+    <item*|链式操作 >实例方法支持链式调用，例如 (<scm|instance :method1 :method2>)。
 
-    <item><with|font-series|bold|自动生成方法>: <verbatim|define-case-class> 会自动生成以下实例方法：
+    <item*|自动生成方法 ><scm|define-case-class> 会自动生成以下实例方法：
 
     <\itemize-minus>
-      <item><verbatim|%equals>: 用于比较两个样本类实例是否相等。
+      <item><scm|%equals>: 用于比较两个样本类实例是否相等。
 
-      <item><verbatim|%to-string>: 用于将样本类实例转换为字符串。
+      <item><scm|%to-string>: 用于将样本类实例转换为字符串。
 
-      <item><verbatim|%apply>: 用于处理未命中的字段或方法调用。
+      <item><scm|%apply>: 用于处理未命中的字段或方法调用。
     </itemize-minus>
 
-    <item><with|font-series|bold|类型检查>: 样本类的构造函数会自动检查字段的类型，如果类型不匹配，会抛出类型错误。
-  </enumerate>
+    <item*|类型检查 >样本类的构造函数会自动检查字段的类型，如果类型不匹配，会抛出类型错误。
+  </description>
 
-  <subparagraph|设计意义>\ 
+  \;
 
-  <\itemize-minus>
-    <item>不可变性: 样本类的实例是不可变的，确保了数据的一致性和线程安全。
+  <subparagraph|设计意义>
 
-    <item>链式操作: 支持链式调用，使得代码更加简洁和易读。
+  <\description>
+    <item*|不可变性 >样本类的实例是不可变的，确保了数据的一致性和线程安全。
 
-    <item>类型安全: 构造函数会自动进行类型检查，确保字段的类型正确。
+    <item*|链式操作 >支持链式调用，使得代码更加简洁和易读。
 
-    <item>扩展性: 支持自定义静态方法和实例方法，可以根据需要扩展样本类的功能。
-  </itemize-minus>
+    <item*|类型安全 >构造函数会自动进行类型检查，确保字段的类型正确。
+
+    <item*|拓展性 >支持自定义静态方法和实例方法，可以根据需要扩展样本类的功能。
+  </description>
+
+  \;
 
   <subparagraph|实现细节>
 
@@ -1023,7 +1053,7 @@
     \;
   </goldfish-chunk>
 
-  <strong|测试用例>
+  <subparagraph|测试用例>
 
   测试：方法名不能与字段名重复
 
@@ -1375,6 +1405,114 @@
 
   <paragraph|define-object>
 
+  <scm|define-object> 是基于 <scm|define-case-class> 的语法糖宏，用于快速定义无字段的纯对象类型。它专注于方法定义而不处理字段封装，适用于需要纯行为抽象的场景。
+
+  \;
+
+  <subparagraph|函数签名>
+
+  <\goldfish-code>
+    (define-object object-name . methods)
+  </goldfish-code>
+
+  <\description>
+    <item*|object-name >样本类的名称（符号）。
+
+    <item*|methods >方法定义列表，支持三种格式：
+
+    <\itemize-minus>
+      <item><with|font-family|tt|(@static-method ...)> - 静态方法（类方法）
+
+      <item><with|font-family|tt|(%instance-method ...)> - 实例方法
+
+      <item><with|font-family|tt|(internal-method ...)> - 内部辅助方法
+    </itemize-minus>
+  </description>
+
+  \;
+
+  <subparagraph|功能>
+
+  <\description>
+    <item*|纯行为对象>不包含任何字段定义，仅用于方法封装
+
+    <item*|方法分类>通过前缀区分方法类型：
+
+    <\itemize>
+      <item><scm|@> 前缀：静态方法（类名直接调用）
+
+      <item><scm|%> 前缀：实例方法（对象实例调用）
+
+      <item>无前缀：私有方法（内部使用）
+    </itemize>
+
+    <item*|自动继承>包含 <scm|define-case-class> 的所有基础方法：
+
+    <\itemize-minus>
+      <item><scm|%equals> - 对象相等判断
+
+      <item><scm|%to-string> - 字符串表示
+
+      <item><scm|%apply> - 通用调用处理
+    </itemize-minus>
+  </description>
+
+  \;
+
+  <subparagraph|设计意义>
+
+  <\description>
+    <item*|>轻量级对象定义方案，适用于纯行为抽象
+
+    <item*|>与 <scm|define-case-class> 形成互补：
+
+    <\itemize-minus>
+      <item><scm|define-case-class>：数据+行为封装
+
+      <item><scm|define-object>：纯行为封装
+    </itemize-minus>
+
+    <item*|>通过前缀规范方法作用域，提高代码可读性
+  </description>
+
+  \;
+
+  <subparagraph|实现细节>
+
+  <\description>
+    <item*|>宏展开为 <scm|define-case-class> 的空字段特化形式
+
+    <item*|>编译时进行方法前缀校验
+
+    <item*|>运行时方法查找采用两级缓存策略
+
+    <item*|>生成的方法调度器优化了空字段情况下的性能
+  </description>
+
+  \;
+
+  <subparagraph|典型应用场景>
+
+  <\description>
+    <item*|>工具类封装（如日志器、计数器）
+
+    <item*|>策略模式实现
+
+    <item*|>纯接口定义
+
+    <item*|>函数组命名空间
+  </description>
+
+  \;
+
+  <subparagraph|与define-case-class对比>
+
+  <tformat|<cwith|1|5|1|1|cell-lborder|1ln>|<cwith|1|5|1|1|cell-halign|l>|<cwith|1|5|1|1|cell-rborder|1ln>|<cwith|1|5|2|2|cell-halign|l>|<cwith|1|5|2|2|cell-rborder|1ln>|<cwith|1|5|3|3|cell-halign|l>|<cwith|1|5|3|3|cell-rborder|1ln>|<cwith|1|5|1|3|cell-valign|c>|<cwith|1|1|1|3|cell-tborder|1ln>|<cwith|1|1|1|3|cell-bborder|1ln>|<cwith|2|2|1|3|cell-bborder|1ln>|<cwith|3|3|1|3|cell-bborder|1ln>|<cwith|4|4|1|3|cell-bborder|1ln>|<cwith|5|5|1|3|cell-bborder|1ln>|<table|<row|<cell|特性>|<cell|<scm|define-object>>|<cell|<scm|define-case-class>>>|<row|<cell|字段支持>|<cell|不支持>|<cell|支持类型化字段>>|<row|<cell|方法前缀>|<cell|强制要求>|<cell|可选>>|<row|<cell|初始化>|<cell|无参构造>|<cell|字段初始化构造>>|<row|<cell|适用场景>|<cell|行为抽象>|<cell|数据+行为封装>>>>
+
+  \;
+
+  <subparagraph|实现函数>
+
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define-macro (define-object object-name . methods)
 
@@ -1382,6 +1520,8 @@
 
     \;
   </goldfish-chunk>
+
+  <subparagraph|测试用例>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     (define-object string-utils
@@ -1403,7 +1543,7 @@
 
   <paragraph|define-class>
 
-  \ \ <scm|><scm|define-class> 是一个成员变量可变的类，所有成员变量均为私有成员（即在define-case-class的内部通过define来定义），通过 get-name, set-name! 来给变量赋值和获取变量。
+  \ \ <scm|><scm|define-class> 是一个成员变量可变的类，所有成员变量均为私有成员（即在<scm|define-case-class>的内部通过<scm|define>来定义），通过 <scm|get-name>, <scm|set-name!> 来给变量赋值和获取变量。
 
   例如：
 
@@ -1495,6 +1635,8 @@
     )
   </scm-code>
 
+  <subparagraph|实现函数>
+
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define-macro (define-class class-name private-fields . private-fields-and-methods)
 
@@ -1583,7 +1725,7 @@
     \;
   </goldfish-chunk>
 
-  \;
+  <subparagraph|测试用例>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     ;; Test define-class (可变类)
@@ -2807,6 +2949,56 @@
 
   <paragraph|rich-integer%to>
 
+  <scm|rich-integer%to> 是富整数(<scm|rich-integer>)的实例方法，用于生成从当前整数值到目标整数的连续整数序列，返回封装为富列表(<scm|rich-list>)的序列结果。若目标值小于当前值，返回空列表。
+
+  \;
+
+  <subparagraph|功能>
+
+  <\description>
+    <item*|生成序列>返回从当前整数值 <scm|data> 到 <scm|n> 的连续整数序列
+
+    <item*|边界处理>
+
+    <\itemize-minus>
+      <item>当 <scm|n \<gtr\>= data> 时，生成 <scm|[data, data+1, ..., n]> 的闭区间序列
+
+      <item>当 <scm|n \<less\> data> 时，返回空列表 <scm|()>
+    </itemize-minus>
+
+    <item*|返回值>封装为 <scm|rich-list> 样本类，支持链式操作
+
+    <item*|不变性保证>原 <scm|rich-integer> 值不会被修改
+  </description>
+
+  \;
+
+  <subparagraph|使用场景>
+
+  <\itemize-minus>
+    <item>生成连续的ID范围
+
+    <item>数值模拟时的离散化采样
+
+    <item>循环边界初始化
+
+    <item>测试数据生成（如 (<scm|$ 1 :to 100>) 生成1-100的测试输入）
+  </itemize-minus>
+
+  \;
+
+  <subparagraph|注意事项>
+
+  <\description>
+    <item*|性能>大范围序列（如 <scm|1 :to 1e6>）会预分配内存
+
+    <item*|类型限制>参数 <scm|n> 必须为整数（<scm|integer?>）
+  </description>
+
+  \;
+
+  <subparagraph|实现函数>
+
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (typed-define (%to (n integer?))
 
@@ -2818,6 +3010,8 @@
 
     \;
   </goldfish-chunk>
+
+  <subparagraph|测试用例>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     (check (($ 1 :to 2) :collect) =\<gtr\> (list 1 2))
@@ -2831,6 +3025,66 @@
 
   <paragraph|rich-integer%until>
 
+  <scm|rich-integer%until> 是富整数(<scm|rich-integer>)的实例方法，用于生成从当前整数值开始到终止值(不包含)的整数序列，返回封装为富列表(<scm|rich-list>)的序列结果。若当前值大于等于终止值，则返回空列表。
+
+  \;
+
+  <subparagraph|功能>
+
+  <\description>
+    <item*|生成序列>返回从当前整数值 <scm|data> 到 <scm|n-1> 的连续整数序列
+
+    <item*|边界处理>
+
+    <\itemize-minus>
+      <item>若 <scm|n <textless|>= data>，返回空列表
+
+      <item>若 <scm|n <textgreater|> data>，返回 <scm|[data, data+1, ..., n-1]>
+    </itemize-minus>
+
+    <item*|返回值>封装为 <scm|rich-list> 样本类，支持链式操作
+
+    <item*|不变性保证>原 <scm|rich-integer> 值不会被修改
+  </description>
+
+  \;
+
+  <subparagraph|使用场景>
+
+  <\description>
+    <item*|范围迭代>快速生成需要迭代的整数范围（如循环边界）。
+
+    <item*|序列生成>结合 <scm|rich-list> 的方法（如 <scm|:map、:filter>）进行数据处理。
+
+    <item*|边界检查>避免手动处理空序列或无效范围。
+  </description>
+
+  \;
+
+  <subparagraph|注意事项>
+
+  <\description>
+    <item*|与 <scm|:to> 的区别>
+
+    <\itemize-minus>
+      <item><scm|:until> 不包含结束值（<scm|n>），而 <scm|:to> 包含结束值。
+
+      <item>示例对比：
+
+      <\scm>
+        ($ 1 :until 3) =\<gtr\> (1 2) \ \ ; 不包含 3
+
+        ($ 1 :to 3) \ \ \ =\<gtr\> (1 2 3) ; 包含 3
+      </scm>
+    </itemize-minus>
+
+    <item*|性能>基于 <scm|iota> 实现，时间复杂度为 O(n)，适合小范围序列。
+  </description>
+
+  \;
+
+  <subparagraph|实现函数>
+
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (typed-define (%until (n integer?))
 
@@ -2842,6 +3096,8 @@
 
     \;
   </goldfish-chunk>
+
+  <subparagraph|测试用例>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
     (check (($ 1 :until 3) :collect) =\<gtr\> (list 1 2))

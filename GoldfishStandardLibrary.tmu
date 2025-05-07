@@ -3845,6 +3845,80 @@
     \;
   </scm-chunk>
 
+  <paragraph|path%parent>
+
+  返回当前路径的父目录
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (%parent)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    \ \ (define (parts-drop-right parts x)
+
+    \ \ \ \ \ (let1 path-vec ($ parts :drop-right x :collect)
+
+    \ \ \ \ \ \ \ (if (equal? path-vec #())
+
+    \ \ \ \ \ \ \ \ \ \ \ (path :from-string ".")
+
+    \ \ \ \ \ \ \ \ \ \ \ (path :from-vector path-vec)))) \ \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    \ \ (cond\ 
+
+    \ \ \ \ ;; Root and cwd
+
+    \ \ \ \ ((or (equal? #("/") parts) (equal? #(".") parts))
+
+    \ \ \ \ \ (%this))
+
+    \ \ \ \ 
+
+    \ \ \ \ ((or (os-macos?) (os-linux?))
+
+    \ \ \ \ \ (let1 last-part (($ parts) :take-right 1 :collect)
+
+    \ \ \ \ \ \ \ \ \ \ \ (if (equal? last-part #(""))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 2)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 1)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ))
+
+    \ \ \ \ \ )
+
+    \ \ \ \ 
+
+    \ \ \ \ (else (value-error "windows is not supported yet"))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (when (or (os-linux?) (os-macos?))
+
+    \ \ (check (path :from-string "/" :parent :to-string) =\<gtr\> "/")
+
+    \ \ (check (path :from-string "" :parent :to-string) =\<gtr\> ".")
+
+    \ \ (check (path :from-string "/tmp/" :parent :to-string) =\<gtr\> "/")
+
+    \ \ (check (path :from-string "/tmp/test" :parent :parent :to-string) =\<gtr\> "/")
+
+    \ \ (check (path :from-string "tmp/test" :parent :to-string) =\<gtr\> "tmp")
+
+    \ \ (check (path :from-string "tmp" :parent :to-string) =\<gtr\> ".")
+
+    \ \ (check (path :from-string "tmp" :parent :parent :to-string) =\<gtr\> "."))
+
+    \;
+  </scm-chunk>
+
   <subsection|静态方法>
 
   <paragraph|path@of-drive>

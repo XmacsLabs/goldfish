@@ -113,6 +113,15 @@
 
 (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
 
+(when (or (os-linux?) (os-macos?))
+  (check (path :from-string "/" :parent :to-string) => "/")
+  (check (path :from-string "" :parent :to-string) => ".")
+  (check (path :from-string "/tmp/" :parent :to-string) => "/")
+  (check (path :from-string "/tmp/test" :parent :parent :to-string) => "/")
+  (check (path :from-string "tmp/test" :parent :to-string) => "tmp")
+  (check (path :from-string "tmp" :parent :to-string) => ".")
+  (check (path :from-string "tmp" :parent :parent :to-string) => "."))
+
 (check (path :of-drive #\C :to-string) => "C:\\")
 
 (check (path :/ "C:" :to-string) => "C:\\")

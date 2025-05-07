@@ -165,6 +165,30 @@
                (else ((%this) :parts (vector-append parts (x 'parts))))))
         (else (type-error "only string?, path is allowed"))))
 
+(chained-define (%parent)
+             
+  (define (parts-drop-right parts x)
+     (let1 path-vec ($ parts :drop-right x :collect)
+       (if (equal? path-vec #())
+           (path :from-string ".")
+           (path :from-vector path-vec))))              
+                
+  (cond 
+    ;; Root and cwd
+    ((or (equal? #("/") parts) (equal? #(".") parts))
+     (%this))
+    
+    ((or (os-macos?) (os-linux?))
+     (let1 last-part (($ parts) :take-right 1 :collect)
+           (if (equal? last-part #(""))
+               (parts-drop-right parts 2)
+               (parts-drop-right parts 1)
+               
+               ))
+     )
+    
+    (else (value-error "windows is not supported yet"))))
+
 (chained-define (@of-drive ch)
   (when (not (char? ch))
     (type-error "path@of-drive must take char? as input"))
