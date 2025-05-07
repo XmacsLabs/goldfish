@@ -1,6 +1,6 @@
-<TMU|<tuple|1.1.0|2025.0.8>>
+<TMU|<tuple|1.0.5|1.2.9.7>>
 
-<style|<tuple|book|chinese|literate|goldfish|reduced-margins|guile|smart-ref|preview-ref|python|elvish>>
+<style|<tuple|book|chinese|literate|goldfish|reduced-margins|guile|smart-ref|preview-ref|python|elvish|framed-theorems>>
 
 <\body>
   <\hide-preamble>
@@ -3420,6 +3420,50 @@
 
     \;
   </scm-chunk>
+
+  \ <with|paragraph|<macro|title|<assign|paragraph-numbered|<compound|paragraph-display-numbers>><assign|paragraph-prefix|<macro|<compound|the-paragraph>.>><compound|next-paragraph><compound|paragraph-clean><compound|paragraph-header|<arg|title>><compound|paragraph-toc|<arg|title>><if|<value|paragraph-numbered>|<compound|paragraph-numbered-title|<arg|title>>|<compound|paragraph-unnumbered-title|<arg|title>>>>|>
+
+  <paragraph|<value|r7rs>numerator ><index|索引><scm|<goldfish-lang|>(q)=\<gtr\> (n exact?)>
+
+  返回有理数的分子部分。
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check (numerator 1/2)     =\> 1)
+
+    (check (numerator 4/5)     =\> 4)
+
+    (check (numerator -3/7)    =\> -3)
+
+    (check (numerator 5)       =\> 5)
+
+    (check (numerator 0)       =\> 0)
+
+    (check (numerator (inexact-\>exact 2.5)) =\> 5)
+  </scm-chunk>
+
+  \;
+
+  \;
+
+  <paragraph|<value|r7rs>denominator><index|索引><scm|(q) =\<gtr\> (n exact? positive?)>
+
+  返回有理数的分母部分。
+
+  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
+    (check (denominator 1/2)   =\> 2)
+
+    (check (denominator 4/5)   =\> 5)
+
+    (check (denominator -3/7)  =\> 7)
+
+    (check (denominator 5)     =\> 1)
+
+    (check (denominator 0)     =\> 1)
+
+    (check (denominator (inexact-\>exact 2.5)) =\> 2)
+  </scm-chunk>
+
+  \;
 
   \;
 
