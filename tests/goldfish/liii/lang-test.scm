@@ -694,6 +694,11 @@
 (check ($ "" :drop-while (@ _ :equals (rich-char #\a))) => "")
 (check ($ "aaaa" :drop-while (@ _ :equals (rich-char #\a))) => "")
 
+(let ((result ($ "HelLo" :group-by (lambda (x) (x :to-upper)))))
+  (check (result :collect) 
+          => (hash-table ($ #\H) "H" ($ #\E) "e" ($ #\L) "lL" ($ #\o) "o")))
+
+
 (check ((rich-string "hello") :to-string) => "hello")
 
 (let1 v ($ "中文" :to-vector)

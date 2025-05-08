@@ -5263,6 +5263,40 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|rich-string%group-by>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%group-by func)
+
+    \ \ (let1 group\ 
+
+    \ \ \ \ (((%to-rich-vector) :group-by func)
+
+    \ \ \ \ :map (lambda (k v) (values k ($ v :map (@ _ :make-string) :make-string))))
+
+    \ \ \ \ group))
+
+    \ \ 
+
+    \;
+
+    \ \ \ \ 
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let ((result ($ "HelLo" :group-by (lambda (x) (x :to-upper)))))
+
+    \ \ (check (result :collect)\ 
+
+    \ \ \ \ \ \ \ \ \ \ =\<gtr\> (hash-table ($ #\\H) "H" ($ #\\E) "e" ($ #\\L) "lL" ($ #\\o) "o")))
+
+    \;
+
+    \;
+  </goldfish-chunk>
+
   <section|转换器>
 
   <paragraph|rich-string%to-string>

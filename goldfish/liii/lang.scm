@@ -798,6 +798,15 @@
         (rich-string "")
         (%slice index N))))
 
+(define (%group-by func)
+  (let1 group 
+    (((%to-rich-vector) :group-by func)
+    :map (lambda (k v) (values k ($ v :map (@ _ :make-string) :make-string))))
+    group))
+  
+
+    
+
 (define (%to-string)
   data)
 
