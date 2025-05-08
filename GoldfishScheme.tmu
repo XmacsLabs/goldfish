@@ -3432,15 +3432,15 @@
   返回有理数的分子部分。
 
   <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
-    (check (numerator 1/2)     =\> 1)
+    (check (numerator 1/2) =\> 1)
 
-    (check (numerator 4/5)     =\> 4)
+    (check (numerator 4/5) =\> 4)
 
-    (check (numerator -3/7)    =\> -3)
+    (check (numerator -3/7) =\> -3)
 
-    (check (numerator 5)       =\> 5)
+    (check (numerator 5) =\> 5)
 
-    (check (numerator 0)       =\> 0)
+    (check (numerator 0) =\> 0)
 
     (check (numerator (inexact-\>exact 2.5)) =\> 5)
   </scm-chunk>
@@ -3454,15 +3454,15 @@
   返回有理数的分母部分。
 
   <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
-    (check (denominator 1/2)   =\> 2)
+    (check (denominator 1/2) =\> 2)
 
-    (check (denominator 4/5)   =\> 5)
+    (check (denominator 4/5) =\> 5)
 
-    (check (denominator -3/7)  =\> 7)
+    (check (denominator -3/7) =\> 7)
 
-    (check (denominator 5)     =\> 1)
+    (check (denominator 5) =\> 1)
 
-    (check (denominator 0)     =\> 1)
+    (check (denominator 0) =\> 1)
 
     (check (denominator (inexact-\>exact 2.5)) =\> 2)
   </scm-chunk>
