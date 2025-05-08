@@ -129,7 +129,7 @@
 (check (path :/ "etc" :/ "passwd" :to-string) => "/etc/passwd")
 
 (when (os-windows?)
-  (check (path :of-drive "C" :to-string) => "C:\\"))
+  (check (path :of-drive #\C :to-string) => "C:\\"))
 
 (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
 (check (path :/ (path "a/b")) => (path "/a/b"))

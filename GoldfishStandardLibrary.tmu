@@ -3896,7 +3896,7 @@
 
     (when (os-windows?)
 
-    \ \ (check (path :of-drive "C" :to-string) =\<gtr\> "C:\\\\"))
+    \ \ (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\"))
 
     \;
   </scm-chunk>
