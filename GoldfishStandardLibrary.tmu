@@ -4070,7 +4070,7 @@
 
     \ \ (check (path "/tmp/test" :parent :parent :to-string) =\<gtr\> "/")
 
-    \ \ (check (path "tmp/test" :parent :to-string) =\<gtr\> "tmp")
+    \ \ (check (path "tmp/test" :parent :to-string) =\<gtr\> "tmp/")
 
     \ \ (check (path "tmp" :parent :to-string) =\<gtr\> ".")
 

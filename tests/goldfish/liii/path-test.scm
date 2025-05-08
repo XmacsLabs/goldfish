@@ -140,7 +140,7 @@
   (check (path "" :parent :to-string) => ".")
   (check (path "/tmp/" :parent :to-string) => "/")
   (check (path "/tmp/test" :parent :parent :to-string) => "/")
-  (check (path "tmp/test" :parent :to-string) => "tmp")
+  (check (path "tmp/test" :parent :to-string) => "tmp/")
   (check (path "tmp" :parent :to-string) => ".")
   (check (path "tmp" :parent :parent :to-string) => "."))
 
