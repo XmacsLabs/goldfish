@@ -3606,21 +3606,19 @@
 
     \ \ \ \ \ \ \ \ \ (path :/ (@apply ($ s :drop 1 :get))))
 
+    \ \ \ \ \ \ \ \ 
+
     \ \ \ \ \ \ \ \ ((and (os-windows?)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\<gtr\>= ($ s :length) 2)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\<gtr\>= (string-length s) 2)
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 1) #\\:))
 
-    \ \ \ \ \ \ \ \ \ (if (and (\<gtr\>= ($ s :length) 3) (char=? (s 2) #\\\\))
+    \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (path :of-drive (s 2)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@apply ($ s :drop 2 :get))))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@apply ($ s :drop 3 :get)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@apply ($ s :drop 2 :get)))))
+    \ \ \ \ \ \ \ \ 
 
     \ \ \ \ \ \ \ \ (else
 
