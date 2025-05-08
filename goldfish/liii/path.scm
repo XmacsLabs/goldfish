@@ -200,7 +200,7 @@
                 (%this))
                (else (let ((new-path (%copy))
                            (x-parts (x :get-parts)))
-                       (new-path :set-parts! (vector-append #((string (os-sep))) x-parts))
+                       (new-path :set-parts! (vector-append (vector (string (os-sep))) x-parts))
                        new-path))))
         
         (else (type-error "only string?, path is allowed"))))

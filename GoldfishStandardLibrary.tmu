@@ -3988,7 +3988,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (x-parts (x :get-parts)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append #((string (os-sep))) x-parts))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append (vector (string (os-sep))) x-parts))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path))))
 
