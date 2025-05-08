@@ -152,8 +152,8 @@
   (check (path "tmp" :parent :parent :to-string) => "."))
 
 (when (os-windows?)
-  (check (path "C:" :parent :to-string) => "C:\\")
-  (check (path "C:\\Users" :parent :to-string) => "C:\\")
+  (check (path "C:" :parent :to-string) => "C:")
+  (check (path "C:\\Users" :parent :to-string) => "C:")
   (check (path "a\\b" :parent :to-string) => "a\\"))
 
 (check (path :./ "a" :to-string) => "a")

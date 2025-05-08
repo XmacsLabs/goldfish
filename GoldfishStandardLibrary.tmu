@@ -4094,9 +4094,9 @@
 
     (when (os-windows?)
 
-    \ \ (check (path "C:" :parent :to-string) =\<gtr\> "C:\\\\")
+    \ \ (check (path "C:" :parent :to-string) =\<gtr\> "C:")
 
-    \ \ (check (path "C:\\\\Users" :parent :to-string) =\<gtr\> "C:\\\\")
+    \ \ (check (path "C:\\\\Users" :parent :to-string) =\<gtr\> "C:")
 
     \ \ (check (path "a\\\\b" :parent :to-string) =\<gtr\> "a\\\\"))
 
