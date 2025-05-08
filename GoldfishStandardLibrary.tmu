@@ -3510,9 +3510,9 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :of-drive #\\D :to-string) =\<gtr\> "D:")
+    (check (path :of-drive #\\D :to-string) =\<gtr\> "D:\\\\")
 
-    (check (path :of-drive #\\d :to-string) =\<gtr\> "D:")
+    (check (path :of-drive #\\d :to-string) =\<gtr\> "D:\\\\")
 
     \;
   </scm-chunk>
@@ -3594,7 +3594,7 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (when (os-windows?)
 
-    \ \ (check (path :/ "C:" :to-string) =\<gtr\> "C:"))
+    \ \ (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\"))
 
     \;
 
@@ -3616,19 +3616,23 @@
 
     \ \ \ \ \ \ \ \ \ (path :/ (@apply ($ s :drop 1 :get))))
 
-    \ \ \ \ \ \ \ \ 
-
     \ \ \ \ \ \ \ \ ((and (os-windows?)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\<gtr\>= (string-length s) 2)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (= (string-length s) 2)
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 1) #\\:))
 
+    \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)))
+
+    \ \ \ \ \ \ \ \ ((and (os-windows?) (\<gtr\>= (string-length s) 3)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 1) #\\:)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 2) #\\\\))
+
     \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@apply ($ s :drop 2 :get))))
-
-    \ \ \ \ \ \ \ \ 
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@apply ($ s :drop 3 :get))))
 
     \ \ \ \ \ \ \ \ (else
 
@@ -3890,7 +3894,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ s
 
-    \ \ \ \ \ \ \ \ \ \ \ (string-append drive ":" s))))
+    \ \ \ \ \ \ \ \ \ \ \ (string-append drive ":\\\\" s))))
 
     \ \ \ \ (else (value-error "path%to-string: unknown type" type))))
 
@@ -3906,7 +3910,7 @@
 
     (when (os-windows?)
 
-    \ \ (check (path :of-drive #\\C :to-string) =\<gtr\> "C:"))
+    \ \ (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\"))
 
     \;
   </scm-chunk>
@@ -3988,7 +3992,11 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (x-parts (x :get-parts)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append (vector (string (os-sep))) x-parts))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (os-windows?)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! x-parts)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append (vector (string (os-sep))) x-parts)))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path))))
 
@@ -4094,9 +4102,9 @@
 
     (when (os-windows?)
 
-    \ \ (check (path "C:" :parent :to-string) =\<gtr\> "C:")
+    \ \ (check (path "C:" :parent :to-string) =\<gtr\> "C:\\\\")
 
-    \ \ (check (path "C:\\\\Users" :parent :to-string) =\<gtr\> "C:")
+    \ \ (check (path "C:\\\\Users" :parent :to-string) =\<gtr\> "C:\\\\")
 
     \ \ (check (path "a\\\\b" :parent :to-string) =\<gtr\> "a\\\\"))
 

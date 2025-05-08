@@ -120,13 +120,15 @@
   (cond ((and (or (os-linux?) (os-macos?))
               (string-starts? s "/"))
          (path :/ (@apply ($ s :drop 1 :get))))
-        
         ((and (os-windows?)
-              (>= (string-length s) 2)
+              (= (string-length s) 2)
               (char=? (s 1) #\:))
+         (path :of-drive (s 0)))
+        ((and (os-windows?) (>= (string-length s) 3)
+              (char=? (s 1) #\:)
+              (char=? (s 2) #\\))
          (path :of-drive (s 0)
-               :/ (@apply ($ s :drop 2 :get))))
-        
+               :/ (@apply ($ s :drop 3 :get))))
         (else
          (let loop ((iter s))
            (cond ((or (string-null? iter) (string=? iter "."))
@@ -171,7 +173,7 @@
      (let1 s ($ parts :make-string "\\")
        (if (string-null? drive)
            s
-           (string-append drive ":" s))))
+           (string-append drive ":\\" s))))
     (else (value-error "path%to-string: unknown type" type))))
 
 (define (%read-text)
@@ -200,7 +202,9 @@
                 (%this))
                (else (let ((new-path (%copy))
                            (x-parts (x :get-parts)))
-                       (new-path :set-parts! (vector-append (vector (string (os-sep))) x-parts))
+                       (if (os-windows?)
+                           (new-path :set-parts! x-parts)
+                           (new-path :set-parts! (vector-append (vector (string (os-sep))) x-parts)))
                        new-path))))
         
         (else (type-error "only string?, path is allowed"))))

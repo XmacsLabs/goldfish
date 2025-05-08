@@ -78,8 +78,8 @@
 (check ((path) :get-type) => 'posix)
 (check ((path) :get-parts) => #("."))
 
-(check (path :of-drive #\D :to-string) => "D:")
-(check (path :of-drive #\d :to-string) => "D:")
+(check (path :of-drive #\D :to-string) => "D:\\")
+(check (path :of-drive #\d :to-string) => "D:\\")
 
 (check (path :root :to-string) => "/")
 
@@ -89,7 +89,7 @@
   (check (path :from-parts #("/", "tmp") :to-string) => "/tmp"))
 
 (when (os-windows?)
-  (check (path :/ "C:" :to-string) => "C:"))
+  (check (path :/ "C:" :to-string) => "C:\\"))
 
 (when (not (os-windows?))
   (check (path :/ "root" :to-string) => "/root"))
@@ -134,7 +134,7 @@
   (check (path :/ "etc" :/ "passwd" :to-string) => "/etc/passwd"))
 
 (when (os-windows?)
-  (check (path :of-drive #\C :to-string) => "C:"))
+  (check (path :of-drive #\C :to-string) => "C:\\"))
 
 (when (not (os-windows?))
   (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
@@ -152,8 +152,8 @@
   (check (path "tmp" :parent :parent :to-string) => "."))
 
 (when (os-windows?)
-  (check (path "C:" :parent :to-string) => "C:")
-  (check (path "C:\\Users" :parent :to-string) => "C:")
+  (check (path "C:" :parent :to-string) => "C:\\")
+  (check (path "C:\\Users" :parent :to-string) => "C:\\")
   (check (path "a\\b" :parent :to-string) => "a\\"))
 
 (check (path :./ "a" :to-string) => "a")
