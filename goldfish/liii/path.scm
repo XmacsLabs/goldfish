@@ -163,8 +163,8 @@
 (define (%to-string)
   (case type
     ((posix)
-     (let1 s ($ parts :make-string "/")
-        (if (string-starts? s "//")
+     (let1 s ($ parts :make-string (string (os-sep)))
+        (if (string-starts? s (string (os-sep)))
             (string-drop s 1)
             s)))
     ((windows)

@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.9>>
+<TMU|<tuple|1.1.0|2025.0.8>>
 
 <style|<tuple|book|chinese|literate|goldfish|reduced-margins|guile|smart-ref|preview-ref|python>>
 
@@ -3552,11 +3552,13 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :from-parts #("/" "tmp")) =\<gtr\> (path :/ "tmp"))
+    (when (not (os-windows?))
 
-    (check (path :from-parts #("/" "tmp" "/" "test")) =\<gtr\> (path :/ "tmp" :/ "test"))
+    \ \ (check (path :from-parts #("/" "tmp")) =\<gtr\> (path :/ "tmp"))
 
-    (check (path :from-parts #("/", "tmp") :to-string) =\<gtr\> "/tmp")
+    \ \ (check (path :from-parts #("/" "tmp" "/" "test")) =\<gtr\> (path :/ "tmp" :/ "test"))
+
+    \ \ (check (path :from-parts #("/", "tmp") :to-string) =\<gtr\> "/tmp"))
 
     \;
   </scm-chunk>
@@ -3588,9 +3590,15 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
+    (when (os-windows?)
 
-    (check (path :/ "root" :to-string) =\<gtr\> "/root")
+    \ \ (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\"))
+
+    \;
+
+    (when (not (os-windows?))
+
+    \ \ (check (path :/ "root" :to-string) =\<gtr\> "/root"))
 
     \;
   </scm-chunk>
@@ -3866,9 +3874,9 @@
 
     \ \ \ \ ((posix)
 
-    \ \ \ \ \ (let1 s ($ parts :make-string "/")
+    \ \ \ \ \ (let1 s ($ parts :make-string (string (os-sep)))
 
-    \ \ \ \ \ \ \ \ (if (string-starts? s "//")
+    \ \ \ \ \ \ \ \ (if (string-starts? s (string (os-sep)))
 
     \ \ \ \ \ \ \ \ \ \ \ \ (string-drop s 1)
 

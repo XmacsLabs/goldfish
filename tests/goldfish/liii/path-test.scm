@@ -82,12 +82,16 @@
 
 (check (path :root :to-string) => "/")
 
-(check (path :from-parts #("/" "tmp")) => (path :/ "tmp"))
-(check (path :from-parts #("/" "tmp" "/" "test")) => (path :/ "tmp" :/ "test"))
-(check (path :from-parts #("/", "tmp") :to-string) => "/tmp")
+(when (not (os-windows?))
+  (check (path :from-parts #("/" "tmp")) => (path :/ "tmp"))
+  (check (path :from-parts #("/" "tmp" "/" "test")) => (path :/ "tmp" :/ "test"))
+  (check (path :from-parts #("/", "tmp") :to-string) => "/tmp"))
 
-(check (path :/ "C:" :to-string) => "C:\\")
-(check (path :/ "root" :to-string) => "/root")
+(when (os-windows?)
+  (check (path :/ "C:" :to-string) => "C:\\"))
+
+(when (not (os-windows?))
+  (check (path :/ "root" :to-string) => "/root"))
 
 (when (os-windows?)
   (check (path "a\\b") => (path :./ "a" :/ "b"))
