@@ -3418,16 +3418,240 @@
   <section|path样本类>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define-case-class path
+    (define-case-class path ()
 
-    \ \ ((parts vector?)
+    \ \ (define parts #("."))
 
-    \ \ \ (type symbol? 'posix)
+    \ \ (define type 'posix)
 
-    \ \ \ (drive string? ""))
+    \ \ (define drive "")
+
+    \ \ 
+
+    \ \ (define (%set-parts! v)
+
+    \ \ \ \ (if (rich-vector :is-type-of v)
+
+    \ \ \ \ \ \ \ \ (set! parts (v :collect))
+
+    \ \ \ \ \ \ \ \ (set! parts v)))
+
+    \ \ 
+
+    \ \ (define (%set-type! s)
+
+    \ \ \ \ (set! type s))
+
+    \ \ 
+
+    \ \ (define (%set-drive! s)
+
+    \ \ \ \ (set! drive s))
+
+    \ \ 
+
+    \ \ (define (%get-parts) parts)
+
+    \ \ (define (%get-type) type)
+
+    \ \ (define (%get-drive) drive)
+
+    \ \ 
+
+    \ \ (define (%copy)
+
+    \ \ \ \ (let1 p (path)
+
+    \ \ \ \ \ \ (p :set-parts! parts)
+
+    \ \ \ \ \ \ (p :set-type! type)
+
+    \ \ \ \ \ \ (p :set-drive! drive)
+
+    \ \ \ \ \ \ p))
+
+    \;
 
     \;
   </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check ((path) :get-type) =\<gtr\> 'posix)
+
+    (check ((path) :get-parts) =\<gtr\> #("."))
+
+    \;
+
+    (check (let1 p (path)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("/", "tmp"))\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (p :to-string)) =\<gtr\> "/tmp")
+
+    \;
+  </scm-chunk>
+
+  <subsection|构造器>
+
+  <paragraph|path@of-drive>
+
+  在Windows系统上，盘符只有26中可能。
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@of-drive ch)
+
+    \ \ (when (not (char? ch))
+
+    \ \ \ \ (type-error "path@of-drive must take char? as input"))
+
+    \ \ \ \ (let1 r (path)
+
+    \ \ \ \ \ \ \ \ (r :set-type! 'windows)
+
+    \ \ \ \ \ \ \ \ (r :set-drive! ($ ch :to-upper :make-string))
+
+    \ \ \ \ \ \ \ \ (r :set-parts! #())
+
+    \ \ \ \ \ \ \ \ r))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\")
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path@root>
+
+  返回根目录。
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@root)
+
+    \ \ (let1 r (path)
+
+    \ \ \ \ \ \ \ \ (r :set-parts! #("/"))
+
+    \ \ \ \ \ \ \ \ r))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :root :to-string) =\<gtr\> "/")
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path@/>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@/ x)\ 
+
+    \ \ \ (if (path :is-type-of x)
+
+    \ \ \ \ \ \ \ (path :root :/ x)
+
+    \ \ \ \ \ \ \ (cond ((and (string-ends? x ":") (= (string-length x) 2))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (path :of-drive (x 0)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ ((string=? x "/") (path :root))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (else\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (let1 r (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (r :set-parts! (vector-append #("/") (vector x)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ r)))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
+
+    (check (path :/ "root" :to-string) =\<gtr\> "/root")
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path@apply>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (chained-define (@apply s)
+
+    \ \ (cond ((and (or (os-linux?) (os-macos?))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-starts? s "/"))
+
+    \ \ \ \ \ \ \ \ \ (path :/ (@apply ($ s :drop 1 :get))))
+
+    \ \ \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ ((and (os-windows?)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\<gtr\>= (string-length s) 2)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 1) #\\:))
+
+    \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@apply ($ s :drop 2 :get))))
+
+    \ \ \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ (else
+
+    \ \ \ \ \ \ \ \ \ (let loop ((iter s))
+
+    \ \ \ \ \ \ \ \ \ \ \ (cond ((or (string-null? iter) (string=? iter "."))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (path))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((not (char=? (iter 0) (os-sep)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (let1 p (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! ($ iter :split (string (os-sep))))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ p))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop ($ iter :drop 1 :get))))))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (when (os-windows?)
+
+    \ \ (check (path "a\\\\b") =\<gtr\> (path :./ "a" :/ "b"))
+
+    \ \ (check (path "C:\\\\") =\<gtr\> (path :of-drive #\\C)))
+
+    \;
+
+    (when (or (os-linux?) (os-macos?))
+
+    \ \ (check (path "a/b") =\<gtr\> (path :./ "a" :/ "b"))
+
+    \ \ (check (path "/tmp/") =\<gtr\> (path :/ "tmp"))
+
+    \ \ (check (path "/tmp/tmp2") =\<gtr\> (path :/ "tmp" :/ "tmp2")))
+
+    \;
+  </scm-chunk>
+
+  \;
 
   <subsection|谓词>
 
@@ -3504,7 +3728,11 @@
 
     \ \ (mkdir "tmpxxxx")\ 
 
-    \ \ (check (path :from-string "/tmp/tmpxxxx" :file?) =\<gtr\> #f)
+    \ \ (check-false (let1 p (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("/" "tmp" "/" "tmpxxxx"))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :file?)))
 
     \ \ (rmdir "tmpxxxx"))
 
@@ -3530,15 +3758,27 @@
 
     \ \ (check-true (path :/ "tmp/" :dir?))
 
-    \ \ (check (path :from-string "/tmpxxxx" :dir?) =\<gtr\> #f)
+    \ \ (check-false (let1 p (path)
 
-    \ \ (check (path :from-string "/tmpxxxx/" :dir?) =\<gtr\> #f)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("/" "tmpxxxx"))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :dir?)))
+
+    \ \ (check-true (let1 p (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("/" "tmp" ""))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :dir?)))
 
     \ \ (chdir "/tmp")
 
-    \ \ (mkdir "tmpxxxx")\ 
+    \ \ (mkdir "tmpxxxx")
 
-    \ \ (check (path :from-string "/tmp/tmpxxxx/" :dir?) =\<gtr\> #t)
+    \ \ (check-true (let1 p (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("/" "tmp" "/" "tmpxxxx" ""))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :dir?)))
 
     \ \ (rmdir "tmpxxxx"))
 
@@ -3552,36 +3792,52 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (%absolute?)
 
-    \ \ (case type
+    \ \ \ (case type
 
-    \ \ \ \ ((posix)
+    \ \ \ \ \ ((posix) (string-starts? (parts 0) "/"))
 
-    \ \ \ \ \ (string-starts? (parts 0) "/"))
+    \ \ \ \ 
 
-    \ \ \ \ ((windows)
+    \ \ \ \ \ ((windows) (not ($ drive :empty?)))
 
-    \ \ \ \ \ (not ($ drive :empty?)))
+    \ \ \ \ 
 
-    \ \ \ \ (else
+    \ \ \ \ \ (else
 
-    \ \ \ \ \ (value-error
+    \ \ \ \ \ \ \ (value-error
 
-    \ \ \ \ \ \ (string-append "path%absolute?: unknown type" (symbol-\<gtr\>string type))))))
+    \ \ \ \ \ \ \ \ \ (string-append "path%absolute?: unknown type" (symbol-\<gtr\>string type))))))
 
     \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check-true ((path #("/")) :absolute?))
+    (check-false ((path) :absolute?))
 
-    (check-true ((path #("/" "tmp")) :absolute?))
+    (check (path :/ "C:" :get-type) =\<gtr\> 'windows)
 
-    (check-false ((path #("tmp")) :absolute?))
+    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
+
+    (check (path :/ "C:" :get-parts) =\<gtr\> #())
 
     (check-true (path :/ "C:" :absolute?))
 
+    (check-true (let1 p (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("/" "tmp"))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :absolute?)))
+
+    (check-false (let1 p (path)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :set-parts! #("tmp"))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (p :absolute?)))\ 
+
     \;
   </scm-chunk>
+
+  \;
 
   <paragraph|path%relative?>
 
@@ -3604,7 +3860,7 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (when (os-linux?)
+    (when (or (os-linux?) (os-macos?))
 
     \ \ (check-true (path :/ "tmp" :exists?)))
 
@@ -3612,116 +3868,6 @@
   </scm-chunk>
 
   <subsection|转换器>
-
-  <paragraph|path@from-vector>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define (@from-vector v)
-
-    \ \ (define (check-posix-parts parts)
-
-    \ \ \ \ (when (vector-empty? parts)
-
-    \ \ \ \ \ \ (value-error "make-path: parts must not be emtpy for posix path"))
-
-    \ \ \ \ (let1 N (vector-length parts)
-
-    \ \ \ \ \ \ (let loop ((i 0))
-
-    \ \ \ \ \ \ \ \ (when (\<less\> i (- N 1))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (when (string-null? (parts i))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "make-path: part of path must not be empty string, index" i))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1))))
-
-    \ \ \ \ \ \ (let loop ((i 1))
-
-    \ \ \ \ \ \ \ \ (when (\<less\> i N)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (when (string-index (parts i) #\\/)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "make-path: non-first part of path must not contains /"))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i 1))))))
-
-    \ \ 
-
-    \ \ (cond ((vector? v)
-
-    \ \ \ \ \ \ \ \ \ (begin
-
-    \ \ \ \ \ \ \ \ \ \ \ (check-posix-parts v)
-
-    \ \ \ \ \ \ \ \ \ \ \ (path v)))
-
-    \ \ \ \ \ \ \ \ ((rich-vector :is-type-of v)
-
-    \ \ \ \ \ \ \ \ \ (@from-vector (v :collect)))
-
-    \ \ \ \ \ \ \ \ (else (type-error "input must be vector or rich-vector"))))
-
-    \;
-  </goldfish-chunk>
-
-  \;
-
-  <paragraph|path@from-string>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@from-string s)
-
-    \ \ (cond ((and (or (os-linux?) (os-macos?))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-starts? s "/"))
-
-    \ \ \ \ \ \ \ \ \ (path :/ (@from-string ($ s :drop 1 :get))))
-
-    \ \ \ \ \ \ \ \ ((and (os-windows?)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\<gtr\>= (string-length s) 2)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (char=? (s 1) #\\:))
-
-    \ \ \ \ \ \ \ \ \ (path :of-drive (s 0)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (@from-string ($ s :drop 2 :get))))
-
-    \ \ \ \ \ \ \ \ (else
-
-    \ \ \ \ \ \ \ \ \ (let loop ((iter s))
-
-    \ \ \ \ \ \ \ \ \ \ \ (cond ((or (string-null? iter) (string=? iter "."))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector (vector ".")))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((not (char=? (iter 0) (os-sep)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (@from-vector ($ iter :split (string (os-sep)))))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop ($ iter :drop 1 :get))))))))
-
-    \;
-  </goldfish-chunk>
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (when (os-windows?)
-
-    \ \ (check (path :from-string "a\\\\b") =\<gtr\> (path :./ "a" :/ "b"))
-
-    \ \ (check (path :from-string "C:\\\\") =\<gtr\> (path :of-drive #\\C)))
-
-    \;
-
-    (when (or (os-linux?) (os-macos?))
-
-    \ \ (check (path :from-string "a/b") =\<gtr\> (path :./ "a" :/ "b")))
-
-    \;
-  </scm-chunk>
 
   <paragraph|path%to-string>
 
@@ -3756,11 +3902,7 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check ((path #("/" "etc" "passwd")) :to-string) =\<gtr\> "/etc/passwd")
-
-    (check ((path #("/" "tmp" "")) :to-string) =\<gtr\> "/tmp/")
-
-    (check ((path #("Users") 'windows "C") :to-string) =\<gtr\> "C:\\\\Users")
+    (check (path :/ "etc" :/ "passwd" :to-string) =\<gtr\> "/etc/passwd")
 
     \;
   </scm-chunk>
@@ -3820,7 +3962,13 @@
 
     \ \ (cond ((string? x)
 
-    \ \ \ \ \ \ \ \ \ ((%this) :parts (vector-append parts (vector x))))
+    \ \ \ \ \ \ \ \ \ (let1 new-path (%copy)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append parts (vector x)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ new-path))
+
+    \ \ \ \ \ \ \ \ 
 
     \ \ \ \ \ \ \ \ ((path :is-type-of x)
 
@@ -3828,11 +3976,19 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "path to append must not be absolute path: " (x :to-string)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((x :equals (path (vector ".")))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((string=? (x :to-string) ".")
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (%this))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else ((%this) :parts (vector-append parts (x 'parts))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (let ((new-path (%copy))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (x-parts (x :get-parts)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append #("/") x-parts))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path))))
+
+    \ \ \ \ \ \ \ \ 
 
     \ \ \ \ \ \ \ \ (else (type-error "only string?, path is allowed"))))
 
@@ -3841,6 +3997,10 @@
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+
+    (check (path :/ (path "a/b")) =\<gtr\> (path "/a/b"))
+
+    (check-catch 'value-error (path :/ (path "/a/b")))
 
     \;
   </scm-chunk>
@@ -3860,9 +4020,13 @@
 
     \ \ \ \ \ \ \ (if (equal? path-vec #())
 
-    \ \ \ \ \ \ \ \ \ \ \ (path :from-string ".")
+    \ \ \ \ \ \ \ \ \ \ \ (path)
 
-    \ \ \ \ \ \ \ \ \ \ \ (path :from-vector path-vec)))) \ \ \ \ \ \ \ \ \ \ \ \ \ 
+    \ \ \ \ \ \ \ \ \ \ \ (let1 new-path (%copy)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! path-vec)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path)))) \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
@@ -3884,13 +4048,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 2)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 1)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ))
-
-    \ \ \ \ \ )
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 1))))
 
     \ \ \ \ 
 
@@ -3902,97 +4060,37 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (when (or (os-linux?) (os-macos?))
 
-    \ \ (check (path :from-string "/" :parent :to-string) =\<gtr\> "/")
+    \ \ (check (path "/" :parent :to-string) =\<gtr\> "/")
 
-    \ \ (check (path :from-string "" :parent :to-string) =\<gtr\> ".")
+    \ \ (check (path "" :parent :to-string) =\<gtr\> ".")
 
-    \ \ (check (path :from-string "/tmp/" :parent :to-string) =\<gtr\> "/")
+    \ \ (check (path "/tmp/" :parent :to-string) =\<gtr\> "/")
 
-    \ \ (check (path :from-string "/tmp/test" :parent :parent :to-string) =\<gtr\> "/")
+    \ \ (check (path "/tmp/test" :parent :parent :to-string) =\<gtr\> "/")
 
-    \ \ (check (path :from-string "tmp/test" :parent :to-string) =\<gtr\> "tmp")
+    \ \ (check (path "tmp/test" :parent :to-string) =\<gtr\> "tmp")
 
-    \ \ (check (path :from-string "tmp" :parent :to-string) =\<gtr\> ".")
+    \ \ (check (path "tmp" :parent :to-string) =\<gtr\> ".")
 
-    \ \ (check (path :from-string "tmp" :parent :parent :to-string) =\<gtr\> "."))
+    \ \ (check (path "tmp" :parent :parent :to-string) =\<gtr\> "."))
 
     \;
   </scm-chunk>
 
   <subsection|静态方法>
 
-  <paragraph|path@of-drive>
-
-  在Windows系统上，盘符只有26中可能。
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@of-drive ch)
-
-    \ \ (when (not (char? ch))
-
-    \ \ \ \ (type-error "path@of-drive must take char? as input"))
-
-    \;
-
-    \ \ (path #() 'windows ($ ch :to-upper :make-string)))
-
-    \;
-  </goldfish-chunk>
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\")
-
-    \;
-  </scm-chunk>
-
-  <paragraph|path@root>
-
-  返回根目录。
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@root)
-
-    \ \ (path #("/")))
-
-    \;
-  </goldfish-chunk>
-
-  <paragraph|path@/>
-
-  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (@/ x)
-
-    \ \ (if (path :is-type-of x)
-
-    \ \ \ \ \ \ (path :root :/ x)
-
-    \ \ \ \ \ \ (cond ((and (string-ends? x ":") (= (string-length x) 2))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (path :of-drive (x 0)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ ((string=? x "/")
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (path :root))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ (else (path (vector-append #("/") (vector x)))))))
-
-    \;
-  </goldfish-chunk>
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
-
-    (check (path :/ "root" :to-string) =\<gtr\> "/root")
-
-    \;
-  </scm-chunk>
-
   <paragraph|path@./>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (@./ x)
 
-    \ \ (path (vector x)))
+    \ \ (let1 p (path x)
+
+    \ \ \ \ \ \ \ \ (if (p :absolute?)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (value-error "path@./: only accecpt relative path")
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (path x))))
 
     \;
   </goldfish-chunk>
@@ -4010,13 +4108,13 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (chained-define (@cwd)
 
-    \ \ (@from-string (getcwd)))
+    \ \ (path (getcwd)))
 
     \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (when (os-linux?)
+    (when (or (os-linux?) (os-macos?))
 
     \ \ (check-true (path :cwd :dir?)))
 
@@ -4032,13 +4130,13 @@
 
     \ \ (cond ((or (os-linux?) (os-macos?))
 
-    \ \ \ \ \ \ \ \ \ (path :from-string (getenv "HOME")))
+    \ \ \ \ \ \ \ \ \ (path (getenv "HOME")))
 
     \ \ \ \ \ \ \ \ ((os-windows?)
 
     \ \ \ \ \ \ \ \ \ (path :of-drive ((getenv "HOMEDRIVE") 0)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (path :from-string (getenv "HOMEPATH"))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :/ (path (getenv "HOMEPATH"))))
 
     \ \ \ \ \ \ \ \ (else (value-error "path@home: unknown type"))))
 
@@ -4046,7 +4144,7 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (when (not (os-windows?))
+    (when (or (os-linux?) (os-macos?))
 
     \ \ (check ((path :home) :to-string) =\<gtr\> (getenv "HOME")))
 

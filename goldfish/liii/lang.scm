@@ -165,6 +165,7 @@
                  (let1 name (string-remove-prefix (symbol->string method) "@")
                    (string->symbol (string-append ":" name))))
                static-method-symbols))
+         ;(default-static-messages '(:is-type-of))
          (internal-methods
            (filter (lambda (method) (not (or (string-starts? (symbol->string (caadr method)) "%")
                                              (string-starts? (symbol->string (caadr method)) "@"))))

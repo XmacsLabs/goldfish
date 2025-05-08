@@ -90,6 +90,7 @@
   (check-catch 'value-error (bob 'sex))
   (check-catch 'value-error (bob :sex))
   (check-true (bob :is-instance-of 'person))
+  (check-true (person :is-type-of bob))
   (check (bob :to-string) => "(person :name \"Bob\" :age 21)"))
 
 (check-catch 'type-error (person 1 21))
@@ -156,6 +157,7 @@
 (check-true ((my-bool 'false) :false?))
 (check-true ((my-bool #t) :true?))
 (check-true ((my-bool #f) :false?))
+(check-true (my-bool :is-type-of (my-bool 'true)))
 
 (define-case-class test-case-class
   ((name string?))
@@ -183,6 +185,7 @@
       (apply (%this) (if (null? xs) '(:this) xs)))
     (define (%to-string)
       (format #f "Hello ~a from ~a" name country)))
+
   (define Andy (person :default))
   (check-catch 'wrong-type-arg (person :this))
   (check (Andy :to-string) => "Hello Andy from China")
@@ -190,7 +193,8 @@
   (check (Andy :to-string) => "Hello Andy from USA")
   (check (Andy :set-country! "China" :set-name! "Ancker-0" :to-string) => "Hello Ancker-0 from China")
   (check (Andy :set-country! "China") => (person "Ancker-0" "China"))
-  (check (Andy :this :set-country! "USA" :this :set-name! "Andy" :this :to-string) => "Hello Andy from USA"))
+  (check (Andy :this :set-country! "USA" :this :set-name! "Andy" :this :to-string) => "Hello Andy from USA")
+  (check-true (person :is-type-of Andy)))
 
 (let ()
   (define-case-class person ((name string?) (country string?))
@@ -242,6 +246,9 @@
   (check (p1 :get-age) => 25)
   (check (p2 :get-name) => "Bob")
   (check (p2 :get-age) => 10)
+  
+  (check-true (person :is-type-of p1))
+  (check-true (person :is-type-of p2))
 
   ;; 测试类型检查
   (check-catch 'type-error (p1 :set-name! 123))

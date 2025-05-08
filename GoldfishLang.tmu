@@ -836,6 +836,8 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ static-method-symbols))
 
+    \ \ \ \ \ \ \ \ \ ;(default-static-messages '(:is-type-of))
+
     \ \ \ \ \ \ \ \ \ (internal-methods
 
     \ \ \ \ \ \ \ \ \ \ \ (filter (lambda (method) (not (or (string-starts? (symbol-\<gtr\>string (caadr method)) "%")
@@ -1134,6 +1136,8 @@
 
     \ \ (check-true (bob :is-instance-of 'person))
 
+    \ \ (check-true (person :is-type-of bob))
+
     \ \ (check (bob :to-string) =\<gtr\> "(person :name \\"Bob\\" :age 21)"))
 
     \;
@@ -1278,6 +1282,8 @@
 
     (check-true ((my-bool #f) :false?))
 
+    (check-true (my-bool :is-type-of (my-bool 'true)))
+
     \;
   </goldfish-chunk>
 
@@ -1340,6 +1346,8 @@
 
     \ \ \ \ \ \ (format #f "Hello ~a from ~a" name country)))
 
+    \;
+
     \ \ (define Andy (person :default))
 
     \ \ (check-catch 'wrong-type-arg (person :this))
@@ -1354,7 +1362,9 @@
 
     \ \ (check (Andy :set-country! "China") =\<gtr\> (person "Ancker-0" "China"))
 
-    \ \ (check (Andy :this :set-country! "USA" :this :set-name! "Andy" :this :to-string) =\<gtr\> "Hello Andy from USA"))
+    \ \ (check (Andy :this :set-country! "USA" :this :set-name! "Andy" :this :to-string) =\<gtr\> "Hello Andy from USA")
+
+    \ \ (check-true (person :is-type-of Andy)))
 
     \;
   </goldfish-chunk>
@@ -1773,6 +1783,12 @@
     \ \ (check (p2 :get-name) =\<gtr\> "Bob")
 
     \ \ (check (p2 :get-age) =\<gtr\> 10)
+
+    \ \ 
+
+    \ \ (check-true (person :is-type-of p1))
+
+    \ \ (check-true (person :is-type-of p2))
 
     \;
 
@@ -9516,7 +9532,7 @@
   <\collection>
     <associate|font-base-size|12>
     <associate|page-height|auto>
-    <associate|page-orientation|portrait>
+    <associate|page-orientation|landscape>
     <associate|page-screen-margin|false>
     <associate|page-type|a4>
     <associate|page-width|auto>
