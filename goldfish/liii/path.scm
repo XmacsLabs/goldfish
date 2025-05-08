@@ -114,7 +114,7 @@
              ((string=? x "/") (path :root))
             
              (else
-               (path :from-parts (vector-append #("/") (vector x)))))))
+               (path :from-parts (vector-append (vector (string (os-sep))) (vector x)))))))
 
 (chained-define (@apply s)
   (cond ((and (or (os-linux?) (os-macos?))
@@ -171,7 +171,7 @@
      (let1 s ($ parts :make-string "\\")
        (if (string-null? drive)
            s
-           (string-append drive ":\\" s))))
+           (string-append drive ":" s))))
     (else (value-error "path%to-string: unknown type" type))))
 
 (define (%read-text)
@@ -200,7 +200,7 @@
                 (%this))
                (else (let ((new-path (%copy))
                            (x-parts (x :get-parts)))
-                       (new-path :set-parts! (vector-append #("/") x-parts))
+                       (new-path :set-parts! (vector-append #((string (os-sep))) x-parts))
                        new-path))))
         
         (else (type-error "only string?, path is allowed"))))

@@ -3510,7 +3510,9 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\")
+    (check (path :of-drive #\\D :to-string) =\<gtr\> "D:")
+
+    (check (path :of-drive #\\d :to-string) =\<gtr\> "D:")
 
     \;
   </scm-chunk>
@@ -3584,7 +3586,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ (else
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (path :from-parts (vector-append #("/") (vector x)))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (path :from-parts (vector-append (vector (string (os-sep))) (vector x)))))))
 
     \;
   </goldfish-chunk>
@@ -3820,8 +3822,6 @@
 
     (check (path :/ "C:" :get-type) =\<gtr\> 'windows)
 
-    (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\")
-
     (check (path :/ "C:" :get-parts) =\<gtr\> #())
 
     (check-true (path :/ "C:" :absolute?))
@@ -3890,7 +3890,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ s
 
-    \ \ \ \ \ \ \ \ \ \ \ (string-append drive ":\\\\" s))))
+    \ \ \ \ \ \ \ \ \ \ \ (string-append drive ":" s))))
 
     \ \ \ \ (else (value-error "path%to-string: unknown type" type))))
 
@@ -3898,13 +3898,15 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :/ "etc" :/ "passwd" :to-string) =\<gtr\> "/etc/passwd")
+    (when (not (os-windows?))
+
+    \ \ (check (path :/ "etc" :/ "passwd" :to-string) =\<gtr\> "/etc/passwd"))
 
     \;
 
     (when (os-windows?)
 
-    \ \ (check (path :of-drive #\\C :to-string) =\<gtr\> "C:\\\\"))
+    \ \ (check (path :of-drive #\\C :to-string) =\<gtr\> "C:"))
 
     \;
   </scm-chunk>
@@ -3986,7 +3988,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (x-parts (x :get-parts)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append #("/") x-parts))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (vector-append #((string (os-sep))) x-parts))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path))))
 
@@ -3998,9 +4000,13 @@
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+    (when (not (os-windows?))
 
-    (check (path :/ (path "a/b")) =\<gtr\> (path "/a/b"))
+    \ \ (check (path :/ "etc" :/ "host" :to-string) =\<gtr\> "/etc/host")
+
+    \ \ (check (path :/ (path "a/b")) =\<gtr\> (path "/a/b")))
+
+    \;
 
     (check-catch 'value-error (path :/ (path "/a/b")))
 
@@ -4118,7 +4124,11 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (check (path :./ "a" :to-string) =\<gtr\> "a")
 
-    (check (path :./ "a" :/ "b" :/ "c" :to-string) =\<gtr\> "a/b/c")
+    \;
+
+    (when (not (os-windows?))
+
+    \ \ (check (path :./ "a" :/ "b" :/ "c" :to-string) =\<gtr\> "a/b/c"))
 
     \;
   </scm-chunk>
