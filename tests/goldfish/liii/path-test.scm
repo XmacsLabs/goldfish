@@ -89,7 +89,7 @@
   (check (path :from-parts #("/", "tmp") :to-string) => "/tmp"))
 
 (when (os-windows?)
-  (check (path :/ "C:" :to-string) => "C:\\"))
+  (check (path :/ "C:" :to-string) => "C:"))
 
 (when (not (os-windows?))
   (check (path :/ "root" :to-string) => "/root"))

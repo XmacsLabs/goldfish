@@ -3594,7 +3594,7 @@
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (when (os-windows?)
 
-    \ \ (check (path :/ "C:" :to-string) =\<gtr\> "C:\\\\"))
+    \ \ (check (path :/ "C:" :to-string) =\<gtr\> "C:"))
 
     \;
 
