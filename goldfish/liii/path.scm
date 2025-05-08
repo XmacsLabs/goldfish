@@ -166,7 +166,7 @@
   (case type
     ((posix)
      (let1 s ($ parts :make-string (string (os-sep)))
-        (if (string-starts? s (string (os-sep)))
+        (if (and (> ($ s :length) 1) (string-starts? s (string (os-sep))))
             (string-drop s 1)
             s)))
     ((windows)

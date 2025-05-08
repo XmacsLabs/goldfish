@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.8>>
+<TMU|<tuple|1.1.0|2025.0.9>>
 
 <style|<tuple|book|chinese|literate|goldfish|reduced-margins|guile|smart-ref|preview-ref|python>>
 
@@ -3882,7 +3882,7 @@
 
     \ \ \ \ \ (let1 s ($ parts :make-string (string (os-sep)))
 
-    \ \ \ \ \ \ \ \ (if (string-starts? s (string (os-sep)))
+    \ \ \ \ \ \ \ \ (if (and (\<gtr\> ($ s :length) 1) (string-starts? s (string (os-sep))))
 
     \ \ \ \ \ \ \ \ \ \ \ \ (string-drop s 1)
 
