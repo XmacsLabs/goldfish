@@ -4010,7 +4010,7 @@
 
     \ \ \ \ \ (let1 path-vec ($ parts :drop-right x)
 
-    \ \ \ \ \ \ \ (if (path-vec :emtpy?)
+    \ \ \ \ \ \ \ (if (path-vec :empty?)
 
     \ \ \ \ \ \ \ \ \ \ \ (path)
 

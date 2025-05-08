@@ -208,7 +208,7 @@
 (chained-define (%parent)   
   (define (parts-drop-right parts x)
      (let1 path-vec ($ parts :drop-right x)
-       (if (path-vec :emtpy?)
+       (if (path-vec :empty?)
            (path)
            (let1 new-path (%copy)
                  (new-path :set-parts! (path-vec :append #("")))
