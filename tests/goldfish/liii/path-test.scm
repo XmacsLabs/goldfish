@@ -128,6 +128,9 @@
 
 (check (path :/ "etc" :/ "passwd" :to-string) => "/etc/passwd")
 
+(when (os-windows?)
+  (check (path :of-drive "C" :to-string) => "C:\\"))
+
 (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
 (check (path :/ (path "a/b")) => (path "/a/b"))
 (check-catch 'value-error (path :/ (path "/a/b")))
@@ -140,6 +143,11 @@
   (check (path "tmp/test" :parent :to-string) => "tmp")
   (check (path "tmp" :parent :to-string) => ".")
   (check (path "tmp" :parent :parent :to-string) => "."))
+
+(when (os-windows?)
+  (check (path "C:" :parent :to-string) => "C:")
+  (check (path "C:/Users" :parent :to-string) => "C:")
+  (check (path "a/b" :parent :to-string) => "a"))
 
 (check (path :./ "a" :to-string) => "a")
 (check (path :./ "a" :/ "b" :/ "c" :to-string) => "a/b/c")

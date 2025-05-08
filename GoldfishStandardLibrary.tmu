@@ -3893,6 +3893,12 @@
     (check (path :/ "etc" :/ "passwd" :to-string) =\<gtr\> "/etc/passwd")
 
     \;
+
+    (when (os-windows?)
+
+    \ \ (check (path :of-drive "C" :to-string) =\<gtr\> "C:\\\\"))
+
+    \;
   </scm-chunk>
 
   <subsection|实用方法>
@@ -3998,35 +4004,29 @@
   返回当前路径的父目录
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (chained-define (%parent)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ 
+    (chained-define (%parent) \ \ 
 
     \ \ (define (parts-drop-right parts x)
 
-    \ \ \ \ \ (let1 path-vec ($ parts :drop-right x :collect)
+    \ \ \ \ \ (let1 path-vec ($ parts :drop-right x)
 
-    \ \ \ \ \ \ \ (if (equal? path-vec #())
+    \ \ \ \ \ \ \ (if (path-vec :emtpy?)
 
     \ \ \ \ \ \ \ \ \ \ \ (path)
 
     \ \ \ \ \ \ \ \ \ \ \ (let1 new-path (%copy)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! path-vec)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (path-vec :append #("")))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path)))) \ \ \ \ \ \ \ \ \ \ \ \ \ 
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path))))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
-    \ \ (cond\ 
-
-    \ \ \ \ ;; Root and cwd
+    \ \ (cond
 
     \ \ \ \ ((or (equal? #("/") parts) (equal? #(".") parts))
 
     \ \ \ \ \ (%this))
-
-    \ \ \ \ 
 
     \ \ \ \ ((or (os-macos?) (os-linux?))
 
@@ -4038,9 +4038,23 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 1))))
 
+    \ \ \ \ ((os-windows?)
+
+    \ \ \ \ \ (if ($ parts :empty?)
+
+    \ \ \ \ \ \ \ \ \ (%this)
+
+    \ \ \ \ \ \ \ \ \ (let1 last-part (($ parts) :take-right 1 :collect)
+
+    \ \ \ \ \ \ \ \ \ \ \ (if (equal? last-part #(""))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 2)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (parts-drop-right parts 1)))))
+
     \ \ \ \ 
 
-    \ \ \ \ (else (value-error "windows is not supported yet"))))
+    \ \ \ \ (else (??? "Unsupported platform"))))
 
     \;
   </goldfish-chunk>
@@ -4061,6 +4075,16 @@
     \ \ (check (path "tmp" :parent :to-string) =\<gtr\> ".")
 
     \ \ (check (path "tmp" :parent :parent :to-string) =\<gtr\> "."))
+
+    \;
+
+    (when (os-windows?)
+
+    \ \ (check (path "C:" :parent :to-string) =\<gtr\> "C:")
+
+    \ \ (check (path "C:/Users" :parent :to-string) =\<gtr\> "C:")
+
+    \ \ (check (path "a/b" :parent :to-string) =\<gtr\> "a"))
 
     \;
   </scm-chunk>

@@ -205,28 +205,32 @@
         
         (else (type-error "only string?, path is allowed"))))
 
-(chained-define (%parent)
-             
+(chained-define (%parent)   
   (define (parts-drop-right parts x)
-     (let1 path-vec ($ parts :drop-right x :collect)
-       (if (equal? path-vec #())
+     (let1 path-vec ($ parts :drop-right x)
+       (if (path-vec :emtpy?)
            (path)
            (let1 new-path (%copy)
-                 (new-path :set-parts! path-vec)
-                 new-path))))              
+                 (new-path :set-parts! (path-vec :append #("")))
+                 new-path))))
                 
-  (cond 
-    ;; Root and cwd
+  (cond
     ((or (equal? #("/") parts) (equal? #(".") parts))
      (%this))
-    
     ((or (os-macos?) (os-linux?))
      (let1 last-part (($ parts) :take-right 1 :collect)
            (if (equal? last-part #(""))
                (parts-drop-right parts 2)
                (parts-drop-right parts 1))))
+    ((os-windows?)
+     (if ($ parts :empty?)
+         (%this)
+         (let1 last-part (($ parts) :take-right 1 :collect)
+           (if (equal? last-part #(""))
+               (parts-drop-right parts 2)
+               (parts-drop-right parts 1)))))
     
-    (else (value-error "windows is not supported yet"))))
+    (else (??? "Unsupported platform"))))
 
 (chained-define (@./ x)
   (let1 p (path x)
