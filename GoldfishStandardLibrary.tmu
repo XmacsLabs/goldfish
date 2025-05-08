@@ -4034,15 +4034,19 @@
 
     \ \ \ \ \ (let1 path-vec ($ parts :drop-right x)
 
-    \ \ \ \ \ \ \ (if (path-vec :empty?)
+    \ \ \ \ \ \ \ (let1 new-path (%copy)
 
-    \ \ \ \ \ \ \ \ \ \ \ (path)
+    \ \ \ \ \ \ \ \ \ (if (path-vec :empty?)
 
-    \ \ \ \ \ \ \ \ \ \ \ (let1 new-path (%copy)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (if (os-windows?)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (path-vec :append #("")))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! #(""))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ new-path))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! #(".")))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (new-path :set-parts! (path-vec :append #(""))))
+
+    \ \ \ \ \ \ \ \ \ new-path)))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
