@@ -96,7 +96,8 @@
 
 (when (os-windows?)
   (check (path "a\\b") => (path :./ "a" :/ "b"))
-  (check (path "C:\\") => (path :of-drive #\C)))
+  (check (path "C:\\") => (path :of-drive #\C))
+  (check (path "C:\\Users") => (path :of-drive #\C :/ "Users")))
 
 (when (or (os-linux?) (os-macos?))
   (check (path "a/b") => (path :./ "a" :/ "b"))

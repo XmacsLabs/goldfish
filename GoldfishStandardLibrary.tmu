@@ -3662,7 +3662,9 @@
 
     \ \ (check (path "a\\\\b") =\<gtr\> (path :./ "a" :/ "b"))
 
-    \ \ (check (path "C:\\\\") =\<gtr\> (path :of-drive #\\C)))
+    \ \ (check (path "C:\\\\") =\<gtr\> (path :of-drive #\\C))
+
+    \ \ (check (path "C:\\\\Users") =\<gtr\> (path :of-drive #\\C :/ "Users")))
 
     \;
 
