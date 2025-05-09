@@ -179,5 +179,8 @@
 (check-catch 'out-of-range
              (bit-field #x100000000000000000000000000000000 128 129))       ; start 超过64位整数范围
 
+(check (bit-field-any? #b1001001 1 6) => #t)
+(check (bit-field-any? #b1000001 1 6) => #f)
+
 (check-report)
 

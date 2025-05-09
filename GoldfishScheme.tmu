@@ -1,4 +1,4 @@
-<TMU|<tuple|1.0.5|1.2.9.7>>
+<TMU|<tuple|1.1.0|2025.0.8>>
 
 <style|<tuple|book|chinese|literate|goldfish|reduced-margins|guile|smart-ref|preview-ref|python|elvish|framed-theorems>>
 
@@ -9848,7 +9848,7 @@
 
     \ \ bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 
-    \ \ bit-field
+    \ \ bit-field bit-field-any?
 
     \ \ ; S7 built-in
 
@@ -9878,7 +9878,7 @@
 
     \ \ bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 
-    \ \ bit-field
+    \ \ bit-field bit-field-any?
 
     )
 
@@ -10701,6 +10701,32 @@
     (check-catch 'out-of-range
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ (bit-field #x100000000000000000000000000000000 128 129)) \ \ \ \ \ \ ; start 超过64位整数范围
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>bit-field-any?><index|bit-field-any?><typehint|（(i integer?) (start integer?) (end integer?)) =\<gtr\> boolean?>
+
+  <strong|bit-field-any?> 用于检查位字段 <strong|i> 中从 <strong|start> 到 <strong|end> 之间的位置是否包含 <strong|1>。如果至少有一位是 <strong|1>，就返回 #t，否则返回 #f。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-field-any? i start end)
+
+    \ \ (not (zero?
+
+    \ \ \ \ \ \ \ \ \ (bitwise-and
+
+    \ \ \ \ \ \ \ \ \ \ \ (arithmetic-shift i (- start))
+
+    \ \ \ \ \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1)))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bit-field-any? #b1001001 1 6) =\<gtr\> #t)
+
+    (check (bit-field-any? #b1000001 1 6) =\<gtr\> #f)
 
     \;
   </scm-chunk>
