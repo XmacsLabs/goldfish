@@ -9186,7 +9186,7 @@
 
     \ \ \ \ (check (ht2 :get 'a :some?) =\<gtr\> #f)
 
-    \ \ \ \ (check (ht2 :get 'b :get) =\<gtr\> 2)))
+    \ \ \ \ (check (ht2 :get 'b :get) \ \ =\<gtr\> 2)))
 
     \;
   </goldfish-chunk>

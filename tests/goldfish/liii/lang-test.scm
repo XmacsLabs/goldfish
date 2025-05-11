@@ -1439,7 +1439,7 @@
   (let1 ((ht2 (ht :remove 'a)))
     (check (ht  :get 'a :some?) => #t)
     (check (ht2 :get 'a :some?) => #f)
-    (check (ht2 :get 'b :get) => 2)))
+    (check (ht2 :get 'b :get)   => 2)))
 
 (let1 ((ht ($ (hash-table 'x 42 'y 99))))
   (ht :remove! 'x)
