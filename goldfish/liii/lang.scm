@@ -1565,10 +1565,12 @@
 
 (define (%remove k)
   (rich-hash-table (hash-table-remove data k)))
+
 (define (%remove! k)
   (begin 
     (hash-table-remove! data k)
    this))
+
 (define (%contains k)
   (hash-table-contains? data k))
 

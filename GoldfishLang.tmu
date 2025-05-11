@@ -9175,18 +9175,20 @@
     (define (%remove k)
 
     \ \ (rich-hash-table (hash-table-remove data k)))
+
+    \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (let1 ((ht ($ (hash-table 'a 1 'b 2))))
+    (let1 ht ($ (hash-table 'a 1 'b 2))
 
-    \ \ (let1 ((ht2 (ht :remove 'a)))
+    \ \ (let1 ht2 (ht :remove 'a)
 
-    \ \ \ \ (check (ht \ :get 'a :some?) =\<gtr\> #t)
+    \ \ \ \ (check ((ht \ :get 'a) :some?) =\<gtr\> #t)
 
-    \ \ \ \ (check (ht2 :get 'a :some?) =\<gtr\> #f)
+    \ \ \ \ (check ((ht2 :get 'a) :some?) =\<gtr\> #f)
 
-    \ \ \ \ (check (ht2 :get 'b :get) \ \ =\<gtr\> 2)))
+    \ \ \ \ (check ((ht2 :get 'b) :get) \ \ =\<gtr\> 2)))
 
     \;
   </goldfish-chunk>
@@ -9201,16 +9203,18 @@
     \ \ \ \ (hash-table-remove! data k)
 
     \ \ \ this))
+
+    \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (let1 ((ht ($ (hash-table 'x 42 'y 99))))
+    (let1 ht ($ (hash-table 'x 42 'y 99))
 
-    \ \ (ht :remove! 'x)
+    \ \ ((ht :remove!) 'x)
 
-    \ \ (check (ht :get 'x :none?) =\<gtr\> #t)
+    \ \ (check ((ht :get 'x) :none?) =\<gtr\> #t)
 
-    \ \ (check (ht :get 'y :get) =\<gtr\> 99))
+    \ \ (check ((ht :get 'y) :get) =\<gtr\> 99))
 
     \;
   </goldfish-chunk>
