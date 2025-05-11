@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.9>>
+<TMU|<tuple|1.0.5|1.2.9.7>>
 
 <style|<tuple|book|goldfish|literate|reduced-margins|python|padded-paragraphs|chinese>>
 
@@ -9166,6 +9166,54 @@
   </goldfish-chunk>
 
   \;
+
+  <section|删除器>
+
+  <paragraph|rich-hash-table%remove><scm|><typehint|((k any?)) =\<gtr\> rich-hash-table>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|false|false>
+    (define (%remove k)
+
+    \ \ (rich-hash-table (hash-table-remove data k)))
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|false|false>
+    (let ((ht ($ (hash-table 'a 1 'b 2))))
+
+    \ \ (let ((ht2 (ht :remove 'a)))
+
+    \ \ \ \ (check (ht \ :get 'a :some?) =\<gtr\> #t)
+
+    \ \ \ \ (check (ht2 :get 'a :some?) =\<gtr\> #f)
+
+    \ \ \ \ (check (ht2 :get 'b :get) =\<gtr\> 2)))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-hash-table%remove!><typehint|((k any?)) =\<gtr\> rich-hash-table>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|false|false>
+    (define (%remove! k)
+
+    \ \ (begin\ 
+
+    \ \ \ \ (hash-table-remove! data k)
+
+    \ \ \ this))
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|false|false>
+    (let ((ht ($ (hash-table 'x 42 'y 99))))
+
+    \ \ (ht :remove! 'x)
+
+    \ \ (check (ht :get 'x :none?) =\<gtr\> #t)
+
+    \ \ (check (ht :get 'y :get) =\<gtr\> 99))
+
+    \;
+  </goldfish-chunk>
 
   <section|谓词>
 

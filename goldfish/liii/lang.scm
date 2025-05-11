@@ -1563,6 +1563,12 @@
 (define (%get k)
   (option (hash-table-ref/default data k '())))
 
+(define (%remove k)
+  (rich-hash-table (hash-table-remove data k)))
+(define (%remove! k)
+  (begin 
+    (hash-table-remove! data k)
+   this))
 (define (%contains k)
   (hash-table-contains? data k))
 
