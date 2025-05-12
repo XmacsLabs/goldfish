@@ -1,4 +1,6 @@
-(define (prime? n)
+(import (scheme time))
+
+(define (prime1? n)
   (define (iter i)
     (cond ((> (* i i) n) #t)
           ((zero? (modulo n i)) #f)
@@ -9,7 +11,7 @@
         ((even? n) #f)
         (else (iter 3))))
 
-(define (prime? n)
+(define (prime2? n)
   (cond ((< n 2) #f)
         ((= n 2) #t)
         ((even? n) #f)
@@ -18,8 +20,20 @@
           :forall
           (lambda (i) (not (zero? (modulo n i))))))))
 
-(($ 1 :to 100)
- :filter prime?
- :filter (lambda (x) (prime? (+ x 2)))
- :map (lambda (x) (cons x (+ x 2)))
- :collect)
+(define (timing msg thunk)
+  (let* ((start (current-jiffy))
+         (val (thunk))
+         (end (current-jiffy)))
+    (display* msg (number->string (- end start)) "\n")))
+
+(let1 n 1073729
+  (timing "R7RS: " (lambda () (($ 1 :to 100) :for-each (lambda (x) (prime1? n)))))
+  (timing "Goldfish: " (lambda () (($ 1 :to 100) :for-each (lambda (x) (prime2? n)))))
+  (display* (prime1? n) "\n")
+)
+
+; (($ 1 :to 100)
+;  :filter prime?
+;  :filter (lambda (x) (prime? (+ x 2)))
+;  :map (lambda (x) (cons x (+ x 2)))
+;  :collect)

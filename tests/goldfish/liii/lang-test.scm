@@ -90,6 +90,7 @@
   (check-catch 'value-error (bob 'sex))
   (check-catch 'value-error (bob :sex))
   (check-true (bob :is-instance-of 'person))
+  (check-true (person :is-type-of bob))
   (check (bob :to-string) => "(person :name \"Bob\" :age 21)"))
 
 (check-catch 'type-error (person 1 21))
@@ -156,6 +157,7 @@
 (check-true ((my-bool 'false) :false?))
 (check-true ((my-bool #t) :true?))
 (check-true ((my-bool #f) :false?))
+(check-true (my-bool :is-type-of (my-bool 'true)))
 
 (define-case-class test-case-class
   ((name string?))
@@ -183,6 +185,7 @@
       (apply (%this) (if (null? xs) '(:this) xs)))
     (define (%to-string)
       (format #f "Hello ~a from ~a" name country)))
+
   (define Andy (person :default))
   (check-catch 'wrong-type-arg (person :this))
   (check (Andy :to-string) => "Hello Andy from China")
@@ -190,7 +193,8 @@
   (check (Andy :to-string) => "Hello Andy from USA")
   (check (Andy :set-country! "China" :set-name! "Ancker-0" :to-string) => "Hello Ancker-0 from China")
   (check (Andy :set-country! "China") => (person "Ancker-0" "China"))
-  (check (Andy :this :set-country! "USA" :this :set-name! "Andy" :this :to-string) => "Hello Andy from USA"))
+  (check (Andy :this :set-country! "USA" :this :set-name! "Andy" :this :to-string) => "Hello Andy from USA")
+  (check-true (person :is-type-of Andy)))
 
 (let ()
   (define-case-class person ((name string?) (country string?))
@@ -242,6 +246,9 @@
   (check (p1 :get-age) => 25)
   (check (p2 :get-name) => "Bob")
   (check (p2 :get-age) => 10)
+  
+  (check-true (person :is-type-of p1))
+  (check-true (person :is-type-of p2))
 
   ;; 测试类型检查
   (check-catch 'type-error (p1 :set-name! 123))
@@ -536,6 +543,27 @@
    (check (str 0) => ($ #\H))
    (check (str 7) => (rich-char :from-string "#\\界")))
 
+(let1 s ($ "你好世界HelloWord")
+  (check ((s :find (@ _ :equals ($ "你" 0))) :get) 
+          => ($ "你" 0))
+  (check-true ((s :find (@ _ :equals ($ "师" 0))) :empty?)))
+
+(let1 s ($ "你好世界HelloWord")
+  (check ((s :find-last (@ _ :equals ($ "你" 0))) :get) 
+          => ($ "你" 0))
+  (check-true ((s :find-last (@ _ :equals ($ "师" 0))) :empty?)))
+
+(check ($ "你好" :head) => ($ "你" 0))
+(check-catch 'index-error (rich-string :empty :head))
+(check ($ "hello" :head-option) => (option #\h))
+(check (rich-string :empty :head-option) => (none))
+
+(check ($ "你好" :last) => ($ "好" 0))
+(check-catch 'index-error (rich-string :empty :last))
+
+(check ($ "hello" :last-option) => (option #\o))
+(check (rich-string :empty :last-option) => (none))
+
 (let1 str ($ "Hello，世界")
    (check (str :slice 0 5) => ($ "Hello"))
    (check (str :slice -10 5) => ($ "Hello"))
@@ -591,7 +619,15 @@
 (let1 str (rich-string "Hello, World!")
   (check-true (str :contains #\W))
   (check-true (str :contains "Hello"))
-  (check-true (str :contains "")))
+  (check-true (str :contains ""))
+  (check-true (str :contains (rich-char #\W)))
+  (check-true (str :contains ($ "")))
+  (check-true (str :contains ($ "Hello"))))
+
+(let1 str (rich-string "你好世界")
+  (check-true (str :contains "好世"))
+  (check-true (str :contains "你"))
+  (check-true (str :contains ($ "你" 0))))
 
 (let1 str (rich-string "你好，世界！")
   (check (str :index-of ($ "你")) => 0)
@@ -626,6 +662,16 @@
   (check (s :length) => 3))
 
 (check ($ "abc中文" :map (lambda (c) (c :to-upper))) => "ABC中文")
+
+(check ($ "Hello123" :filter (@ _ :ascii?)) => "Hello123")
+(check ($ "123abc" :filter (@ _ :digit?)) => "123")
+(check ($ "ABCabc" :filter (@ _ :upper?)) => "ABC")
+(check ($ "你好世界hello" :filter (@ _ :equals ($ "你" 0))) => ($ "你"))
+
+(check ($ "Hello123" :filter (@ _ :ascii?) :reverse) => "321olleH")
+(check ($ "123abc" :filter (@ _ :digit?) :reverse) => "321")
+(check ($ "ABCabc" :filter (@ _ :upper?) :reverse) => "CBA")
+(check ($ "你好世界" :drop-while (@ _ :equals ($ "你" 0)) :reverse) => "界世好")
 
 (check ($ "" :count (@ == _ #\A)) => 0)
 (check ($ "hello" :count (@ == _ #\l)) => 2)
@@ -961,6 +1007,13 @@
   (check ((lst :find even?) :get) => 2)
   (check ((lst :find (lambda (x) (< x 0))) :empty?) => #t))
 
+(let1 lst (rich-list '(1 2 3 4 5))
+  (check ((lst :find-last even?) :get) => 4)  ; 最后一个偶数是4
+  (check ((lst :find-last (@ > _ 3)) :get) => 5)  ; 最后一个大于3的元素是5
+  (check ((lst :find-last (@ > _ 5)) :empty?) => #t)  ; 没有大于5的元素
+  (check ((lst :find-last zero?) :empty?) => #t)  ; 没有0
+  (check ((rich-list '()) :find-last even?) => (none)))  ; 空列表返回none
+
 (check ($ (list 1 2 3) :head) => 1)
 (check-catch 'out-of-range (rich-list :empty :head))
 (check ($ (list 1 2 3) :head-option) => (option 1))
@@ -1086,6 +1139,24 @@
      :collect)
   => '((1 . b) (1 . d) (2 . c) (3 . a)))
 
+;; 测试按绝对值排序
+(check ($ '(-3 1 -2 4 0) :sort-by abs :collect) => '(0 1 -2 -3 4))
+  
+;; 测试按结构体字段排序
+(let ((people ($ '((name . "Alice") (name . "Bob") (name . "Charlie")))))
+  (check (people :sort-by (lambda (p) (string-length (cdr p))) :collect)
+         => '((name . "Bob") (name . "Alice") (name . "Charlie"))))
+  
+;; 测试空列表
+(check ($ '() :sort-by identity :collect) => '())
+  
+;; 测试链式调用
+(check ($ '(-3 1 -2 4 0) 
+         :sort-by abs 
+         :filter positive? 
+         :collect)
+       => '(1 4))
+
 (check  (($ '(1 2 3 4 5 6) :group-by (@ modulo _ 2)) :collect)
         =>  (hash-table 0 '(2 4 6) 1 '(1 3 5)))
 
@@ -1098,6 +1169,39 @@
 (let ((result ($ '("apple" "banana" "cat" "dog") :group-by (@ string-length _))))
   (check (result :collect) 
           => (hash-table 3 '("cat" "dog") 5 '("apple") 6 '("banana"))))
+
+;; Single-argument sliding for rich-list
+(check ($ '() :sliding 2) => #())
+(check ($ '(1) :sliding 2) => #((1)))
+(check ($ '(1 2) :sliding 2) => #((1 2)))
+(check ($ '(1 2 3) :sliding 2) => #((1 2) (2 3)))
+(check ($ '(1 2 3 4 5) :sliding 3) => #((1 2 3) (2 3 4) (3 4 5)))
+(check ($ '(1 2 3 4 5) :sliding 1) => #((1) (2) (3) (4) (5)))
+(check ($ '(1 2 3) :sliding 3) => #((1 2 3)))
+(check ($ '(1 2 3) :sliding 4) => #((1 2 3)))
+
+;; Error cases for size (single-arg) for rich-list
+(check-catch 'value-error ($ '(1 2 3) :sliding 0))
+(check-catch 'value-error ($ '(1 2 3) :sliding -1))
+(check-catch 'type-error ($ '(1 2 3) :sliding 1.5))
+
+;; Two-argument sliding for rich-list
+(check ($ '() :sliding 2 2) => #())
+(check ($ '(1 2 3 4 5) :sliding 2 2) => #((1 2) (3 4) (5)))
+(check ($ '(1 2 3 4 5 6) :sliding 2 3) => #((1 2) (4 5)))
+(check ($ '(1 2 3 4 5) :sliding 3 1) => #((1 2 3) (2 3 4) (3 4 5) (4 5) (5)))
+(check ($ '(1 2 3 4) :sliding 2 2) => #((1 2) (3 4)))
+(check ($ '(1 2) :sliding 3 1) => #((1 2) (2)))
+(check ($ '(1 2 3 4 5) :sliding 3 2) => #((1 2 3) (3 4 5) (5)))
+(check ($ '(1 2 3 4 5 6 7) :sliding 3 3) => #((1 2 3) (4 5 6) (7)))
+(check ($ '(1 2 3 4 5) :sliding 5 1) => #((1 2 3 4 5) (2 3 4 5) (3 4 5) (4 5) (5)))
+(check ($ '(1 2 3 4 5) :sliding 6 1) => #((1 2 3 4 5) (2 3 4 5) (3 4 5) (4 5) (5)))
+
+
+;; Error cases for step (two-arg) for rich-list
+(check-catch 'value-error ($ '(1 2 3) :sliding 2 0))
+(check-catch 'value-error ($ '(1 2 3) :sliding 2 -1))
+(check-catch 'type-error ($ '(1 2 3) :sliding 2 1.5))
 
 (check (($ '(1 2 3)) :zip '(a b c) :collect) => '((1 . a) (2 . b) (3 . c)))
 (check (($ '(1 2 3)) :zip '(a b) :collect) => '((1 . a) (2 . b)))
@@ -1153,6 +1257,20 @@
 (check-catch 'value-error ($ '() :max-by identity))
 (check-catch 'type-error ($ '(1 2 3) :max-by "not-function"))
 (check-catch 'type-error ($ '("a" "b" "c") :max-by identity))
+
+(check ($ '(1 2 3) :min-by identity) => 1)
+(check ($ '((1) (3) (2)) :min-by car) => '(1))
+(check-catch 'value-error ($ '() :min-by identity))
+(check-catch 'type-error ($ '(1 2 3) :min-by "not-function"))
+(check-catch 'type-error ($ '("a" "b" "c") :min-by identity))
+
+(check (rich-list :empty :append (list 1 2)) => ($ (list 1 2)))
+(check ($ (list 1 2) :append (list )) => ($ (list 1 2)))
+(check ($ (list 1 2) :append (list 3 4)) => ($ (list 1 2 3 4)))
+
+(check ($ '() :max-by-option identity) => (none))
+
+(check ($ '() :min-by-option identity) => (none))
 
 (check (object->string ($ '(1 2 3))) => "(1 2 3)")
 
@@ -1210,11 +1328,28 @@
 (check ($ #(1 2 3) 1) => 2)
 
 (let ((vec (array #(1 2 3 4 5))))
+  (check (vec :index-of 1) => 0)
+  (check (vec :index-of 5) => 4)
+  (check (vec :index-of 6) => -1))
+
+(let ((vec (array #(1 1 1 5 5))))
+  (check (vec :last-index-of 1) => 2)
+  (check (vec :last-index-of 5) => 4)
+  (check (vec :last-index-of 6) => -1))
+
+(let ((vec (array #(1 2 3 4 5))))
   (check ((vec :find (lambda (x) (= x 3))) :get) => 3)
   (check ((vec :find (lambda (x) (> x 2))) :get) => 3)
   (check ((vec :find (lambda (x) (> x 10))) :empty?) => #t)
   (check ((vec :find even?) :get) => 2)
   (check ((vec :find (lambda (x) (< x 0))) :empty?) => #t))
+
+(let ((vec (array #(1 2 3 4 5))))
+  (check ((vec :find-last even?) :get) => 4)  ; 最后一个偶数是4
+  (check ((vec :find-last (@ > _ 3)) :get) => 5)  ; 最后一个大于3的元素是5
+  (check ((vec :find-last (@ > _ 5)) :empty?) => #t)  ; 没有大于5的元素
+  (check ((vec :find-last zero?) :empty?) => #t)  ; 没有0
+  (check ((array :empty) :find-last even?) => (none)))  ; 空向量返回none
 
 (check ($ (vector 1 2 3) :head) => 1)
 (check-catch 'out-of-range (array :empty :head))
@@ -1222,7 +1357,7 @@
 (check (array :empty :head-option) => (none))
 
 (check ($ (vector 1 2 3) :last) => 3)
-(check-catch 'out-of-range (array :empty :last))
+(check-catch 'index-error (array :empty :last))
 (check ($ (vector 1 2 3) :last-option) => (option 3))
 (check (array :empty :last-option) => (none))
 
@@ -1252,11 +1387,32 @@
 (let ((empty-vec (array #())))
   (check (empty-vec :forall (lambda (x) (> x 0))) => #t))
 
+(let1 vec (rich-vector #(1 2 3))
+  (check-true (vec :contains 1))
+  (check-false (vec :contains 4)))
+
+(let1 vec (rich-vector #("/" "tmp" "/"))
+  (check-true (vec :contains "tmp"))
+  (check-true (vec :contains "/"))
+  (check-false (vec :contains "tmpxx")))
+
 (let1 vec (array #(1 2 3 4 5))
   (check (vec :map (lambda (x) (vector x x))) => #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))))
 
 (let1 vec (array #(1 2 3 4 5))
   (check (vec :flat-map (lambda (x) (vector x x))) => #(1 1 2 2 3 3 4 4 5 5)))
+
+(let ((vec (rich-vector #(1 2 3 4 5))))
+  (check (vec :reverse :collect) => #(5 4 3 2 1)))
+
+(let ((vec (rich-vector #(a b c d e))))
+  (check (vec :reverse :collect) => #(e d c b a)))
+
+(let ((vec (rich-vector #())))
+  (check (vec :reverse :collect) => #()))
+
+(let ((vec (rich-vector #("/" "tmp" "/" "tmp2"))))
+  (check (vec :reverse :collect) => #("tmp2" "/" "tmp" "/")))
 
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :take -1 :collect) => #())
@@ -1322,6 +1478,24 @@
   (check (vec :sort-with (lambda (x y) (< (cdr x) (cdr y))))
          => (rich-vector #((2 . 1) (1 . 2) (3 . 2) (3 . 3) (1 . 3)))))
 
+;; 测试按绝对值排序
+(check ($ #(-3 1 -2 4 0) :sort-by abs :collect) => #(0 1 -2 -3 4))
+  
+;; 测试按结构体字段排序
+(let ((people ($ #((name . "Alice") (name . "Bob") (name . "Charlie")))))
+  (check (people :sort-by (lambda (p) (string-length (cdr p))) :collect)
+         => #((name . "Bob") (name . "Alice") (name . "Charlie"))))
+  
+;; 测试空向量
+(check ($ #() :sort-by identity :collect) => #())
+  
+;; 测试链式调用
+(check ($ #(-3 1 -2 4 0) 
+         :sort-by abs 
+         :filter positive? 
+         :collect)
+       => #(1 4))
+
 (check  (($ #(1 2 3 4 5 6) :group-by (@ modulo _ 2)) :collect)
         =>  (hash-table 0 #(2 4 6) 1 #(1 3 5)))
 
@@ -1334,6 +1508,39 @@
 (let ((result ($ #("apple" "banana" "cat" "dog") :group-by (@ string-length _))))
   (check (result :collect) 
           => (hash-table 3 #("cat" "dog") 5 #("apple") 6 #("banana"))))
+
+(check ($ #() :sliding 2) => #())
+(check ($ #(1) :sliding 2) => #(#(1)))
+(check ($ #(1 2) :sliding 2) => #(#(1 2)))
+(check ($ #(1 2 3) :sliding 2) => #(#(1 2) #(2 3)))
+(check ($ #(1 2 3 4 5) :sliding 3) => #(#(1 2 3) #(2 3 4) #(3 4 5)))
+(check ($ #(1 2 3 4 5) :sliding 1) => #(#(1) #(2) #(3) #(4) #(5)))
+(check ($ #(1 2 3) :sliding 3) => #(#(1 2 3)))
+(check ($ #(1 2 3) :sliding 4) => #(#(1 2 3)))
+
+;; Error cases for size
+(check-catch 'value-error ($ #(1 2 3) :sliding 0))
+(check-catch 'value-error ($ #(1 2 3) :sliding -1))
+(check-catch 'type-error ($ #(1 2 3) :sliding 1.5))
+(check-catch 'type-error ($ #(1 2 3) :sliding "a"))
+
+;; Two-argument sliding
+(check ($ #() :sliding 2 2) => #())
+(check ($ #(1 2 3 4 5) :sliding 2 2) => #(#(1 2) #(3 4) #(5)))
+(check ($ #(1 2 3 4 5 6) :sliding 2 3) => #(#(1 2) #(4 5)))
+(check ($ #(1 2 3 4 5) :sliding 3 1) => #(#(1 2 3) #(2 3 4) #(3 4 5) #(4 5) #(5)))
+(check ($ #(1 2 3 4) :sliding 2 2) => #(#(1 2) #(3 4)))
+(check ($ #(1 2) :sliding 3 1) => #(#(1 2) #(2)))
+(check ($ #(1 2 3 4 5) :sliding 3 2) => #(#(1 2 3) #(3 4 5) #(5)))
+(check ($ #(1 2 3 4 5 6 7) :sliding 3 3) => #(#(1 2 3) #(4 5 6) #(7)))
+(check ($ #(1 2 3 4 5) :sliding 5 1) => #(#(1 2 3 4 5) #(2 3 4 5) #(3 4 5) #(4 5) #(5)))
+(check ($ #(1 2 3 4 5) :sliding 6 1) => #(#(1 2 3 4 5) #(2 3 4 5) #(3 4 5) #(4 5) #(5)))
+
+;; Error cases for step (two-arg)
+(check-catch 'value-error ($ #(1 2 3) :sliding 2 0))
+(check-catch 'value-error ($ #(1 2 3) :sliding 2 -1))
+(check-catch 'type-error ($ #(1 2 3) :sliding 2 1.5))
+(check-catch 'type-error ($ #(1 2 3) :sliding 2 "a"))
 
 (check  ($ #(a b c) :zip-with-index :collect)  
         => #((0 . a) (1 . b) (2 . c)))
@@ -1368,8 +1575,12 @@
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :index-where even?) => 1)
   (check (vec :index-where (@ > _ 3)) => 3)
-  (check (vec :index-where (@ > _ 5)) => #f)
-)
+  (check (vec :index-where (@ > _ 5)) => -1))
+
+(let ((vec (array #(1 2 3 4 5))))
+  (check (vec :last-index-where even?) => 3)
+  (check (vec :last-index-where (@ > _ 3)) => 4)
+  (check (vec :last-index-where (@ > _ 5)) => -1))
 
 (check ($ #(2 4 6 7 8 9) :take-while even?) => #(2 4 6))
 (check ($ #(1 3 5 7) :take-while odd?) => #(1 3 5 7))
@@ -1382,6 +1593,16 @@
 (check-catch 'value-error ($ #() :max-by identity))
 (check-catch 'type-error ($ #(1 2 3) :max-by "not-a-function"))
 (check-catch 'type-error ($ #(1 2 3) :max-by (lambda (x) "not-a-number")))
+
+(check ($ #(1 2 3 4 5) :min-by identity) => 1)
+(check ($ #("apple" "banana" "pear") :min-by string-length) => "pear")
+(check-catch 'value-error ($ #() :min-by identity))
+(check-catch 'type-error ($ #(1 2 3) :min-by "not-a-function"))
+(check-catch 'type-error ($ #(1 2 3) :min-by (lambda (x) "not-a-number")))
+
+(check ($ #() :max-by-option identity) => (none))
+
+(check ($ #() :min-by-option identity) => (none))
 
 (check (object->string ($ #(1 2 3))) => "#(1 2 3)")
 
@@ -1419,11 +1640,20 @@
 (let1 v ($ #(1 2 3))
   (v :set! 0 2)
   (check (v 0) => 2)
-  (check-catch 'out-of-range (v -1))
-  (check-catch 'out-of-range (v 3)))
+  (check-catch 'index-error (v -1))
+  (check-catch 'index-error (v 3)))
 
-(check-catch 'out-of-range (array :empty :set! 0 1))
+(check-catch 'index-error (array :empty :set! 0 1))
 
+(check (rich-vector :empty :append #(1)) => #(1))
+(check (rich-vector :empty :append ($ #(1))) => #(1))
+
+(check ($ #(1) :append #()) => #(1))
+(check ($ #(1) :append (rich-vector :empty)) => #(1))
+
+(check ($ #(1) :append #(2 3)) => #(1 2 3))
+(check ($ #(1) :append ($ #(2 3))) => #(1 2 3))
+       
 (check (rich-hash-table :empty) => ($ (hash-table)))
 (check (rich-hash-table :empty :collect) => (hash-table))
 
@@ -1543,6 +1773,10 @@
   
   (check total => 342)                          
 )
+
+(let1 ht ($ (hash-table 'a 1 'b 2 'c 3))
+  (let1 r (ht :filter (lambda (k v) (even? v)) :collect)
+    (check r => (hash-table 'b 2))))
 
 (check-report)
 

@@ -75,65 +75,138 @@
   
   (delete-file file-path))
 
+(check ((path) :get-type) => 'posix)
+(check ((path) :get-parts) => #("."))
+
+(check (path :of-drive #\D :to-string) => "D:\\")
+(check (path :of-drive #\d :to-string) => "D:\\")
+
+(check (path :root :to-string) => "/")
+
+(when (or (os-macos?) (os-linux?))
+  (check (path :from-parts #("/" "tmp")) => (path :/ "tmp"))
+  (check (path :from-parts #("/" "tmp" "test")) => (path :/ "tmp" :/ "test"))
+  (check (path :from-parts #("/", "tmp") :to-string) => "/tmp"))
+
+(when (os-windows?)
+  (check (path :/ "C:" :to-string) => "C:\\"))
+
+(when (not (os-windows?))
+  (check (path :/ "root" :to-string) => "/root"))
+
+(when (os-windows?)
+  (check (path "a\\b") => (path :./ "a" :/ "b"))
+  (check (path "C:\\") => (path :of-drive #\C))
+  (check (path "C:\\Users") => (path :of-drive #\C :/ "Users")))
+
+(when (or (os-linux?) (os-macos?))
+  (check (path "a/b") => (path :./ "a" :/ "b"))
+  (check (path "/tmp") => (path :/ "tmp"))
+  (check (path "/tmp/tmp2") => (path :/ "tmp" :/ "tmp2")))
+
+(when (os-linux?)
+  (check (path :from-env "HOME" :to-string) => (path :home :to-string)))
+
+(when (os-windows?)
+  (check (path :from-env "USERPROFILE" :to-string) => (path :home :to-string)))
+
+(check (path "file.txt" :name) => "file.txt")
+(check (path "archive.tar.gz" :name) => "archive.tar.gz") 
+(check (path ".hidden" :name) => ".hidden") 
+(check (path "noext" :name) => "noext")  
+(check (path "/path/to/file.txt" :name) => "file.txt")  
+(check (path "C:/path/to/file.txt" :name) => "file.txt")  ; Windows路径
+(check (path "" :name) => "")  ; 空路径
+(check (path "." :name) => "")  ; 当前目录
+(check (path ".." :name) => "..")  ; 上级目录
+
+(check (path "file.txt" :stem) => "file")
+(check (path "archive.tar.gz" :stem) => "archive.tar")  ; 只去掉最后一个后缀
+(check (path ".hidden" :stem) => ".hidden")  ; 隐藏文件保留完整名称
+(check (path "noext" :stem) => "noext")  ; 无后缀名保留完整名称
+(check (path "/path/to/file.txt" :stem) => "file")  ; 绝对路径
+(check (path "C:/path/to/file.txt" :stem) => "file")  ; Windows路径
+(check (path "" :stem) => "")  ; 空路径
+(check (path "." :stem) => "")  ; 当前目录
+(check (path ".." :stem) => "..")  ; 上级目录
+
+(check (path "file.txt" :suffix) => ".txt")
+(check (path "archive.tar.gz" :suffix) => ".gz")  ; 只保留最后一个后缀
+(check (path ".hidden" :suffix) => "")  
+(check (path "noext" :suffix) => "")  
+(check (path "/path/to/file.txt" :suffix) => ".txt")  ; 绝对路径
+(check (path "C:/path/to/file.txt" :suffix) => ".txt")  ; Windows路径
+(check (path "" :suffix) => "")  ; 空路径
+(check (path "." :suffix) => "")  ; 当前目录
+(check (path ".." :suffix) => "")  ; 上级目录
+
+(check-true ((path "/tmp") :equals "/tmp"))
+(check-true ((path "/tmp") :equals ($ "/tmp")))
+(check-false ((path "/tmp/test") :equals "/tmp"))
+(check-true ((path "/tmp/test") :equals (path "/tmp/test")))
+
 (when (or (os-linux?) (os-macos?))
   (check-false (path :/ "tmp" :file?))
   (chdir "/tmp")
   (mkdir "tmpxxxx") 
-  (check (path :from-string "/tmp/tmpxxxx" :file?) => #f)
+  (check-false (path :from-parts #("/" "tmp" "/" "tmpxxxx") :file?))
   (rmdir "tmpxxxx"))
 
 (when (or (os-linux?) (os-macos?))
   (check-true (path :/ "tmp" :dir?))
   (check-true (path :/ "tmp/" :dir?))
-  (check (path :from-string "/tmpxxxx" :dir?) => #f)
-  (check (path :from-string "/tmpxxxx/" :dir?) => #f)
+  (check-false (path :from-parts #("/" "tmpxxxx") :dir?))
+  (check-true (path :from-parts #("/" "tmp" "") :dir?))
   (chdir "/tmp")
-  (mkdir "tmpxxxx") 
-  (check (path :from-string "/tmp/tmpxxxx/" :dir?) => #t)
+  (mkdir "tmpxxxx")
+  (check-true (path :from-parts #("/" "tmp" "/" "tmpxxxx" "") :dir?))
   (rmdir "tmpxxxx"))
 
-(check-true ((path #("/")) :absolute?))
-(check-true ((path #("/" "tmp")) :absolute?))
-(check-false ((path #("tmp")) :absolute?))
+(check-false ((path) :absolute?))
+(check (path :/ "C:" :get-type) => 'windows)
+(check (path :/ "C:" :get-parts) => #())
 (check-true (path :/ "C:" :absolute?))
+(check-true (path :from-parts #("/" "tmp") :absolute?))
+(check-false (path :from-parts #("tmp") :absolute?))
 
-(when (os-linux?)
+(when (or (os-linux?) (os-macos?))
   (check-true (path :/ "tmp" :exists?)))
 
+(when (not (os-windows?))
+  (check (path :/ "etc" :/ "passwd" :to-string) => "/etc/passwd"))
+
 (when (os-windows?)
-  (check (path :from-string "a\\b") => (path :./ "a" :/ "b"))
-  (check (path :from-string "C:\\") => (path :of-drive #\C)))
-
-(when (or (os-linux?) (os-macos?))
-  (check (path :from-string "a/b") => (path :./ "a" :/ "b")))
-
-(check ((path #("/" "etc" "passwd")) :to-string) => "/etc/passwd")
-(check ((path #("/" "tmp" "")) :to-string) => "/tmp/")
-(check ((path #("Users") 'windows "C") :to-string) => "C:\\Users")
-
-(check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
-
-(when (or (os-linux?) (os-macos?))
-  (check (path :from-string "/" :parent :to-string) => "/")
-  (check (path :from-string "" :parent :to-string) => ".")
-  (check (path :from-string "/tmp/" :parent :to-string) => "/")
-  (check (path :from-string "/tmp/test" :parent :parent :to-string) => "/")
-  (check (path :from-string "tmp/test" :parent :to-string) => "tmp")
-  (check (path :from-string "tmp" :parent :to-string) => ".")
-  (check (path :from-string "tmp" :parent :parent :to-string) => "."))
-
-(check (path :of-drive #\C :to-string) => "C:\\")
-
-(check (path :/ "C:" :to-string) => "C:\\")
-(check (path :/ "root" :to-string) => "/root")
-
-(check (path :./ "a" :to-string) => "a")
-(check (path :./ "a" :/ "b" :/ "c" :to-string) => "a/b/c")
-
-(when (os-linux?)
-  (check-true (path :cwd :dir?)))
+  (check (path :of-drive #\C :to-string) => "C:\\"))
 
 (when (not (os-windows?))
+  (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
+  (check (path :/ (path "a/b")) => (path "/a/b")))
+
+(check-catch 'value-error (path :/ (path "/a/b")))
+
+(when (or (os-linux?) (os-macos?))
+  (check (path "/" :parent :to-string) => "/")
+  (check (path "" :parent :to-string) => ".")
+  (check (path "/tmp/" :parent :to-string) => "/")
+  (check (path "/tmp/test" :parent :parent :to-string) => "/")
+  (check (path "tmp/test" :parent :to-string) => "tmp/")
+  (check (path "tmp" :parent :to-string) => ".")
+  (check (path "tmp" :parent :parent :to-string) => "."))
+
+(when (os-windows?)
+  (check (path "C:" :parent :to-string) => "C:\\")
+  (check (path "C:\\Users" :parent :to-string) => "C:\\")
+  (check (path "a\\b" :parent :to-string) => "a\\"))
+
+(check (path :./ "a" :to-string) => "a")
+
+(when (not (os-windows?))
+  (check (path :./ "a" :/ "b" :/ "c" :to-string) => "a/b/c"))
+
+(when (or (os-linux?) (os-macos?))
+  (check-true (path :cwd :dir?)))
+
+(when (or (os-linux?) (os-macos?))
   (check ((path :home) :to-string) => (getenv "HOME")))
 
 (when (os-windows?)

@@ -18,7 +18,7 @@
 
     <assign|srfi|<flag|SRFI|dark red>>
 
-    <assign|goldfish-version|17.11.11>
+    <assign|goldfish-version|17.11.12>
 
     <assign|typehint|<macro|body|<goldfish-lang|<arg|body>>>>
 

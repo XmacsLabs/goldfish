@@ -1,4 +1,4 @@
-<TMU|<tuple|1.0.5|1.2.9.7>>
+<TMU|<tuple|1.1.0|2025.0.8>>
 
 <style|<tuple|generic|chinese|goldfish|literate|reduced-margins>>
 
@@ -98,9 +98,9 @@
   <\scm-chunk|goldfish/liii/set.scm|true|true>
     (define-library (liii set)
 
-    (import (srfi srfi-113))
+    (import (liii lang)(liii hash-table)(srfi srfi-128))
 
-    (export set?)
+    (export hash-set)
 
     (begin
 
@@ -119,7 +119,311 @@
     \;
   </scm-chunk>
 
-  \;
+  <section|实现>
+
+  <\scm-chunk|goldfish/liii/set.scm|true|true>
+    \;
+
+    (define-case-class hash-set ((data hash-table?))
+
+    \;
+
+    ;; Factory methods
+
+    (chained-define (@empty)\ 
+
+    \ \ (hash-set (make-hash-table)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 
+
+    ;; Basic operations
+
+    (define (%size) (hash-table-size data))
+
+    \;
+
+    (define (%empty?) (hash-table-empty? data))
+
+    \;
+
+    (define (%contains element)
+
+    \ \ (hash-table-contains? data element))
+
+    \;
+
+    ;; Modification operations
+
+    (chained-define (%add-one! element)
+
+    \ \ (hash-table-set! data element #t)
+
+    \ \ (%this))
+
+    \;
+
+    (chained-define (%remove! element)
+
+    \ \ (hash-table-delete! data element)
+
+    \ \ (%this))
+
+    \;
+
+    (chained-define (%add-one element)
+
+    \ \ (let ((ht (make-hash-table)))
+
+    \ \ \ \ (hash-table-for-each
+
+    \ \ \ \ \ \ (lambda (k v) (hash-table-set! ht k v))
+
+    \ \ \ \ \ \ data)
+
+    \ \ \ \ (hash-table-set! ht element #t)
+
+    \ \ \ \ (hash-set ht)))
+
+    \;
+
+    (chained-define (%remove element)
+
+    \ \ (let ((ht (make-hash-table)))
+
+    \ \ \ \ (hash-table-for-each
+
+    \ \ \ \ \ \ (lambda (k v) (hash-table-set! ht k v))
+
+    \ \ \ \ \ \ data)
+
+    \ \ \ \ (hash-table-delete! ht element)
+
+    \ \ \ \ (hash-set ht)))
+
+    \;
+
+    (chained-define (%clear!)
+
+    \ \ (hash-table-clear! data)
+
+    \ \ (%this))
+
+    \;
+
+    ) ; end of define-case-class
+  </scm-chunk>
+
+  <section|测试>
+
+  <\scm-chunk|tests/goldfish/liii/set-test.scm|false|false>
+    ;
+
+    ; Copyright (C) 2025 The Goldfish Scheme Authors
+
+    ;
+
+    ; Licensed under the Apache License, Version 2.0 (the "License");
+
+    ; you may not use this file except in compliance with the License.
+
+    ; You may obtain a copy of the License at
+
+    ;
+
+    ; http://www.apache.org/licenses/LICENSE-2.0
+
+    ;
+
+    ; Unless required by applicable law or agreed to in writing, software
+
+    ; distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+
+    ; WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+
+    ; License for the specific language governing permissions and limitations
+
+    ; under the License.
+
+    ;
+
+    \;
+
+    (import (liii set) (liii check))
+
+    \;
+
+    (check-set-mode! 'report-failed)
+
+    \;
+
+    ;; Test factory methods
+
+    (check ((hash-set :empty) :size) =\<gtr\> 0)
+
+    (check ((hash-set :empty) :empty?) =\<gtr\> #t)
+
+    \;
+
+    ;; Test basic operations
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (hash-table-set! ht 'c #t)
+
+    \ \ (check ((hash-set ht) :size) =\<gtr\> 3))
+
+    \;
+
+    (let1 ht (make-hash-table)
+
+    \ \ (check ((hash-set ht) :empty?) =\<gtr\> #t)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (check ((hash-set ht) :empty?) =\<gtr\> #f))
+
+    \;
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (check ((hash-set ht) :contains 'a) =\<gtr\> #t)
+
+    \ \ (check ((hash-set ht) :contains 'c) =\<gtr\> #f))
+
+    \;
+
+    ;; Test non-destructive operations
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (let1 s (hash-set ht)
+
+    \ \ \ \ (check (s :add-one 'c) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'a #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'b #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'c #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))
+
+    \ \ \ \ (check (s :add-one 'd) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'a #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'b #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'd #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))))
+
+    \;
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (let1 s (hash-set ht)
+
+    \ \ \ \ (check (s :remove 'a) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'b #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))
+
+    \ \ \ \ (check (s :remove 'b) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'a #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))))
+
+    \;
+
+    ;; Test destructive operations
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (let1 s (hash-set ht)
+
+    \ \ \ \ (check (s :add-one! 'c) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'a #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'b #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'c #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))
+
+    \ \ \ \ (check (s :add-one! 'd) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'a #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'b #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'c #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'd #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))))
+
+    \;
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (let1 s (hash-set ht)
+
+    \ \ \ \ (check (s :remove! 'a) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! new-ht 'b #t)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))
+
+    \ \ \ \ (check (s :remove! 'b) =\<gtr\> (let1 new-ht (make-hash-table)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-set new-ht)))))
+
+    \;
+
+    (let1 ht (make-hash-table)
+
+    \ \ (hash-table-set! ht 'a #t)
+
+    \ \ (hash-table-set! ht 'b #t)
+
+    \ \ (let1 s (hash-set ht)
+
+    \ \ \ \ (check (s :clear!) =\<gtr\> (hash-set (make-hash-table)))))
+
+    \;
+
+    (check-report)
+
+    \;
+  </scm-chunk>
 
   <section|结尾>
 
