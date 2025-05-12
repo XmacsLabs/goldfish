@@ -760,6 +760,16 @@
       (option (car data))))
 
 
+(define (%last)
+  (if (null? data)
+      (index-error "rich-list%last: empty list")
+      (car (reverse data))))
+
+(define (%last-option)
+  (if (null? data)
+      (none)
+      (option (car (reverse data)))))
+
 (chained-define (%slice from until)
   (let* ((len (length data))
          (start (max 0 (min from len)))

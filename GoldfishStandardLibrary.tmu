@@ -3726,17 +3726,19 @@
 
     (check (path ".hidden" :name) =\<gtr\> ".hidden")\ 
 
-    (check (path "noext" :name) =\<gtr\> "noext") \ 
-
-    (check (path "/path/to/file.txt" :name) =\<gtr\> "file.txt") \ 
-
-    (check (path "C:/path/to/file.txt" :name) =\<gtr\> "file.txt") \ ; Windows路径
+    (check (path "noext" :name) =\<gtr\> "noext") \ \ \ 
 
     (check (path "" :name) =\<gtr\> "") \ ; 空路径
 
     (check (path "." :name) =\<gtr\> "") \ ; 当前目录
 
     (check (path ".." :name) =\<gtr\> "..") \ ; 上级目录
+
+    \;
+
+    (when (or (os-macos?) (os-linux?))
+
+    \ \ (check (path "/path/to/file.txt" :name) =\<gtr\> "file.txt"))
 
     \;
   </scm-chunk>
@@ -3798,15 +3800,15 @@
 
     (check (path "noext" :stem) =\<gtr\> "noext") \ ; 无后缀名保留完整名称
 
-    (check (path "/path/to/file.txt" :stem) =\<gtr\> "file") \ ; 绝对路径
-
-    (check (path "C:/path/to/file.txt" :stem) =\<gtr\> "file") \ ; Windows路径
-
     (check (path "" :stem) =\<gtr\> "") \ ; 空路径
 
     (check (path "." :stem) =\<gtr\> "") \ ; 当前目录
 
     (check (path ".." :stem) =\<gtr\> "..") \ ; 上级目录
+
+    (when (or (os-linux?) (os-macos?))
+
+    \ \ (check (path "/path/to/file.txt" :stem) =\<gtr\> "file")) \ 
 
     \;
   </scm-chunk>

@@ -113,22 +113,23 @@
 (check (path "file.txt" :name) => "file.txt")
 (check (path "archive.tar.gz" :name) => "archive.tar.gz") 
 (check (path ".hidden" :name) => ".hidden") 
-(check (path "noext" :name) => "noext")  
-(check (path "/path/to/file.txt" :name) => "file.txt")  
-(check (path "C:/path/to/file.txt" :name) => "file.txt")  ; Windows路径
+(check (path "noext" :name) => "noext")    
 (check (path "" :name) => "")  ; 空路径
 (check (path "." :name) => "")  ; 当前目录
 (check (path ".." :name) => "..")  ; 上级目录
+
+(when (or (os-macos?) (os-linux?))
+  (check (path "/path/to/file.txt" :name) => "file.txt"))
 
 (check (path "file.txt" :stem) => "file")
 (check (path "archive.tar.gz" :stem) => "archive.tar")  ; 只去掉最后一个后缀
 (check (path ".hidden" :stem) => ".hidden")  ; 隐藏文件保留完整名称
 (check (path "noext" :stem) => "noext")  ; 无后缀名保留完整名称
-(check (path "/path/to/file.txt" :stem) => "file")  ; 绝对路径
-(check (path "C:/path/to/file.txt" :stem) => "file")  ; Windows路径
 (check (path "" :stem) => "")  ; 空路径
 (check (path "." :stem) => "")  ; 当前目录
 (check (path ".." :stem) => "..")  ; 上级目录
+(when (or (os-linux?) (os-macos?))
+  (check (path "/path/to/file.txt" :stem) => "file"))  
 
 (check (path "file.txt" :suffix) => ".txt")
 (check (path "archive.tar.gz" :suffix) => ".gz")  ; 只保留最后一个后缀

@@ -1,4 +1,4 @@
-<TMU|<tuple|1.0.5|1.2.9.7>>
+<TMU|<tuple|1.1.0|2025.0.9>>
 
 <style|<tuple|book|goldfish|literate|reduced-margins|python|padded-paragraphs|chinese>>
 
@@ -6184,6 +6184,46 @@
 
     \;
   </goldfish-chunk>
+
+  <paragraph|rich-list%last>
+
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%last)
+
+    \ \ (if (null? data)
+
+    \ \ \ \ \ \ (index-error "rich-list%last: empty list")
+
+    \ \ \ \ \ \ (car (reverse data))))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|rich-list%last-option>
+
+  <\scm-chunk|goldfish/liii/lang.scm|true|true>
+    (define (%last-option)
+
+    \ \ (if (null? data)
+
+    \ \ \ \ \ \ (none)
+
+    \ \ \ \ \ \ (option (car (reverse data)))))
+
+    \;
+  </scm-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (check ($ (list 1 2 3) :last) =\> 3)
+
+    (check-catch 'index-error (rich-list :empty :last))
+
+    (check ($ (list 1 2 3) :last-option) =\> (option 3))
+
+    (check (rich-list :empty :last-option) =\> (none))
+
+    \;
+  </scm-chunk>
 
   <paragraph|rich-list%slice>
 

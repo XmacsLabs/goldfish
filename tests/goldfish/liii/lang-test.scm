@@ -1019,6 +1019,11 @@
 (check ($ (list 1 2 3) :head-option) => (option 1))
 (check (rich-list :empty :head-option) => (none))
 
+(check ($ (list 1 2 3) :last) => 3)
+(check-catch 'index-error (rich-list :empty :last))
+(check ($ (list 1 2 3) :last-option) => (option 3))
+(check (rich-list :empty :last-option) => (none))
+
 (let ((lst ($ '(1 2 3 4 5))))
   ;; 基本切片
   (check (lst :slice 1 3 :collect) => '(2 3))
