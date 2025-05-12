@@ -15,7 +15,9 @@
 ;
 
 (import (scheme time)
-        (liii lang))
+        (liii lang)
+        (liii oop)
+        (liii check))
 
 (define (timing msg thunk)
   (let* ((start (current-jiffy))
@@ -30,3 +32,8 @@
 
 (timing "option%map:\t"
   (lambda () (repeat 10000 (lambda () ((option 65536) :map (lambda (x) (+ x 1)))))))
+
+(check ((option2 1) 'value) => 1)
+
+(timing "option2%map:\t"
+  (lambda () (repeat 10000 (lambda () ((option2 65536) :map (lambda (x) (+ x 1)))))))
