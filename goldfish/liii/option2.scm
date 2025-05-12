@@ -3,6 +3,8 @@
 (export option2)
 (begin
 
+; TODO: 实现 option2@is-type-of
+
 (define (option2 x)
   (lambda (msg . args)
     (let ((env (funclet option2)))
