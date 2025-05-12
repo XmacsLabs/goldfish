@@ -9174,21 +9174,35 @@
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%remove k)
 
-    \ \ (rich-hash-table (hash-table-remove data k)))
+    \ \ (rich-hash-table
+
+    \ \ \ (let ((new (make-hash-table)))
+
+    \ \ \ \ \ (hash-table-for-each
+
+    \ \ \ \ \ \ (lambda (key val)
+
+    \ \ \ \ \ \ \ (unless (equal? key k)
+
+    \ \ \ \ \ \ \ \ (hash-table-set! new key val)))
+
+    \ \ \ \ \ \ \ data)
+
+    \ \ \ \ \ \ new)))
 
     \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (let1 ht ($ (hash-table 'a 1 'b 2))
+    (let1 ht1 ($ (hash-table 'a 1 'b 2 'c 3))
 
-    \ \ (let1 ht2 (ht :remove 'a)
+    \ \ (let1 ht2 (ht1 :remove 'b)
 
-    \ \ \ \ (check ((ht \ :get 'a) :some?) =\<gtr\> #t)
+    \ \ \ \ (check-true \ (ht1 :contains 'b))
 
-    \ \ \ \ (check ((ht2 :get 'a) :some?) =\<gtr\> #f)
+    \ \ \ \ (check-false (ht2 :contains 'b))
 
-    \ \ \ \ (check ((ht2 :get 'b) :get) \ \ =\<gtr\> 2)))
+    \ \ \ \ (check ((ht2 :get 'c) :get) =\> 3)))
 
     \;
   </goldfish-chunk>
@@ -9196,25 +9210,23 @@
   <paragraph|rich-hash-table%remove!><typehint|((k any?)) =\<gtr\> rich-hash-table>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (define (%remove! k)
+    (chained-define (%remove! k)
 
-    \ \ (begin\ 
+    \ \ (hash-table-delete! data k)
 
-    \ \ \ \ (hash-table-remove! data k)
-
-    \ \ \ this))
+    \ \ %this)
 
     \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (let1 ht ($ (hash-table 'x 42 'y 99))
+    (let1 ht3 ($ (hash-table 'x 9 'y 8))
 
-    \ \ ((ht :remove!) 'x)
+    \ \ (ht3 :remove! 'x)
 
-    \ \ (check ((ht :get 'x) :none?) =\<gtr\> #t)
+    \ \ (check-false (ht3 :contains 'x))
 
-    \ \ (check ((ht :get 'y) :get) =\<gtr\> 99))
+    \ \ (check ((ht3 :get 'y) :get) =\> 8))
 
     \;
   </goldfish-chunk>
