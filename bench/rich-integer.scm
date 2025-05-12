@@ -51,6 +51,45 @@
         (cutlet env 'data)
         r))))
 
+(define rint-lambda
+  (lambda args
+    (define (make-case-class-rich-integer data)
+      (define (%to-string)
+        (number->string data))
+      (define (%to-rich-string)
+        (rich-string (%to-string)))
+      (define (%sqrt)
+        (if (< data 0) 
+          (value-error (format #f "sqrt of negative integer is undefined!         ** Got ~a **" data)) 
+          (inexact->exact (floor (sqrt data)))))
+      (define (instance-dispatcher) 
+        (lambda (msg . args) 
+          (cond 
+            ((eq? msg :to-string) (%to-string)) 
+            ((eq? msg 'data) data)
+            ((eq? msg :to-rich-string) (%to-rich-string))
+            ((eq? msg :sqrt) (apply %sqrt)))))
+
+      (instance-dispatcher)
+    )
+    (apply make-case-class-rich-integer args)
+  )
+)
+
+; (define (rint2 x)
+;   (lambda (msg . args)
+;     (let-set! (funclet rint) 'data x)
+;     (let1 r (case msg
+;               ((:to-string)
+;                 (%to-string))
+;               ((:to-rich-string)
+;                 (%to-rich-string))
+;               ((:sqrt)
+;                 (%sqrt))) 
+;       r)))
+
+; (varlet (funclet rint) 'data #f)
+
 (with-let (funclet rint)
   (define (%to-string)
     (number->string data))
@@ -79,10 +118,14 @@
 (display* "\n\nBench of SQRT:\n")
 (timing "prim%sqrt:\t\t\t" (lambda () (repeat 10000 (lambda () (prim-sqrt 65536)))))
 (timing "rint%sqrt:\t\t\t" (lambda () (repeat 10000 (lambda () ((rint 65536) :sqrt)))))
+; (timing "rint2%sqrt:\t\t\t" (lambda () (repeat 10000 (lambda () ((rint2 65536) :sqrt)))))
 (timing "rich-integer%sqrt:\t\t" (lambda () (repeat 10000 (lambda () ((rich-integer 65536) :sqrt)))))
+(timing "rint-lambda%sqrt:\t\t" (lambda () (repeat 10000 (lambda () ((rint-lambda 65536) :sqrt)))))
+
 
 (display* ((rint 65535) :sqrt))
 (newline)
+((rint-lambda 65535) :sqrt)
 
 ; slow because of rich-string
 ; (timing "rint%to-rich-string " (lambda () (repeat 1000 (lambda () (((rint 65536) :to-rich-string) :length)))))
