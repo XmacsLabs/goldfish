@@ -77,11 +77,10 @@
     (when (not (null? value))
           (f value)))
   
-  (define (%map f . args)
-    (chain-apply args
-      (if (null? value)
-          (option2 '())
-          (option2 (f value)))))
+  (chained-define (%map f)
+    (if (null? value)
+        (option2 '())
+        (option2 (f value))))
   
   (define (%flat-map f . args)
     (chain-apply args
