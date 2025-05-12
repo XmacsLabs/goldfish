@@ -1,4 +1,5 @@
 (define-library (liii option2)
+(import (liii oop))
 (export option2)
 (begin
 
@@ -9,6 +10,8 @@
       (let1 r (case msg
                 ((value)
                  value)
+                ((:value)
+                 (option2 value))
                 ((:get) (apply (env '%get) args))
                 ((:get-or-else) (apply (env '%get-or-else) args))
                 ((:or-else) (apply (env '%or-else) args))

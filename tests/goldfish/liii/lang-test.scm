@@ -17,8 +17,10 @@
 (import (liii check)
         (liii lang)
         (liii cut)
-        (liii case))
+        (liii case)
+        (liii option2))
 
+(define option option2)
 ;(check-set-mode! 'report-failed)
 
 (check ((@ + _ 2) 1) => 3)

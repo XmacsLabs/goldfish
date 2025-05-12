@@ -16,7 +16,7 @@
 
 (define-library (liii lang)
 (import (liii base) (liii oop) (liii string) (liii vector) (liii sort)
-        (liii list) (liii hash-table) (liii bitwise))
+        (liii list) (liii hash-table) (liii bitwise) (liii option2))
 (export
   @ typed-define define-case-class define-object define-class
   case-class? == != chained-define display* object->string
@@ -26,6 +26,9 @@
   box $
 )
 (begin
+
+(define option option2)
+(define (none) (option '()))
 
 (define (box x)
   (cond ((integer? x) (rich-integer x))
@@ -581,77 +584,6 @@
         (rich-vector (reverse-list->vector (split-helper 0 '()))))))
 
 )
-
-(define-case-class option ((value any?))
-
-(define (%get)
-  (if (null? value)
-      (value-error "option is empty, cannot get value")
-      value))
-
-(define (%get-or-else default)
-  (cond ((not (null? value)) value)
-        ((and (procedure? default) (not (case-class? default)))
-         (default))
-        (else default)))
-
-(define (%or-else default . args)
-  (when (not (option :is-type-of default))
-    (type-error "The first parameter of option%or-else must be a option case class"))
-  
-  (chain-apply args
-    (if (null? value)
-        default
-        (option value))))
-
-(define (%equals that)
-  (== value (that 'value)))
-
-(define (%defined?) (not (null? value)))
-  
-(define (%empty?)
-  (null? value))
-
-(define (%forall f)
-  (if (null? value)
-      #f
-      (f value)))
-
-(define (%exists f)
-  (if (null? value)
-      #f
-      (f value)))
-
-(define (%contains pred?)
-  (if (null? value)
-      #f
-      (pred? value)))
-
-(define (%for-each f)
-  (when (not (null? value))
-        (f value)))
-
-(define (%map f . args)
-  (chain-apply args
-    (if (null? value)
-        (option '())
-        (option (f value)))))
-
-(define (%flat-map f . args)
-  (chain-apply args
-    (if (null? value)
-        (option '())
-        (f value))))
-
-(define (%filter pred . args)
-  (chain-apply args
-    (if (or (null? value) (not (pred value)))
-        (option '())
-        (option value))))
-
-)
-
-(define (none) (option '()))
 
 (define-case-class either
   ((type symbol?)
