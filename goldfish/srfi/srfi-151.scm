@@ -21,7 +21,7 @@
   bit-count bitwise-orc1 bitwise-orc2 bitwise-andc1 bitwise-andc2
   arithmetic-shift integer-length bitwise-if
   bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
-  bit-field bit-field-any?
+  bit-field bit-field-any? bit-field-every?
 )
 (begin
 
@@ -138,6 +138,10 @@
          (bitwise-and
            (arithmetic-shift i (- start))
            (- (arithmetic-shift 1 (- end start)) 1)))))
+(define (bit-field-every? i start end)
+  (= (bitwise-and (arithmetic-shift i (- start)) 
+                  (- (arithmetic-shift 1 (- end start)) 1)) 
+     (- (arithmetic-shift 1 (- end start)) 1)))
 ) ; end of begin
 ) ; end of define-library
 
