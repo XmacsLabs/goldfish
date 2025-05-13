@@ -6696,7 +6696,7 @@
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) '())
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (drop data n)))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (drop data n))))
 
     \ \ \ \ 
 

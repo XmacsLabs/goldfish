@@ -911,7 +911,7 @@
       
         (cond ((< n 0) data)
               ((>= n (length data)) '())
-              (else (drop data n)))
+              (else (drop data n))))
     
       (rich-list (scala-drop data x)))))
 
