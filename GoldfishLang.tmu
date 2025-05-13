@@ -6070,12 +6070,6 @@
   <paragraph|rich-list@concat>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    ;(chained-define (@concat lst1 lst2)
-
-    \ ; (rich-list (append (lst1 :collect) (lst2 :collect))))
-
-    \;
-
     (define (@concat lst1 lst2 . args)
 
     \ \ (chain-apply args
@@ -6222,7 +6216,7 @@
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
     (define (%find-last pred)
 
-    \ \ (let1 reversed-list (reverse data) \ ; 先反转列表
+    \ \ (let ((reversed-list (reverse data))) \ ; 先反转列表
 
     \ \ \ \ (let loop ((lst reversed-list))
 
@@ -6256,17 +6250,13 @@
   <paragraph|rich-list%head>
 
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
-    <\code>
-      (define (%head)
+    (define (%head)
 
-      \ \ (if (null? data)
+    \ \ (if (null? data)
 
-      \ \ \ \ \ \ (error 'out-of-range "rich-list%head: list is empty")
+    \ \ \ \ \ \ (error 'out-of-range "rich-list%head: list is empty")
 
-      \ \ \ \ \ \ (car data)))
-
-      \;
-    </code>
+    \ \ \ \ \ \ (car data)))
 
     \;
   </scm-chunk>
@@ -6346,19 +6336,21 @@
   <paragraph|rich-list%slice>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%slice from until)
+    (define (%slice from until . args)
 
-    \ \ (let* ((len (length data))
+    \ \ (chain-apply args
 
-    \ \ \ \ \ \ \ \ \ (start (max 0 (min from len)))
+    \ \ \ \ (let* ((len (length data))
 
-    \ \ \ \ \ \ \ \ \ (end (max 0 (min until len))))
+    \ \ \ \ \ \ \ \ \ \ (start (max 0 (min from len)))
 
-    \ \ \ \ (if (\<less\> start end)
+    \ \ \ \ \ \ \ \ \ \ (end (max 0 (min until len))))
 
-    \ \ \ \ \ \ \ \ (rich-list (take (drop data start) (- end start)))
+    \ \ \ \ \ \ (if (\<less\> start end)
 
-    \ \ \ \ \ \ \ \ (rich-list '()))))
+    \ \ \ \ \ \ \ \ \ \ (rich-list (take (drop data start) (- end start)))
+
+    \ \ \ \ \ \ \ \ \ \ (rich-list '())))))
 
     \;
   </goldfish-chunk>
@@ -6534,9 +6526,11 @@
   <paragraph|rich-list%map>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%map x)
+    (define (%map x . args)
 
-    \ \ (rich-list (map x data)))
+    \ \ (chain-apply args
+
+    \ \ \ \ (rich-list (map x data))))
 
     \;
   </goldfish-chunk>
@@ -6544,9 +6538,11 @@
   <paragraph|rich-list%flat-map>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%flat-map x)
+    (define (%flat-map x . args)
 
-    \ \ (rich-list (flat-map x data)))
+    \ \ (chain-apply args
+
+    \ \ \ \ (rich-list (flat-map x data))))
 
     \;
   </goldfish-chunk>
@@ -6554,9 +6550,11 @@
   <paragraph|rich-list%filter>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%filter x)
+    (define (%filter x . args)
 
-    \ \ (rich-list (filter x data)))
+    \ \ (chain-apply args
+
+    \ \ \ \ (rich-list (filter x data))))
 
     \;
   </goldfish-chunk>
@@ -6574,9 +6572,11 @@
   <paragraph|rich-list%reverse>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%reverse)
+    (define (%reverse . args)
 
-    \ \ (rich-list (reverse data)))
+    \ \ (chain-apply args
+
+    \ \ \ \ (rich-list (reverse data))))
 
     \ \ \ \ 
   </goldfish-chunk>
@@ -6604,17 +6604,55 @@
   <paragraph|rich-list%take>
 
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%take x)
+    ;(chained-define (%take x)
 
-    \ \ (typed-define (scala-take (data list?) (n integer?))
+    ; \ (typed-define (scala-take (data list?) (n integer?))
 
-    \ \ \ \ (cond ((\<less\> n 0) '())
+    \ ; \ \ (cond ((\<less\> n 0) '())
 
-    \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) data)
+    ; \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) data)
 
-    \ \ \ \ \ \ \ \ \ \ (else (take data n))))
+    ; \ \ \ \ \ \ \ \ \ (else (take data n))))
 
-    \ \ (rich-list (scala-take data x)))
+    ; \ (rich-list (scala-take data x)))
+
+    \;
+
+    (define (%take x . args)
+
+    \ \ (chain-apply args
+
+    \ \ \ \ (begin\ 
+
+    \ \ \ \ \ \ (define (scala-take data n)
+
+    \ \ \ \ \ \ \ \ (unless (list? data)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-take '(data n) 'data "list" (object-\<gtr\>string data))))
+
+    \ \ \ \ \ \ \ \ (unless (integer? n)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-take '(data n) 'n "integer" (object-\<gtr\>string n))))
+
+    \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ (cond ((\<less\> n 0) '())
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) data)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (take data n))))
+
+    \ \ \ \ 
+
+    \ \ \ \ \ \ (rich-list (scala-take data x)))))
 
     \;
   </scm-chunk>

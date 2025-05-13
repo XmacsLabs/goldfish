@@ -771,9 +771,6 @@
   (chain-apply args
     (rich-list (list ))))
 
-;(chained-define (@concat lst1 lst2)
- ; (rich-list (append (lst1 :collect) (lst2 :collect))))
-
 (define (@concat lst1 lst2 . args)
   (chain-apply args
     (rich-list (append (lst1 :collect) (lst2 :collect)))))
@@ -800,7 +797,7 @@
       (else (loop (cdr lst))))))
 
 (define (%find-last pred)
-  (let1 reversed-list (reverse data)  ; 先反转列表
+  (let ((reversed-list (reverse data)))  ; 先反转列表
     (let loop ((lst reversed-list))
       (cond
         ((null? lst) (none))  ; 遍历完未找到
@@ -811,7 +808,6 @@
   (if (null? data)
       (error 'out-of-range "rich-list%head: list is empty")
       (car data)))
-
 
 (define (%head-option)
   (if (null? data)
@@ -829,13 +825,14 @@
       (none)
       (option (car (reverse data)))))
 
-(chained-define (%slice from until)
-  (let* ((len (length data))
-         (start (max 0 (min from len)))
-         (end (max 0 (min until len))))
-    (if (< start end)
-        (rich-list (take (drop data start) (- end start)))
-        (rich-list '()))))
+(define (%slice from until . args)
+  (chain-apply args
+    (let* ((len (length data))
+          (start (max 0 (min from len)))
+          (end (max 0 (min until len))))
+      (if (< start end)
+          (rich-list (take (drop data start) (- end start)))
+          (rich-list '())))))
 
 (define (%empty?)
   (null? data))
@@ -861,27 +858,50 @@
 (define (%contains elem)
   (%exists (lambda (x) (equal? x elem))))
 
-(chained-define (%map x)
-  (rich-list (map x data)))
+(define (%map x . args)
+  (chain-apply args
+    (rich-list (map x data))))
 
-(chained-define (%flat-map x)
-  (rich-list (flat-map x data)))
+(define (%flat-map x . args)
+  (chain-apply args
+    (rich-list (flat-map x data))))
 
-(chained-define (%filter x)
-  (rich-list (filter x data)))
+(define (%filter x . args)
+  (chain-apply args
+    (rich-list (filter x data))))
 
 (define (%for-each x)
   (for-each x data))
 
-(chained-define (%reverse)
-  (rich-list (reverse data)))
+(define (%reverse . args)
+  (chain-apply args
+    (rich-list (reverse data))))
     
-(chained-define (%take x)
-  (typed-define (scala-take (data list?) (n integer?))
-    (cond ((< n 0) '())
-          ((>= n (length data)) data)
-          (else (take data n))))
-  (rich-list (scala-take data x)))
+;(chained-define (%take x)
+;  (typed-define (scala-take (data list?) (n integer?))
+ ;   (cond ((< n 0) '())
+;          ((>= n (length data)) data)
+;          (else (take data n))))
+;  (rich-list (scala-take data x)))
+
+(define (%take x . args)
+  (chain-apply args
+    (begin 
+      (define (scala-take data n)
+        (unless (list? data) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-take '(data n) 'data "list" (object->string data))))
+        (unless (integer? n) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-take '(data n) 'n "integer" (object->string n))))
+      
+        (cond ((< n 0) '())
+              ((>= n (length data)) data)
+              (else (take data n))))
+    
+      (rich-list (scala-take data x)))))
 
 (chained-define (%drop x)
   (typed-define (scala-drop (data list?) (n integer?))
