@@ -185,7 +185,7 @@
 
 (define (%equals that)
   (if (path :is-type-of that)
-      (equal? (%to-string) (that :to-string))
+      (string=? (%to-string) (that :to-string))
       #f))
 
 (define (%file?)
