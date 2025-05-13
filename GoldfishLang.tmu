@@ -6790,17 +6790,41 @@
   <paragraph|rich-list%drop-right>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%drop-right x)
+    (define (%drop-right x . args)
 
-    \ \ (typed-define (scala-drop-right (data list?) (n integer?))
+    \ \ (chain-apply args
 
-    \ \ \ \ (cond ((\<less\> n 0) data)
+    \ \ \ \ (begin\ 
 
-    \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) '())
+    \ \ \ \ \ \ (define (scala-drop-right data n)
 
-    \ \ \ \ \ \ \ \ \ \ (else (drop-right data n))))
+    \ \ \ \ \ \ \ \ (unless (list? data)\ 
 
-    \ \ (rich-list (scala-drop-right data x)))
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-drop-right '(data n) 'data "list" (object-\<gtr\>string data))))
+
+    \ \ \ \ \ \ \ \ (unless (integer? n)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-drop-right '(data n) 'n "integer" (object-\<gtr\>string n))))
+
+    \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ (cond ((\<less\> n 0) data)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) '())
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (drop-right data n))))
+
+    \ \ \ \ 
+
+    \ \ \ \ \ \ (rich-list (scala-drop-right data x)))))
 
     \;
   </goldfish-chunk>
@@ -6826,13 +6850,13 @@
   <paragraph|rich-list%count>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    \ \ (define (%count . xs)
+    (define (%count . xs)
 
-    \ \ \ \ (cond ((null? xs) (length data))
+    \ \ (cond ((null? xs) (length data))
 
-    \ \ \ \ \ \ \ \ \ \ ((length=? 1 xs) (count (car xs) data))
+    \ \ \ \ \ \ \ \ ((length=? 1 xs) (count (car xs) data))
 
-    \ \ \ \ \ \ \ \ \ \ (else (error 'wrong-number-of-args "rich-list%count" xs))))
+    \ \ \ \ \ \ \ \ (else (error 'wrong-number-of-args "rich-list%count" xs))))
 
     \;
   </goldfish-chunk>
@@ -6876,15 +6900,15 @@
   <paragraph|rich-list%fold>
 
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
-    \ \ (define (%fold initial f)
+    (define (%fold initial f)
 
-    \ \ \ \ (fold f initial data))
+    \ \ (fold f initial data))
 
     \;
 
-    \ \ (define (%fold-right initial f)
+    (define (%fold-right initial f)
 
-    \ \ \ \ (fold-right f initial data))
+    \ \ (fold-right f initial data))
 
     \;
   </scm-chunk>
@@ -6912,11 +6936,13 @@
   <paragraph|rich-list%sort-with>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%sort-with less-p)
+    (define (%sort-with less-p . args)
 
-    \ \ (let ((sorted-data (list-stable-sort less-p data)))
+    \ \ (chain-apply args
 
-    \ \ \ \ \ \ \ \ (rich-list sorted-data)))
+    \ \ \ \ (let ((sorted-data (list-stable-sort less-p data)))
+
+    \ \ \ \ \ \ \ \ (rich-list sorted-data))))
 
     \;
   </goldfish-chunk>
@@ -6966,11 +6992,13 @@
   <paragraph|rich-list%sort-by>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%sort-by f)
+    (define (%sort-by f . args)
 
-    \ \ (let ((sorted-data (list-stable-sort (lambda (x y) (\<less\> (f x) (f y))) data)))
+    \ \ (chain-apply args
 
-    \ \ \ \ (rich-list sorted-data)))
+    \ \ \ \ (let ((sorted-data (list-stable-sort (lambda (x y) (\<less\> (f x) (f y))) data)))
+
+    \ \ \ \ (rich-list sorted-data))))
 
     \;
   </goldfish-chunk>
@@ -7250,19 +7278,21 @@
   <paragraph|rich-list%zip-with-index>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%zip-with-index)
+    (define (%zip-with-index . args)
 
-    \ \ (let loop ((lst data) (idx 0) (result '()))
+    \ \ (chain-apply args
 
-    \ \ \ \ (if (null? lst)
+    \ \ \ \ (let loop ((lst data) (idx 0) (result '()))
 
-    \ \ \ \ \ \ \ \ (rich-list (reverse result)) \ 
+    \ \ \ \ \ \ (if (null? lst)
 
-    \ \ \ \ \ \ \ \ (loop (cdr lst)\ 
+    \ \ \ \ \ \ \ \ \ \ (rich-list (reverse result)) \ 
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+ idx 1)\ 
+    \ \ \ \ \ \ \ \ \ \ (loop (cdr lst)\ 
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons (cons idx (car lst)) result)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+ idx 1)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons (cons idx (car lst)) result))))))
 
     \;
   </goldfish-chunk>
@@ -7296,9 +7326,11 @@
   <paragraph|rich-list%distinct>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%distinct)
+    (define (%distinct . args)
 
-    \ \ (let loop
+    \ \ (chain-apply args
+
+    \ \ \ \ (let loop
 
     \ \ \ \ \ \ ((result '())\ 
 
@@ -7306,23 +7338,23 @@
 
     \ \ \ \ \ \ (ht (make-hash-table)))
 
-    \ \ \ \ (cond
+    \ \ \ \ \ \ (cond
 
-    \ \ \ \ \ \ ((null? data) (rich-list (reverse result))) \ 
+    \ \ \ \ \ \ \ \ ((null? data) (rich-list (reverse result))) \ 
 
-    \ \ \ \ \ \ (else
+    \ \ \ \ \ \ \ \ (else
 
-    \ \ \ \ \ \ \ (let ((elem (car data)))
+    \ \ \ \ \ \ \ \ \ (let ((elem (car data)))
 
-    \ \ \ \ \ \ \ \ \ (if (eq? (hash-table-ref ht elem) #f)\ 
+    \ \ \ \ \ \ \ \ \ \ \ (if (eq? (hash-table-ref ht elem) #f)\ 
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (begin
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (begin
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! ht elem #t) \ 
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (hash-table-set! ht elem #t) \ 
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (cons elem result) (cdr data) ht))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (cons elem result) (cdr data) ht))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (loop result (cdr data) ht)))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop result (cdr data) ht))))))))
 
     \;
   </goldfish-chunk>
@@ -7410,11 +7442,13 @@
   <paragraph|rich-list%take-while>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%take-while pred)
+    (define (%take-while pred . args)
 
-    \ \ (let ((result (take-while pred data)))
+    \ \ (chain-apply args
 
-    \ \ \ \ (rich-list result)))
+    \ \ \ \ (let ((result (take-while pred data)))
+
+    \ \ \ \ \ \ (rich-list result))))
 
     \;
   </goldfish-chunk>
@@ -7434,11 +7468,13 @@
   <paragraph|rich-list%drop-while>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%drop-while pred)
+    (define (%drop-while pred . args)
 
-    \ \ (let ((result (drop-while pred data)))
+    \ \ (chain-apply args
 
-    \ \ \ \ (rich-list result)))
+    \ \ \ \ (let ((result (drop-while pred data)))
+
+    \ \ \ \ \ \ (rich-list result))))
 
     \;
   </goldfish-chunk>

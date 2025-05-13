@@ -934,34 +934,48 @@
     
       (rich-list (scala-take-right data x)))))
 
-(chained-define (%drop-right x)
-  (typed-define (scala-drop-right (data list?) (n integer?))
-    (cond ((< n 0) data)
-          ((>= n (length data)) '())
-          (else (drop-right data n))))
-  (rich-list (scala-drop-right data x)))
+(define (%drop-right x . args)
+  (chain-apply args
+    (begin 
+      (define (scala-drop-right data n)
+        (unless (list? data) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-drop-right '(data n) 'data "list" (object->string data))))
+        (unless (integer? n) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-drop-right '(data n) 'n "integer" (object->string n))))
+      
+        (cond ((< n 0) data)
+              ((>= n (length data)) '())
+              (else (drop-right data n))))
+    
+      (rich-list (scala-drop-right data x)))))
 
-  (define (%count . xs)
-    (cond ((null? xs) (length data))
-          ((length=? 1 xs) (count (car xs) data))
-          (else (error 'wrong-number-of-args "rich-list%count" xs))))
+(define (%count . xs)
+  (cond ((null? xs) (length data))
+        ((length=? 1 xs) (count (car xs) data))
+        (else (error 'wrong-number-of-args "rich-list%count" xs))))
 
 (define (%length)
   (length data))
 
-  (define (%fold initial f)
-    (fold f initial data))
+(define (%fold initial f)
+  (fold f initial data))
 
-  (define (%fold-right initial f)
-    (fold-right f initial data))
+(define (%fold-right initial f)
+  (fold-right f initial data))
 
-(chained-define (%sort-with less-p)
-  (let ((sorted-data (list-stable-sort less-p data)))
-        (rich-list sorted-data)))
+(define (%sort-with less-p . args)
+  (chain-apply args
+    (let ((sorted-data (list-stable-sort less-p data)))
+        (rich-list sorted-data))))
 
-(chained-define (%sort-by f)
-  (let ((sorted-data (list-stable-sort (lambda (x y) (< (f x) (f y))) data)))
-    (rich-list sorted-data)))
+(define (%sort-by f . args)
+  (chain-apply args
+    (let ((sorted-data (list-stable-sort (lambda (x y) (< (f x) (f y))) data)))
+    (rich-list sorted-data))))
 
 (define (%group-by func)
   (let ((group (make-hash-table)))
@@ -1017,28 +1031,30 @@
   (chain-apply args
     (rich-list (apply map cons (list data l)))))
 
-(chained-define (%zip-with-index)
-  (let loop ((lst data) (idx 0) (result '()))
-    (if (null? lst)
-        (rich-list (reverse result))  
-        (loop (cdr lst) 
-              (+ idx 1) 
-              (cons (cons idx (car lst)) result)))))
+(define (%zip-with-index . args)
+  (chain-apply args
+    (let loop ((lst data) (idx 0) (result '()))
+      (if (null? lst)
+          (rich-list (reverse result))  
+          (loop (cdr lst) 
+                (+ idx 1) 
+                (cons (cons idx (car lst)) result))))))
 
-(chained-define (%distinct)
-  (let loop
+(define (%distinct . args)
+  (chain-apply args
+    (let loop
       ((result '()) 
       (data data) 
       (ht (make-hash-table)))
-    (cond
-      ((null? data) (rich-list (reverse result)))  
-      (else
-       (let ((elem (car data)))
-         (if (eq? (hash-table-ref ht elem) #f) 
-             (begin
-               (hash-table-set! ht elem #t)  
-               (loop (cons elem result) (cdr data) ht))
-             (loop result (cdr data) ht)))))))
+      (cond
+        ((null? data) (rich-list (reverse result)))  
+        (else
+         (let ((elem (car data)))
+           (if (eq? (hash-table-ref ht elem) #f) 
+               (begin
+                 (hash-table-set! ht elem #t)  
+                 (loop (cons elem result) (cdr data) ht))
+               (loop result (cdr data) ht))))))))
 
 (define (%reduce f)
   (if (null? data)
@@ -1050,13 +1066,15 @@
       (none)
       (option (reduce f '() data))))
 
-(chained-define (%take-while pred)
-  (let ((result (take-while pred data)))
-    (rich-list result)))
+(define (%take-while pred . args)
+  (chain-apply args
+    (let ((result (take-while pred data)))
+      (rich-list result))))
 
-(chained-define (%drop-while pred)
-  (let ((result (drop-while pred data)))
-    (rich-list result)))
+(define (%drop-while pred . args)
+  (chain-apply args
+    (let ((result (drop-while pred data)))
+      (rich-list result))))
 
 (define (%index-where pred)
   (list-index pred data))
