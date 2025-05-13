@@ -689,12 +689,12 @@
   (unless (procedure? pred) 
       (type-error 
         (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
-                    %filter-or-else '(pred) 'pred "procedure" (object->string pred))))
+                    %filter-or-else '(pred zero) 'pred "procedure" (object->string pred))))
   
   (unless (any? zero) 
       (type-error 
         (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
-                    %filter-or-else '(zero) 'zero "any" (object->string zero))))  
+                    %filter-or-else '(pred zero) 'zero "any" (object->string zero))))  
   (if (%right?)
       (if (pred value)
           (%this)

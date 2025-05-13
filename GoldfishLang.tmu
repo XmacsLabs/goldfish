@@ -5710,7 +5710,7 @@
 
     \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %filter-or-else '(pred) 'pred "procedure" (object-\<gtr\>string pred))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %filter-or-else '(pred zero) 'pred "procedure" (object-\<gtr\>string pred))))
 
     \ \ 
 
@@ -5720,7 +5720,7 @@
 
     \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %filter-or-else '(zero) 'zero "any" (object-\<gtr\>string zero)))) \ 
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %filter-or-else '(pred zero) 'zero "any" (object-\<gtr\>string zero)))) \ 
 
     \ \ (if (%right?)
 
