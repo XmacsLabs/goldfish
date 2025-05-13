@@ -7518,7 +7518,15 @@
   <paragraph|rich-list%max-by>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (typed-define (%max-by (f procedure?))
+    (define (%max-by f)
+
+    \ \ (unless (procedure? f)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %max-by '(f) 'f "procedure" (object-\<gtr\>string f)))) \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
     \ \ (if (null? data)
 
@@ -7580,7 +7588,15 @@
   <paragraph|rich-list%min-by>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (typed-define (%min-by (f procedure?))
+    (define (%min-by f)
+
+    \ \ (unless (procedure? f)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %min-by '(f) 'f "procedure" (object-\<gtr\>string f)))) \ \ \ \ \ \ \ \ \ \ \ \ \ 
 
     \ \ (if (null? data)
 

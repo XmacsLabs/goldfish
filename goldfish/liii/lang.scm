@@ -1079,7 +1079,11 @@
 (define (%index-where pred)
   (list-index pred data))
 
-(typed-define (%max-by (f procedure?))
+(define (%max-by f)
+  (unless (procedure? f) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %max-by '(f) 'f "procedure" (object->string f))))              
   (if (null? data)
       (value-error "rich-list%max-by: empty list is not allowed")
       (let loop ((rest (cdr data))
@@ -1101,7 +1105,11 @@
                   (loop (cdr rest) current current-val)
                   (loop (cdr rest) max-elem max-val)))))))
 
-(typed-define (%min-by (f procedure?))
+(define (%min-by f)
+  (unless (procedure? f) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %min-by '(f) 'f "procedure" (object->string f))))              
   (if (null? data)
       (value-error "rich-list%min-by: empty list is not allowed")
       (let loop ((rest (cdr data))
