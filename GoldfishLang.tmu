@@ -6604,20 +6604,6 @@
   <paragraph|rich-list%take>
 
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
-    ;(chained-define (%take x)
-
-    ; \ (typed-define (scala-take (data list?) (n integer?))
-
-    \ ; \ \ (cond ((\<less\> n 0) '())
-
-    ; \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) data)
-
-    ; \ \ \ \ \ \ \ \ \ (else (take data n))))
-
-    ; \ (rich-list (scala-take data x)))
-
-    \;
-
     (define (%take x . args)
 
     \ \ (chain-apply args
@@ -6680,17 +6666,41 @@
   <paragraph|rich-list%drop >
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%drop x)
+    (define (%drop x . args)
 
-    \ \ (typed-define (scala-drop (data list?) (n integer?))
+    \ \ (chain-apply args
 
-    \ \ \ \ (cond ((\<less\> n 0) data)
+    \ \ \ \ (begin\ 
 
-    \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) '())
+    \ \ \ \ \ \ (define (scala-drop data n)
 
-    \ \ \ \ \ \ \ \ \ \ (else (drop data n))))
+    \ \ \ \ \ \ \ \ (unless (list? data)\ 
 
-    \ \ (rich-list (scala-drop data x)))
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-drop '(data n) 'data "list" (object-\<gtr\>string data))))
+
+    \ \ \ \ \ \ \ \ (unless (integer? n)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-drop '(data n) 'n "integer" (object-\<gtr\>string n))))
+
+    \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ (cond ((\<less\> n 0) data)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) '())
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (drop data n)))
+
+    \ \ \ \ 
+
+    \ \ \ \ \ \ (rich-list (scala-drop data x)))))
 
     \;
   </goldfish-chunk>

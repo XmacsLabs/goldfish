@@ -877,13 +877,6 @@
   (chain-apply args
     (rich-list (reverse data))))
     
-;(chained-define (%take x)
-;  (typed-define (scala-take (data list?) (n integer?))
- ;   (cond ((< n 0) '())
-;          ((>= n (length data)) data)
-;          (else (take data n))))
-;  (rich-list (scala-take data x)))
-
 (define (%take x . args)
   (chain-apply args
     (begin 
@@ -903,12 +896,24 @@
     
       (rich-list (scala-take data x)))))
 
-(chained-define (%drop x)
-  (typed-define (scala-drop (data list?) (n integer?))
-    (cond ((< n 0) data)
-          ((>= n (length data)) '())
-          (else (drop data n))))
-  (rich-list (scala-drop data x)))
+(define (%drop x . args)
+  (chain-apply args
+    (begin 
+      (define (scala-drop data n)
+        (unless (list? data) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-drop '(data n) 'data "list" (object->string data))))
+        (unless (integer? n) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-drop '(data n) 'n "integer" (object->string n))))
+      
+        (cond ((< n 0) data)
+              ((>= n (length data)) '())
+              (else (drop data n)))
+    
+      (rich-list (scala-drop data x)))))
 
 (chained-define (%take-right x)
   (typed-define (scala-take-right (data list?) (n integer?))
