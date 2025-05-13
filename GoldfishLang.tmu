@@ -6730,17 +6730,41 @@
   </paragraph>
 
   <\scm-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%take-right x)
+    (define (%take-right x . args)
 
-    \ \ (typed-define (scala-take-right (data list?) (n integer?))
+    \ \ (chain-apply args
 
-    \ \ \ \ (cond ((\<less\> n 0) '())
+    \ \ \ \ (begin\ 
 
-    \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) data)
+    \ \ \ \ \ \ (define (scala-take-right data n)
 
-    \ \ \ \ \ \ \ \ \ \ (else (take-right data n))))
+    \ \ \ \ \ \ \ \ (unless (list? data)\ 
 
-    \ \ (rich-list (scala-take-right data x)))
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-take-right '(data n) 'data "list" (object-\<gtr\>string data))))
+
+    \ \ \ \ \ \ \ \ (unless (integer? n)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ scala-take-right '(data n) 'n "integer" (object-\<gtr\>string n))))
+
+    \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ \ \ (cond ((\<less\> n 0) '())
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((\<gtr\>= n (length data)) data)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (take-right data n))))
+
+    \ \ \ \ 
+
+    \ \ \ \ \ \ (rich-list (scala-take-right data x)))))
 
     \;
   </scm-chunk>

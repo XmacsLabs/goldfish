@@ -915,12 +915,24 @@
     
       (rich-list (scala-drop data x)))))
 
-(chained-define (%take-right x)
-  (typed-define (scala-take-right (data list?) (n integer?))
-    (cond ((< n 0) '())
-          ((>= n (length data)) data)
-          (else (take-right data n))))
-  (rich-list (scala-take-right data x)))
+(define (%take-right x . args)
+  (chain-apply args
+    (begin 
+      (define (scala-take-right data n)
+        (unless (list? data) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-take-right '(data n) 'data "list" (object->string data))))
+        (unless (integer? n) 
+            (type-error 
+               (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                              scala-take-right '(data n) 'n "integer" (object->string n))))
+      
+        (cond ((< n 0) '())
+              ((>= n (length data)) data)
+              (else (take-right data n))))
+    
+      (rich-list (scala-take-right data x)))))
 
 (chained-define (%drop-right x)
   (typed-define (scala-drop-right (data list?) (n integer?))
