@@ -3876,36 +3876,16 @@
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define (%equals that)
 
-    \ \ (cond ((string? that)
+    \ \ (if (path :is-type-of that)
 
-    \ \ \ \ \ \ \ \ \ (string=? (%to-string) that))
+    \ \ \ \ \ \ (equal? (%to-string) (that :to-string))
 
-    \ \ \ \ \ \ \ \ 
-
-    \ \ \ \ \ \ \ \ ((rich-string :is-type-of that)
-
-    \ \ \ \ \ \ \ \ \ (string=? (%to-string) (that :get)))
-
-    \ \ \ \ \ \ \ \ 
-
-    \ \ \ \ \ \ \ \ ((path :is-type-of that)
-
-    \ \ \ \ \ \ \ \ \ (equal? (%to-string) (that :to-string)))
-
-    \ \ \ \ \ \ \ \ 
-
-    \ \ \ \ \ \ \ \ (else #f)))
+    \ \ \ \ \ \ #f))
 
     \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (check-true ((path "/tmp") :equals "/tmp"))
-
-    (check-true ((path "/tmp") :equals ($ "/tmp")))
-
-    (check-false ((path "/tmp/test") :equals "/tmp"))
-
     (check-true ((path "/tmp/test") :equals (path "/tmp/test")))
 
     \;

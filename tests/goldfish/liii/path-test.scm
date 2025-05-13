@@ -141,9 +141,6 @@
 (check (path "." :suffix) => "")  ; 当前目录
 (check (path ".." :suffix) => "")  ; 上级目录
 
-(check-true ((path "/tmp") :equals "/tmp"))
-(check-true ((path "/tmp") :equals ($ "/tmp")))
-(check-false ((path "/tmp/test") :equals "/tmp"))
 (check-true ((path "/tmp/test") :equals (path "/tmp/test")))
 
 (when (or (os-linux?) (os-macos?))
