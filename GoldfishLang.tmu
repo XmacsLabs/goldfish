@@ -5634,7 +5634,17 @@
   <paragraph|either%or-else>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (typed-define (%or-else (default case-class?))
+    (define (%or-else default)
+
+    \ \ (unless (case-class? default)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %or-else '(default) 'default "case-class" (object-\<gtr\>string default)))) \ 
+
+    \ \ 
 
     \ \ (when (not (default :is-instance-of 'either))
 
@@ -5692,7 +5702,25 @@
   如果右值存在，并且被给定的 pred 为真，返回右值，否则返回左值（被zero赋值）。如果右值不存在直接返回左值。
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (typed-define (%filter-or-else (pred procedure?) (zero any?))
+    (define (%filter-or-else pred zero)
+
+    \ \ (unless (procedure? pred)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %filter-or-else '(pred) 'pred "procedure" (object-\<gtr\>string pred))))
+
+    \ \ 
+
+    \ \ (unless (any? zero)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %filter-or-else '(zero) 'zero "any" (object-\<gtr\>string zero)))) \ 
 
     \ \ (if (%right?)
 
@@ -5812,13 +5840,15 @@
   <paragraph|either%map>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%map f)
+    (define (%map f . args)
 
-    \ \ (if (%right?)
+    \ \ (chain-apply args
+
+    \ \ \ \ (if (%right?)
 
     \ \ \ \ \ \ (right (f value))
 
-    \ \ \ \ \ \ (%this)))
+    \ \ \ \ \ \ (%this))))
 
     \;
   </goldfish-chunk>
@@ -5836,13 +5866,15 @@
   <paragraph|either%flat-map>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (%flat-map f)
+    (define (%flat-map f . args)
 
-    \ \ (if (%right?)
+    \ \ (chain-apply args
+
+    \ \ \ \ (if (%right?)
 
     \ \ \ \ \ \ (f value)
 
-    \ \ \ \ \ \ (%this)))
+    \ \ \ \ \ \ (%this))))
 
     \;
   </goldfish-chunk>
@@ -5862,7 +5894,15 @@
   如果是左值直接跳过返回真，如果是右值执行谓词判断，参数必须是一个过程。
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (typed-define (%forall (pred procedure?))
+    (define (%forall pred)
+
+    \ \ (unless (procedure? pred)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %forall '(pred) 'pred "procedure" (object-\<gtr\>string pred))))
 
     \ \ (if (%right?)
 
@@ -5888,7 +5928,15 @@
   <paragraph|either%exists>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (typed-define (%exists (pred procedure?))
+    (define (%exists pred)
+
+    \ \ (unless (procedure? pred)\ 
+
+    \ \ \ \ \ \ (type-error\ 
+
+    \ \ \ \ \ \ \ \ (format #f "In funtion #\<less\>~a ~a\<gtr\>: argument *~a* must be *~a*! \ \ \ **Got ~a**"\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ %exists '(pred) 'pred "procedure" (object-\<gtr\>string pred))))
 
     \ \ (if (%right?)
 

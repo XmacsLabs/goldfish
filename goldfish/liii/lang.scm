@@ -666,7 +666,12 @@
 (define (%get)
   value)
 
-(typed-define (%or-else (default case-class?))
+(define (%or-else default)
+  (unless (case-class? default) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %or-else '(default) 'default "case-class" (object->string default))))  
+  
   (when (not (default :is-instance-of 'either))
     (type-error "The first parameter of either%or-else must be a either case class"))
 
@@ -680,7 +685,16 @@
          (default))
         (else default)))
 
-(typed-define (%filter-or-else (pred procedure?) (zero any?))
+(define (%filter-or-else pred zero)
+  (unless (procedure? pred) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %filter-or-else '(pred) 'pred "procedure" (object->string pred))))
+  
+  (unless (any? zero) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %filter-or-else '(zero) 'zero "any" (object->string zero))))  
   (if (%right?)
       (if (pred value)
           (%this)
@@ -700,22 +714,32 @@
       (option value)
       (none)))
 
-(chained-define (%map f)
-  (if (%right?)
+(define (%map f . args)
+  (chain-apply args
+    (if (%right?)
       (right (f value))
-      (%this)))
+      (%this))))
 
-(chained-define (%flat-map f)
-  (if (%right?)
+(define (%flat-map f . args)
+  (chain-apply args
+    (if (%right?)
       (f value)
-      (%this)))
+      (%this))))
 
-(typed-define (%forall (pred procedure?))
+(define (%forall pred)
+  (unless (procedure? pred) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %forall '(pred) 'pred "procedure" (object->string pred))))
   (if (%right?)
       (pred value)
       #t))
 
-(typed-define (%exists (pred procedure?))
+(define (%exists pred)
+  (unless (procedure? pred) 
+      (type-error 
+        (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**" 
+                    %exists '(pred) 'pred "procedure" (object->string pred))))
   (if (%right?)
       (pred value)
       #f))

@@ -28,12 +28,6 @@
         (proc)
         (repeat (- n 1) proc)))
 
-(timing "either%map-right:\t"
-  (lambda () (repeat 10000 (lambda () ((right 65536) :map (lambda (x) (+ x 1)))))))
-
-(timing "either%map-left:\t"
-  (lambda () (repeat 10000 (lambda () ((left "error") :map (lambda (x) (+ x 1)))))))
-
 (timing "either%get-or-else:\t"
   (lambda () (repeat 10000 (lambda () ((right 65536) :get-or-else 0)))))
 
