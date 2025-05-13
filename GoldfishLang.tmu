@@ -6070,9 +6070,17 @@
   <paragraph|rich-list@concat>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (chained-define (@concat lst1 lst2)
+    ;(chained-define (@concat lst1 lst2)
 
-    \ \ (rich-list (append (lst1 :collect) (lst2 :collect))))
+    \ ; (rich-list (append (lst1 :collect) (lst2 :collect))))
+
+    \;
+
+    (define (@concat lst1 lst2 . args)
+
+    \ \ (chain-apply args
+
+    \ \ \ \ (rich-list (append (lst1 :collect) (lst2 :collect)))))
 
     \;
   </goldfish-chunk>
