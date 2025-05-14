@@ -239,7 +239,7 @@
 
   \;
 
-  <value|r7rs><paragraph|file-exists?ge t><index|file-exists?>
+  <value|r7rs><paragraph|file-exists?><index|file-exists?>
 
   <\goldfish-chunk|goldfish/scheme/boot.scm|false|true>
     (define (file-exists? path)
