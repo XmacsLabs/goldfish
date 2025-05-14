@@ -19,7 +19,7 @@
   os-arch os-type os-windows? os-linux? os-macos? os-temp-dir
   os-sep pathsep
   os-call ; system
-  mkdir chdir rmdir getenv unsetenv getcwd listdir access getlogin getpid)
+  mkdir chdir rmdir getenv putenv unsetenv getcwd listdir access getlogin getpid)
 (import (scheme process-context)
         (liii base)
         (liii error)
@@ -81,6 +81,11 @@
     (if val
         val
         default)))
+
+(define (putenv key value)
+  (if (and (string? key) (string? value))
+      (g_setenv key value)
+      (error 'type-error "(putenv key value): key and value must be strings")))
 
 (define (unsetenv key)
   (g_unsetenv key))

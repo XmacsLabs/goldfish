@@ -239,7 +239,7 @@
 
   \;
 
-  <value|r7rs><paragraph|file-exists?><index|file-exists?>
+  <value|r7rs><paragraph|file-exists?ge t><index|file-exists?>
 
   <\goldfish-chunk|goldfish/scheme/boot.scm|false|true>
     (define (file-exists? path)
@@ -1474,7 +1474,7 @@
 
     \ \ os-call ; system
 
-    \ \ mkdir chdir rmdir getenv unsetenv getcwd listdir access getlogin getpid)
+    \ \ mkdir chdir rmdir getenv putenv unsetenv getcwd listdir access getlogin getpid)
 
     (import (scheme process-context)
 
@@ -1944,6 +1944,76 @@
 
     \;
   </goldfish-chunk>
+
+  <paragraph|putenv>
+
+  <\goldfish-chunk|goldfish/liii/os.scm|true|true>
+    (define (putenv key value)
+
+    \ \ (if (and (string? key) (string? value))
+
+    \ \ \ \ \ \ (g_setenv key value)
+
+    \ \ \ \ \ \ (error 'type-error "(putenv key value): key and value must be strings")))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|true>
+    (check-true (putenv "TEST_VAR" "123")) \ \ \ \ \ \ ; 设置环境变量
+
+    (check (getenv "TEST_VAR") =\<gtr\> "123") \ \ \ \ \ \ \ \ ; 验证设置成功
+
+    (check-true (putenv "TEST_VAR" "456")) \ \ \ \ \ \ ; 修改环境变量
+
+    (check (getenv "TEST_VAR") =\<gtr\> "456") \ \ \ \ \ \ \ \ ; 验证修改成功
+
+    (check-true (unsetenv "TEST_VAR")) \ \ \ \ \ \ \ \ \ \ ; 删除环境变量
+
+    (check (getenv "TEST_VAR") =\<gtr\> #f) \ \ \ \ \ \ \ \ \ \ \ ; 验证删除成功
+
+    \;
+
+    (check-catch 'type-error (putenv 123 "abc")) ; key 非字符串
+
+    (check-catch 'type-error (putenv "ABC" 123)) ; value 非字符串
+
+    \;
+  </scm-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    // 实现 putenv 功能
+
+    static s7_pointer
+
+    f_set_environment_variable(s7_scheme* sc, s7_pointer args) {
+
+    \ \ \ \ const char* key = s7_string(s7_car(args));
+
+    \ \ \ \ const char* value = s7_string(s7_cadr(args));
+
+    \ \ \ \ return s7_make_boolean(sc, tb_environment_set(key, value));
+
+    }
+
+    \;
+  </cpp-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    inline void
+
+    glue_setenv(s7_scheme* sc) {
+
+    \ \ \ \ const char* name = "g_setenv";
+
+    \ \ \ \ const char* desc = "(g_setenv key value) =\<gtr\> boolean, set an environment variable";
+
+    \ \ \ \ glue_define(sc, name, desc, f_set_environment_variable, 2, 0);
+
+    }
+
+    \;
+  </cpp-chunk>
 
   <paragraph|unsetenv>
 
@@ -2495,6 +2565,8 @@
     \ \ glue_system (sc);
 
     \ \ glue_access (sc);
+
+    \ \ glue_setenv (sc);
 
     \ \ glue_unsetenv (sc);
 

@@ -44,6 +44,16 @@
   (check-false (access "/root" 'W_OK))
   (check-true (access (executable) 'X_OK)))
 
+(check-true (putenv "TEST_VAR" "123"))       ; 设置环境变量
+(check (getenv "TEST_VAR") => "123")         ; 验证设置成功
+(check-true (putenv "TEST_VAR" "456"))       ; 修改环境变量
+(check (getenv "TEST_VAR") => "456")         ; 验证修改成功
+(check-true (unsetenv "TEST_VAR"))           ; 删除环境变量
+(check (getenv "TEST_VAR") => #f)            ; 验证删除成功
+
+(check-catch 'type-error (putenv 123 "abc")) ; key 非字符串
+(check-catch 'type-error (putenv "ABC" 123)) ; value 非字符串
+
 (check (string-null? (getenv "PATH")) => #f)
 (unsetenv "PATH")
 (check (getenv "PATH") => #f)

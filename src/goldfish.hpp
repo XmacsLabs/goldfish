@@ -332,6 +332,21 @@ inline void glue_access(s7_scheme* sc) {
   glue_define(sc, name, desc, f_access, 2, 0);
 }
 
+// 实现 putenv 功能
+static s7_pointer
+f_set_environment_variable(s7_scheme* sc, s7_pointer args) {
+    const char* key = s7_string(s7_car(args));
+    const char* value = s7_string(s7_cadr(args));
+    return s7_make_boolean(sc, tb_environment_set(key, value));
+}
+
+inline void
+glue_setenv(s7_scheme* sc) {
+    const char* name = "g_setenv";
+    const char* desc = "(g_setenv key value) => boolean, set an environment variable";
+    glue_define(sc, name, desc, f_set_environment_variable, 2, 0);
+}
+
 inline void
 glue_unsetenv (s7_scheme* sc) {
   const char* name= "g_unsetenv";
@@ -477,6 +492,7 @@ glue_liii_os (s7_scheme* sc) {
   glue_os_call (sc);
   glue_system (sc);
   glue_access (sc);
+  glue_setenv (sc);
   glue_unsetenv (sc);
   glue_getcwd (sc);
   glue_os_temp_dir (sc);
