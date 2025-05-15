@@ -749,7 +749,6 @@ glue_liii_path (s7_scheme* sc) {
   glue_path_read_text (sc);
   glue_path_read_bytes (sc);
   glue_path_write_text (sc);
-  glue_path_delete(sc);
 }
 
 void

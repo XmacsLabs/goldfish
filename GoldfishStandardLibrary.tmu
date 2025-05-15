@@ -3618,8 +3618,6 @@
 
     \ \ glue_path_write_text (sc);
 
-    \ \ glue_path_delete(sc);
-
     }
 
     \;
