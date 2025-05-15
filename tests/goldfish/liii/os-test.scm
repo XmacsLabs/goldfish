@@ -77,6 +77,23 @@
              (mkdir "/tmp/test_124")))
     => #t))
 
+(when (or (os-macos?) (os-linux?))
+    ;; 测试 remove
+  (let ((test-file (string-append (os-temp-dir) "/test_remove.txt")))
+    ;; 创建临时文件
+    (with-output-to-file test-file
+      (lambda () (display "test data")))
+    ;; 验证文件存在
+    (check-true (file-exists? test-file))
+    ;; 删除文件
+    (check-true (remove test-file))
+    ;; 验证文件已删除
+    (check-false (file-exists? test-file))))
+
+;; 错误测试
+(check-catch 'type-error (remove 123))               ; path 非字符串
+(check-catch 'file-not-found-error (remove "/nonexistent/file")) ; 文件不存在
+
 (when (not (os-windows?))
   (check (> (vector-length (listdir "/usr")) 0) => #t))
 

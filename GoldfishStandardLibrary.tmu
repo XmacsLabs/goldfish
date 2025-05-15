@@ -1474,7 +1474,7 @@
 
     \ \ os-call ; system
 
-    \ \ mkdir chdir rmdir getenv putenv unsetenv getcwd listdir access getlogin getpid)
+    \ \ mkdir chdir rmdir remove getenv putenv unsetenv getcwd listdir access getlogin getpid)
 
     (import (scheme process-context)
 
@@ -2193,6 +2193,96 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|remove>
+
+  <\goldfish-chunk|goldfish/liii/os.scm|true|true>
+    (define (remove path)
+
+    \ \ (cond
+
+    \ \ \ \ ((not (string? path))
+
+    \ \ \ \ \ (error 'type-error "(remove path): path must be a string"))
+
+    \ \ \ \ ((not (file-exists? path))
+
+    \ \ \ \ \ (error 'file-not-found-error (string-append "File not found: " path)))
+
+    \ \ \ \ (else
+
+    \ \ \ \ \ (g_remove-file path))))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/os-test.scm|true|true>
+    (when (or (os-macos?) (os-linux?))
+
+    \ \ \ \ ;; 测试 remove
+
+    \ \ (let ((test-file (string-append (os-temp-dir) "/test_remove.txt")))
+
+    \ \ \ \ ;; 创建临时文件
+
+    \ \ \ \ (with-output-to-file test-file
+
+    \ \ \ \ \ \ (lambda () (display "test data")))
+
+    \ \ \ \ ;; 验证文件存在
+
+    \ \ \ \ (check-true (file-exists? test-file))
+
+    \ \ \ \ ;; 删除文件
+
+    \ \ \ \ (check-true (remove test-file))
+
+    \ \ \ \ ;; 验证文件已删除
+
+    \ \ \ \ (check-false (file-exists? test-file))))
+
+    \;
+
+    ;; 错误测试
+
+    (check-catch 'type-error (remove 123)) \ \ \ \ \ \ \ \ \ \ \ \ \ \ ; path 非字符串
+
+    (check-catch 'file-not-found-error (remove "/nonexistent/file")) ; 文件不存在
+
+    \;
+  </scm-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    static s7_pointer
+
+    f_remove_file(s7_scheme* sc, s7_pointer args) {
+
+    \ \ \ \ const char* path = s7_string(s7_car(args));
+
+    \ \ \ \ bool success = tb_file_remove(path); // TBOX 提供的文件删除函数
+
+    \ \ \ \ return s7_make_boolean(sc, success);
+
+    }
+
+    \;
+  </cpp-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    inline void
+
+    glue_remove_file(s7_scheme* sc) {
+
+    \ \ \ \ const char* name = "g_remove-file";
+
+    \ \ \ \ const char* desc = "(g_remove-file path) =\<gtr\> boolean, delete a file";
+
+    \ \ \ \ glue_define(sc, name, desc, f_remove_file, 1, 0);
+
+    }
+
+    \;
+  </cpp-chunk>
+
   <paragraph|chdir>
 
   <\goldfish-chunk|goldfish/liii/os.scm|true|true>
@@ -2575,6 +2665,8 @@
     \ \ glue_os_temp_dir (sc);
 
     \ \ glue_mkdir (sc);
+
+    \ \ glue_remove_file(sc);\ 
 
     \ \ glue_chdir (sc);
 
