@@ -286,6 +286,12 @@
     
     (else (??? "Unsupported platform"))))
 
+(define (%rmdir)
+  (rmdir (%to-string)))
+
+(define (%unlink)
+  (remove (%to-string)))
+
 (chained-define (@./ x)
   (let1 p (path x)
         (if (p :absolute?)

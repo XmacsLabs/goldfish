@@ -3618,6 +3618,8 @@
 
     \ \ glue_path_write_text (sc);
 
+    \ \ glue_path_delete(sc);
+
     }
 
     \;
@@ -4529,6 +4531,98 @@
     \ \ (check (path "C:\\\\Users" :parent :to-string) =\<gtr\> "C:\\\\")
 
     \ \ (check (path "a\\\\b" :parent :to-string) =\<gtr\> "a\\\\"))
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path%rmdir>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%rmdir)
+
+    \ \ (rmdir (%to-string)))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|path%unlink>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%unlink)
+
+    \ \ (remove (%to-string)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    ;; 测试删除文件
+
+    (let ((test-file (string-append (os-temp-dir) "/test_delete.txt")))
+
+    \ \ ;; 创建临时文件
+
+    \ \ (with-output-to-file test-file
+
+    \ \ \ \ (lambda () (display "test data")))
+
+    \ \ ;; 验证文件存在
+
+    \ \ (check-true (file-exists? test-file))
+
+    \ \ ;; 删除文件（使用 remove）
+
+    \ \ (check-true (remove test-file))
+
+    \ \ ;; 验证文件已删除
+
+    \ \ (check-false (file-exists? test-file)))
+
+    \;
+
+    ;; 测试删除目录
+
+    (let ((test-dir (string-append (os-temp-dir) "/test_delete_dir")))
+
+    \ \ ;; 创建临时目录
+
+    \ \ (mkdir test-dir)
+
+    \ \ ;; 验证目录存在
+
+    \ \ (check-true (file-exists? test-dir))
+
+    \ \ ;; 删除目录（使用 rmdir）
+
+    \ \ (check-true (rmdir test-dir))
+
+    \ \ ;; 验证目录已删除
+
+    \ \ (check-false (file-exists? test-dir)))
+
+    \;
+
+    ;; 测试 path 对象的 :unlink 和 :rmdir
+
+    (let ((test-file (string-append (os-temp-dir) "/test_path_unlink.txt")))
+
+    \ \ (with-output-to-file test-file
+
+    \ \ \ \ (lambda () (display "test data")))
+
+    \ \ (check-true ((path test-file) :unlink))
+
+    \ \ (check-false (file-exists? test-file)))
+
+    \;
+
+    (let ((test-dir (string-append (os-temp-dir) "/test_path_rmdir")))
+
+    \ \ (mkdir test-dir)
+
+    \ \ (check-true ((path test-dir) :rmdir))
+
+    \ \ (check-false (file-exists? test-dir)))
 
     \;
   </scm-chunk>
