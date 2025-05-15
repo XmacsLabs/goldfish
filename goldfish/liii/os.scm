@@ -19,7 +19,7 @@
   os-arch os-type os-windows? os-linux? os-macos? os-temp-dir
   os-sep pathsep
   os-call ; system
-  mkdir chdir rmdir getenv putenv unsetenv getcwd listdir access getlogin getpid)
+  mkdir chdir rmdir remove getenv putenv unsetenv getcwd listdir access getlogin getpid)
 (import (scheme process-context)
         (liii base)
         (liii error)
@@ -101,6 +101,17 @@
 
 (define (rmdir path)
   (%check-dir-andthen path delete-file))
+
+(define (remove path)
+  (cond
+    ((not (string? path))
+     (error 'type-error "(remove path): path must be string"))
+    ((not (file-exists? path))
+     (error 'file-not-found-error (string-append "File not found: " path)))
+    ((g_isdir path)  ; 检查是否为目录
+     (error 'value-error "Cannot remove a directory (use 'rmdir' instead)"))
+    (else
+     (g_remove-file path))))
 
 (define (chdir path)
   (if (file-exists? path)
