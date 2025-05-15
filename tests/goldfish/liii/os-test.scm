@@ -94,6 +94,15 @@
 (check-catch 'type-error (remove 123))               ; path 非字符串
 (check-catch 'file-not-found-error (remove "/nonexistent/file")) ; 文件不存在
 
+;; 测试 remove 对目录的提示
+(let ((test-dir (string-append (os-temp-dir) "/test_dir")))
+  ;; 创建临时目录
+  (mkdir test-dir)
+  ;; 尝试删除目录，应提示使用 rmdir
+  (check-catch 'wrong-type-arg (remove test-dir))
+  ;; 清理
+  (rmdir test-dir))
+
 (when (not (os-windows?))
   (check (> (vector-length (listdir "/usr")) 0) => #t))
 

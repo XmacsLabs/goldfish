@@ -383,7 +383,18 @@ inline void glue_mkdir(s7_scheme* sc) {
 static s7_pointer
 f_remove_file(s7_scheme* sc, s7_pointer args) {
     const char* path = s7_string(s7_car(args));
-    bool success = tb_file_remove(path); // TBOX 提供的文件删除函数
+    
+    // 检查是否是目录
+    tb_file_info_t info;
+    if (tb_file_info(path, &info)) {
+        if (info.type == TB_FILE_TYPE_DIRECTORY) {
+            return s7_error(sc, s7_make_symbol(sc, "wrong-type-arg"),
+                          s7_make_string(sc, "Path is a directory. Use 'rmdir' instead of 'remove'"));
+        }
+    }
+
+    // 删除文件
+    bool success = tb_file_remove(path);
     return s7_make_boolean(sc, success);
 }
 

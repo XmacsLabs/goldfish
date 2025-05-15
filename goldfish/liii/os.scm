@@ -108,6 +108,8 @@
      (error 'type-error "(remove path): path must be a string"))
     ((not (file-exists? path))
      (error 'file-not-found-error (string-append "File not found: " path)))
+    ((g_isdir path)  ; 检查是否是目录
+     (error 'wrong-type-arg "Path is a directory. Use 'rmdir' instead of 'remove'"))
     (else
      (g_remove-file path))))
 

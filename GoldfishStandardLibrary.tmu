@@ -2208,6 +2208,10 @@
 
     \ \ \ \ \ (error 'file-not-found-error (string-append "File not found: " path)))
 
+    \ \ \ \ ((g_isdir path) \ ; 检查是否是目录
+
+    \ \ \ \ \ (error 'wrong-type-arg "Path is a directory. Use 'rmdir' instead of 'remove'"))
+
     \ \ \ \ (else
 
     \ \ \ \ \ (g_remove-file path))))
@@ -2249,6 +2253,24 @@
     (check-catch 'file-not-found-error (remove "/nonexistent/file")) ; 文件不存在
 
     \;
+
+    ;; 测试 remove 对目录的提示
+
+    (let ((test-dir (string-append (os-temp-dir) "/test_dir")))
+
+    \ \ ;; 创建临时目录
+
+    \ \ (mkdir test-dir)
+
+    \ \ ;; 尝试删除目录，应提示使用 rmdir
+
+    \ \ (check-catch 'wrong-type-arg (remove test-dir))
+
+    \ \ ;; 清理
+
+    \ \ (rmdir test-dir))
+
+    \;
   </scm-chunk>
 
   <\cpp-chunk|src/goldfish.hpp|true|true>
@@ -2258,7 +2280,29 @@
 
     \ \ \ \ const char* path = s7_string(s7_car(args));
 
-    \ \ \ \ bool success = tb_file_remove(path); // TBOX 提供的文件删除函数
+    \ \ \ \ 
+
+    \ \ \ \ // 检查是否是目录
+
+    \ \ \ \ tb_file_info_t info;
+
+    \ \ \ \ if (tb_file_info(path, &info)) {
+
+    \ \ \ \ \ \ \ \ if (info.type == TB_FILE_TYPE_DIRECTORY) {
+
+    \ \ \ \ \ \ \ \ \ \ \ \ return s7_error(sc, s7_make_symbol(sc, "wrong-type-arg"),
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ s7_make_string(sc, "Path is a directory. Use 'rmdir' instead of 'remove'"));
+
+    \ \ \ \ \ \ \ \ }
+
+    \ \ \ \ }
+
+    \;
+
+    \ \ \ \ // 删除文件
+
+    \ \ \ \ bool success = tb_file_remove(path);
 
     \ \ \ \ return s7_make_boolean(sc, success);
 
