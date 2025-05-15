@@ -286,6 +286,21 @@
     
     (else (??? "Unsupported platform"))))
 
+(define (%rmdir)
+  (rmdir (%to-string)))
+
+(define* (%unlink (missing-ok #f))  ; 使用define*定义可选参数
+  (let ((path-str (%to-string)))
+    (cond
+      ((file-exists? path-str)  ; 文件存在时总是删除
+       (remove path-str))
+      (missing-ok  ; 文件不存在时根据missing-ok决定
+       #t)         ; missing-ok为#t时静默返回#t
+      (else        ; missing-ok为#f时抛出错误
+       (error 'file-not-found-error 
+              (string-append "File not found: " path-str))))))
+
+
 (chained-define (@./ x)
   (let1 p (path x)
         (if (p :absolute?)
