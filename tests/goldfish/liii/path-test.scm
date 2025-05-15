@@ -196,40 +196,60 @@
   (check (path "C:\\Users" :parent :to-string) => "C:\\")
   (check (path "a\\b" :parent :to-string) => "a\\"))
 
-;; 测试删除文件
-(let ((test-file (string-append (os-temp-dir) "/test_delete.txt")))
-  ;; 创建临时文件
-  (with-output-to-file test-file
-    (lambda () (display "test data")))
-  ;; 验证文件存在
-  (check-true (file-exists? test-file))
-  ;; 删除文件（使用 remove）
-  (check-true (remove test-file))
-  ;; 验证文件已删除
-  (check-false (file-exists? test-file)))
+(when (or (os-macos?) (os-linux?))
+    ;; 测试删除文件
+  (let ((test-file (string-append (os-temp-dir) "/test_delete.txt")))
+    ;; 创建临时文件
+    (with-output-to-file test-file
+      (lambda () (display "test data")))
+    ;; 验证文件存在
+    (check-true (file-exists? test-file))
+    ;; 删除文件（使用 remove）
+    (check-true (remove test-file))
+    ;; 验证文件已删除
+    (check-false (file-exists? test-file))))
 
-;; 测试删除目录
-(let ((test-dir (string-append (os-temp-dir) "/test_delete_dir")))
-  ;; 创建临时目录
-  (mkdir test-dir)
-  ;; 验证目录存在
-  (check-true (file-exists? test-dir))
-  ;; 删除目录（使用 rmdir）
-  (check-true (rmdir test-dir))
-  ;; 验证目录已删除
-  (check-false (file-exists? test-dir)))
+(when (or (os-macos?) (os-linux?))
+  ;; 测试删除目录
+  (let ((test-dir (string-append (os-temp-dir) "/test_delete_dir")))
+    ;; 创建临时目录
+    (mkdir test-dir)
+    ;; 验证目录存在
+    (check-true (file-exists? test-dir))
+    ;; 删除目录（使用 rmdir）
+    (check-true (rmdir test-dir))
+    ;; 验证目录已删除
+    (check-false (file-exists? test-dir))))
 
-;; 测试 path 对象的 :unlink 和 :rmdir
-(let ((test-file (string-append (os-temp-dir) "/test_path_unlink.txt")))
-  (with-output-to-file test-file
-    (lambda () (display "test data")))
-  (check-true ((path test-file) :unlink))
-  (check-false (file-exists? test-file)))
+(when (or (os-macos?) (os-linux?))
+  ;; 测试 path 对象的 :unlink 和 :rmdir
+  (let ((test-file (string-append (os-temp-dir) "/test_path_unlink.txt")))
+    (with-output-to-file test-file
+      (lambda () (display "test data")))
+    (check-true ((path test-file) :unlink))
+    (check-false (file-exists? test-file))))
 
-(let ((test-dir (string-append (os-temp-dir) "/test_path_rmdir")))
-  (mkdir test-dir)
-  (check-true ((path test-dir) :rmdir))
-  (check-false (file-exists? test-dir)))
+(when (or (os-macos?) (os-linux?))
+  (let ((test-dir (string-append (os-temp-dir) "/test_path_rmdir")))
+    (mkdir test-dir)
+    (check-true ((path test-dir) :rmdir))
+    (check-false (file-exists? test-dir))))
+
+(when (or (os-macos?) (os-linux?))
+  ;; 测试各种调用方式
+  (let ((test-file "/tmp/test_unlink.txt"))
+    ;; 默认行为 (missing-ok=#f)
+    (check-catch 'file-not-found-error
+                 ((path test-file) :unlink))
+  
+    ;; 显式指定 missing-ok=#t
+    (check-true ((path test-file) :unlink #t))
+  
+    ;; 文件存在时的测试
+    (with-output-to-file test-file
+      (lambda () (display "test")))
+    (check-true ((path test-file) :unlink))
+    (check-false (file-exists? test-file))))
 
 (check (path :./ "a" :to-string) => "a")
 

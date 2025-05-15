@@ -4546,81 +4546,139 @@
   <paragraph|path%unlink>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
-    (define (%unlink)
+    (define* (%unlink (missing-ok #f)) \ ; 使用define*定义可选参数
 
-    \ \ (remove (%to-string)))
+    \ \ (let ((path-str (%to-string)))
+
+    \ \ \ \ (cond
+
+    \ \ \ \ \ \ ((file-exists? path-str) \ ; 文件存在时总是删除
+
+    \ \ \ \ \ \ \ (remove path-str))
+
+    \ \ \ \ \ \ (missing-ok \ ; 文件不存在时根据missing-ok决定
+
+    \ \ \ \ \ \ \ #t) \ \ \ \ \ \ \ \ ; missing-ok为#t时静默返回#t
+
+    \ \ \ \ \ \ (else \ \ \ \ \ \ \ ; missing-ok为#f时抛出错误
+
+    \ \ \ \ \ \ \ (error 'file-not-found-error\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (string-append "File not found: " path-str))))))
+
+    \;
 
     \;
   </goldfish-chunk>
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    ;; 测试删除文件
+    (when (or (os-macos?) (os-linux?))
 
-    (let ((test-file (string-append (os-temp-dir) "/test_delete.txt")))
+    \ \ \ \ ;; 测试删除文件
 
-    \ \ ;; 创建临时文件
+    \ \ (let ((test-file (string-append (os-temp-dir) "/test_delete.txt")))
 
-    \ \ (with-output-to-file test-file
+    \ \ \ \ ;; 创建临时文件
 
-    \ \ \ \ (lambda () (display "test data")))
+    \ \ \ \ (with-output-to-file test-file
 
-    \ \ ;; 验证文件存在
+    \ \ \ \ \ \ (lambda () (display "test data")))
 
-    \ \ (check-true (file-exists? test-file))
+    \ \ \ \ ;; 验证文件存在
 
-    \ \ ;; 删除文件（使用 remove）
+    \ \ \ \ (check-true (file-exists? test-file))
 
-    \ \ (check-true (remove test-file))
+    \ \ \ \ ;; 删除文件（使用 remove）
 
-    \ \ ;; 验证文件已删除
+    \ \ \ \ (check-true (remove test-file))
 
-    \ \ (check-false (file-exists? test-file)))
+    \ \ \ \ ;; 验证文件已删除
 
-    \;
-
-    ;; 测试删除目录
-
-    (let ((test-dir (string-append (os-temp-dir) "/test_delete_dir")))
-
-    \ \ ;; 创建临时目录
-
-    \ \ (mkdir test-dir)
-
-    \ \ ;; 验证目录存在
-
-    \ \ (check-true (file-exists? test-dir))
-
-    \ \ ;; 删除目录（使用 rmdir）
-
-    \ \ (check-true (rmdir test-dir))
-
-    \ \ ;; 验证目录已删除
-
-    \ \ (check-false (file-exists? test-dir)))
+    \ \ \ \ (check-false (file-exists? test-file))))
 
     \;
 
-    ;; 测试 path 对象的 :unlink 和 :rmdir
+    (when (or (os-macos?) (os-linux?))
 
-    (let ((test-file (string-append (os-temp-dir) "/test_path_unlink.txt")))
+    \ \ ;; 测试删除目录
 
-    \ \ (with-output-to-file test-file
+    \ \ (let ((test-dir (string-append (os-temp-dir) "/test_delete_dir")))
 
-    \ \ \ \ (lambda () (display "test data")))
+    \ \ \ \ ;; 创建临时目录
 
-    \ \ (check-true ((path test-file) :unlink))
+    \ \ \ \ (mkdir test-dir)
 
-    \ \ (check-false (file-exists? test-file)))
+    \ \ \ \ ;; 验证目录存在
+
+    \ \ \ \ (check-true (file-exists? test-dir))
+
+    \ \ \ \ ;; 删除目录（使用 rmdir）
+
+    \ \ \ \ (check-true (rmdir test-dir))
+
+    \ \ \ \ ;; 验证目录已删除
+
+    \ \ \ \ (check-false (file-exists? test-dir))))
 
     \;
 
-    (let ((test-dir (string-append (os-temp-dir) "/test_path_rmdir")))
+    (when (or (os-macos?) (os-linux?))
 
-    \ \ (mkdir test-dir)
+    \ \ ;; 测试 path 对象的 :unlink 和 :rmdir
 
-    \ \ (check-true ((path test-dir) :rmdir))
+    \ \ (let ((test-file (string-append (os-temp-dir) "/test_path_unlink.txt")))
 
-    \ \ (check-false (file-exists? test-dir)))
+    \ \ \ \ (with-output-to-file test-file
+
+    \ \ \ \ \ \ (lambda () (display "test data")))
+
+    \ \ \ \ (check-true ((path test-file) :unlink))
+
+    \ \ \ \ (check-false (file-exists? test-file))))
+
+    \;
+
+    (when (or (os-macos?) (os-linux?))
+
+    \ \ (let ((test-dir (string-append (os-temp-dir) "/test_path_rmdir")))
+
+    \ \ \ \ (mkdir test-dir)
+
+    \ \ \ \ (check-true ((path test-dir) :rmdir))
+
+    \ \ \ \ (check-false (file-exists? test-dir))))
+
+    \;
+
+    (when (or (os-macos?) (os-linux?))
+
+    \ \ ;; 测试各种调用方式
+
+    \ \ (let ((test-file "/tmp/test_unlink.txt"))
+
+    \ \ \ \ ;; 默认行为 (missing-ok=#f)
+
+    \ \ \ \ (check-catch 'file-not-found-error
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((path test-file) :unlink))
+
+    \ \ 
+
+    \ \ \ \ ;; 显式指定 missing-ok=#t
+
+    \ \ \ \ (check-true ((path test-file) :unlink #t))
+
+    \ \ 
+
+    \ \ \ \ ;; 文件存在时的测试
+
+    \ \ \ \ (with-output-to-file test-file
+
+    \ \ \ \ \ \ (lambda () (display "test")))
+
+    \ \ \ \ (check-true ((path test-file) :unlink))
+
+    \ \ \ \ (check-false (file-exists? test-file))))
 
     \;
   </scm-chunk>
