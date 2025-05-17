@@ -4507,64 +4507,6 @@
 
   <subsection|实用方法>
 
-  注意到在不同系统里换行符的标准是不一样的
-
-  <\enumerate>
-    <item><strong|不同系统的换行符标准>：
-
-    <\itemize>
-      <item>Unix/Linux/macOS: 使用<nbsp><code*|\\n><nbsp>(LF)
-
-      <item>Windows: 使用<nbsp><code*|\\r\\n><nbsp>(CRLF)
-    </itemize>
-
-    <item><strong|问题表现>：
-
-    <\itemize>
-      <item>在Windows上写入<code*|\\n>时，系统可能会自动转换为<code*|\\r\\n>
-
-      <item>但读取时可能保持原始<code*|\\n>或转换为系统标准
-
-      <item>导致字符串比较失败
-    </itemize>
-  </enumerate>
-
-  以下为一个案例：
-
-  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (let ((p (path :temp-dir :/ "append_test.txt"))
-
-    \ \ \ \ \ \ (p-windows (path :temp-dir :/ "append_test.txt")))
-
-    \ \ ;; 确保文件不存在
-
-    \ \ (when (p :exists?) (p :unlink))
-
-    \ \ (when (p-windows :exists?) (p-windows :unlink))
-
-    \ \ 
-
-    \ \ (p :append-text "Line 1\\n")
-
-    \ \ (p-windows :append-text "Line 1\\r\\n")
-
-    \ \ (when (or (os-linux?) (os-macos?))
-
-    \ \ \ \ (check (p :read-text) =\<gtr\> "Line 1\\n"))
-
-    \ \ (when (os-windows?)
-
-    \ \ \ \ (check (p :read-text) =\<gtr\> "Line 1\\r\\n"))
-
-    \ \ 
-
-    \ \ ;; 清理
-
-    \ \ (p :unlink)
-
-    \ \ (p-windows :unlink))
-  </scm-chunk>
-
   <paragraph|path%read-text>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
@@ -4654,6 +4596,64 @@
 
     \;
   </goldfish-chunk>
+
+  注意到在不同系统里换行符的标准是不一样的
+
+  <\enumerate>
+    <item><strong|不同系统的换行符标准>：
+
+    <\itemize>
+      <item>Unix/Linux/macOS: 使用<nbsp><code*|\\n><nbsp>(LF)
+
+      <item>Windows: 使用<nbsp><code*|\\r\\n><nbsp>(CRLF)
+    </itemize>
+
+    <item><strong|问题表现>：
+
+    <\itemize>
+      <item>在Windows上写入<code*|\\n>时，系统可能会自动转换为<code*|\\r\\n>
+
+      <item>但读取时可能保持原始<code*|\\n>或转换为系统标准
+
+      <item>导致字符串比较失败
+    </itemize>
+  </enumerate>
+
+  以下为一个案例：
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (let ((p (path :temp-dir :/ "append_test.txt"))
+
+    \ \ \ \ \ \ (p-windows (path :temp-dir :/ "append_test_windows.txt")))
+
+    \ \ ;; 确保文件不存在
+
+    \ \ (when (p :exists?) (p :unlink))
+
+    \ \ (when (p-windows :exists?) (p-windows :unlink))
+
+    \ \ 
+
+    \ \ (p :write-text "Line 1\\n")
+
+    \ \ (p-windows :write-text "Line 1\\r\\n")
+
+    \ \ (when (or (os-linux?) (os-macos?))
+
+    \ \ \ \ (check (p :read-text) =\<gtr\> "Line 1\\n"))
+
+    \ \ (when (os-windows?)
+
+    \ \ \ \ (check (p-windows :read-text) =\<gtr\> "Line 1\\r\\n"))
+
+    \ \ 
+
+    \ \ ;; 清理
+
+    \ \ (p :unlink)
+
+    \ \ (p-windows :unlink))
+  </scm-chunk>
 
   <subsection|修改器>
 

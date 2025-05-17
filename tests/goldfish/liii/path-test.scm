@@ -217,22 +217,6 @@
 (when (os-windows?)
   (check (path :of-drive #\C :to-string) => "C:\\"))
 
-(let ((p (path :temp-dir :/ "append_test.txt"))
-      (p-windows (path :temp-dir :/ "append_test.txt")))
-  ;; 确保文件不存在
-  (when (p :exists?) (p :unlink))
-  (when (p-windows :exists?) (p-windows :unlink))
-  
-  (p :append-text "Line 1\n")
-  (p-windows :append-text "Line 1\r\n")
-  (when (or (os-linux?) (os-macos?))
-    (check (p :read-text) => "Line 1\n"))
-  (when (os-windows?)
-    (check (p :read-text) => "Line 1\r\n"))
-  
-  ;; 清理
-  (p :unlink)
-  (p-windows :unlink))
 ;; path%append-text 测试
 (let ((p (path :temp-dir :/ "append_test.txt")))
   ;; 确保文件不存在
@@ -251,6 +235,22 @@
   ;; 清理
   (p :unlink))
 
+(let ((p (path :temp-dir :/ "append_test.txt"))
+      (p-windows (path :temp-dir :/ "append_test_windows.txt")))
+  ;; 确保文件不存在
+  (when (p :exists?) (p :unlink))
+  (when (p-windows :exists?) (p-windows :unlink))
+  
+  (p :write-text "Line 1\n")
+  (p-windows :write-text "Line 1\r\n")
+  (when (or (os-linux?) (os-macos?))
+    (check (p :read-text) => "Line 1\n"))
+  (when (os-windows?)
+    (check (p-windows :read-text) => "Line 1\r\n"))
+  
+  ;; 清理
+  (p :unlink)
+  (p-windows :unlink))
 (when (not (os-windows?))
   (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
   (check (path :/ (path "a/b")) => (path "/a/b")))
