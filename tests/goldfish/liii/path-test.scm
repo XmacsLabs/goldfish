@@ -221,13 +221,11 @@
   ;; 确保文件不存在
   (when (p :exists?) (p :unlink))
   
-  (p :append-text "First line\n")
+  (p :append-text "Line 1\n")
   (when (or (os-linux?) (os-macos?))
-    (check (p :read-text) => "First line\n"))
-  
-  (p :append-text "First line\r\n")
+    (check (p :read-text) => "Line 1\n"))
   (when (os-windows?)
-    (check (p :read-text) => "First line\r\n"))
+    (check (p :read-text) => "Line 1\r\n"))
   
   ;; 清理
   (p :unlink))
