@@ -10403,6 +10403,8 @@
     \ \ \ (bitwise-and mask a)
 
     \ \ \ (bitwise-and (bitwise-not mask) b)))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10445,6 +10447,8 @@
     \ \ \ \ (else
 
     \ \ \ \ \ (not (zero? (bitwise-and n (arithmetic-shift 1 index)))))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10507,6 +10511,8 @@
     \ \ \ \ \ \ \ \ \ (bitwise-ior n (arithmetic-shift 1 index))
 
     \ \ \ \ \ \ \ \ \ (bitwise-and n (bitwise-not (arithmetic-shift 1 index)))))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10563,6 +10569,8 @@
     \ \ \ \ \ \ \ \ (copy-bit index1 n (bit-set? index2 n))
 
     \ \ \ \ \ \ \ \ (bit-set? index1 n)))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10593,6 +10601,8 @@
     (define (any-bit-set? test-bits n)
 
     \ \ (not (zero? (bitwise-and test-bits n))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10613,6 +10623,8 @@
     (define (every-bit-set? test-bits n)
 
     \ \ (= (bitwise-and test-bits n) test-bits))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10639,6 +10651,8 @@
     \ \ \ \ \ \ (let ((lsb (bitwise-and n (- n))))
 
     \ \ \ \ \ \ \ \ (- (integer-length lsb) 1))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10687,6 +10701,8 @@
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ (let ((mask (arithmetic-shift (- (expt 2 width) 1) start)))
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (arithmetic-shift (bitwise-and i mask) (- start))))))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10727,6 +10743,8 @@
     \ \ \ \ \ \ \ \ \ \ \ (arithmetic-shift i (- start))
 
     \ \ \ \ \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1)))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10751,6 +10769,8 @@
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1))\ 
 
     \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1)))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10777,6 +10797,8 @@
     \ \ \ \ \ \ (arithmetic-shift
 
     \ \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1) start))))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
@@ -10799,6 +10821,8 @@
     \ \ \ \ (arithmetic-shift
 
     \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1) start)))
+
+    \;
   </scm-chunk>
 
   <paragraph|测试>
