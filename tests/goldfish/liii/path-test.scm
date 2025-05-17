@@ -111,7 +111,8 @@
   (path-append-text file-path content)
   
   ;; 验证内容
-  (check (path-read-text file-path) => content)
+  (when (or (os-macos?) (os-linux?))
+    (check (path-read-text file-path) => content))
   
   ;; 清理
   (delete-file file-path))

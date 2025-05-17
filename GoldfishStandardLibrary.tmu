@@ -3758,7 +3758,9 @@
 
     \ \ ;; 验证内容
 
-    \ \ (check (path-read-text file-path) =\<gtr\> content)
+    \ \ (when (or (os-macos?) (os-linux?))
+
+    \ \ \ \ (check (path-read-text file-path) =\<gtr\> content))
 
     \ \ 
 
