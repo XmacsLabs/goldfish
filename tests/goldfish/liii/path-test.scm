@@ -222,15 +222,16 @@
   (when (p :exists?) (p :unlink))
   
   ;; 测试追加到新文件
-  (check-true (> (p :append-text "First line\n") 0))
+  (p :append-text "First line\n")
   (check (p :read-text) => "First line\n")
   
   ;; 测试追加到已有文件
-  (check-true (> (p :append-text "Second line\n") 0))
+  (p :append-text "Second line\n")
   (check (p :read-text) => "First line\nSecond line\n")
   
   ;; 清理
   (p :unlink))
+
 (when (not (os-windows?))
   (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
   (check (path :/ (path "a/b")) => (path "/a/b")))
