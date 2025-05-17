@@ -185,5 +185,9 @@
 (check (bit-field-every? #b1011110 1 5) => #t)
 (check (bit-field-every? #b1011010 1 5) => #f)
 
+(check (bit-field-clear #b101010 1 4) => #b100000)
+
+(check (bit-field-set #b101010 1 4) => #b101110)
+
 (check-report)
 

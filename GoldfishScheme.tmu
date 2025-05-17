@@ -9856,7 +9856,7 @@
 
     \ \ bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 
-    \ \ bit-field bit-field-any? bit-field-every?
+    \ \ bit-field bit-field-any? bit-field-every? bit-field-clear bit-field-set
 
     \ \ ; S7 built-in
 
@@ -9886,7 +9886,7 @@
 
     \ \ bit-set? copy-bit bit-swap any-bit-set? every-bit-set? first-set-bit
 
-    \ \ bit-field bit-field-any? bit-field-every?
+    \ \ bit-field bit-field-any? bit-field-every? bit-field-clear bit-field-set
 
     )
 
@@ -10759,6 +10759,52 @@
     (check (bit-field-every? #b1011110 1 5) =\<gtr\> #t)
 
     (check (bit-field-every? #b1011010 1 5) =\<gtr\> #f)
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>bit-field-clear><index|bit-field-clear><typehint|((i integer?) (start integer?) (end integer?)) =\<gtr\> integer?>
+
+  <strong|bit-field-clear> 用于将位字段 <strong|i> 中从 <strong|start> 到 <strong|end> 之间的字段全部清零。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-field-clear i start end)
+
+    \ \ (bitwise-and i
+
+    \ \ \ \ (bitwise-not
+
+    \ \ \ \ \ \ (arithmetic-shift
+
+    \ \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1) start))))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bit-field-clear #b101010 1 4) =\<gtr\> #b100000)
+
+    \;
+  </scm-chunk>
+
+  <paragraph|<value|srfi>bit-field-set><index|bit-field-set><typehint|((i integer?) (start integer?) (end integer?)) =\<gtr\> integer?>
+
+  <strong|bit-field-set> 用于将位字段 <strong|i> 中从 <strong|start> 到 <strong|end> 之间的字段全部置 <strong|1>。
+
+  <\scm-chunk|goldfish/srfi/srfi-151.scm|true|true>
+    (define (bit-field-set i start end)
+
+    \ \ (bitwise-ior i
+
+    \ \ \ \ (arithmetic-shift
+
+    \ \ \ \ \ \ \ (- (arithmetic-shift 1 (- end start)) 1) start)))
+  </scm-chunk>
+
+  <paragraph|测试>
+
+  <\scm-chunk|tests/goldfish/liii/bitwise-test.scm|true|true>
+    (check (bit-field-set #b101010 1 4) =\<gtr\> #b101110)
 
     \;
   </scm-chunk>
