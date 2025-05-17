@@ -216,14 +216,10 @@
 (when (os-windows?)
   (check (path :of-drive #\C :to-string) => "C:\\"))
 
-;; 测试 path%append-text 方法
-(let1 test-file (string-append (os-temp-dir) "/append_test.txt")
+;; path%append-text 测试
+(let ((p (path :temp-dir :/ "append_test.txt")))
   ;; 确保文件不存在
-  (when (file-exists? test-file)
-    (delete-file test-file))
-  
-  ;; 创建 path 对象
-  (define p (path test-file))
+  (when (p :exists?) (p :unlink))
   
   ;; 测试追加到新文件
   (check-true (> (p :append-text "First line\n") 0))
@@ -234,7 +230,7 @@
   (check (p :read-text) => "First line\nSecond line\n")
   
   ;; 清理
-  (delete-file test-file))
+  (p :unlink))
 (when (not (os-windows?))
   (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
   (check (path :/ (path "a/b")) => (path "/a/b")))
@@ -324,6 +320,37 @@
 (when (os-windows?)
   (check (path :home)
    =>    (path :/ (getenv "HOMEDRIVE") :/ "Users" :/ (getenv "USERNAME"))))
+
+;; 测试 path@temp-dir 方法
+(let ((temp-path (path :temp-dir)))
+  ;; 验证返回的是 path 对象
+  (check-true (path :is-type-of temp-path))
+  
+  ;; 验证路径存在且是目录
+  (check-true (temp-path :exists?))
+  (check-true (temp-path :dir?))
+  
+  ;; 验证路径与 os-temp-dir 一致
+  (check (temp-path :to-string) => (os-temp-dir))
+  
+  ;; 验证在不同平台下的基本特征
+  (when (os-windows?)
+    (check-true (string-starts? (temp-path :to-string) "C:\\"))
+  
+  (when (or (os-linux? os-macos?)
+    (check-true (string-starts? (temp-path :to-string) "/"))))))
+
+;; 测试可以基于临时目录创建文件
+(let ((temp-file (path :temp-dir :/ "test_file.txt")))
+  ;; 写入测试文件
+  (temp-file :write-text "test content")
+  
+  ;; 验证文件存在
+  (check-true (temp-file :exists?))
+  (check-true (temp-file :file?))
+  
+  ;; 清理
+  (temp-file :unlink))
 
 (check-report)
 
