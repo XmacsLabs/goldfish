@@ -16,7 +16,8 @@
 
 (import (liii path)
         (liii check)
-        (liii os))
+        (liii os)
+        (liii string))
 
 ; (check-set-mode! 'report-failed)
 
@@ -342,23 +343,23 @@
    =>    (path :/ (getenv "HOMEDRIVE") :/ "Users" :/ (getenv "USERNAME"))))
 
 ;; 测试 path@temp-dir 方法
-(let ((temp-path (path :temp-dir)))
+(let1 temp-path (path :temp-dir)
   ;; 验证返回的是 path 对象
   (check-true (path :is-type-of temp-path))
-  
+
   ;; 验证路径存在且是目录
   (check-true (temp-path :exists?))
   (check-true (temp-path :dir?))
-  
+
   ;; 验证路径与 os-temp-dir 一致
   (check (temp-path :to-string) => (os-temp-dir))
-  
+
   ;; 验证在不同平台下的基本特征
   (when (os-windows?)
-    (check-true (string-starts? (temp-path :to-string) "C:\\"))
-  
-  (when (or (os-linux? os-macos?)
-    (check-true (string-starts? (temp-path :to-string) "/"))))))
+    (check-true (string-starts? (temp-path :to-string) "C:\\")))
+
+  (when (or (os-linux?) (os-macos?))
+    (check-true (string-starts? (temp-path :to-string) "/"))))
 
 ;; 测试可以基于临时目录创建文件
 (let ((temp-file (path :temp-dir :/ "test_file.txt")))
