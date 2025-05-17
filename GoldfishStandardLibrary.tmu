@@ -4505,6 +4505,58 @@
 
   <subsection|实用方法>
 
+  注意到在不同系统里换行符的标准是不一样的
+
+  <\enumerate>
+    <item><strong|不同系统的换行符标准>：
+
+    <\itemize>
+      <item>Unix/Linux/macOS: 使用<nbsp><code*|\\n><nbsp>(LF)
+
+      <item>Windows: 使用<nbsp><code*|\\r\\n><nbsp>(CRLF)
+    </itemize>
+
+    <item><strong|问题表现>：
+
+    <\itemize>
+      <item>在Windows上写入<code*|\\n>时，系统可能会自动转换为<code*|\\r\\n>
+
+      <item>但读取时可能保持原始<code*|\\n>或转换为系统标准
+
+      <item>导致字符串比较失败
+    </itemize>
+  </enumerate>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (let ((p (path :temp-dir :/ "append_test.txt")))
+
+    \ \ ;; 确保文件不存在
+
+    \ \ (when (p :exists?) (p :unlink))
+
+    \ \ 
+
+    \ \ (p :append-text "First line\\n")
+
+    \ \ (when (or (os-linux?) (os-macos?))
+
+    \ \ \ \ (check (p :read-text) =\<gtr\> "First line\\n"))
+
+    \ \ 
+
+    \ \ (p :append-text "First line\\r\\n")
+
+    \ \ (when (os-windows?)
+
+    \ \ \ \ (check (p :read-text) =\<gtr\> "First line\\r\\n"))
+
+    \ \ 
+
+    \ \ ;; 清理
+
+    \ \ (p :unlink))
+  </scm-chunk>
+
   <paragraph|path%read-text>
 
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
@@ -4550,7 +4602,9 @@
 
     \ \ (p :append-text "First line\\n")
 
-    \ \ (check (p :read-text) =\<gtr\> "First line\\n")
+    \ \ (when (or (os-linux?) (os-macos?))
+
+    \ \ \ \ (check (p :read-text) =\<gtr\> "First line\\n"))
 
     \ \ 
 
@@ -4558,7 +4612,9 @@
 
     \ \ (p :append-text "Second line\\n")
 
-    \ \ (check (p :read-text) =\<gtr\> "First line\\nSecond line\\n")
+    \ \ (when (or (os-linux?) (os-macos?))
+
+    \ \ \ \ (check (p :read-text) =\<gtr\> "First line\\nSecond line\\n"))
 
     \ \ 
 

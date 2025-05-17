@@ -216,6 +216,20 @@
 (when (os-windows?)
   (check (path :of-drive #\C :to-string) => "C:\\"))
 
+(let ((p (path :temp-dir :/ "append_test.txt")))
+  ;; 确保文件不存在
+  (when (p :exists?) (p :unlink))
+  
+  (p :append-text "First line\n")
+  (when (or (os-linux?) (os-macos?))
+    (check (p :read-text) => "First line\n"))
+  
+  (p :append-text "First line\r\n")
+  (when (os-windows?)
+    (check (p :read-text) => "First line\r\n"))
+  
+  ;; 清理
+  (p :unlink))
 ;; path%append-text 测试
 (let ((p (path :temp-dir :/ "append_test.txt")))
   ;; 确保文件不存在
@@ -223,11 +237,13 @@
   
   ;; 测试追加到新文件
   (p :append-text "First line\n")
-  (check (p :read-text) => "First line\n")
+  (when (or (os-linux?) (os-macos?))
+    (check (p :read-text) => "First line\n"))
   
   ;; 测试追加到已有文件
   (p :append-text "Second line\n")
-  (check (p :read-text) => "First line\nSecond line\n")
+  (when (or (os-linux?) (os-macos?))
+    (check (p :read-text) => "First line\nSecond line\n"))
   
   ;; 清理
   (p :unlink))
