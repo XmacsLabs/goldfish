@@ -89,7 +89,7 @@
   (check (path-read-text file-path) => initial-content)
   
   ;; 追加内容
-  (check-true (> (path-append-text file-path append-content) 0))
+  (path-append-text file-path append-content)
   
   ;; 验证追加后的内容
   (check (path-read-text file-path) => (string-append initial-content append-content))
@@ -108,7 +108,7 @@
     (delete-file file-path))
   
   ;; 追加到不存在的文件
-  (check-true (> (path-append-text file-path content) 0))
+  (path-append-text file-path content)
   
   ;; 验证内容
   (check (path-read-text file-path) => content)

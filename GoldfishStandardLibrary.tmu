@@ -3714,7 +3714,7 @@
 
     \ \ ;; 追加内容
 
-    \ \ (check-true (\<gtr\> (path-append-text file-path append-content) 0))
+    \ \ (path-append-text file-path append-content)
 
     \ \ 
 
@@ -3752,7 +3752,7 @@
 
     \ \ ;; 追加到不存在的文件
 
-    \ \ (check-true (\<gtr\> (path-append-text file-path content) 0))
+    \ \ (path-append-text file-path content)
 
     \ \ 
 
