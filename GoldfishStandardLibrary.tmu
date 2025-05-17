@@ -4529,6 +4529,8 @@
     </itemize>
   </enumerate>
 
+  以下为一个案例：
+
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
     (let ((p (path :temp-dir :/ "append_test.txt")))
 
