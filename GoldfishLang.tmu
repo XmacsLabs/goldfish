@@ -5321,74 +5321,6 @@
     \;
   </goldfish-chunk>
 
-  <subsection|测试>
-
-  <\scm-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (let ((opt1 (option 42))
-
-    \ \ \ \ \ \ (opt2 (option '())))
-
-    \ \ (check (opt1 :map (lambda (x) (+ x 1))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :map (lambda (x) (* x 2))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :get) =\<gtr\> 86)
-
-    \ \ (check (opt2 :map (lambda (x) (+ x 1))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :map (lambda (x) (* x 2))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t)
-
-    \;
-
-    \ \ (check (opt1 :flat-map (lambda (x) (option (+ x 1)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :flat-map (lambda (x) (option (* x 2)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :get) =\<gtr\> 86)
-
-    \ \ (check (opt2 :flat-map (lambda (x) (option (+ x 1)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :flat-map (lambda (x) (option (* x 2)))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t)
-
-    \;
-
-    \ \ (check (opt1 :filter (lambda (x) (\<gtr\> x 40))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :filter (lambda (x) (\<less\> x 50))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :get) =\<gtr\> 42)
-
-    \ \ (check (opt1 :filter (lambda (x) (\<gtr\> x 50))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :filter (lambda (x) (\<less\> x 60))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t)
-
-    \ \ (check (opt2 :filter (lambda (x) (\<gtr\> x 40))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :filter (lambda (x) (\<less\> x 50))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t)
-
-    \;
-
-    \ \ (check (opt1 :defined?) =\<gtr\> #t)
-
-    \ \ (check (opt1 :empty?) =\<gtr\> #f)
-
-    \ \ (check (opt2 :defined?) =\<gtr\> #f)
-
-    \ \ (check (opt2 :empty?) =\<gtr\> #t)
-
-    )
-
-    \;
-  </scm-chunk>
-
   <subsection|选择器>
 
   <paragraph|option%get>
@@ -5648,6 +5580,26 @@
     \;
   </goldfish-chunk>
 
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let ((opt1 (option 42))
+
+    \ \ \ \ \ \ (opt2 (option '())))
+
+    \ \ (check (opt1 :map (lambda (x) (+ x 1))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :map (lambda (x) (* x 2))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :get) =\<gtr\> 86)
+
+    \ \ (check (opt2 :map (lambda (x) (+ x 1))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :map (lambda (x) (* x 2))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|option%flatmap>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
@@ -5663,6 +5615,27 @@
 
     \;
   </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let ((opt1 (option 42))
+
+    \ \ \ \ \ \ (opt2 (option '())))
+
+    \ \ (check (opt1 :flat-map (lambda (x) (option (+ x 1)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :flat-map (lambda (x) (option (* x 2)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :get) =\<gtr\> 86)
+
+    \ \ (check (opt2 :flat-map (lambda (x) (option (+ x 1)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :flat-map (lambda (x) (option (* x 2)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t))
+
+    \;
+  </goldfish-chunk>
+
 
   <paragraph|option%filter>
 
@@ -5680,6 +5653,33 @@
     \;
   </goldfish-chunk>
 
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+    (let ((opt1 (option 42))
+
+    \ \ \ \ \ \ (opt2 (option '())))
+
+    \ \ (check (opt1 :filter (lambda (x) (\<gtr\> x 40))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :filter (lambda (x) (\<less\> x 50))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :get) =\<gtr\> 42)
+
+    \ \ (check (opt1 :filter (lambda (x) (\<gtr\> x 50))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :filter (lambda (x) (\<less\> x 60))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t)
+
+    \ \ (check (opt2 :filter (lambda (x) (\<gtr\> x 40))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :filter (lambda (x) (\<less\> x 50))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :empty?) =\<gtr\> #t))
+
+    \;
+  </goldfish-chunk>
+
+  
   <subsection|结尾>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
