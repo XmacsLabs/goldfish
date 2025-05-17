@@ -325,6 +325,9 @@
                :/ (path (getenv "HOMEPATH"))))
         (else (value-error "path@home: unknown type"))))
 
+(chained-define (@temp-dir)
+  (path (os-temp-dir)))
+
 )
 
 ) ; end of begin

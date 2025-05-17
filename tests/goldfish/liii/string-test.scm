@@ -222,6 +222,14 @@
 (check (string-prefix? "helloo" "hello") => #f)
 (check (string-prefix? "ello" "hello") => #f)
 
+(check (string-suffix? "ello" "hello") => #t)
+(check (string-suffix? "hello" "hello") => #t)
+(check (string-suffix? "" "hello") => #t)
+(check (string-suffix? "" "") => #t)
+(check (string-suffix? "helloo" "hello") => #f)
+(check (string-suffix? "hhello" "hello") => #f)
+(check (string-suffix? "hell" "hello") => #f)
+
 (check (string-index "0123456789" #\2) => 2)
 (check (string-index "0123456789" #\2 2) => 2)
 (check (string-index "0123456789" #\2 3) => #f)
