@@ -4532,15 +4532,21 @@
   以下为一个案例：
 
   <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
-    (let ((p (path :temp-dir :/ "append_test.txt")))
+    (let ((p (path :temp-dir :/ "append_test.txt"))
+
+    \ \ \ \ \ \ (p-windows (path :temp-dir :/ "append_test.txt")))
 
     \ \ ;; 确保文件不存在
 
     \ \ (when (p :exists?) (p :unlink))
 
+    \ \ (when (p-windows :exists?) (p-windows :unlink))
+
     \ \ 
 
     \ \ (p :append-text "Line 1\\n")
+
+    \ \ (p-windows :append-text "Line 1\\r\\n")
 
     \ \ (when (or (os-linux?) (os-macos?))
 
@@ -4554,7 +4560,9 @@
 
     \ \ ;; 清理
 
-    \ \ (p :unlink))
+    \ \ (p :unlink)
+
+    \ \ (p-windows :unlink))
   </scm-chunk>
 
   <paragraph|path%read-text>
