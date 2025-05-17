@@ -901,6 +901,11 @@
 (check-true ((option "str") :equals (option "str")))
 
 (let ((opt1 (option 42)) (opt2 (option '())))
+  (check-true (opt1 :defined?))
+  (check-false (opt2 :defined?))
+)
+
+(let ((opt1 (option 42)) (opt2 (option '())))
   (check-true (opt1 :forall (lambda (x) (== x 42))))
   (check-false (opt2 :forall (lambda (x) (== x 42)))))
 

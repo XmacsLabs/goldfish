@@ -5517,6 +5517,17 @@
     \ \ 
   </goldfish-chunk>
 
+  <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
+
+    (let ((opt1 (option 42)) (opt2 (option '())))
+
+    \ \ (check-true (opt1 :defined?))
+
+    \ \ (check-false (opt2 :defined?)))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|option%empty?>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
