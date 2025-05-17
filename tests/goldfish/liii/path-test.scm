@@ -241,8 +241,8 @@
   (when (p :exists?) (p :unlink))
   (when (p-windows :exists?) (p-windows :unlink))
   
-  (p :write-text "Line 1\n")
-  (p-windows :write-text "Line 1\r\n")
+  (p :append-text "Line 1\n")
+  (p-windows :append-text "Line 1\r\n")
   (when (or (os-linux?) (os-macos?))
     (check (p :read-text) => "Line 1\n"))
   (when (os-windows?)

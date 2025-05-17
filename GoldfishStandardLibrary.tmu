@@ -4634,9 +4634,9 @@
 
     \ \ 
 
-    \ \ (p :write-text "Line 1\\n")
+    \ \ (p :append-text "Line 1\\n")
 
-    \ \ (p-windows :write-text "Line 1\\r\\n")
+    \ \ (p-windows :append-text "Line 1\\r\\n")
 
     \ \ (when (or (os-linux?) (os-macos?))
 
