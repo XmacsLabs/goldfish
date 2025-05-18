@@ -784,7 +784,7 @@ static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
     
     // Use current time for both access and modification times
     tb_time_t now = tb_time();
-    bool success = tb_file_touch(path, now, now);
+    tb_bool_t success = tb_file_touch(path, 0, 0);
     return s7_make_boolean(sc, success);
 }
 
