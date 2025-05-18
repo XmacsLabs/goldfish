@@ -4412,13 +4412,13 @@
       True
     </unfolded-io>
 
-    <\unfolded-io>
+    <\folded-io>
       \<gtr\>\<gtr\>\<gtr\>\ 
-    <|unfolded-io>
+    <|folded-io>
       Path("emptydir").is_file()
-    <|unfolded-io>
+    <|folded-io>
       False
-    </unfolded-io>
+    </folded-io>
 
     <\input>
       \<gtr\>\<gtr\>\<gtr\>\ 
@@ -5816,6 +5816,158 @@
 
     \;
   </scm-chunk>
+
+  <chapter|(liii logging)>
+
+  <section|许可证>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|false|true>
+    ;
+
+    ; Copyright (C) 2024 The Goldfish Scheme Authors
+
+    ;
+
+    ; Licensed under the Apache License, Version 2.0 (the "License");
+
+    ; you may not use this file except in compliance with the License.
+
+    ; You may obtain a copy of the License at
+
+    ;
+
+    ; http://www.apache.org/licenses/LICENSE-2.0
+
+    ;
+
+    ; Unless required by applicable law or agreed to in writing, software
+
+    ; distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+
+    ; WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+
+    ; License for the specific language governing permissions and limitations
+
+    ; under the License.
+
+    ;
+
+    \;
+  </goldfish-chunk>
+
+  <section|接口>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define-library (liii logging)
+
+    (import (liii path))
+
+    (export logging)
+
+    (begin
+
+    \;
+  </goldfish-chunk>
+
+  <section|日志级别>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define-constant NOTSET 0)
+
+    (define-constant DEBUG 10)
+
+    (define-constant INFO 20)
+
+    (define-constant WARNING 30)
+
+    (define-constant ERROR 40)
+
+    (define-constant CRITICAL 50)
+
+    \;
+  </goldfish-chunk>
+
+  <section|实现>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define-class logging
+
+    \ \ ((name string? "default")
+
+    \ \ \ (path string? "")
+
+    \ \ \ (level integer? WARNING))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|print>
+
+  打印日志。如果路径为空，那么直接输出到控制台；如果路径不为空，那么直接将日志追加到路径中。
+
+  <\warning>
+    我们会在输入的字符串的尾部新增一个换行符，以保证每一行日志都会自动换行。
+  </warning>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (print line0)
+
+    \ \ (let ((line (string-append line "\\n")))
+
+    \ \ \ \ (if (string-null? path)
+
+    \ \ \ \ \ \ \ \ (display line)
+
+    \ \ \ \ \ \ \ \ (path-append-text path line))))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|logging%debug?>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|false>
+    (define (%debug?)
+
+    \ \ (\<gtr\>= level DEBUG))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-code>
+    (when (log :debug?)
+
+    \ \ (log :debug "xxx"))
+  </scm-code>
+
+  <paragraph|logging%info?>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|false>
+    (define (%info?)
+
+    \ \ (\<gtr\>= level INFO))
+
+    \;
+  </goldfish-chunk>
+
+  \;
+
+  \;
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    )
+
+    \;
+  </goldfish-chunk>
+
+  <section|结尾>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|false>
+    ) ; end of begin
+
+    ) ; end of define-library
+
+    \;
+  </goldfish-chunk>
 
   <chapter|C++部分结尾>
 
