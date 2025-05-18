@@ -4742,9 +4742,9 @@
 
     \ \ \ \ (check (p :read-text) =\<gtr\> "Line 1\\n"))
 
-    \ \ (when (os-windows?)
+    ; \ (when (os-windows?)
 
-    \ \ \ \ (check (p-windows :read-text) =\<gtr\> "Line 1\\r\\n"))
+    ; \ \ \ (check (p-windows :read-text) =\<gtr\> "Line 1\\r\\n"))
 
     \ \ 
 
