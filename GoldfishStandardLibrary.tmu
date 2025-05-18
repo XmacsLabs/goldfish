@@ -5869,6 +5869,16 @@
     \;
   </goldfish-chunk>
 
+  <section|测试>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|false|true>
+    (import (liii check)
+
+    \ \ \ \ \ \ \ \ (liii logging))
+
+    \;
+  </scm-chunk>
+
   <section|日志级别>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
@@ -5898,6 +5908,16 @@
 
     \ \ \ (level integer? WARNING))
 
+    \ \ 
+
+    (define (@apply p-name)
+
+    \ \ (let ((r (logging)))
+
+    \ \ \ \ (r :set-name! p-name)
+
+    \ \ \ \ r))
+
     \;
   </goldfish-chunk>
 
@@ -5925,29 +5945,45 @@
 
   <paragraph|logging%debug?>
 
-  <\goldfish-chunk|goldfish/liii/logging.scm|true|false>
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define (%debug?)
 
-    \ \ (\<gtr\>= level DEBUG))
+    \ \ (\<less\>= level DEBUG))
 
     \;
   </goldfish-chunk>
 
-  <\scm-code>
-    (when (log :debug?)
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    (check-false ((logging "app") :debug?))
 
-    \ \ (log :debug "xxx"))
-  </scm-code>
+    \;
+  </scm-chunk>
 
   <paragraph|logging%info?>
 
-  <\goldfish-chunk|goldfish/liii/logging.scm|true|false>
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define (%info?)
 
-    \ \ (\<gtr\>= level INFO))
+    \ \ (\<less\>= level INFO))
 
     \;
   </goldfish-chunk>
+
+  <paragraph|logging%warning?>
+
+  <paragraph|logging%error?>
+
+  <paragraph|logging%critical?>
+
+  <paragraph|logging%debug>
+
+  <paragraph|logging%info>
+
+  <paragraph|logging%warning>
+
+  <paragraph|logging%error>
+
+  <paragraph|logging%critical>
 
   \;
 

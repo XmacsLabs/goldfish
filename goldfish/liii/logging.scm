@@ -30,6 +30,11 @@
   ((name string? "default")
    (path string? "")
    (level integer? WARNING))
+  
+(define (@apply p-name)
+  (let ((r (logging)))
+    (r :set-name! p-name)
+    r))
 
 (define (print line0)
   (let ((line (string-append line "\n")))
@@ -38,10 +43,10 @@
         (path-append-text path line))))
 
 (define (%debug?)
-  (>= level DEBUG))
+  (<= level DEBUG))
 
 (define (%info?)
-  (>= level INFO))
+  (<= level INFO))
 
 )
 
