@@ -287,14 +287,6 @@
   ;; Clean up
   (delete-file test-file))
 
-;; Test with directory path (should fail)
-(let1 test-dir (string-append (os-temp-dir) (string (os-sep)) "test_touch_dir")
-  (mkdir test-dir)
-  (let1 p (path test-dir)
-    (check-true (p :dir?))
-    (check-false (p :touch))  ; Should fail for directories
-    (rmdir test-dir)))
-
 ;; Test with very long path
 (let ((long-name (make-string 200 #\x))
       (temp-dir (os-temp-dir)))

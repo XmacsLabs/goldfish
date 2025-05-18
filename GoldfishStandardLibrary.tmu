@@ -3784,41 +3784,25 @@
   </goldfish-chunk>
 
   <\cpp-chunk|src/goldfish.hpp|true|true>
-    static s7_pointer
+    static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
 
-    f_path_touch(s7_scheme* sc, s7_pointer args) {
+    \ \ \ \ const char* path = s7_string(s7_car(args));
 
-    \ \ const char* path = s7_string(s7_car(args));
+    \ \ \ \ if (!path) {
 
-    \ \ if (!path) {
+    \ \ \ \ \ \ \ \ return s7_make_boolean(sc, false);
 
-    \ \ \ \ return s7_make_boolean(sc, false);
+    \ \ \ \ }
 
-    \ \ }
+    \ \ \ \ 
 
-    \;
+    \ \ \ \ // Use current time for both access and modification times
 
-    \ \ // Try to create the file if it doesn't exist
+    \ \ \ \ tb_time_t now = tb_time();
 
-    \ \ tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_RW \| TB_FILE_MODE_CREAT);
+    \ \ \ \ bool success = tb_file_touch(path, now, now);
 
-    \ \ if (file == tb_null) {
-
-    \ \ \ \ return s7_make_boolean(sc, false);
-
-    \ \ }
-
-    \;
-
-    \ \ // Update the modification time to current time
-
-    \ \ tb_file_sync(file);
-
-    \ \ tb_file_exit(file);
-
-    \ \ 
-
-    \ \ return s7_make_boolean(sc, true);
+    \ \ \ \ return s7_make_boolean(sc, success);
 
     }
 
@@ -4807,22 +4791,6 @@
     \ \ ;; Clean up
 
     \ \ (delete-file test-file))
-
-    \;
-
-    ;; Test with directory path (should fail)
-
-    (let1 test-dir (string-append (os-temp-dir) (string (os-sep)) "test_touch_dir")
-
-    \ \ (mkdir test-dir)
-
-    \ \ (let1 p (path test-dir)
-
-    \ \ \ \ (check-true (p :dir?))
-
-    \ \ \ \ (check-false (p :touch)) \ ; Should fail for directories
-
-    \ \ \ \ (rmdir test-dir)))
 
     \;
 

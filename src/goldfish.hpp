@@ -776,24 +776,16 @@ append content to the file at the given path and return the number of bytes writ
   s7_define_function(sc, name, f_path_append_text, 2, 0, false, desc);
 }
 
-static s7_pointer
-f_path_touch(s7_scheme* sc, s7_pointer args) {
-  const char* path = s7_string(s7_car(args));
-  if (!path) {
-    return s7_make_boolean(sc, false);
-  }
-
-  // Try to create the file if it doesn't exist
-  tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_RW | TB_FILE_MODE_CREAT);
-  if (file == tb_null) {
-    return s7_make_boolean(sc, false);
-  }
-
-  // Update the modification time to current time
-  tb_file_sync(file);
-  tb_file_exit(file);
-  
-  return s7_make_boolean(sc, true);
+static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
+    const char* path = s7_string(s7_car(args));
+    if (!path) {
+        return s7_make_boolean(sc, false);
+    }
+    
+    // Use current time for both access and modification times
+    tb_time_t now = tb_time();
+    bool success = tb_file_touch(path, now, now);
+    return s7_make_boolean(sc, success);
 }
 
 inline void
