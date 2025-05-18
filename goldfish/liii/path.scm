@@ -17,7 +17,7 @@
 (define-library (liii path)
 (export
   path-dir? path-file? path-exists?
-  path-getsize path-read-text path-read-bytes path-write-text path-append-text
+  path-getsize path-read-text path-read-bytes path-write-text path-append-text path-touch
   path
 )
 (import (liii base) (liii error) (liii vector) (liii string) (liii list)
@@ -61,6 +61,9 @@
 (define path-append-text
   (typed-lambda ((path string?) (content string?))
     (g_path-append-text path content)))
+
+(define (path-touch path)
+  (g_path-touch path))
 
 (define-case-class path ()
   (define parts #("."))
@@ -243,6 +246,9 @@
 (define (%list-path)
   ((box (listdir (%to-string)))
    :map (lambda (x) ((%this) :/ x))))
+
+(define (%touch)
+  (path-touch (%to-string)))
 
 (chained-define (%/ x)
   (cond ((string? x)

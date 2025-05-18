@@ -2910,7 +2910,7 @@
 
     \ \ path-dir? path-file? path-exists?
 
-    \ \ path-getsize path-read-text path-read-bytes path-write-text path-append-text
+    \ \ path-getsize path-read-text path-read-bytes path-write-text path-append-text path-touch
 
     \ \ path
 
@@ -3769,6 +3769,118 @@
     \ \ ;; 清理
 
     \ \ (delete-file file-path))
+
+    \;
+  </scm-chunk>
+
+  <paragraph|path-touch>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (path-touch path)
+
+    \ \ (g_path-touch path))
+
+    \;
+  </goldfish-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    static s7_pointer
+
+    f_path_touch(s7_scheme* sc, s7_pointer args) {
+
+    \ \ const char* path = s7_string(s7_car(args));
+
+    \ \ if (!path) {
+
+    \ \ \ \ return s7_make_boolean(sc, false);
+
+    \ \ }
+
+    \;
+
+    \ \ // Try to create the file if it doesn't exist
+
+    \ \ tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_RW \| TB_FILE_MODE_CREAT);
+
+    \ \ if (file == tb_null) {
+
+    \ \ \ \ return s7_make_boolean(sc, false);
+
+    \ \ }
+
+    \;
+
+    \ \ // Update the modification time to current time
+
+    \ \ tb_file_sync(file);
+
+    \ \ tb_file_exit(file);
+
+    \ \ 
+
+    \ \ return s7_make_boolean(sc, true);
+
+    }
+
+    \;
+  </cpp-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    inline void
+
+    glue_path_touch(s7_scheme* sc) {
+
+    \ \ const char* name = "g_path-touch";
+
+    \ \ const char* desc = "(g_path-touch path) =\<gtr\> boolean, create empty file or update modification time";
+
+    \ \ s7_define_function(sc, name, f_path_touch, 1, 0, false, desc);
+
+    }
+
+    \;
+  </cpp-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (let ((test-file (string-append (os-temp-dir) "/test_touch.txt")))
+
+    \ \ ;; Ensure file doesn't exist initially
+
+    \ \ (when (file-exists? test-file)
+
+    \ \ \ \ (delete-file test-file))
+
+    \ \ 
+
+    \ \ ;; Test creating new file
+
+    \ \ (check-true (path-touch test-file))
+
+    \ \ (check-true (file-exists? test-file))
+
+    \ \ 
+
+    \ \ ;; Test updating existing file
+
+    \ \ (let ((old-size (path-getsize test-file)))
+
+    \ \ \ \ (check-true (path-touch test-file))
+
+    \ \ \ \ (check (= (path-getsize test-file) old-size) =\<gtr\> #t))
+
+    \ \ 
+
+    \ \ ;; Clean up
+
+    \ \ (delete-file test-file))
+
+    \;
+
+    ;; Test error cases
+
+    (check-false (path-touch "/nonexistent/path/file.txt")) \ ; Invalid path
+
+    \;
   </scm-chunk>
 
   <paragraph|glue_path>
@@ -3791,6 +3903,8 @@
     \ \ glue_path_write_text (sc);
 
     \ \ glue_path_append_text (sc);
+
+    \ \ glue_path_touch (sc);
 
     }
 
@@ -4655,6 +4769,78 @@
     \ \ (p :unlink)
 
     \ \ (p-windows :unlink))
+  </scm-chunk>
+
+  <paragraph|path%touch>
+
+  <\goldfish-chunk|goldfish/liii/path.scm|true|true>
+    (define (%touch)
+
+    \ \ (path-touch (%to-string)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/path-test.scm|true|true>
+    (let1 test-file (string-append (os-temp-dir) (string (os-sep)) "test_touch.txt")
+
+    \ \ ;; Ensure file doesn't exist initially
+
+    \ \ (when (file-exists? test-file)
+
+    \ \ \ \ (delete-file test-file))
+
+    \ \ 
+
+    \ \ ;; Test creating new file with path object
+
+    \ \ (let1 p (path test-file)
+
+    \ \ \ \ (check-false (p :exists?))
+
+    \ \ \ \ (check-true (p :touch))
+
+    \ \ \ \ (check-true (p :exists?)))
+
+    \ \ 
+
+    \ \ ;; Clean up
+
+    \ \ (delete-file test-file))
+
+    \;
+
+    ;; Test with directory path (should fail)
+
+    (let1 test-dir (string-append (os-temp-dir) (string (os-sep)) "test_touch_dir")
+
+    \ \ (mkdir test-dir)
+
+    \ \ (let1 p (path test-dir)
+
+    \ \ \ \ (check-true (p :dir?))
+
+    \ \ \ \ (check-false (p :touch)) \ ; Should fail for directories
+
+    \ \ \ \ (rmdir test-dir)))
+
+    \;
+
+    ;; Test with very long path
+
+    (let ((long-name (make-string 200 #\\x))
+
+    \ \ \ \ \ \ (temp-dir (os-temp-dir)))
+
+    \ \ (let ((p (path temp-dir :/ long-name)))
+
+    \ \ \ \ (check-true (p :touch))
+
+    \ \ \ \ (check-true (p :exists?))
+
+    \ \ \ \ (p :unlink)))
+
+    \;
   </scm-chunk>
 
   <subsection|修改器>

@@ -776,6 +776,33 @@ append content to the file at the given path and return the number of bytes writ
   s7_define_function(sc, name, f_path_append_text, 2, 0, false, desc);
 }
 
+static s7_pointer
+f_path_touch(s7_scheme* sc, s7_pointer args) {
+  const char* path = s7_string(s7_car(args));
+  if (!path) {
+    return s7_make_boolean(sc, false);
+  }
+
+  // Try to create the file if it doesn't exist
+  tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_RW | TB_FILE_MODE_CREAT);
+  if (file == tb_null) {
+    return s7_make_boolean(sc, false);
+  }
+
+  // Update the modification time to current time
+  tb_file_sync(file);
+  tb_file_exit(file);
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_path_touch(s7_scheme* sc) {
+  const char* name = "g_path-touch";
+  const char* desc = "(g_path-touch path) => boolean, create empty file or update modification time";
+  s7_define_function(sc, name, f_path_touch, 1, 0, false, desc);
+}
+
 inline void
 glue_liii_path (s7_scheme* sc) {
   glue_isfile (sc);
@@ -785,6 +812,7 @@ glue_liii_path (s7_scheme* sc) {
   glue_path_read_bytes (sc);
   glue_path_write_text (sc);
   glue_path_append_text (sc);
+  glue_path_touch (sc);
 }
 
 void
