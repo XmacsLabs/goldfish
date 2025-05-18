@@ -782,18 +782,15 @@ static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
         return s7_make_boolean(sc, false);
     }
     
-    // Get current time for both atime and mtime
-    tb_timeval_t tp = {0};
-    tb_gettimeofday(&tp, tb_null);
-    tb_time_t current_time = (tb_time_t)tp.tv_sec;
-    
-    tb_bool_t success = tb_file_touch(path, current_time, current_time);
-
-    if (success == tb_true) {
-        return s7_make_boolean(sc, true);
-    } else {
+    // Try to open the file in append mode
+    tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_WO | TB_FILE_MODE_CREAT | TB_FILE_MODE_APPEND);
+    if (file == tb_null) {
         return s7_make_boolean(sc, false);
     }
+    
+    // Just close the file - this will update the timestamps
+    bool success = tb_file_exit(file);
+    return s7_make_boolean(sc, success);
 }
 
 inline void
