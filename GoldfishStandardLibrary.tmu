@@ -5899,6 +5899,8 @@
 
   <section|实现>
 
+  <todo|logging的构造器应该使用工厂模式，如果输入的日志模块名一样，应该返回同一个实例。>
+
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define-class logging
 
