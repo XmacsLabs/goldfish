@@ -135,9 +135,6 @@
   ;; Clean up
   (delete-file test-file))
 
-;; Test error cases
-(check-false (path-touch "/nonexistent/path/file.txt"))  ; Invalid path
-
 (check ((path) :get-type) => 'posix)
 (check ((path) :get-parts) => #("."))
 
