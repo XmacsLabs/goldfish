@@ -784,7 +784,7 @@ static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
     
     tb_bool_t success = tb_file_touch(path, 0, 0);
 
-    if (success) {
+    if (success == tb_true) {
         return s7_make_boolean(sc, true);
     } else {
         return s7_make_boolean(sc, false);
