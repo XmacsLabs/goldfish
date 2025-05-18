@@ -777,18 +777,18 @@ append content to the file at the given path and return the number of bytes writ
 }
 
 static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
-    const char* path = s7_string(s7_car(args));
-    if (!path) {
-        return s7_make_boolean(sc, false);
-    }
+  const char* path = s7_string(s7_car(args));
+  if (path == nullptr) {
+    return s7_make_boolean(sc, false);
+  }
     
-    tb_bool_t success = tb_file_touch(path, 0, 0);
+  tb_bool_t success = tb_file_touch(path, 0, 0);
 
-    if (success == tb_true) {
-        return s7_make_boolean(sc, true);
-    } else {
-        return s7_make_boolean(sc, false);
-    }
+  if (success == tb_true) {
+    return s7_make_boolean(sc, true);
+  } else {
+    return s7_make_boolean(sc, false);
+  }
 }
 
 inline void
