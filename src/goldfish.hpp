@@ -784,7 +784,11 @@ static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
     
     // Use -1 for both atime and mtime to use current time
     tb_bool_t success = tb_file_touch(path, -1, -1);
-    return s7_make_boolean(sc, success == tb_true);
+    if (success == tb_true) {
+        return s7_make_boolean(sc, true);
+    } else {
+        return s7_make_boolean(sc, false);
+    }
 }
 
 inline void
