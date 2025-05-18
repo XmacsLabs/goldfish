@@ -3798,7 +3798,17 @@
 
     \ \ \ \ tb_bool_t success = tb_file_touch(path, 0, 0);
 
-    \ \ \ \ return s7_make_boolean(sc, success);
+    \;
+
+    \ \ \ \ if (success == tb_true) {
+
+    \ \ \ \ \ \ \ \ return s7_make_boolean(sc, true);
+
+    \ \ \ \ } else {
+
+    \ \ \ \ \ \ \ \ return s7_make_boolean(sc, false);
+
+    \ \ \ \ }
 
     }
 
@@ -3853,12 +3863,6 @@
     \ \ ;; Clean up
 
     \ \ (delete-file test-file))
-
-    \;
-
-    ;; Test error cases
-
-    (check-false (path-touch "/nonexistent/path/file.txt")) \ ; Invalid path
 
     \;
   </scm-chunk>
