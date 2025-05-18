@@ -782,12 +782,30 @@ static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
         return s7_make_boolean(sc, false);
     }
     
-    // Use -1 for both atime and mtime to use current time
-    tb_bool_t success = tb_file_touch(path, -1, -1);
-    if (success == tb_true) {
-        return s7_make_boolean(sc, true);
+    // 检查文件是否存在
+    tb_file_info_t info;
+    bool exists = tb_file_info(path, &info);
+    
+    if (!exists) {
+        // 文件不存在，创建它
+        tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_WO | TB_FILE_MODE_CREAT);
+        if (file == tb_null) {
+            return s7_make_boolean(sc, false);
+        }
+        bool success = tb_file_exit(file);
+        return s7_make_boolean(sc, success);
     } else {
-        return s7_make_boolean(sc, false);
+        // 文件存在，打开并关闭它以更新时间戳
+        tb_file_ref_t file = tb_file_init(path, TB_FILE_MODE_RW);
+        if (file == tb_null) {
+            // 如果无法以读写模式打开，尝试只读模式
+            file = tb_file_init(path, TB_FILE_MODE_RO);
+            if (file == tb_null) {
+                return s7_make_boolean(sc, false);
+            }
+        }
+        bool success = tb_file_exit(file);
+        return s7_make_boolean(sc, success);
     }
 }
 
