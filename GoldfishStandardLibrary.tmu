@@ -3788,7 +3788,7 @@
 
     \ \ const char* path = s7_string(s7_car(args));
 
-    \ \ if (path == nullptr) {
+    \ \ if (!path) {
 
     \ \ \ \ return s7_make_boolean(sc, false);
 

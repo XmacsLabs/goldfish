@@ -778,7 +778,7 @@ append content to the file at the given path and return the number of bytes writ
 
 static s7_pointer f_path_touch(s7_scheme* sc, s7_pointer args) {
   const char* path = s7_string(s7_car(args));
-  if (path == nullptr) {
+  if (!path) {
     return s7_make_boolean(sc, false);
   }
     
