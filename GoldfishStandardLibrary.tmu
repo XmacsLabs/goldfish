@@ -3581,12 +3581,22 @@
 
   <paragraph|path-append-text>
 
+  在windows中如果文件不存在，无法使用<verbatim|path-append-text>，因此需要先<verbatim|path-touch>创造这个文件然后再写入
+
   <\goldfish-chunk|goldfish/liii/path.scm|true|true>
     (define path-append-text
 
     \ \ (typed-lambda ((path string?) (content string?))
 
-    \ \ \ \ (g_path-append-text path content)))
+    \ \ \ \ (if (os-windows?)
+
+    \ \ \ \ \ \ \ \ (begin
+
+    \ \ \ \ \ \ \ \ \ \ (g_path-touch path)
+
+    \ \ \ \ \ \ \ \ \ \ (g_path-append-text path content))
+
+    \ \ \ \ \ \ \ \ (g_path-append-text path content))))
 
     \;
   </goldfish-chunk>
