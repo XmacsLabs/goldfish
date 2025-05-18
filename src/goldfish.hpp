@@ -749,7 +749,7 @@ f_path_append_text (s7_scheme* sc, s7_pointer args) {
   }
 
   tb_filelock_ref_t lock = tb_filelock_init(file);
-  if (tb_filelock_enter(lock, TB_FILE_MODE_WO) == tb_false) {
+  if (tb_filelock_enter(lock, TB_FILELOCK_MODE_EX) == tb_false) {
     tb_filelock_exit(lock);
     tb_file_exit(file);
     return s7_make_integer(sc, -1);

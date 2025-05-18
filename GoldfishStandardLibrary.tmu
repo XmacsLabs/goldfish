@@ -3588,15 +3588,7 @@
 
     \ \ (typed-lambda ((path string?) (content string?))
 
-    \ \ \ \ (if (os-windows?)
-
-    \ \ \ \ \ \ \ \ (begin
-
-    \ \ \ \ \ \ \ \ \ \ (g_path-touch path)
-
-    \ \ \ \ \ \ \ \ \ \ (g_path-append-text path content))
-
-    \ \ \ \ \ \ \ \ (g_path-append-text path content))))
+    \ \ \ \ (g_path-append-text path content)))
 
     \;
   </goldfish-chunk>
@@ -3640,7 +3632,7 @@
 
     \ \ tb_filelock_ref_t lock = tb_filelock_init(file);
 
-    \ \ if (tb_filelock_enter(lock, TB_FILE_MODE_WO) == tb_false) {
+    \ \ if (tb_filelock_enter(lock, TB_FILELOCK_MODE_EX) == tb_false) {
 
     \ \ \ \ tb_filelock_exit(lock);
 

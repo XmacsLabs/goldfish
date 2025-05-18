@@ -60,11 +60,7 @@
 
 (define path-append-text
   (typed-lambda ((path string?) (content string?))
-    (if (os-windows?)
-        (begin
-          (g_path-touch path)
-          (g_path-append-text path content))
-        (g_path-append-text path content))))
+    (g_path-append-text path content)))
 
 (define (path-touch path)
   (g_path-touch path))
