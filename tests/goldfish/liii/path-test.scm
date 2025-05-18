@@ -264,8 +264,8 @@
   (p-windows :append-text "Line 1\r\n")
   (when (or (os-linux?) (os-macos?))
     (check (p :read-text) => "Line 1\n"))
-;  (when (os-windows?)
-;    (check (p-windows :read-text) => "Line 1\r\n"))
+  (when (os-windows?)
+    (check (p-windows :read-text) => "Line 1\r\n"))
   
   ;; 清理
   (p :unlink)
