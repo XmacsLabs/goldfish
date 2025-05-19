@@ -31,7 +31,7 @@ else
 end
 
 target ("goldfish") do
-    set_languages("c++98")
+    set_languages("c++11")
     if is_plat("linux") then
         -- for Ubuntu 20.04
         add_syslinks("stdc++")

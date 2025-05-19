@@ -811,7 +811,7 @@ glue_liii_path (s7_scheme* sc) {
 }
 
 static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
-  // Get current time
+  // Get current time using tbox for year, month, day, etc.
   tb_time_t now = tb_time();
   
   // Get local time
@@ -819,6 +819,11 @@ static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
   if (!tb_localtime(now, &lt)) {
     return s7_f(sc);
   }
+  
+  // Use C++ chrono to get microseconds
+  auto now_chrono = std::chrono::system_clock::now();
+  auto duration = now_chrono.time_since_epoch();
+  auto micros = std::chrono::duration_cast<std::chrono::microseconds>(duration).count() % 1000000;
   
   // Create a vector with the time components - vector is easier to index than list in Scheme
   s7_pointer time_vec = s7_make_vector(sc, 7);
@@ -830,7 +835,7 @@ static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
   s7_vector_set(sc, time_vec, 3, s7_make_integer(sc, lt.hour));       // hour
   s7_vector_set(sc, time_vec, 4, s7_make_integer(sc, lt.minute));     // minute
   s7_vector_set(sc, time_vec, 5, s7_make_integer(sc, lt.second));     // second
-  s7_vector_set(sc, time_vec, 6, s7_make_integer(sc, 0));             // micro-second
+  s7_vector_set(sc, time_vec, 6, s7_make_integer(sc, micros));        // micro-second
   
   return time_vec;
 }
