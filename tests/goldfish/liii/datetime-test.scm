@@ -1,6 +1,26 @@
 (import (liii check)
         (liii datetime))
 
+(import (liii check)
+        (liii datetime)
+        (liii logging))
+
+(let ((now (datetime :now)))
+  (check-true (datetime :is-type-of now))
+  (check-true (>= (now 'year) 2023))  ; Assuming test is run in 2023 or later
+  (check-true (<= 1 (now 'month) 12))
+  (check-true (<= 1 (now 'day) 31))
+  (check-true (<= 0 (now 'hour) 23))
+  (check-true (<= 0 (now 'minute) 59))
+  (check-true (<= 0 (now 'second) 59))
+  (check-true (<= 0 (now 'micro-second) 999999)))
+
+(check ((datetime :year 2025 :month 1 :day 1) :to-string)
+  => "2025-01-01 00:00:00")
+
+(check ((datetime :year 2025 :month 1 :day 1 :micro-second 111111) :to-string)
+  => "2025-01-01 00:00:00.111111")
+
 (check ((datetime :year 2025 :month 1 :day 1) :to-string)
   => "2025-01-01 00:00:00")
 

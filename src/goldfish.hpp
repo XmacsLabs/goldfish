@@ -810,6 +810,42 @@ glue_liii_path (s7_scheme* sc) {
   glue_path_touch (sc);
 }
 
+static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
+  // Get current time
+  tb_time_t now = tb_time();
+  
+  // Get local time
+  tb_tm_t lt = {0};
+  if (!tb_localtime(now, &lt)) {
+    return s7_f(sc);
+  }
+  
+  // Create a vector with the time components - vector is easier to index than list in Scheme
+  s7_pointer time_vec = s7_make_vector(sc, 7);
+  
+  // Fill the vector with values
+  s7_vector_set(sc, time_vec, 0, s7_make_integer(sc, lt.year));       // year
+  s7_vector_set(sc, time_vec, 1, s7_make_integer(sc, lt.month));      // month
+  s7_vector_set(sc, time_vec, 2, s7_make_integer(sc, lt.mday));       // day
+  s7_vector_set(sc, time_vec, 3, s7_make_integer(sc, lt.hour));       // hour
+  s7_vector_set(sc, time_vec, 4, s7_make_integer(sc, lt.minute));     // minute
+  s7_vector_set(sc, time_vec, 5, s7_make_integer(sc, lt.second));     // second
+  s7_vector_set(sc, time_vec, 6, s7_make_integer(sc, 0));             // micro-second
+  
+  return time_vec;
+}
+
+inline void glue_datetime_now(s7_scheme* sc) {
+    const char* name = "g_datetime-now";
+    const char* desc = "(g_datetime-now) => datetime, create a datetime object with current time";
+    s7_define_function(sc, name, f_datetime_now, 0, 0, false, desc);
+}
+
+inline void
+glue_liii_datetime (s7_scheme* sc) {
+  glue_datetime_now (sc);
+}
+
 void
 glue_for_community_edition (s7_scheme* sc) {
   glue_goldfish (sc);
@@ -818,6 +854,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_sys (sc);
   glue_liii_os (sc);
   glue_liii_path (sc);
+  glue_liii_datetime (sc);
   glue_liii_uuid (sc);
 }
 

@@ -15,7 +15,7 @@
 ;
 
 (define-library (liii datetime)
-(export datetime)
+(export datetime g_datetime-now)
 (begin
 
 (define-case-class datetime
@@ -26,6 +26,17 @@
    (minute integer? 0)
    (second integer? 0)
    (micro-second integer? 0))
+
+(chained-define (@now)
+  (let ((time-vec (g_datetime-now)))
+    (datetime 
+      :year (vector-ref time-vec 0)
+      :month (vector-ref time-vec 1)
+      :day (vector-ref time-vec 2)
+      :hour (vector-ref time-vec 3)
+      :minute (vector-ref time-vec 4)
+      :second (vector-ref time-vec 5)
+      :micro-second (vector-ref time-vec 6))))
 
 (define (%to-string)
   (define (pad2 n)  ; 补零到 2 位

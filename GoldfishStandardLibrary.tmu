@@ -5346,7 +5346,7 @@
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define-library (liii datetime)
 
-    (export datetime)
+    (export datetime g_datetime-now)
 
     (begin
 
@@ -5362,6 +5362,10 @@
   </goldfish-chunk>
 
   <section|datetime>
+
+  <paragraph|g_datetime-now>
+
+  \;
 
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define-case-class datetime
@@ -5385,9 +5389,137 @@
 
   <paragraph|datetime@now>
 
-  <todo|基于tbox来实现>
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
+    (chained-define (@now)
 
-  see <slink|https://gitee.com/tboox/tbox/blob/master/src/demo/libc/time.c>
+    \ \ (let ((time-vec (g_datetime-now)))
+
+    \ \ \ \ (datetime\ 
+
+    \ \ \ \ \ \ :year (vector-ref time-vec 0)
+
+    \ \ \ \ \ \ :month (vector-ref time-vec 1)
+
+    \ \ \ \ \ \ :day (vector-ref time-vec 2)
+
+    \ \ \ \ \ \ :hour (vector-ref time-vec 3)
+
+    \ \ \ \ \ \ :minute (vector-ref time-vec 4)
+
+    \ \ \ \ \ \ :second (vector-ref time-vec 5)
+
+    \ \ \ \ \ \ :micro-second (vector-ref time-vec 6))))
+
+    \;
+  </goldfish-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
+
+    \ \ // Get current time
+
+    \ \ tb_time_t now = tb_time();
+
+    \ \ 
+
+    \ \ // Get local time
+
+    \ \ tb_tm_t lt = {0};
+
+    \ \ if (!tb_localtime(now, &lt)) {
+
+    \ \ \ \ return s7_f(sc);
+
+    \ \ }
+
+    \ \ 
+
+    \ \ // Create a vector with the time components - vector is easier to index than list in Scheme
+
+    \ \ s7_pointer time_vec = s7_make_vector(sc, 7);
+
+    \ \ 
+
+    \ \ // Fill the vector with values
+
+    \ \ s7_vector_set(sc, time_vec, 0, s7_make_integer(sc, lt.year)); \ \ \ \ \ \ // year
+
+    \ \ s7_vector_set(sc, time_vec, 1, s7_make_integer(sc, lt.month)); \ \ \ \ \ // month
+
+    \ \ s7_vector_set(sc, time_vec, 2, s7_make_integer(sc, lt.mday)); \ \ \ \ \ \ // day
+
+    \ \ s7_vector_set(sc, time_vec, 3, s7_make_integer(sc, lt.hour)); \ \ \ \ \ \ // hour
+
+    \ \ s7_vector_set(sc, time_vec, 4, s7_make_integer(sc, lt.minute)); \ \ \ \ // minute
+
+    \ \ s7_vector_set(sc, time_vec, 5, s7_make_integer(sc, lt.second)); \ \ \ \ // second
+
+    \ \ s7_vector_set(sc, time_vec, 6, s7_make_integer(sc, 0)); \ \ \ \ \ \ \ \ \ \ \ \ // micro-second
+
+    \ \ 
+
+    \ \ return time_vec;
+
+    }
+
+    \;
+  </cpp-chunk>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    inline void glue_datetime_now(s7_scheme* sc) {
+
+    \ \ \ \ const char* name = "g_datetime-now";
+
+    \ \ \ \ const char* desc = "(g_datetime-now) =\<gtr\> datetime, create a datetime object with current time";
+
+    \ \ \ \ s7_define_function(sc, name, f_datetime_now, 0, 0, false, desc);
+
+    }
+
+    \;
+  </cpp-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
+    (import (liii check)
+
+    \ \ \ \ \ \ \ \ (liii datetime)
+
+    \ \ \ \ \ \ \ \ (liii logging))
+
+    \;
+
+    (let ((now (datetime :now)))
+
+    \ \ (check-true (datetime :is-type-of now))
+
+    \ \ (check-true (\<gtr\>= (now 'year) 2023)) \ ; Assuming test is run in 2023 or later
+
+    \ \ (check-true (\<less\>= 1 (now 'month) 12))
+
+    \ \ (check-true (\<less\>= 1 (now 'day) 31))
+
+    \ \ (check-true (\<less\>= 0 (now 'hour) 23))
+
+    \ \ (check-true (\<less\>= 0 (now 'minute) 59))
+
+    \ \ (check-true (\<less\>= 0 (now 'second) 59))
+
+    \ \ (check-true (\<less\>= 0 (now 'micro-second) 999999)))
+
+    \;
+
+    (check ((datetime :year 2025 :month 1 :day 1) :to-string)
+
+    \ \ =\<gtr\> "2025-01-01 00:00:00")
+
+    \;
+
+    (check ((datetime :year 2025 :month 1 :day 1 :micro-second 111111) :to-string)
+
+    \ \ =\<gtr\> "2025-01-01 00:00:00.111111")
+
+    \;
+  </goldfish-chunk>
 
   <paragraph|datetime%to-string>
 
@@ -5446,6 +5578,20 @@
 
     \;
   </goldfish-chunk>
+
+  <paragraph|glue_datetime>
+
+  <\cpp-chunk|src/goldfish.hpp|true|true>
+    inline void
+
+    glue_liii_datetime (s7_scheme* sc) {
+
+    \ \ glue_datetime_now (sc);
+
+    }
+
+    \;
+  </cpp-chunk>
 
   <subparagraph|结尾>
 
@@ -6351,6 +6497,8 @@
     \ \ glue_liii_os (sc);
 
     \ \ glue_liii_path (sc);
+
+    \ \ glue_liii_datetime (sc);
 
     \ \ glue_liii_uuid (sc);
 
