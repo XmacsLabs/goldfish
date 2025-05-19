@@ -13,3 +13,11 @@
 
 (check-false ((logging "app") :debug?))
 
+(check-false ((logging "app") :info?))
+
+(check-true ((logging "app") :warning?))
+
+(check-true ((logging "app") :error?))
+
+(check-true ((logging "app") :critical?))
+

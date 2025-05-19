@@ -6179,6 +6179,12 @@
     \;
   </goldfish-chunk>
 
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    (check-false ((logging "app") :info?))
+
+    \;
+  </scm-chunk>
+
   <paragraph|logging%warning?>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
@@ -6188,6 +6194,12 @@
 
     \;
   </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    (check-true ((logging "app") :warning?))
+
+    \;
+  </scm-chunk>
 
   <paragraph|logging%error?>
 
@@ -6199,6 +6211,12 @@
     \;
   </goldfish-chunk>
 
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    (check-true ((logging "app") :error?))
+
+    \;
+  </scm-chunk>
+
   <paragraph|logging%critical?>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
@@ -6208,6 +6226,12 @@
 
     \;
   </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    (check-true ((logging "app") :critical?))
+
+    \;
+  </scm-chunk>
 
   <paragraph|logging%debug>
 
