@@ -1,5 +1,14 @@
 (import (liii check)
-        (liii logging))
+        (liii logging)
+        (liii datetime))
+
+;; Test timestamp function
+(check-true (string? (timestamp)))
+(check-true (>= ($ (timestamp) :length) 19)) ;; "YYYY-MM-DD HH:MM:SS" is at least 19 chars
+
+;; Test that timestamp matches datetime format
+(let ((now (datetime :now)))
+  (check ($ (timestamp) :take 4 :get) => ($ (now 'year) :to-string)))
 
 ;; Test @apply: Verify that the same logger instance is returned for the same name
 (let ((logger1 (logging "test-module"))

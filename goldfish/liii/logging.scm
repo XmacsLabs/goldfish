@@ -15,8 +15,9 @@
 ;
 
 (define-library (liii logging)
-(import (liii path))
-(export logging)
+(import (liii path)
+        (liii datetime))
+(export logging timestamp)
 (begin
 
 (define-constant NOTSET 0)
@@ -27,12 +28,15 @@
 (define-constant CRITICAL 50)
 
 (define loggers-registry (make-hash-table))
+(define (timestamp)
+  (let ((now (datetime :now)))
+    (now :to-string)))
 
 (define-class logging
   ((name string? "default")
    (path string? "")
    (level integer? WARNING))
-  
+
 (define (@apply p-name)
   ;; Check if logger with this name already exists in registry
   (let ((existing-logger (hash-table-ref loggers-registry p-name)))

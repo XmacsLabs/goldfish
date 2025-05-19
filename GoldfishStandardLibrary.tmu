@@ -6216,9 +6216,11 @@
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define-library (liii logging)
 
-    (import (liii path))
+    (import (liii path)
 
-    (export logging)
+    \ \ \ \ \ \ \ \ (liii datetime))
+
+    (export logging timestamp)
 
     (begin
 
@@ -6230,7 +6232,9 @@
   <\scm-chunk|tests/goldfish/liii/logging-test.scm|false|true>
     (import (liii check)
 
-    \ \ \ \ \ \ \ \ (liii logging))
+    \ \ \ \ \ \ \ \ (liii logging)
+
+    \ \ \ \ \ \ \ \ (liii datetime))
 
     \;
   </scm-chunk>
@@ -6253,13 +6257,47 @@
     \;
   </goldfish-chunk>
 
-  <section|实现>
+  <section|辅助函数>
+
+  \;
 
   <verbatim|logging>的构造器使用工厂模式，如果输入的日志模块名一样，返回同一个实例。我们使用<verbatim|logging-registry>（数据类型为<verbatim|hash-table>）来保证同一个模块名（logging name），返回的是同一个<verbatim|logger>。
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define loggers-registry (make-hash-table))
   </goldfish-chunk>
+
+  我们同时需要一个时间戳来返回日志产生的日期
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (timestamp)
+
+    \ \ (let ((now (datetime :now)))
+
+    \ \ \ \ (now :to-string)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    ;; Test timestamp function
+
+    (check-true (string? (timestamp)))
+
+    (check-true (\<gtr\>= ($ (timestamp) :length) 19)) ;; "YYYY-MM-DD HH:MM:SS" is at least 19 chars
+
+    \;
+
+    ;; Test that timestamp matches datetime format
+
+    (let ((now (datetime :now)))
+
+    \ \ (check ($ (timestamp) :take 4 :get) =\<gtr\> ($ (now 'year) :to-string)))
+
+    \;
+  </scm-chunk>
+
+  <section|实现>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define-class logging
@@ -6269,8 +6307,6 @@
     \ \ \ (path string? "")
 
     \ \ \ (level integer? WARNING))
-
-    \ \ 
 
     \;
   </goldfish-chunk>
