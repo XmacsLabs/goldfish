@@ -15,7 +15,7 @@
 ;
 
 (define-library (liii datetime)
-(export datetime g_datetime-now)
+(export datetime)
 (begin
 
 (define-case-class datetime

@@ -5346,7 +5346,7 @@
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define-library (liii datetime)
 
-    (export datetime g_datetime-now)
+    (export datetime)
 
     (begin
 
