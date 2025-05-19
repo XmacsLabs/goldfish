@@ -66,7 +66,6 @@
 (define (%critical?)
   (<= level CRITICAL))
 
-
 )
 
 ) ; end of begin
