@@ -5480,14 +5480,6 @@
   </cpp-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
-    (import (liii check)
-
-    \ \ \ \ \ \ \ \ (liii datetime)
-
-    \ \ \ \ \ \ \ \ (liii logging))
-
-    \;
-
     (let ((now (datetime :now)))
 
     \ \ (check-true (datetime :is-type-of now))
