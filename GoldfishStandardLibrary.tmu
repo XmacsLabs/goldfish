@@ -5431,7 +5431,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|false>
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
     (check ((datetime :year 2025 :month 1 :day 1) :to-string)
 
     \ \ =\<gtr\> "2025-01-01 00:00:00")
@@ -6061,7 +6061,11 @@
 
   <section|实现>
 
-  <todo|logging的构造器应该使用工厂模式，如果输入的日志模块名一样，应该返回同一个实例。>
+  <verbatim|logging>的构造器使用工厂模式，如果输入的日志模块名一样，返回同一个实例。我们使用<verbatim|logging-registry>（数据类型为<verbatim|hash-table>）来保证同一个模块名（logging name），返回的是同一个<verbatim|logger>。
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define loggers-registry (make-hash-table))
+  </goldfish-chunk>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define-class logging
@@ -6074,16 +6078,58 @@
 
     \ \ 
 
-    (define (@apply p-name)
-
-    \ \ (let ((r (logging)))
-
-    \ \ \ \ (r :set-name! p-name)
-
-    \ \ \ \ r))
-
     \;
   </goldfish-chunk>
+
+  <subsection|构造器>
+
+  <\scm-chunk|goldfish/liii/logging.scm|true|true>
+    (define (@apply p-name)
+
+    \ \ ;; Check if logger with this name already exists in registry
+
+    \ \ (let ((existing-logger (hash-table-ref loggers-registry p-name)))
+
+    \ \ \ \ (if (eq? existing-logger #f)
+
+    \ \ \ \ \ \ \ \ ;; If not, create a new logger and store in registry
+
+    \ \ \ \ \ \ \ \ (let ((new-logger (logging)))
+
+    \ \ \ \ \ \ \ \ \ \ (new-logger :set-name! p-name)
+
+    \ \ \ \ \ \ \ \ \ \ (hash-table-set! loggers-registry p-name new-logger)
+
+    \ \ \ \ \ \ \ \ \ \ new-logger)
+
+    \ \ \ \ \ \ \ \ ;; If exists, return existing logger
+
+    \ \ \ \ \ \ \ \ existing-logger)))
+
+    \;
+  </scm-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|true>
+    ;; Test @apply: Verify that the same logger instance is returned for the same name
+
+    (let ((logger1 (logging "test-module"))
+
+    \ \ \ \ \ \ (logger2 (logging "test-module")))
+
+    \ \ (check-true (eq? logger1 logger2)))
+
+    \;
+
+    ;; Test @apply: Verify that different logger instances are returned for different names
+
+    (let ((logger1 (logging "module-a"))
+
+    \ \ \ \ \ \ (logger2 (logging "module-b")))
+
+    \ \ (check-false (eq? logger1 logger2)))
+
+    \;
+  </scm-chunk>
 
   <paragraph|print>
 

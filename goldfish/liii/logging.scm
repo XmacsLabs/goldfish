@@ -26,15 +26,24 @@
 (define-constant ERROR 40)
 (define-constant CRITICAL 50)
 
+(define loggers-registry (make-hash-table))
 (define-class logging
   ((name string? "default")
    (path string? "")
    (level integer? WARNING))
   
+
 (define (@apply p-name)
-  (let ((r (logging)))
-    (r :set-name! p-name)
-    r))
+  ;; Check if logger with this name already exists in registry
+  (let ((existing-logger (hash-table-ref loggers-registry p-name)))
+    (if (eq? existing-logger #f)
+        ;; If not, create a new logger and store in registry
+        (let ((new-logger (logging)))
+          (new-logger :set-name! p-name)
+          (hash-table-set! loggers-registry p-name new-logger)
+          new-logger)
+        ;; If exists, return existing logger
+        existing-logger)))
 
 (define (print line0)
   (let ((line (string-append line "\n")))
