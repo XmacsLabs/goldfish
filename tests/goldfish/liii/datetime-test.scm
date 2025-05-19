@@ -1,10 +1,6 @@
 (import (liii check)
         (liii datetime))
 
-(import (liii check)
-        (liii datetime)
-        (liii logging))
-
 (let ((now (datetime :now)))
   (check-true (datetime :is-type-of now))
   (check-true (>= (now 'year) 2023))  ; Assuming test is run in 2023 or later
