@@ -70,6 +70,10 @@
   <\cpp-chunk|src/goldfish.hpp|true|true>
     #include \<less\>algorithm\<gtr\>
 
+    #include \<less\>chrono\<gtr\>
+
+    #include \<less\>cstdint\<gtr\>
+
     #include \<less\>cstdlib\<gtr\>
 
     #include \<less\>cstring\<gtr\>
@@ -5363,8 +5367,6 @@
 
   <section|datetime>
 
-  <paragraph|g_datetime-now>
-
   \;
 
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
@@ -5436,11 +5438,37 @@
 
     \ \ // Use C++ chrono to get microseconds
 
+    \ \ std::uint64_t micros = 0;
+
+    #ifdef TB_CONFIG_OS_WINDOWS
+
+    \ \ // On Windows, ensure we properly handle chrono
+
+    \ \ FILETIME ft;
+
+    \ \ ULARGE_INTEGER uli;
+
+    \ \ GetSystemTimeAsFileTime(&ft);
+
+    \ \ uli.LowPart = ft.dwLowDateTime;
+
+    \ \ uli.HighPart = ft.dwHighDateTime;
+
+    \ \ // Convert to microseconds and get modulo
+
+    \ \ micros = (uli.QuadPart / 10) % 1000000; // Convert from 100-nanosecond intervals to microseconds
+
+    #else
+
+    \ \ // Standard approach for other platforms
+
     \ \ auto now_chrono = std::chrono::system_clock::now();
 
     \ \ auto duration = now_chrono.time_since_epoch();
 
-    \ \ auto micros = std::chrono::duration_cast\<less\>std::chrono::microseconds\<gtr\>(duration).count() % 1000000;
+    \ \ micros = std::chrono::duration_cast\<less\>std::chrono::microseconds\<gtr\>(duration).count() % 1000000;
+
+    #endif
 
     \ \ 
 
