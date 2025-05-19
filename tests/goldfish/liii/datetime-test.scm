@@ -20,7 +20,6 @@
   (check-true (<= 0 (dt1 'micro-second) 999999))
   (check-true (<= 0 (dt2 'micro-second) 999999)))
 
-;; Tests for creating datetime with specific microsecond values
 (check ((datetime :year 2025 :month 1 :day 1) :to-string)
   => "2025-01-01 00:00:00")
 

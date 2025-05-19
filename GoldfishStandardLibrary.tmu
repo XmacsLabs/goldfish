@@ -5416,7 +5416,7 @@
   <\cpp-chunk|src/goldfish.hpp|true|true>
     static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
 
-    \ \ // Get current time
+    \ \ // Get current time using tbox for year, month, day, etc.
 
     \ \ tb_time_t now = tb_time();
 
@@ -5431,6 +5431,16 @@
     \ \ \ \ return s7_f(sc);
 
     \ \ }
+
+    \ \ 
+
+    \ \ // Use C++ chrono to get microseconds
+
+    \ \ auto now_chrono = std::chrono::system_clock::now();
+
+    \ \ auto duration = now_chrono.time_since_epoch();
+
+    \ \ auto micros = std::chrono::duration_cast\<less\>std::chrono::microseconds\<gtr\>(duration).count() % 1000000;
 
     \ \ 
 
@@ -5454,7 +5464,7 @@
 
     \ \ s7_vector_set(sc, time_vec, 5, s7_make_integer(sc, lt.second)); \ \ \ \ // second
 
-    \ \ s7_vector_set(sc, time_vec, 6, s7_make_integer(sc, 0)); \ \ \ \ \ \ \ \ \ \ \ \ // micro-second
+    \ \ s7_vector_set(sc, time_vec, 6, s7_make_integer(sc, micros)); \ \ \ \ \ \ \ // micro-second
 
     \ \ 
 
@@ -5500,15 +5510,21 @@
 
     \;
 
-    (check ((datetime :year 2025 :month 1 :day 1) :to-string)
+    ;; Test microsecond functionality
 
-    \ \ =\<gtr\> "2025-01-01 00:00:00")
+    (let ((dt1 (datetime :now))
 
-    \;
+    \ \ \ \ \ \ (dt2 (datetime :now)))
 
-    (check ((datetime :year 2025 :month 1 :day 1 :micro-second 111111) :to-string)
+    \ \ ;; Two close timestamps should have different microsecond values
 
-    \ \ =\<gtr\> "2025-01-01 00:00:00.111111")
+    \ \ (check-true (integer? (dt1 'micro-second)))
+
+    \ \ (check-true (integer? (dt2 'micro-second)))
+
+    \ \ (check-true (\<less\>= 0 (dt1 'micro-second) 999999))
+
+    \ \ (check-true (\<less\>= 0 (dt2 'micro-second) 999999)))
 
     \;
   </goldfish-chunk>
@@ -5567,6 +5583,18 @@
     (check ((datetime :year 2025 :month 1 :day 1 :micro-second 111111) :to-string)
 
     \ \ =\<gtr\> "2025-01-01 00:00:00.111111")
+
+    \;
+
+    (check ((datetime :year 2025 :month 1 :day 1 :micro-second 1) :to-string)
+
+    \ \ =\<gtr\> "2025-01-01 00:00:00.000001")
+
+    \;
+
+    (check ((datetime :year 2025 :month 1 :day 1 :micro-second 999999) :to-string)
+
+    \ \ =\<gtr\> "2025-01-01 00:00:00.999999")
 
     \;
   </goldfish-chunk>
