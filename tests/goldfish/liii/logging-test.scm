@@ -1,6 +1,7 @@
 (import (liii check)
         (liii logging)
-        (liii string))
+        (liii string)
+        (liii lang))
 
 ;; Test @apply: Verify that the same logger instance is returned for the same name
 (let ((logger1 (logging "test-module"))
@@ -21,6 +22,19 @@
 (check-true ((logging "app") :error?))
 
 (check-true ((logging "app") :critical?))
+
+;; Test logging with rich-string messages
+(let ((log (logging "rich-string-test")))
+  (log :set-level! 10) ;; DEBUG level
+  
+  ;; Test using $ to create a rich-string and logging it
+  (define log-output (log :info ($ "User ID: " :+ 12345 :+ " logged in from " :+ "192.168.1.1")))
+  (check-true (string-contains log-output "User ID: 12345 logged in from 192.168.1.1"))
+  
+  ;; Test with Unicode characters in rich-string
+  (define unicode-msg ($ "用户: " :+ "admin" :+ " 登录成功 ✓"))
+  (define log-output3 (log :error unicode-msg))
+  (check-true (string-contains log-output3 " 登录成功 ✓")))
 
 ;; Test that debug logging doesn't happen when level is too high
 (let ((log (logging "high-level")))

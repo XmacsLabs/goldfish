@@ -57,7 +57,7 @@
                          (map (lambda (arg) 
                                 (if (string? arg) 
                                     arg 
-                                    (object->string arg)))
+                                    (arg :get)))
                               args))))
     (let ((line (string-append prefix message "\n")))
       (if (string=? path "")
