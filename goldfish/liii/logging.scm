@@ -66,25 +66,6 @@
 (define (%critical?)
   (<= level CRITICAL))
 
-(define (%debug)
-  (set! level DEBUG)
-  %this)
-
-(define (%info)
-  (set! level INFO)
-  %this)
-
-(define (%warning)
-  (set! level WARNING)
-  %this)
-
-(define (%error)
-  (set! level ERROR)
-  %this)
-
-(define (%critical)
-  (set! level CRITICAL)
-  %this)
 
 )
 
