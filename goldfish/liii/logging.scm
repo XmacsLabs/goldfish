@@ -27,12 +27,12 @@
 (define-constant CRITICAL 50)
 
 (define loggers-registry (make-hash-table))
+
 (define-class logging
   ((name string? "default")
    (path string? "")
    (level integer? WARNING))
   
-
 (define (@apply p-name)
   ;; Check if logger with this name already exists in registry
   (let ((existing-logger (hash-table-ref loggers-registry p-name)))
@@ -56,6 +56,35 @@
 
 (define (%info?)
   (<= level INFO))
+
+(define (%warning?)
+  (<= level WARNING))
+
+(define (%error?)
+  (<= level ERROR))
+
+(define (%critical?)
+  (<= level CRITICAL))
+
+(define (%debug)
+  (set! level DEBUG)
+  %this)
+
+(define (%info)
+  (set! level INFO)
+  %this)
+
+(define (%warning)
+  (set! level WARNING)
+  %this)
+
+(define (%error)
+  (set! level ERROR)
+  %this)
+
+(define (%critical)
+  (set! level CRITICAL)
+  %this)
 
 )
 

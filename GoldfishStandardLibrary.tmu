@@ -6181,9 +6181,33 @@
 
   <paragraph|logging%warning?>
 
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%warning?)
+
+    \ \ (\<less\>= level WARNING))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|logging%error?>
 
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%error?)
+
+    \ \ (\<less\>= level ERROR))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|logging%critical?>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%critical?)
+
+    \ \ (\<less\>= level CRITICAL))
+
+    \;
+  </goldfish-chunk>
 
   <paragraph|logging%debug>
 
