@@ -31,6 +31,9 @@
   (define log-output (log :info ($ "User ID: " :+ 12345 :+ " logged in from " :+ "192.168.1.1")))
   (check-true (string-contains log-output "User ID: 12345 logged in from 192.168.1.1"))
   
+  (define log-output2 (log :info "User ID: " "12345" " logged in from " "192.168.1.1"))
+  (check-true (string-contains log-output2 "User ID: 12345 logged in from 192.168.1.1"))
+
   ;; Test with Unicode characters in rich-string
   (define unicode-msg ($ "用户: " :+ "admin" :+ " 登录成功 ✓"))
   (define log-output3 (log :error unicode-msg))
