@@ -6548,7 +6548,7 @@
 
     \ \ (define log-output3 (log :error unicode-msg))
 
-    \ \ (check-true (string-contains log-output3 " 登录成功 \<checkmark\>")))
+    \ \ (check-true (string-contains log-output3 " 登录成功 \<checkmark\>")))\ 
 
     \;
 

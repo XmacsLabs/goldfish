@@ -38,7 +38,7 @@
   ;; Test with Unicode characters in rich-string
   (define unicode-msg ($ "用户: " :+ "admin" :+ " 登录成功 ✓"))
   (define log-output3 (log :error unicode-msg))
-  (check-true (string-contains log-output3 " 登录成功 ✓")))
+  (check-true (string-contains log-output3 " 登录成功 ✓"))) 
 
 ;; Test that debug logging doesn't happen when level is too high
 (let ((log (logging "high-level")))
