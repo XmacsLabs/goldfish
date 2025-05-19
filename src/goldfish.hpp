@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -822,9 +823,22 @@ static s7_pointer f_datetime_now(s7_scheme* sc, s7_pointer args) {
   }
   
   // Use C++ chrono to get microseconds
+  std::uint64_t micros = 0;
+#ifdef TB_CONFIG_OS_WINDOWS
+  // On Windows, ensure we properly handle chrono
+  FILETIME ft;
+  ULARGE_INTEGER uli;
+  GetSystemTimeAsFileTime(&ft);
+  uli.LowPart = ft.dwLowDateTime;
+  uli.HighPart = ft.dwHighDateTime;
+  // Convert to microseconds and get modulo
+  micros = (uli.QuadPart / 10) % 1000000; // Convert from 100-nanosecond intervals to microseconds
+#else
+  // Standard approach for other platforms
   auto now_chrono = std::chrono::system_clock::now();
   auto duration = now_chrono.time_since_epoch();
-  auto micros = std::chrono::duration_cast<std::chrono::microseconds>(duration).count() % 1000000;
+  micros = std::chrono::duration_cast<std::chrono::microseconds>(duration).count() % 1000000;
+#endif
   
   // Create a vector with the time components - vector is easier to index than list in Scheme
   s7_pointer time_vec = s7_make_vector(sc, 7);
