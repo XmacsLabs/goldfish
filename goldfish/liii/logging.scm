@@ -15,7 +15,8 @@
 ;
 
 (define-library (liii logging)
-(import (liii path))
+(import (liii path)
+        (liii datetime))
 (export logging)
 (begin
 
@@ -27,12 +28,12 @@
 (define-constant CRITICAL 50)
 
 (define loggers-registry (make-hash-table))
-
 (define-class logging
   ((name string? "default")
    (path string? "")
    (level integer? WARNING))
   
+
 (define (@apply p-name)
   ;; Check if logger with this name already exists in registry
   (let ((existing-logger (hash-table-ref loggers-registry p-name)))
@@ -45,11 +46,23 @@
         ;; If exists, return existing logger
         existing-logger)))
 
-(define (print line0)
-  (let ((line (string-append line "\n")))
-    (if (string-null? path)
-        (display line)
-        (path-append-text path line))))
+(define (format-timestamp)
+  (let ((now (datetime :now)))
+    (now :to-string)))
+
+(define (print-log level-name . args)
+  (let* ((timestamp (format-timestamp))
+         (prefix (string-append timestamp " [" level-name "] " name ": "))
+         (message (apply string-append 
+                         (map (lambda (arg) 
+                                (if (string? arg) 
+                                    arg 
+                                    (object->string arg)))
+                              args))))
+    (let ((line (string-append prefix message "\n")))
+      (if (string=? path "")
+          (display line)
+          (path-append-text path line)))))
 
 (define (%debug?)
   (<= level DEBUG))
@@ -65,6 +78,26 @@
 
 (define (%critical?)
   (<= level CRITICAL))
+
+(define (%debug . args)
+  (when (%debug?)
+    (apply print-log "DEBUG" args)))
+
+(define (%info . args)
+  (when (%info?)
+    (apply print-log "INFO" args)))
+
+(define (%warning . args)
+  (when (%warning?)
+    (apply print-log "WARNING" args)))
+
+(define (%error . args)
+  (when (%error?)
+    (apply print-log "ERROR" args)))
+
+(define (%critical . args)
+  (when (%critical?)
+    (apply print-log "CRITICAL" args)))
 
 )
 

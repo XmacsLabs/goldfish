@@ -6216,7 +6216,9 @@
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     (define-library (liii logging)
 
-    (import (liii path))
+    (import (liii path)
+
+    \ \ \ \ \ \ \ \ (liii datetime))
 
     (export logging)
 
@@ -6230,7 +6232,9 @@
   <\scm-chunk|tests/goldfish/liii/logging-test.scm|false|true>
     (import (liii check)
 
-    \ \ \ \ \ \ \ \ (liii logging))
+    \ \ \ \ \ \ \ \ (liii logging)
+
+    \ \ \ \ \ \ \ \ (liii string))
 
     \;
   </scm-chunk>
@@ -6330,19 +6334,43 @@
   打印日志。如果路径为空，那么直接输出到控制台；如果路径不为空，那么直接将日志追加到路径中。
 
   <\warning>
-    我们会在输入的字符串的尾部新增一个换行符，以保证每一行日志都会自动换行。
+    我们会在输入的字符串的尾部新增一个换行符，以保证每一行日志都会自动换行。同时每行日志都会在开头打印当时的时间戳。
   </warning>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
-    (define (print line0)
+    (define (format-timestamp)
 
-    \ \ (let ((line (string-append line "\\n")))
+    \ \ (let ((now (datetime :now)))
 
-    \ \ \ \ (if (string-null? path)
+    \ \ \ \ (now :to-string)))
 
-    \ \ \ \ \ \ \ \ (display line)
+    \;
 
-    \ \ \ \ \ \ \ \ (path-append-text path line))))
+    (define (print-log level-name . args)
+
+    \ \ (let* ((timestamp (format-timestamp))
+
+    \ \ \ \ \ \ \ \ \ (prefix (string-append timestamp " [" level-name "] " name ": "))
+
+    \ \ \ \ \ \ \ \ \ (message (apply string-append\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (map (lambda (arg)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (string? arg)\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ arg\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (object-\<gtr\>string arg)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ args))))
+
+    \ \ \ \ (let ((line (string-append prefix message "\\n")))
+
+    \ \ \ \ \ \ (if (string=? path "")
+
+    \ \ \ \ \ \ \ \ \ \ (display line)
+
+    \ \ \ \ \ \ \ \ \ \ (path-append-text path line)))))
 
     \;
   </goldfish-chunk>
@@ -6421,7 +6449,7 @@
     \;
   </goldfish-chunk>
 
-  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|true>
     (check-true ((logging "app") :critical?))
 
     \;
@@ -6429,17 +6457,105 @@
 
   <paragraph|logging%debug>
 
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%debug . args)
+
+    \ \ (when (%debug?)
+
+    \ \ \ \ (apply print-log "DEBUG" args)))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|logging%info>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%info . args)
+
+    \ \ (when (%info?)
+
+    \ \ \ \ (apply print-log "INFO" args)))
+
+    \;
+  </goldfish-chunk>
 
   <paragraph|logging%warning>
 
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%warning . args)
+
+    \ \ (when (%warning?)
+
+    \ \ \ \ (apply print-log "WARNING" args)))
+
+    \;
+  </goldfish-chunk>
+
   <paragraph|logging%error>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%error . args)
+
+    \ \ (when (%error?)
+
+    \ \ \ \ (apply print-log "ERROR" args)))
+
+    \;
+  </goldfish-chunk>
 
   <paragraph|logging%critical>
 
-  \;
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%critical . args)
+
+    \ \ (when (%critical?)
+
+    \ \ \ \ (apply print-log "CRITICAL" args)))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|true>
+    ;; Test that debug logging doesn't happen when level is too high
+
+    (let ((log (logging "high-level")))
+
+    \ \ (log :set-level! 30) ;; WARNING level
+
+    \ \ (check-false (log :debug?))
+
+    \ \ (check-false (log :info?))
+
+    \ \ (check-true (log :warning?))
+
+    \ \ (check-true (log :error?))
+
+    \ \ (check-true (log :critical?))
+
+    \ \ 
+
+    \ \ ;; These shouldn't produce output
+
+    \ \ (check (log :debug "This debug message shouldn't appear") =\<gtr\> #\<less\>unspecified\<gtr\>)
+
+    \ \ (check (log :info "This info message shouldn't appear") =\<gtr\> #\<less\>unspecified\<gtr\>)
+
+    \ \ 
+
+    \ \ ;; These should produce output
+
+    \ \ (check-true (string-contains (log :warning "This warning should appear") "This warning should appear"))
+
+    \ \ (check-true (string-contains (log :error "This error should appear") "This error should appear"))
+
+    \ \ (check-true (string-contains (log :critical "This critical message should appear") "This critical message should appear")))
+
+    \;
+  </scm-chunk>
 
   \;
+
+  <subparagraph|结尾>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
     )
@@ -6456,6 +6572,10 @@
 
     \;
   </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|false>
+    (check-report)
+  </scm-chunk>
 
   <chapter|C++部分结尾>
 

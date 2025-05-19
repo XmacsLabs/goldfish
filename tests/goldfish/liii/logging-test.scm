@@ -1,5 +1,6 @@
 (import (liii check)
-        (liii logging))
+        (liii logging)
+        (liii string))
 
 ;; Test @apply: Verify that the same logger instance is returned for the same name
 (let ((logger1 (logging "test-module"))
@@ -21,3 +22,22 @@
 
 (check-true ((logging "app") :critical?))
 
+;; Test that debug logging doesn't happen when level is too high
+(let ((log (logging "high-level")))
+  (log :set-level! 30) ;; WARNING level
+  (check-false (log :debug?))
+  (check-false (log :info?))
+  (check-true (log :warning?))
+  (check-true (log :error?))
+  (check-true (log :critical?))
+  
+  ;; These shouldn't produce output
+  (check (log :debug "This debug message shouldn't appear") => #<unspecified>)
+  (check (log :info "This info message shouldn't appear") => #<unspecified>)
+  
+  ;; These should produce output
+  (check-true (string-contains (log :warning "This warning should appear") "This warning should appear"))
+  (check-true (string-contains (log :error "This error should appear") "This error should appear"))
+  (check-true (string-contains (log :critical "This critical message should appear") "This critical message should appear")))
+
+(check-report)
