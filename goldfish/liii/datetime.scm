@@ -111,6 +111,33 @@
                    days-in-prev-month 
                    (+ remaining-days d))))))))
 
+(define (%plus-months months-to-add)
+  (define (leap-year? y)
+    (or (and (zero? (modulo y 4)) 
+             (not (zero? (modulo y 100))))
+        (zero? (modulo y 400))))
+  
+  (define (days-in-month m y)
+    (cond ((member m '(4 6 9 11)) 30)
+          ((= m 2) (if (leap-year? y) 29 28))
+          (else 31)))
+  
+  ;; Calculate new year and month
+  (let* ((total-months (+ (+ (* year 12) month -1) months-to-add))
+         (new-year (quotient total-months 12))
+         (new-month (+ (remainder total-months 12) 1))
+         ;; Adjust day if necessary
+         (days-in-new-month (days-in-month new-month new-year))
+         (new-day (min day days-in-new-month)))
+    
+    (datetime :year new-year
+              :month new-month
+              :day new-day
+              :hour hour
+              :minute minute
+              :second second
+              :micro-second micro-second)))
+
 )
 
 ) ; end of begin
