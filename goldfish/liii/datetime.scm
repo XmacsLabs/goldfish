@@ -57,6 +57,60 @@
         (string-append date-part " " time-part)
         (string-append date-part " " time-part "." (pad6 micro-second)))))
 
+(define (%plus-days days-to-add)
+  (define (leap-year? y)
+    (or (and (zero? (modulo y 4)) 
+             (not (zero? (modulo y 100))))
+        (zero? (modulo y 400))))
+  
+  (define (days-in-month m y)
+    (cond ((member m '(4 6 9 11)) 30)
+          ((= m 2) (if (leap-year? y) 29 28))
+          (else 31)))
+  
+  (let loop ((y year)
+             (m month)
+             (d day)
+             (remaining-days days-to-add))
+    (cond
+      ;; No more days to add
+      ((zero? remaining-days)
+       (datetime :year y
+                 :month m
+                 :day d
+                 :hour hour
+                 :minute minute
+                 :second second
+                 :micro-second micro-second))
+      
+      ;; Adding days (positive)
+      ((> remaining-days 0)
+       (let ((days-in-current-month (days-in-month m y)))
+         (if (<= (+ d remaining-days) days-in-current-month)
+             ;; Simple case: result is within the same month
+             (loop y m (+ d remaining-days) 0)
+             ;; Complex case: need to move to next month
+             (let ((next-month (if (= m 12) 1 (+ m 1)))
+                   (next-year (if (= m 12) (+ y 1) y)))
+               (loop next-year 
+                     next-month 
+                     1 
+                     (- (+ remaining-days d) days-in-current-month 1))))))
+      
+      ;; Subtracting days (negative)
+      (else
+       (if (> d (abs remaining-days))
+           ;; Simple case: result is within the same month
+           (loop y m (+ d remaining-days) 0)
+           ;; Complex case: need to move to previous month
+           (let* ((prev-month (if (= m 1) 12 (- m 1)))
+                  (prev-year (if (= m 1) (- y 1) y))
+                  (days-in-prev-month (days-in-month prev-month prev-year)))
+             (loop prev-year 
+                   prev-month 
+                   days-in-prev-month 
+                   (+ remaining-days d))))))))
+
 )
 
 ) ; end of begin

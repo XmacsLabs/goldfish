@@ -5365,7 +5365,7 @@
     \;
   </goldfish-chunk>
 
-  <section|datetime>
+  <section|实现>
 
   \;
 
@@ -5388,6 +5388,8 @@
 
     \;
   </goldfish-chunk>
+
+  <subsection|静态方法>
 
   <paragraph|datetime@now>
 
@@ -5557,6 +5559,8 @@
     \;
   </goldfish-chunk>
 
+  <subsection|转换器>
+
   <paragraph|datetime%to-string>
 
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
@@ -5607,7 +5611,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|false>
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
     (check ((datetime :year 2025 :month 1 :day 1 :micro-second 111111) :to-string)
 
     \ \ =\<gtr\> "2025-01-01 00:00:00.111111")
@@ -5626,6 +5630,318 @@
 
     \;
   </goldfish-chunk>
+
+  <paragraph|datetime%plus-days>
+
+  <code*|plus-days><nbsp>是<nbsp><code*|datetime><nbsp>类的方法，用于在现有日期时间基础上<nbsp><strong|加减指定天数>，返回调整后的新<nbsp><code*|datetime><nbsp>对象。特性：
+
+  <\itemize>
+    <item>支持正数（未来日期）和负数（过去日期）
+
+    <item>自动处理跨月、跨年的日期边界（如 2023-03-31 +1天 \<rightarrow\> 2023-04-01）
+
+    <item>保留原始时间部分（时、分、秒、微秒）不变
+
+    <item>返回新对象，原始对象保持不变（immutable）
+  </itemize>
+
+  <subsubsection*|实现细节>
+
+  算法核心通过递归循环调整天数，处理逻辑分为两部分：
+
+  <paragraph*|1. 增加天数（<code*|days-to-add><nbsp>为正）>
+
+  <\itemize>
+    <item><strong|同一月内>：若目标天数 \<leq\> 当月总天数，直接相加
+
+    例：<code*|2023-02-10 +5天 \<rightarrow\> 2023-02-15>
+
+    <item><strong|跨月处理> a. 计算当月剩余天数（总天数 - 当前日）b. 若剩余天数不足，进入下一月并将天数设为1 c. 递归处理剩余天数
+
+    例：<code*|2023-01-31 +1天 \<rightarrow\> 2023-02-01>
+  </itemize>
+
+  <paragraph*|2. 减少天数（<code*|days-to-add><nbsp>为负）>
+
+  <\itemize>
+    <item><strong|同一月内>：若当前日 \<geq\> 要减的天数绝对值，直接相减
+
+    例：<code*|2023-05-15 -5天 \<rightarrow\> 2023-05-10>
+
+    <item><strong|跨月处理>：a. 跳到上一月，获取该月总天数 b. 从月总天数倒推调整 c. 递归处理剩余天数
+
+    例：<code*|2023-03-01 -1天 \<rightarrow\> 2023-02-28（非闰年）>
+  </itemize>
+
+  <paragraph*|辅助逻辑>
+
+  <\itemize>
+    <item><strong|闰年判断>：
+
+    <code|(or (and (整除4 不整除100) (整除400))>
+
+    <item><strong|月份天数表>：
+
+    <\itemize>
+      <item>30天：4,6,9,11月
+
+      <item>31天：1,3,5,7,8,10,12月
+
+      <item>2月：28天（闰年29天）
+    </itemize>
+  </itemize>
+
+  <paragraph*|边界示例>
+
+  <\code>
+    (datetime 2020 2 28)
+
+    \ \<rightarrow\> +3天 \<rightarrow\> 2020-03-02（2020是闰年）
+
+    \;
+
+    (datetime 2023 12 31)
+
+    \ \<rightarrow\> +1天 \<rightarrow\> 2024-01-01
+
+    \;
+
+    (datetime 2023 1 1) \<rightarrow\> -1天 \<rightarrow\> 2022-12-31
+  </code>
+
+  <subsubsection*|设计特点>
+
+  <\itemize>
+    <item><strong|不可变性>：生成新对象，原始数据保持不变
+
+    <item><strong|递归优化>：逐月处理，避免复杂日期计算库依赖
+
+    <item><strong|微秒保留>：时间部分（时/分/秒/微秒）完全继承原对象
+  </itemize>
+
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
+    (define (%plus-days days-to-add)
+
+    \ \ (define (leap-year? y)
+
+    \ \ \ \ (or (and (zero? (modulo y 4))\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (not (zero? (modulo y 100))))
+
+    \ \ \ \ \ \ \ \ (zero? (modulo y 400))))
+
+    \ \ 
+
+    \ \ (define (days-in-month m y)
+
+    \ \ \ \ (cond ((member m '(4 6 9 11)) 30)
+
+    \ \ \ \ \ \ \ \ \ \ ((= m 2) (if (leap-year? y) 29 28))
+
+    \ \ \ \ \ \ \ \ \ \ (else 31)))
+
+    \ \ 
+
+    \ \ (let loop ((y year)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (m month)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (d day)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (remaining-days days-to-add))
+
+    \ \ \ \ (cond
+
+    \ \ \ \ \ \ ;; No more days to add
+
+    \ \ \ \ \ \ ((zero? remaining-days)
+
+    \ \ \ \ \ \ \ (datetime :year y
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :month m
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :day d
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :hour hour
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :minute minute
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :second second
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :micro-second micro-second))
+
+    \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ ;; Adding days (positive)
+
+    \ \ \ \ \ \ ((\<gtr\> remaining-days 0)
+
+    \ \ \ \ \ \ \ (let ((days-in-current-month (days-in-month m y)))
+
+    \ \ \ \ \ \ \ \ \ (if (\<less\>= (+ d remaining-days) days-in-current-month)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ ;; Simple case: result is within the same month
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (loop y m (+ d remaining-days) 0)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ ;; Complex case: need to move to next month
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (let ((next-month (if (= m 12) 1 (+ m 1)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (next-year (if (= m 12) (+ y 1) y)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop next-year\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ next-month\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (- (+ remaining-days d) days-in-current-month 1))))))
+
+    \ \ \ \ \ \ 
+
+    \ \ \ \ \ \ ;; Subtracting days (negative)
+
+    \ \ \ \ \ \ (else
+
+    \ \ \ \ \ \ \ (if (\<gtr\> d (abs remaining-days))
+
+    \ \ \ \ \ \ \ \ \ \ \ ;; Simple case: result is within the same month
+
+    \ \ \ \ \ \ \ \ \ \ \ (loop y m (+ d remaining-days) 0)
+
+    \ \ \ \ \ \ \ \ \ \ \ ;; Complex case: need to move to previous month
+
+    \ \ \ \ \ \ \ \ \ \ \ (let* ((prev-month (if (= m 1) 12 (- m 1)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (prev-year (if (= m 1) (- y 1) y))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (days-in-prev-month (days-in-month prev-month prev-year)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (loop prev-year\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ prev-month\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ days-in-prev-month\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (+ remaining-days d))))))))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
+    ;; Test plus-days with positive days
+
+    (check ((datetime :year 2024 :month 1 :day 1) :plus-days 10)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 1 :day 11))
+
+    \;
+
+    (check ((datetime :year 2024 :month 1 :day 31) :plus-days 1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 2 :day 1))
+
+    \;
+
+    (check ((datetime :year 2024 :month 1 :day 1) :plus-days 31)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 2 :day 1))
+
+    \;
+
+    (check ((datetime :year 2024 :month 2 :day 28) :plus-days 1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 2 :day 29)) ; 2024 is a leap year
+
+    \;
+
+    (check ((datetime :year 2024 :month 2 :day 29) :plus-days 1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 3 :day 1))
+
+    \;
+
+    (check ((datetime :year 2023 :month 2 :day 28) :plus-days 1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2023 :month 3 :day 1)) ; 2023 is not a leap year
+
+    \;
+
+    (check ((datetime :year 2024 :month 12 :day 31) :plus-days 1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2025 :month 1 :day 1))
+
+    \;
+
+    (check ((datetime :year 2024 :month 1 :day 1) :plus-days 366)\ 
+
+    \ \ =\<gtr\> (datetime :year 2025 :month 1 :day 1)) ; 2024 is a leap year
+
+    \;
+
+    ;; Test plus-days with negative days
+
+    (check ((datetime :year 2024 :month 1 :day 11) :plus-days -10)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 1 :day 1))
+
+    \;
+
+    (check ((datetime :year 2024 :month 2 :day 1) :plus-days -1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 1 :day 31))
+
+    \;
+
+    (check ((datetime :year 2024 :month 3 :day 1) :plus-days -1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 2 :day 29)) \ ; 2024 is a leap year
+
+    \;
+
+    (check ((datetime :year 2023 :month 3 :day 1) :plus-days -1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2023 :month 2 :day 28)) \ ; 2023 is not a leap year
+
+    \;
+
+    (check ((datetime :year 2025 :month 1 :day 1) :plus-days -1)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 12 :day 31))
+
+    \;
+
+    (check ((datetime :year 2025 :month 1 :day 1) :plus-days -365)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 1 :day 2)) ; 2024 is a leap year
+
+    \;
+
+    ;; Test plus-days with zero
+
+    (check ((datetime :year 2024 :month 1 :day 1) :plus-days 0)\ 
+
+    \ \ =\<gtr\> (datetime :year 2024 :month 1 :day 1))
+
+    \;
+
+    ;; Test preserving time components
+
+    (let ((dt (datetime :year 2024 :month 1 :day 1\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :hour 12 :minute 30 :second 45 :micro-second 123456)))
+
+    \ \ (check (dt :plus-days 10)\ 
+
+    \ \ \ \ =\<gtr\> (datetime :year 2024 :month 1 :day 11\ 
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :hour 12 :minute 30 :second 45 :micro-second 123456)))
+
+    \;
+  </goldfish-chunk>
+
+  \;
 
   <paragraph|glue_datetime>
 
@@ -5655,6 +5971,12 @@
     ) ; end of begin
 
     ) ; end of define-library
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|false>
+    (check-report)
 
     \;
   </goldfish-chunk>
