@@ -5963,6 +5963,24 @@
     <item>返回新对象，原始对象保持不变（immutable）
   </itemize>
 
+  实现思路：
+
+  <\itemize>
+    <item><strong|<code*|total-months>>：将原日期转换为“绝对月数”（从公元1年1月开始计数）：
+
+    <code|绝对月数 = (year \<times\> 12) + (month - 1) + months-to-add>
+
+    <itemize|<item><code*|month -1><nbsp>是因为月份从1开始，但计算时需要从0开始对齐。>
+
+    <item><strong|<code*|new-year><nbsp>和<nbsp><code*|new-month>>：通过除法和取余拆分回年份和月份：
+
+    <\itemize>
+      <item><code*|new-year = total-months \<div\> 12>（商）
+
+      <item><code*|new-month = total-months % 12 + 1>（余数加1，恢复1-based月份）
+    </itemize>
+  </itemize>
+
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define (%plus-months months-to-add)
 
