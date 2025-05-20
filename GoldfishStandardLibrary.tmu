@@ -5943,6 +5943,26 @@
 
   <paragraph|datetime%plus-monthes>
 
+  <code*|%plus-months><nbsp>是<nbsp><code*|datetime><nbsp>类的方法，用于在现有日期时间基础上<nbsp><strong|加减指定月数>，返回调整后的新<nbsp><code*|datetime><nbsp>对象。特性：
+
+  <\itemize>
+    <item>支持正数（未来日期）和负数（过去日期）
+
+    <item>自动处理跨年、跨月的月份计算（如<nbsp><code*|2023-12 +1月 \<rightarrow\> 2024-01>）
+
+    <item>智能调整日期：
+
+    <\itemize>
+      <item>若原日期是某月最后一天（如31日），调整后月份无该日期时，自动设为该月最后一天
+
+      例：<code*|2023-01-31 +1月 \<rightarrow\> 2023-02-28>（非闰年）
+    </itemize>
+
+    <item>保留原始时间部分（时、分、秒、微秒）不变
+
+    <item>返回新对象，原始对象保持不变（immutable）
+  </itemize>
+
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define (%plus-months months-to-add)
 
