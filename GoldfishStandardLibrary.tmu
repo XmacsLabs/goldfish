@@ -5350,7 +5350,7 @@
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define-library (liii datetime)
 
-    (export datetime years)
+    (export datetime date years)
 
     (begin
 
@@ -6305,22 +6305,6 @@
     \;
   </goldfish-chunk>
 
-  \;
-
-  <paragraph|glue_datetime>
-
-  <\cpp-chunk|src/goldfish.hpp|true|true>
-    inline void
-
-    glue_liii_datetime (s7_scheme* sc) {
-
-    \ \ glue_datetime_now (sc);
-
-    }
-
-    \;
-  </cpp-chunk>
-
   <subparagraph|结尾>
 
   <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
@@ -6329,85 +6313,11 @@
     \;
   </goldfish-chunk>
 
-  <section|结尾>
-
-  <\goldfish-chunk|goldfish/liii/datetime.scm|true|false>
-    ) ; end of begin
-
-    ) ; end of define-library
-
-    \;
-  </goldfish-chunk>
-
-  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|false>
-    (check-report)
-
-    \;
-  </goldfish-chunk>
-
-  <chapter|(liii date)>
-
-  <section|许可证>
-
-  <\goldfish-chunk|goldfish/liii/date.scm|false|true>
-    ;
-
-    ; Copyright (C) 2024 The Goldfish Scheme Authors
-
-    ;
-
-    ; Licensed under the Apache License, Version 2.0 (the "License");
-
-    ; you may not use this file except in compliance with the License.
-
-    ; You may obtain a copy of the License at
-
-    ;
-
-    ; http://www.apache.org/licenses/LICENSE-2.0
-
-    ;
-
-    ; Unless required by applicable law or agreed to in writing, software
-
-    ; distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-
-    ; WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-
-    ; License for the specific language governing permissions and limitations
-
-    ; under the License.
-
-    ;
-
-    \;
-  </goldfish-chunk>
-
-  <section|接口>
-
-  <\goldfish-chunk|goldfish/liii/date.scm|true|true>
-    (define-library (liii date)
-
-    (export date)
-
-    (begin
-
-    \;
-  </goldfish-chunk>
-
-  <\goldfish-chunk|tests/goldfish/liii/date-test.scm|false|true>
-    (import (liii check)
-
-    \ \ \ \ \ \ \ \ (liii date))
-
-    \;
-  </goldfish-chunk>
-
   <section|date>
 
   \;
 
-  <\goldfish-chunk|goldfish/liii/date.scm|true|true>
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define-case-class date
 
     \ \ ((year integer?)
@@ -6423,7 +6333,7 @@
 
   <paragraph|date@now>
 
-  <\goldfish-chunk|goldfish/liii/date.scm|true|true>
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (chained-define (@now)
 
     \ \ (let ((time-vec (g_date-now)))
@@ -6497,7 +6407,7 @@
     \;
   </cpp-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/date-test.scm|true|true>
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
     (check-true (\<gtr\> ((date :now) 'year) 2023))
 
     \;
@@ -6507,7 +6417,7 @@
 
   <paragraph|date%to-string>
 
-  <\goldfish-chunk|goldfish/liii/date.scm|true|true>
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     (define (%to-string)
 
     \ \ (define (pad2 n) \ ; 补零到 2 位
@@ -6531,7 +6441,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/date-test.scm|true|true>
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|true>
     (check ((date :year 2025 :month 1 :day 1) :to-string)
 
     \ \ =\<gtr\> "2025-01-01")
@@ -6559,12 +6469,14 @@
 
   \;
 
-  <paragraph|glue_date>
+  <paragraph|glue_datetime>
 
   <\cpp-chunk|src/goldfish.hpp|true|true>
     inline void
 
-    glue_liii_date (s7_scheme* sc) {
+    glue_liii_datetime (s7_scheme* sc) {
+
+    \ \ glue_datetime_now (sc);
 
     \ \ glue_date_now (sc);
 
@@ -6575,7 +6487,7 @@
 
   <subparagraph|结尾>
 
-  <\goldfish-chunk|goldfish/liii/date.scm|true|true>
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|true>
     )
 
     \;
@@ -6583,7 +6495,7 @@
 
   <section|结尾>
 
-  <\goldfish-chunk|goldfish/liii/date.scm|true|false>
+  <\goldfish-chunk|goldfish/liii/datetime.scm|true|false>
     ) ; end of begin
 
     ) ; end of define-library
@@ -6591,7 +6503,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/date-test.scm|true|false>
+  <\goldfish-chunk|tests/goldfish/liii/datetime-test.scm|true|false>
     (check-report)
 
     \;
@@ -7641,8 +7553,6 @@
     \ \ glue_liii_path (sc);
 
     \ \ glue_liii_datetime (sc);
-
-    \ \ glue_liii_date (sc);
 
     \ \ glue_liii_uuid (sc);
 

@@ -861,11 +861,6 @@ inline void glue_datetime_now(s7_scheme* sc) {
     s7_define_function(sc, name, f_datetime_now, 0, 0, false, desc);
 }
 
-inline void
-glue_liii_datetime (s7_scheme* sc) {
-  glue_datetime_now (sc);
-}
-
 static s7_pointer f_date_now(s7_scheme* sc, s7_pointer args) {
   // Get current time using tbox for year, month, day, etc.
   tb_time_t now = tb_time();
@@ -894,7 +889,8 @@ inline void glue_date_now(s7_scheme* sc) {
 }
 
 inline void
-glue_liii_date (s7_scheme* sc) {
+glue_liii_datetime (s7_scheme* sc) {
+  glue_datetime_now (sc);
   glue_date_now (sc);
 }
 
@@ -907,7 +903,6 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_os (sc);
   glue_liii_path (sc);
   glue_liii_datetime (sc);
-  glue_liii_date (sc);
   glue_liii_uuid (sc);
 }
 

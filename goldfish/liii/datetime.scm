@@ -15,7 +15,7 @@
 ;
 
 (define-library (liii datetime)
-(export datetime years)
+(export datetime date years)
 (begin
 
 (define-object years
@@ -159,6 +159,31 @@
               :minute minute
               :second second
               :micro-second micro-second)))
+
+)
+
+(define-case-class date
+  ((year integer?)
+   (month integer?)
+   (day integer?))
+
+(chained-define (@now)
+  (let ((time-vec (g_date-now)))
+    (date 
+      :year (vector-ref time-vec 0)
+      :month (vector-ref time-vec 1)
+      :day (vector-ref time-vec 2))))
+
+(define (%to-string)
+  (define (pad2 n)  ; 补零到 2 位
+    (if (< n 10)
+        (string-append "0" (number->string n))
+        (number->string n)))
+  
+  (let ((date-part (string-append (number->string year) "-"
+                                  (pad2 month) "-"
+                                  (pad2 day))))
+       date-part))
 
 )
 
