@@ -6388,8 +6388,6 @@
   <\goldfish-chunk|goldfish/liii/date.scm|true|true>
     (define-library (liii date)
 
-    (import (liii datetime))
-
     (export date)
 
     (begin
@@ -6533,7 +6531,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/date-test.scm|true|false>
+  <\goldfish-chunk|tests/goldfish/liii/date-test.scm|true|true>
     (check ((date :year 2025 :month 1 :day 1) :to-string)
 
     \ \ =\<gtr\> "2025-01-01")

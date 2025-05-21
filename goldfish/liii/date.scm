@@ -15,7 +15,6 @@
 ;
 
 (define-library (liii date)
-(import (liii datetime))
 (export date)
 (begin
 
