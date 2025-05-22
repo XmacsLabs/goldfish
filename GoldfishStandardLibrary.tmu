@@ -7172,6 +7172,12 @@
 
     (check-catch 'value-error ((logging "app") :set-level! 60))
 
+    (let* ((logging-get-rich-level (logging "get-rich-level")))
+
+    \ (logging-get-rich-level :set-level! ($ 50))
+
+    \ (check (logging-get-rich-level :get-level) =\<gtr\> "CRITICAL"))
+
     \;
   </scm-chunk>
 

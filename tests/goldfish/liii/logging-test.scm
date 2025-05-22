@@ -4,7 +4,10 @@
         (liii lang))
 
 (check-catch 'type-error ((logging "app") :set-level! "invalid level"))
-(check-catch 'value-error ((logging "app") :set-level! 60)) 
+(check-catch 'value-error ((logging "app") :set-level! 60))
+(let* ((logging-get-rich-level (logging "get-rich-level")))
+ (logging-get-rich-level :set-level! ($ 50))
+ (check (logging-get-rich-level :get-level) => "CRITICAL"))
 
 ;; Test @apply: Verify that the same logger instance is returned for the same name
 (let ((logger1 (logging "test-module"))
@@ -67,7 +70,3 @@
   (check-true (string-contains (log :critical "This critical message should appear") "This critical message should appear")))
 
 (check-report)
-
-(let* ((logging-get-rich-level (logging "get-rich-level")))
-  (logging-get-rich-level :set-level! ($ 50))
-  (check (logging-get-rich-level :get-level) => "CRITICAL"))
