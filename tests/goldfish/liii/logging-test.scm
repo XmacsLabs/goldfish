@@ -67,3 +67,7 @@
   (check-true (string-contains (log :critical "This critical message should appear") "This critical message should appear")))
 
 (check-report)
+
+(let* ((logging-get-rich-level (logging "get-rich-level")))
+  (logging-get-rich-level :set-level! ($ 50))
+  (check (logging-get-rich-level :get-level) => "CRITICAL"))
