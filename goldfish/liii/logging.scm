@@ -34,6 +34,23 @@
    (level integer? WARNING))
   
 
+(define (%set-level! l)
+  (define (check-valid-level val)
+    (member val '(0 10 20 30 40 50)))
+  
+  (cond ((integer? l) 
+         (if (check-valid-level l)
+             (set! level l)
+             (value-error "invalid level number" l)))
+
+        ((rich-integer :is-type-of l) 
+         (if (check-valid-level (l :get))
+             (set! level (l :get))
+             (value-error "invalid level number" (l :get))))
+
+        (else 
+         (type-error "level should be an integer"))))
+
 (define (@apply p-name)
   ;; Check if logger with this name already exists in registry
   (let ((existing-logger (hash-table-ref loggers-registry p-name)))

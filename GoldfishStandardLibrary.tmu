@@ -7131,6 +7131,50 @@
     \;
   </goldfish-chunk>
 
+  <\scm-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%set-level! l)
+
+    \ \ (define (check-valid-level val)
+
+    \ \ \ \ (member val '(0 10 20 30 40 50)))
+
+    \ \ 
+
+    \ \ (cond ((integer? l)\ 
+
+    \ \ \ \ \ \ \ \ \ (if (check-valid-level l)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (set! level l)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "invalid level number" l)))
+
+    \;
+
+    \ \ \ \ \ \ \ \ ((rich-integer :is-type-of l)\ 
+
+    \ \ \ \ \ \ \ \ \ (if (check-valid-level (l :get))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (set! level (l :get))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (value-error "invalid level number" (l :get))))
+
+    \;
+
+    \ \ \ \ \ \ \ \ (else\ 
+
+    \ \ \ \ \ \ \ \ \ (type-error "level should be an integer"))))
+
+    \;
+  </scm-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|true>
+    (check-catch 'type-error ((logging "app") :set-level! "invalid level"))
+
+    (check-catch 'value-error ((logging "app") :set-level! 60))
+
+    \;
+  </scm-chunk>
+
   <subsection|构造器>
 
   <\scm-chunk|goldfish/liii/logging.scm|true|true>

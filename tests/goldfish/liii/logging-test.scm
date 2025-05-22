@@ -3,6 +3,9 @@
         (liii string)
         (liii lang))
 
+(check-catch 'type-error ((logging "app") :set-level! "invalid level"))
+(check-catch 'value-error ((logging "app") :set-level! 60)) 
+
 ;; Test @apply: Verify that the same logger instance is returned for the same name
 (let ((logger1 (logging "test-module"))
       (logger2 (logging "test-module")))
