@@ -7227,6 +7227,40 @@
     \;
   </goldfish-chunk>
 
+  <paragraph|logging%get-level>
+
+  <\goldfish-chunk|goldfish/liii/logging.scm|true|true>
+    (define (%get-level)
+
+    \ \ (cond
+
+    \ \ \ \ ((= level 0) "NOTSET")
+
+    \ \ \ \ ((= level 10) "DEBUG")
+
+    \ \ \ \ ((= level 20) "INFO")
+
+    \ \ \ \ ((= level 30) "WARNING")
+
+    \ \ \ \ ((= level 40) "ERROR")
+
+    \ \ \ \ ((= level 50) "CRITICAL")))
+
+    \;
+  </goldfish-chunk>
+
+  <\scm-chunk|tests/goldfish/liii/logging-test.scm|true|true>
+    (check ((logging "app") :get-level) =\<gtr\> "WARNING")
+
+    (let* ((logging-get-level (logging "app-get-level")))
+
+    \ \ (logging-get-level :set-level! 50)
+
+    \ \ (check (logging-get-level :get-level) =\<gtr\> "CRITICAL"))
+
+    \;
+  </scm-chunk>
+
   <paragraph|logging%debug?>
 
   <\goldfish-chunk|goldfish/liii/logging.scm|true|true>

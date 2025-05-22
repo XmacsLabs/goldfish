@@ -64,6 +64,15 @@
           (display line)
           (path-append-text path line)))))
 
+(define (%get-level)
+  (cond
+    ((= level 0) "NOTSET")
+    ((= level 10) "DEBUG")
+    ((= level 20) "INFO")
+    ((= level 30) "WARNING")
+    ((= level 40) "ERROR")
+    ((= level 50) "CRITICAL")))
+
 (define (%debug?)
   (<= level DEBUG))
 

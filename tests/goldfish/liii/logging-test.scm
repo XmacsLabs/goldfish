@@ -13,6 +13,11 @@
       (logger2 (logging "module-b")))
   (check-false (eq? logger1 logger2)))
 
+(check ((logging "app") :get-level) => "WARNING")
+(let* ((logging-get-level (logging "app-get-level")))
+  (logging-get-level :set-level! 50)
+  (check (logging-get-level :get-level) => "CRITICAL"))
+
 (check-false ((logging "app") :debug?))
 
 (check-false ((logging "app") :info?))
