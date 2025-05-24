@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.5>>
+<TMU|<tuple|1.1.0|2025.0.8>>
 
 <style|<tuple|generic|chinese|goldfish|literate|reduced-margins>>
 
@@ -99,7 +99,7 @@
 
   <section|测试>
 
-  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|false>
+  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
     (import (liii check) (liii range))
 
     \;
@@ -131,7 +131,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|false|true>
+  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
     (let1 r (range :inclusive 1 2)
 
     \ \ (check (r 'start) =\<gtr\> 1)
@@ -179,6 +179,36 @@
     (check-false ((range :inclusive 1 3 0) :empty?))
 
     \;
+  </goldfish-chunk>
+
+  \;
+
+  <\goldfish-chunk|goldfish/liii/range.scm|true|false>
+    (define (%filter f)
+
+    \ \ (if (%empty?)
+
+    \ \ \ \ \ \ '()
+
+    \ \ \ \ \ \ (let loop ((i start) (return '()))
+
+    \ \ \ \ \ \ \ \ \ \ \ (cond
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ ((or (and (\<gtr\> step 0)(\<gtr\>= i end))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (\<less\> step 0)(\<less\>= i end))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (= i end)(not inclusive?)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse return))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i step)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return)))))
   </goldfish-chunk>
 
   <subsection|结尾>
