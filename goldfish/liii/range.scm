@@ -30,6 +30,18 @@
       (and (< start end) (< step 0))
       (and (= start end) (not inclusive?))))
 
+(define (%map map-func)
+  (if (%empty?)
+      '()
+      (let loop ((current start) (result '()))
+        (cond
+          ((or (and (> step 0) (if inclusive? (> current end) (>= current end)))
+                (and (< step 0) (if inclusive? (< current end) (<= current end))))
+            (reverse result))
+          (else
+            (loop (+ current step)
+                  (cons (map-func current) result)))))))
+
 ) ; define-case-cass
 ) ; begin
 ) ; define-library
