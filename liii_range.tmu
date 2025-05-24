@@ -167,6 +167,8 @@
     \ \ \ \ \ \ (and (\<less\> start end) (\<less\> step 0))
 
     \ \ \ \ \ \ (and (= start end) (not inclusive?))))
+    
+    \;
   </goldfish-chunk>
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|false>
@@ -191,6 +193,8 @@
                 (loop (+ current step)
 
                       (cons (map-func current) result)))))))
+    
+    \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|false>
