@@ -34,7 +34,10 @@
 (check-true ((range :inclusive 3 1) :empty?))
 (check-false ((range :inclusive 1 3 0) :empty?))
 
-(let1 r1 (range 0 10 1 #f)
-  (test ((r1 '%filter) even?) '(0 2 4 6 8)))
-(let1 r2 (@inclusive 1 5)
-  (test ((r2 '%filter) (lambda (x) (> x 2))) '(3 4 5)))
+(let1 r (range 0 10 1 #t)
+  (check (filter even? r) => '(0 2 4 6 8 10))
+  (check (filter (lambda (x) (> x 5)) r) => '(6 7 8 9 10))
+  (check (filter (lambda (x) (< x 0)) r) => '()))
+
+(let1 r (range 5 1 -1 #t)
+  (check (filter odd? r) => '(5 3 1)))

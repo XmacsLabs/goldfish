@@ -182,43 +182,61 @@
   </goldfish-chunk>
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|false>
-    (define (%filter f)
+    (define (filter f range)
 
-    \ \ (if (%empty?)
+    \ \ (let ((start (range 'start))
 
-    \ \ \ \ \ \ '()
+    \ \ \ \ \ \ \ \ (end (range 'end))
 
-    \ \ \ \ \ \ (let loop ((i start) (return '()))
+    \ \ \ \ \ \ \ \ (step (range 'step))
 
-    \ \ \ \ \ \ \ \ \ \ \ (cond
+    \ \ \ \ \ \ \ \ (inclusive? (range 'inclusive?)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ ((or (and (\<gtr\> step 0)(\<gtr\>= i end))
+    \ \ \ \ (if (or (and (\<gtr\> start end) (\<gtr\> step 0))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (\<less\> step 0)(\<less\>= i end))
+    \ \ \ \ \ \ \ \ \ \ \ \ (and (\<less\> start end) (\<less\> step 0))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (= i end)(not inclusive?)))
+    \ \ \ \ \ \ \ \ \ \ \ \ (and (= start end) (not inclusive?)))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse return)))
+    \ \ \ \ \ \ \ \ '()
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ (else
+    \ \ \ \ \ \ \ \ (let loop ((i start) (return '()))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i step)
+    \ \ \ \ \ \ \ \ \ \ (cond
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
+    \ \ \ \ \ \ \ \ \ \ \ \ ((or (and (\<gtr\> step 0)(\<gtr\>= i end))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (\<less\> step 0)(\<less\>= i end))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return)))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (= i end)(not inclusive?)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse return)))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (else
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i step)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return))))))))
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|false>
-    (let1 r1 (range 0 10 1 #f)
+    (let1 r (range 0 10 1 #t)
 
-    \ \ (test ((r1 '%filter) even?) '(0 2 4 6 8)))
+    \ \ (check (filter even? r) =\<gtr\> '(0 2 4 6 8 10))
 
-    (let1 r2 (@inclusive 1 5)
+    \ \ (check (filter (lambda (x) (\<gtr\> x 5)) r) =\<gtr\> '(6 7 8 9 10))
 
-    \ \ (test ((r2 '%filter) (lambda (x) (\<gtr\> x 2))) '(3 4 5)))
+    \ \ (check (filter (lambda (x) (\<less\> x 0)) r) =\<gtr\> '()))
+
+    \;
+
+    (let1 r (range 5 1 -1 #t)
+
+    \ \ (check (filter odd? r) =\<gtr\> '(5 3 1)))
   </goldfish-chunk>
 
   <subsection|结尾>
