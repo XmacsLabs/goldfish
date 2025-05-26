@@ -16,7 +16,7 @@
 
 (define-library (liii range)
 (import (liii lang))
-(export range filter)
+(export range)
 (begin
 
 (define-case-class range

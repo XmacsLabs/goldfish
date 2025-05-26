@@ -90,7 +90,7 @@
 
     (import (liii lang))
 
-    (export range filter)
+    (export range)
 
     (begin
 
