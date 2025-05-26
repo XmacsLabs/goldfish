@@ -35,9 +35,9 @@
 (check-false ((range :inclusive 1 3 0) :empty?))
 
 (let1 r (range 0 10 1 #t)
-  (check (filter even? r) => '(0 2 4 6 8 10))
-  (check (filter (lambda (x) (> x 5)) r) => '(6 7 8 9 10))
-  (check (filter (lambda (x) (< x 0)) r) => '()))
+  (check (r:filter even?) => ($ (list 0 2 4 6 8 10))))
+  (check (r:filter (lambda (x) (> x 5))) => ($ (list 6 7 8 9 10))))
+  (check (r:filter (lambda (x) (< x 0))) => ($ (list ))))
 
 (let1 r (range 5 1 -1 #t)
-  (check (filter odd? r) => '(5 3 1)))
+  (check (r:filter odd?) => ($ (list5 3 1))))
