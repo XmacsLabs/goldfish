@@ -30,6 +30,11 @@
   (check (r 'step) => 2)
   (check-true (r 'inclusive?)))
 
+(let1 r1 (range :inclusive -2 1)
+  (let1 map-func (lambda (x) (* x x))
+    (let1 r2 (r1 :map map-func)
+      (check r2 => (rich-list (list 4 1 0 1))))))
+
 (check-false ((range :inclusive 1 3) :empty?))
 (check-true ((range :inclusive 3 1) :empty?))
 (check-false ((range :inclusive 1 3 0) :empty?))
