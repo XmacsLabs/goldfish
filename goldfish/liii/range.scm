@@ -32,12 +32,12 @@
 
 (define (%map map-func)
   (if (%empty?)
-      '()
+      (rich-list :empty)
       (let loop ((current start) (result '()))
         (cond
           ((or (and (> step 0) (if inclusive? (> current end) (>= current end)))
                 (and (< step 0) (if inclusive? (< current end) (<= current end))))
-            (reverse result))
+            (rich-list (reverse result)))
           (else
             (loop (+ current step)
                   (cons (map-func current) result)))))))

@@ -176,7 +176,7 @@
 
       (if (%empty?)
 
-          '()
+          (rich-list :empty)
 
           (let loop ((current start) (result '()))
 
@@ -186,7 +186,7 @@
 
                     (and (\< step 0) (if inclusive? (\< current end) (\<= current end))))
 
-                (reverse result))
+                (rich-list (reverse result)))
 
               (else
 
