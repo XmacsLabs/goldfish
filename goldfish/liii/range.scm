@@ -30,6 +30,22 @@
       (and (< start end) (< step 0))
       (and (= start end) (not inclusive?))))
 
+(define (%filter f)
+  (if (%empty?)
+      '()
+      (let loop ((i start) (return '()))
+        (cond
+          ((or (and (> step 0) (>= i end))
+               (and (< step 0) (<= i end))
+               (and (= i end) (not inclusive?)))
+           (rich-list (reverse return)))
+          (else
+           (loop (+ i step)
+                 (if (f i)
+                     (cons i return)
+                     return)))))))
+
+
 ) ; define-case-cass
 ) ; begin
 ) ; define-library
