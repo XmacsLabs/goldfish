@@ -1,7 +1,20 @@
 (import (liii check)
         (liii logging)
         (liii string)
-        (liii lang))
+        (liii lang)
+        (liii path))
+
+;; Test set-path! with path object support
+(let ((log (logging "test-path-support")))
+  ;; Test with string path
+  (log :set-path! "/tmp/test.log")
+  (check (log :get-log-path) => "/tmp/test.log")
+  ;; Test with invalid input should throw type-error
+  (check-catch 'type-error ((logging "app") :set-path! 123))
+  ;; Test with path object
+  (let ((p (path :temp-dir :/ "test-path-object.log")))
+    (log :set-path! p)
+    (check (log :get-log-path) => (p :to-string))))
 
 (check-catch 'type-error ((logging "app") :set-level! "invalid level"))
 (check-catch 'value-error ((logging "app") :set-level! 60))
