@@ -221,6 +221,18 @@
     \;
   </cpp-chunk>
 
+  <section|REPL (可选，只支持macOS和Linux)>
+
+  使用<verbatim|xmake b goldfish_repl>构建REPL，<verbatim|bin/goldfish_repl -i>运行REPL。
+
+  <\cpp-chunk|src/goldfish.hpp|true|false>
+    #ifdef GOLDFISH_ENABLE_REPL
+
+    int interactive_repl (s7_scheme* sc, const string& mode);
+
+    #endif
+  </cpp-chunk>
+
   <chapter|boot.scm><label|chapter:scheme_boot>
 
   S7 Scheme默认并不遵循R7RS，在启动S7 Scheme之后，我们需要做的第一件事就是加载<scm|boot.scm>，实现R7RS的<scm|define-library>和<scm|import>。
@@ -7758,6 +7770,14 @@
 
     \ \ \ \ \ \ \ \<less\>\<less\> "Allowed mode: default, liii, sicp, r7rs, s7" \<less\>\<less\> endl;
 
+    \ \ #ifdef GOLDFISH_ENABLE_REPL
+
+    \ \ \ \ cout \<less\>\<less\> "-i \ \ \ \ \ \ \\t"
+
+    \ \ \ \ \ \ \ \ \ \<less\>\<less\> "Start interactive REPL" \<less\>\<less\> endl;
+
+    \ \ #endif
+
     \ \ cout \<less\>\<less\> "-e \ \ \ \ \ \ \\t"
 
     \ \ \ \ \ \ \ \<less\>\<less\> "Load the scheme code on the command line" \<less\>\<less\> endl
@@ -8195,6 +8215,40 @@
     \ \ \ \ \ \ display_version ();
 
     \ \ \ \ }
+
+    \ \ \ \ #ifdef GOLDFISH_ENABLE_REPL
+
+    \ \ \ \ \ \ else if (args[0] == "-i") {
+
+    \ \ \ \ \ \ \ \ // Start interactive REPL
+
+    \ \ \ \ \ \ \ \ errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
+
+    \ \ \ \ \ \ \ \ if ((errmsg) && (*errmsg)) cout \<less\>\<less\> errmsg;
+
+    \ \ \ \ \ \ \ \ s7_close_output_port (sc, s7_current_error_port (sc));
+
+    \ \ \ \ \ \ \ \ s7_set_current_error_port (sc, old_port);
+
+    \ \ \ \ \ \ \ \ if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+
+    \;
+
+    \ \ \ \ \ \ \ \ return interactive_repl (sc, mode);
+
+    \ \ \ \ \ \ }
+
+    \ \ \ \ #else
+
+    \ \ \ \ \ \ else if (args[0] == "-i") {
+
+    \ \ \ \ \ \ \ \ cerr \<less\>\<less\> "Interactive REPL is not available in this build. Use goldfish_repl instead." \<less\>\<less\> endl;
+
+    \ \ \ \ \ \ \ \ exit (-1);
+
+    \ \ \ \ \ \ }
+
+    \ \ \ \ #endif
 
     \ \ \ \ else {
 
