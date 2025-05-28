@@ -49,6 +49,8 @@ target ("goldfish_repl") do
     if is_plat("linux") then
         -- for Ubuntu 20.04
         add_syslinks("stdc++")
+        -- Add readline support for Linux
+        add_syslinks("readline")
     end
     if is_plat("macosx") then
         -- Add readline support for macOS

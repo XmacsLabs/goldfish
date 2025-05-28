@@ -30,9 +30,12 @@
 #endif
 
 // macOS specific headers for readline support
-#ifdef TB_CONFIG_OS_MACOSX
+#if defined(TB_CONFIG_OS_MACOSX) || defined(TB_CONFIG_OS_LINUX) || defined(__linux__)
 #include <readline/history.h>
 #include <readline/readline.h>
+#define GOLDFISH_HAS_READLINE 1
+#else
+#define GOLDFISH_HAS_READLINE 0
 #endif
 
 namespace goldfish {
@@ -50,6 +53,9 @@ interactive_repl (s7_scheme* sc, const string& mode) {
   cout << "Based on S7 Scheme " << S7_VERSION << " (" << S7_DATE << ")" << endl;
   cout << "Mode: " << mode << endl;
   cout << "Type (exit) or press Ctrl+D to quit." << endl;
+#if GOLDFISH_HAS_READLINE
+  cout << "Readline support enabled - use arrow keys for history navigation." << endl;
+#endif
   cout << endl;
 
   string input_line;
@@ -58,8 +64,8 @@ interactive_repl (s7_scheme* sc, const string& mode) {
   bool   in_expression= false;
   int    paren_count  = 0;
 
-#ifdef TB_CONFIG_OS_MACOSX
-  // Use readline on macOS for better input experience
+#if GOLDFISH_HAS_READLINE
+  // Use readline for better input experience on Unix-like systems
   char*  line;
   string prompt;
 
@@ -143,7 +149,9 @@ interactive_repl (s7_scheme* sc, const string& mode) {
   }
 
 #else
-  // Fallback simple REPL for other platforms
+  // Fallback simple REPL for platforms without readline
+  cout << "Basic input mode - readline not available." << endl;
+  
   while (true) {
     // Display prompt
     if (in_expression) {
