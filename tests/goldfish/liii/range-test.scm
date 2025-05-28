@@ -39,5 +39,13 @@
 (check-true ((range :inclusive 3 1) :empty?))
 (check-false ((range :inclusive 1 3 0) :empty?))
 
+(let1 r (range 0 10 1 #f)
+  (check (r :filter even?) => ($ (list 0 2 4 6 8)))
+  (check (r :filter (lambda (x) (> x 5))) => ($ (list 6 7 8 9)))
+  (check (r :filter (lambda (x) (< x 0))) => ($ (list ))))
+
+(let1 r (range 5 1 -1 #t)
+  (check (r :filter odd?) => ($ (list 5 3 1))))
+
 (check-report)
 
