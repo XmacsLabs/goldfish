@@ -225,7 +225,7 @@
 
   使用<verbatim|xmake b goldfish_repl>构建REPL，<verbatim|bin/goldfish_repl -i>运行REPL。
 
-  <\cpp-chunk|src/goldfish.hpp|true|false>
+  <\cpp-chunk|src/goldfish.hpp|true|true>
     #ifdef GOLDFISH_ENABLE_REPL
 
     int interactive_repl (s7_scheme* sc, const string& mode);
