@@ -184,7 +184,7 @@
 
     \ \ (if (%empty?)
 
-    \ \ \ \ \ \ '()
+    \ \ \ \ \ \ <code*|(rich-list :empty)>
 
     \ \ \ \ \ \ (let loop ((i start) (return '()))
 
@@ -214,17 +214,17 @@
   <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|false>
     (let1 r (range 0 10 1 #t)
 
-    \ \ (check (r:filter even?) =\<gtr\> ($ (list 0 2 4 6 8 10)))
+    \ \ (check (r :filter even?) =\<gtr\> ($ (list 0 2 4 6 8 10)))
 
-    \ \ (check (r:filter (lambda (x) (\<gtr\> x 5))) =\<gtr\> ($ (list 6 7 8 9 10)))
+    \ \ (check (r :filter (lambda (x) (\<gtr\> x 5))) =\<gtr\> ($ (list 6 7 8 9 10)))
 
-    \ \ (check (r:filter (lambda (x) (\<less\> x 0))) =\<gtr\> ($ (list ))))
+    \ \ (check (r :filter (lambda (x) (\<less\> x 0))) =\<gtr\> ($ (list ))))
 
     \;
 
     (let1 r (range 5 1 -1 #t)
 
-    \ \ (check (r:filter odd?) =\<gtr\> ($ (list5 3 1))))
+    \ \ (check (r :filter odd?) =\<gtr\> ($ (list5 3 1))))
   </goldfish-chunk>
 
   <subsection|结尾>

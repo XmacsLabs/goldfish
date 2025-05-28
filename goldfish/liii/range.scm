@@ -32,7 +32,7 @@
 
 (define (%filter f)
   (if (%empty?)
-      '()
+      (rich-list :empty)
       (let loop ((i start) (return '()))
         (cond
           ((or (and (> step 0) (>= i end))
