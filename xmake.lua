@@ -32,6 +32,19 @@ end
 
 target ("goldfish") do
     set_languages("c++11")
+    set_targetdir("$(projectdir)/bin/")
+    add_files ("src/goldfish.cpp")
+    add_packages("s7")
+    add_packages("tbox")
+
+    add_installfiles("$(projectdir)/goldfish/(scheme/*.scm)", {prefixdir = "share/goldfish"})
+    add_installfiles("$(projectdir)/goldfish/(srfi/*.scm)", {prefixdir = "share/goldfish"})
+    add_installfiles("$(projectdir)/goldfish/(liii/*.scm)", {prefixdir = "share/goldfish"})
+end
+
+
+target ("goldfish_repl") do
+    set_languages("c++11")
     if is_plat("linux") then
         -- for Ubuntu 20.04
         add_syslinks("stdc++")
@@ -41,7 +54,7 @@ target ("goldfish") do
         add_syslinks("readline")
     end
     set_targetdir("$(projectdir)/bin/")
-    add_files ("src/goldfish.cpp")
+    add_files ("src/goldfish_repl.cpp")
     add_packages("s7")
     add_packages("tbox")
 

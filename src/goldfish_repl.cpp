@@ -15,6 +15,7 @@
 //
 
 #include "goldfish.hpp"
+#include "goldfish_repl.hpp"
 #include <string>
 
 int
