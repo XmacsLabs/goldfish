@@ -6,6 +6,7 @@
 .xmake/
 build/
 bin/goldfish
+bin/goldfish_repl
 bin/goldfish.exe
 bin/http
 bin/http.exe
