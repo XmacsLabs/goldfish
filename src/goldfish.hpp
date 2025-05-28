@@ -188,6 +188,9 @@ glue_scheme_process_context (s7_scheme* sc) {
                                      false, d_command_line, NULL));
 }
 
+// Forward declarations
+int interactive_repl (s7_scheme* sc, const string& mode);
+
 string
 goldfish_exe () {
 #ifdef TB_CONFIG_OS_WINDOWS
@@ -924,6 +927,8 @@ display_help () {
   cout << "Goldfish Scheme " << GOLDFISH_VERSION << " by LiiiLabs" << endl;
   cout << "--version\t"
        << "Display version" << endl;
+  cout << "-i       \t"
+       << "Start interactive REPL" << endl;
   cout << "-m default\t"
        << "Allowed mode: default, liii, sicp, r7rs, s7" << endl;
   cout << "-e       \t"
@@ -1102,6 +1107,16 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
   if (args.size () == 1 && args[0].size () > 0 && args[0][0] == '-') {
     if (args[0] == "--version") {
       display_version ();
+    }
+    else if (args[0] == "-i") {
+      // Start interactive REPL
+      errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
+      if ((errmsg) && (*errmsg)) cout << errmsg;
+      s7_close_output_port (sc, s7_current_error_port (sc));
+      s7_set_current_error_port (sc, old_port);
+      if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+
+      return interactive_repl (sc, mode);
     }
     else {
       display_for_invalid_options ();

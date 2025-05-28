@@ -36,6 +36,10 @@ target ("goldfish") do
         -- for Ubuntu 20.04
         add_syslinks("stdc++")
     end
+    if is_plat("macosx") then
+        -- Add readline support for macOS
+        add_syslinks("readline")
+    end
     set_targetdir("$(projectdir)/bin/")
     add_files ("src/goldfish.cpp")
     add_packages("s7")
