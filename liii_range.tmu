@@ -257,8 +257,6 @@
 
   <subsection|结尾>
 
-  \;
-
   <\goldfish-chunk|goldfish/liii/range.scm|true|false>
     ) ; define-case-cass
 
