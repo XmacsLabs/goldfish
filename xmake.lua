@@ -45,6 +45,7 @@ end
 
 target ("goldfish_repl") do
     set_languages("c++11")
+    add_defines("GOLDFISH_ENABLE_REPL")
     if is_plat("linux") then
         -- for Ubuntu 20.04
         add_syslinks("stdc++")

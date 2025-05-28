@@ -14,6 +14,8 @@
 // under the License.
 //
 
+// GOLDFISH_ENABLE_REPL宏由xmake定义
+
 #include "goldfish.hpp"
 #include "goldfish_repl.hpp"
 #include <string>
@@ -27,4 +29,4 @@ main (int argc, char** argv) {
   const char* gf_lib      = gf_lib_dir.c_str ();
   s7_scheme* sc= goldfish::init_goldfish_scheme (gf_lib);
   return goldfish::repl_for_community_edition (sc, argc, argv);
-}
+} 

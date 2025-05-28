@@ -189,7 +189,9 @@ glue_scheme_process_context (s7_scheme* sc) {
 }
 
 // Forward declarations
+#ifdef GOLDFISH_ENABLE_REPL
 int interactive_repl (s7_scheme* sc, const string& mode);
+#endif
 
 string
 goldfish_exe () {
@@ -927,8 +929,10 @@ display_help () {
   cout << "Goldfish Scheme " << GOLDFISH_VERSION << " by LiiiLabs" << endl;
   cout << "--version\t"
        << "Display version" << endl;
+#ifdef GOLDFISH_ENABLE_REPL
   cout << "-i       \t"
        << "Start interactive REPL" << endl;
+#endif
   cout << "-m default\t"
        << "Allowed mode: default, liii, sicp, r7rs, s7" << endl;
   cout << "-e       \t"
@@ -1108,6 +1112,7 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
     if (args[0] == "--version") {
       display_version ();
     }
+#ifdef GOLDFISH_ENABLE_REPL
     else if (args[0] == "-i") {
       // Start interactive REPL
       errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
@@ -1118,6 +1123,12 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
 
       return interactive_repl (sc, mode);
     }
+#else
+    else if (args[0] == "-i") {
+      cerr << "Interactive REPL is not available in this build. Use goldfish_repl instead." << endl;
+      exit (-1);
+    }
+#endif
     else {
       display_for_invalid_options ();
     }

@@ -16,6 +16,9 @@
 
 #pragma once
 
+// 只有定义了GOLDFISH_ENABLE_REPL宏时才编译REPL功能
+#ifdef GOLDFISH_ENABLE_REPL
+
 #include <iostream>
 #include <s7.h>
 #include <sstream>
@@ -212,5 +215,6 @@ interactive_repl (s7_scheme* sc, const string& mode) {
 
   return 0;
 }
-
 } // namespace goldfish
+
+#endif // GOLDFISH_ENABLE_REPL
