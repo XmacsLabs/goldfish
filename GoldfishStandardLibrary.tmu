@@ -18,7 +18,7 @@
 
     <assign|srfi|<flag|SRFI|dark red>>
 
-    <assign|goldfish-version|17.11.16>
+    <assign|goldfish-version|17.11.15>
 
     <assign|typehint|<macro|body|<goldfish-lang|<arg|body>>>>
 
@@ -136,7 +136,7 @@
   金鱼Scheme的版本，<todo|后续统一使用<value|goldfish-version>这个在导言区预定义的值>。文学编程的Build Buffer功能暂时不支持展开导言区预定义的值。
 
   <\cpp-chunk|src/goldfish.hpp|true|true>
-    #define GOLDFISH_VERSION "17.11.16"
+    #define GOLDFISH_VERSION "17.11.15"
 
     \;
   </cpp-chunk>
