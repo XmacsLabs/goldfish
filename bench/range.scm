@@ -1,14 +1,16 @@
 (import (scheme time)
-        (liii range))
+        (liii range)
+        (liii list))
 
 (define start-time (current-jiffy))
 
 (define result
   (((range 1 1000) :map
-    (lambda (x)
-      (((range 1 10000)
-        :map (lambda (x) (* x x)))
-        :fold 0 +)))
+    (lambda (y)
+      (fold + 0
+        (((range 1 1000)
+         :map (lambda (x) (* x x)))
+         :collect))))
    :collect))
 
 (display (car result))
