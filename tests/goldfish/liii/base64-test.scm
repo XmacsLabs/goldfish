@@ -19,7 +19,6 @@
         (liii error))
 
 (check-set-mode! 'report-failed)
-(define == class=?)
 
 (check (base64-encode "") => "")
 (check (base64-encode "a") => "YQ==")
