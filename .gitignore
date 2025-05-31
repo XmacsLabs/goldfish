@@ -14,3 +14,5 @@ goldfish/**/*-test.scm
 compile_commands.json
 .cache/
 *~
+.bsp
+.scala-build
