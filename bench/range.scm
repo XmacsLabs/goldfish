@@ -7,10 +7,9 @@
 (define result
   (((range 1 1000) :map
     (lambda (y)
-      (fold + 0
-        (((range 1 1000)
-         :map (lambda (x) (* x x)))
-         :collect))))
+      (((range 1 1000)
+        :map (lambda (x) (* x x)))
+       :count odd?)))
    :collect))
 
 (display (car result))

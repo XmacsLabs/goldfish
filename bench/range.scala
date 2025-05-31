@@ -3,7 +3,7 @@
 
   // 计算 1 到 10000 的平方和，重复 1000 次
   val results = (1 to 1000).map: _ =>
-    (1L to 1000L).map(x => x * x).sum
+    (1L to 10000L).count(x => x % 2 == 0)
 
   val endTime = System.nanoTime()
   val duration = (endTime - startTime) / 1e6d
