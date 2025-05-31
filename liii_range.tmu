@@ -183,6 +183,8 @@
 
   <subsection|谓词>
 
+  <paragraph|range%empty?>
+
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%empty?)
 
@@ -194,6 +196,20 @@
 
     \;
   </goldfish-chunk>
+
+  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
+    (check-false ((range :inclusive 1 3) :empty?))
+
+    (check-true ((range :inclusive 3 1) :empty?))
+
+    (check-false ((range :inclusive 1 3 0) :empty?))
+
+    \;
+  </goldfish-chunk>
+
+  <subsection|高阶函数>
+
+  <paragraph|range%map>
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%map map-func)
@@ -215,6 +231,18 @@
     \;
   </goldfish-chunk>
 
+  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
+    (let* ((r1 (range :inclusive -2 1))
+
+    \ \ \ \ \ \ \ (r2 (r1 :map (lambda (x) (* x x)))))
+
+    \ \ (check r2 =\<gtr\> (rich-list (list 4 1 0 1))))
+
+    \;
+  </goldfish-chunk>
+
+  <paragraph|range%for-each>
+
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%for-each proc)
 
@@ -231,25 +259,7 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
-    (check-false ((range :inclusive 1 3) :empty?))
-
-    (check-true ((range :inclusive 3 1) :empty?))
-
-    (check-false ((range :inclusive 1 3 0) :empty?))
-
-    \;
-  </goldfish-chunk>
-
-  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
-    (let* ((r1 (range :inclusive -2 1))
-
-    \ \ \ \ \ \ \ (r2 (r1 :map (lambda (x) (* x x)))))
-
-    \ \ (check r2 =\<gtr\> (rich-list (list 4 1 0 1))))
-
-    \;
-  </goldfish-chunk>
+  <paragraph|range%filter>
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%filter f)
