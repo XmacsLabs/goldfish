@@ -18,7 +18,7 @@
 (import (liii base) (liii list) (liii string))
 (export
   @ typed-define define-case-class define-object define-class
-  case-class? == != chained-define display* object->string
+  case-class? chained-define display* object->string
   chain-apply
 )
 (begin
@@ -407,20 +407,6 @@
              (pred2 ((body 2) 0)))
     (and (equal? pred1 '(eq? msg :is-instance-of))
          (equal? pred2 '(eq? msg :equals)))))
-
-(define (== left right)
-  (cond
-    ((and (case-class? left) (case-class? right))
-     (left :equals right))
-    ((case-class? left)
-     (left :equals ($ right)))
-    ((case-class? right)
-     ($ left :equals right))
-    (else
-     (equal? left right))))
-
-(define (!= left right)
-  (not (== left right)))
 
 (define-macro (chained-define head . body)
   (let ((xs (gensym))

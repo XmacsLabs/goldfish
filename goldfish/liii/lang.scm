@@ -19,8 +19,8 @@
 (import (only (liii base)
               u8-string-length any? receive u8-substring)
         (only (liii oop)
-              define-case-class display* == @ typed-define case-class? chained-define
-              define-object define-class != chain-apply object->string)
+              define-case-class display* @ typed-define case-class? chained-define
+              define-object define-class chain-apply object->string)
         (only (liii string)
               string-join string-null? string-starts? string-contains string-trim
               string-trim-right string-trim-both string-remove-prefix string-remove-suffix string-pad
@@ -41,13 +41,24 @@
 
 (export
   @ typed-define define-case-class define-object define-class
-  case-class? == != chained-define display* object->string
+  case-class? class=? chained-define display* object->string
   option none either left right
   rich-integer rich-float rich-char rich-string
   rich-list rich-vector array rich-hash-table
   box $
 )
 (begin
+
+(define (class=? left right)
+  (cond
+    ((and (case-class? left) (case-class? right))
+     (left :equals right))
+    ((case-class? left)
+     (left :equals ($ right)))
+    ((case-class? right)
+     ($ left :equals right))
+    (else
+     (equal? left right))))
 
 (define (box x)
   (cond ((integer? x) (rich-integer x))

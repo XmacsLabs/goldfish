@@ -98,9 +98,9 @@
 
     \ \ \ \ \ \ \ \ (only (liii oop)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ define-case-class display* == @ typed-define case-class? chained-define
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ define-case-class display* @ typed-define case-class? chained-define
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ define-object define-class != chain-apply object-\<gtr\>string)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ define-object define-class chain-apply object-\<gtr\>string)
 
     \ \ \ \ \ \ \ \ (only (liii string)
 
@@ -142,7 +142,7 @@
 
     \ \ @ typed-define define-case-class define-object define-class
 
-    \ \ case-class? == != chained-define display* object-\<gtr\>string
+    \ \ case-class? class=? chained-define display* object-\<gtr\>string
 
     \ \ option none either left right
 
@@ -441,7 +441,7 @@
 
   本节函数和相关功能如下表所示：
 
-  <\big-table|<tabular|<tformat|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|1|-1|cell-background|>|<table|<row|<cell|函数名>|<cell|功能>>|<row|<cell|<scm|define-case-class>>|<cell|用于定义数据+行为的不可变样本类（支持类型化字段和方法）>>|<row|<cell|<scm|define-object>>|<cell|用于定义纯行为的不可变对象（仅包含方法）>>|<row|<cell|<scm|define-class>>|<cell|用于定义可变成员变量类的宏>>|<row|<cell|<scm|case-class?>>|<cell|用于判断某个对象是否为样本类>>|<row|<cell|<scm|==> 和 <scm|!=>>|<cell|样本类的相等性判断函数>>|<row|<cell|<scm|chained-define>>|<cell|简化了在样本类中定义方法的语法，使方法可以链式调用>>|<row|<cell|<scm|display*>>|<cell|正确处理样本类对象>>|<row|<cell|<scm|object-<textgreater|>string>>|<cell|样本类的字符串表示函数>>|<row|<cell|<verbatim|box>>|<cell|将基础类型的值装箱为样本类的函数>>|<row|<cell|<scm|$>>|<cell|用于简化样本类的创建和操作>>>>>>
+  <\big-table|<tabular|<tformat|<cwith|1|1|1|-1|cell-tborder|0ln>|<cwith|1|1|1|-1|cell-bborder|1ln>|<cwith|2|2|1|-1|cell-tborder|1ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|2|2|cell-rborder|0ln>|<cwith|1|1|1|-1|cell-background|>|<table|<row|<cell|函数名>|<cell|功能>>|<row|<cell|<scm|define-case-class>>|<cell|用于定义数据+行为的不可变样本类（支持类型化字段和方法）>>|<row|<cell|<scm|define-object>>|<cell|用于定义纯行为的不可变对象（仅包含方法）>>|<row|<cell|<scm|define-class>>|<cell|用于定义可变成员变量类的宏>>|<row|<cell|<scm|case-class?>>|<cell|用于判断某个对象是否为样本类>>|<row|<cell|<scm|class=?>>|<cell|样本类的相等性判断函数>>|<row|<cell|<scm|chained-define>>|<cell|简化了在样本类中定义方法的语法，使方法可以链式调用>>|<row|<cell|<scm|display*>>|<cell|正确处理样本类对象>>|<row|<cell|<scm|object-<textgreater|>string>>|<cell|样本类的字符串表示函数>>|<row|<cell|<verbatim|box>>|<cell|将基础类型的值装箱为样本类的函数>>|<row|<cell|<scm|$>>|<cell|用于简化样本类的创建和操作>>>>>>
     样本类相关函数和功能
   </big-table>
 
@@ -1471,16 +1471,14 @@
     \;
   </scm-chunk>
 
-  <paragraph|==><index|==>
+  <paragraph|class=?><index|==>
 
-  <scm|==> 是一个用于判断两个对象是否相等的函数。它支持对 <with|font-series|bold|样本类（Case Class）>对象的特殊处理，同时也支持对普通对象的比较。如果两个对象都是样本类，则调用样本类的 <scm|:equals> 方法进行比较；如果其中一个对象是样本类，另一个不是，则会将非样本类对象装箱后再进行比较；如果两个对象都不是样本类，则使用 <scm|equal?> 进行比较。
-
-  \;
+  <scm|class=?> 是一个用于判断两个对象是否相等的函数。它支持对 <with|font-series|bold|样本类（Case Class）>对象的特殊处理，同时也支持对普通对象的比较。如果两个对象都是样本类，则调用样本类的 <scm|:equals> 方法进行比较；如果其中一个对象是样本类，另一个不是，则会将非样本类对象装箱后再进行比较；如果两个对象都不是样本类，则使用 <scm|equal?> 进行比较。
 
   <subparagraph|函数签名>
 
   <\goldfish-code>
-    (== left right) =\<gtr\> boolean?
+    (class=? left right) =\<gtr\> boolean?
   </goldfish-code>
 
   <\description>
@@ -1541,108 +1539,44 @@
     <item*|兼容性 >支持对普通对象的比较，确保与现有代码的兼容性。
   </description>
 
-  \;
+  <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
+    (define (class=? left right)
 
-  <subparagraph|测试用例>
+    \ \ (cond
 
-  <\scm-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (check (== (list 1 2) (list 1 2)) =\<gtr\> #t)
+    \ \ \ \ ((and (case-class? left) (case-class? right))
 
-    (check (!= (list 1 2) (list 1 2)) =\<gtr\> #f)
+    \ \ \ \ \ (left :equals right))
 
-    (check (== (box 10) 10) =\<gtr\> #t) \ 
+    \ \ \ \ ((case-class? left)
 
-    (check (== 10 (box 10)) =\<gtr\> #t) \ 
+    \ \ \ \ \ (left :equals ($ right)))
 
-    (check (== (box 10) (box 10)) =\<gtr\> #t) \ 
+    \ \ \ \ ((case-class? right)
 
-    (check (== 10 10) =\<gtr\> #t) \ 
+    \ \ \ \ \ ($ left :equals right))
 
-    (check-true (== (person "Bob" 21) (person "Bob" 21)))
+    \ \ \ \ (else
+
+    \ \ \ \ \ (equal? left right))))
 
     \;
-  </scm-chunk>
-
-  <paragraph|!=><index|!=>
-
-  <scm|!=> 是一个用于判断两个对象是否不相等的函数。它是 <scm|==> 函数的逻辑取反，即如果 <scm|==> 返回 <scm|#t>，则 <scm|!=> 返回 <scm|#f>，反之亦然。<scm|!=> 支持对 <with|font-series|bold|样本类（Case Class）> 对象的特殊处理，同时也支持对普通对象的比较。
-
-  \;
-
-  <subparagraph|函数签名>
-
-  <\goldfish-code>
-    (!= left right) =\<gtr\> boolean?
-  </goldfish-code>
-
-  <\description>
-    <item*|参数 >
-
-    <\itemize-minus>
-      <item><scm|left>: 任意类型的对象。
-
-      <item><scm|right>: 任意类型的对象。
-    </itemize-minus>
-
-    <item*|返回值 >
-
-    <\itemize-minus>
-      <item>如果 <scm|left> 和 <scm|right> 不相等，返回 <scm|#t>。
-
-      <item>否则，返回 <scm|#f>。
-    </itemize-minus>
-  </description>
-
-  \;
-
-  <subparagraph|功能>
-
-  <scm|!=> 函数的比较逻辑与 <scm|==> 完全相反：\ 
-
-  <\description>
-    <item*|>如果 <scm|left> 和 <scm|right> 都是样本类，则调用 <scm|left> 的 <scm|:equals> 方法进行比较,并取反结果。
-
-    <item*|>如果 <scm|left> 是样本类而 <scm|right> 不是，则将 <scm|right> 用 <scm|box> 函数装箱后调用 <scm|left> 的 <scm|:equals> 方法,并取反结果。
-
-    <item*|>如果 <scm|right> 是样本类而 <scm|left> 不是，则将 <scm|left> 用 <scm|box> 函数装箱后调用 <scm|right> 的 <scm|:equals> 方法,并取反结果。
-
-    <item*|>如果两个对象都不是样本类，则使用 <scm|equal?> 进行比较，并取反结果。
-  </description>
-
-  \;
-
-  <subparagraph|注意事项>
-
-  <\description>
-    <item*|><scm|!=> 是 <scm|==> 的逻辑取反，因此其行为完全依赖于 <scm|==> 的实现。
-
-    <item*|>对于样本类对象，<scm|!=> 的行为取决于样本类的 <scm|:equals> 方法的实现。
-
-    <item*|>对于非样本类对象，<scm|!=> 的行为与 <scm|equal?> 的取反结果一致。
-  </description>
-
-  \;
-
-  <subparagraph|设计意义>
-
-  <\description>
-    <item*|逻辑完整性 >提供了与 <scm|==> 对称的不等性判断函数，完善了比较操作的逻辑。
-
-    <item*|代码简洁性 >通过 <scm|!=> 可以更直观地表达不等性判断，避免使用 <scm|(not (== x y))> 的冗余写法。
-
-    <item*|一致性 >与 <scm|==> 共享相同的比较逻辑，确保行为的一致性。
-  </description>
-
-  \;
+  </goldfish-chunk>
 
   <subparagraph|测试用例>
 
   <\scm-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (check (== (list 1 2) (list 1 2)) =\<gtr\> #t)
+    (check (class=? (list 1 2) (list 1 2)) =\<gtr\> #t)
 
-    (check (!= (list 1 2) (list 1 2)) =\<gtr\> #f)
+    (check (class=? (box 10) 10) =\<gtr\> #t) \ 
 
-    (check-true (!= (person "Bob" 20) (person "Bob" 21)))
+    (check (class=? 10 (box 10)) =\<gtr\> #t) \ 
+
+    (check (class=? (box 10) (box 10)) =\<gtr\> #t) \ 
+
+    (check (class=? 10 10) =\<gtr\> #t) \ 
+
+    (check-true (class=? (person "Bob" 21) (person "Bob" 21)))
 
     \;
   </scm-chunk>
