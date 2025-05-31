@@ -7,7 +7,7 @@
 (define result
   (((range 1 1000) :map
     (lambda (y)
-      (((range 1 1000)
+      (((range 1 10000)
         :map (lambda (x) (* x x)))
        :count odd?)))
    :collect))
