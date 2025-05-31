@@ -214,13 +214,13 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%for-each proc)
 
-      (let loop ((current start))
+    \ \ (let loop ((current start))
 
-        (when (in-range? current)
+    \ \ \ \ \ \ (when (in-range? current)
 
-            \ \ (proc current)
+    \ \ \ \ \ \ \ \ \ \ \ \ (proc current)
 
-            \ \ (loop (+ current step)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ current step)))))
 
     \;
   </goldfish-chunk>
@@ -264,6 +264,8 @@
 
     \;
   </goldfish-chunk>
+
+  \;
 
   <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
     (let1 r (range 0 10 1 #f)

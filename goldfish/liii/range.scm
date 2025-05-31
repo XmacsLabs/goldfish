@@ -47,10 +47,10 @@
               (cons (map-func current) result)))))
 
 (define (%for-each proc)
-  (let loop ((current start))
-    (when (in-range? current)
-          (proc current)
-          (loop (+ current step)))))
+  (let loop ((current start))
+      (when (in-range? current)
+            (proc current)
+            (loop (+ current step)))))
 
 (define (%filter f)
   (let loop ((i start) (return '()))
