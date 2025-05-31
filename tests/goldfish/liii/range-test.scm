@@ -34,10 +34,9 @@
 (check-true ((range :inclusive 3 1) :empty?))
 (check-false ((range :inclusive 1 3 0) :empty?))
 
-(let1 r1 (range :inclusive -2 1)
-  (let1 map-func (lambda (x) (* x x))
-  (let1 r2 (r1 :map map-func)
-  (check r2 => (rich-list (list 4 1 0 1))))))
+(let* ((r1 (range :inclusive -2 1))
+       (r2 (r1 :map (lambda (x) (* x x)))))
+  (check r2 => (rich-list (list 4 1 0 1))))
 
 (let1 r (range 0 10 1 #f)
   (check (r :filter even?) => ($ (list 0 2 4 6 8)))
@@ -46,5 +45,6 @@
 
 (let1 r (range 5 1 -1 #t)
   (check (r :filter odd?) => ($ (list 5 3 1))))
+
 (check-report)
 

@@ -25,45 +25,43 @@
 (define* (@inclusive start end (step 1))
   (range start end step #t))
 
+(define (in-range? x)
+  (or (and (> step 0) (if inclusive? (> x end) (>= x end)))
+      (and (< step 0) (if inclusive? (< x end) (<= x end)))))
+
+(define (not-in-range? x)
+  (or (and (> step 0) (> x end))
+      (and (< step 0) (< x end))
+      (and (= x end) (not inclusive?))))
+
 (define (%empty?)
   (or (and (> start end) (> step 0))
       (and (< start end) (< step 0))
       (and (= start end) (not inclusive?))))
 
 (define (%map map-func)
-  (if (%empty?)
-    (rich-list :empty)
-    (let loop ((current start) (result '()))
-      (cond
-        ((or (and (> step 0) (if inclusive? (> current end) (>= current end)))
-             (and (< step 0) (if inclusive? (< current end) (<= current end))))
-          (rich-list (reverse result)))
-        (else
-          (loop (+ current step)
-            (cons (map-func current) result)))))))
+  (let loop ((current start) (result '()))
+    (if (not-in-range? current)
+        (rich-list (reverse result))
+        (loop (+ current step)
+              (cons (map-func current) result)))))
 
 (define (%for-each proc)
-  (let loop ((current start))
-    (when
-      (or (and (> step 0) (if inclusive? (<= current end) (< current end)))
-           (and (< step 0) (if inclusive? (>= current end) (> current end))))
-        (proc current)
-        (loop (+ current step)))))
+  (let loop ((current start))
+    (when (in-range? current)
+          (proc current)
+          (loop (+ current step)))))
 
 (define (%filter f)
   (if (%empty?)
       (rich-list :empty)
       (let loop ((i start) (return '()))
-        (cond
-          ((or (and (> step 0) (> i end))
-               (and (< step 0) (< i end))
-               (and (= i end) (not inclusive?)))
-           (rich-list (reverse return)))
-          (else
-           (loop (+ i step)
-                 (if (f i)
-                     (cons i return)
-                     return)))))))
+        (if (not-in-range? i)
+            (rich-list (reverse return))
+            (loop (+ i step)
+                  (if (f i)
+                      (cons i return)
+                      return))))))
 
 ) ; define-case-cass
 ) ; begin

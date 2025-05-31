@@ -157,6 +157,30 @@
     \;
   </goldfish-chunk>
 
+  <subsection|内部函数>
+
+  <\goldfish-chunk|goldfish/liii/range.scm|true|true>
+    (define (in-range? x)
+
+    \ \ (or (and (\> step 0) (if inclusive? (\> x end) (\>= x end)))
+
+    \ \ \ \ \ \ (and (\< step 0) (if inclusive? (\< x end) (\<= x end)))))
+
+    \;
+  </goldfish-chunk>
+
+  <\goldfish-chunk|goldfish/liii/range.scm|true|true>
+    (define (not-in-range? x)
+
+    \ \ (or (and (\<gtr\> step 0) (\<gtr\> x end))
+
+    \ \ \ \ \ \ (and (\<less\> step 0) (\<less\> x end))
+
+    \ \ \ \ \ \ (and (= x end) (not inclusive?))))
+
+    \;
+  </goldfish-chunk>
+
   <subsection|谓词>
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
@@ -174,43 +198,29 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%map map-func)
 
-      (if (%empty?)
+    \ \ (let loop ((current start) (result '()))
 
-          (rich-list :empty)
+    \ \ \ \ (if (not-in-range? current)
 
-          (let loop ((current start) (result '()))
+    \ \ \ \ \ \ \ \ (rich-list (reverse result))
 
-            (cond
+    \ \ \ \ \ \ \ \ (loop (+ current step)
 
-              ((or (and (\> step 0) (if inclusive? (\> current end) (\>= current end)))
-
-                    (and (\< step 0) (if inclusive? (\< current end) (\<= current end))))
-
-                (rich-list (reverse result)))
-
-              (else
-
-                (loop (+ current step)
-
-                      (cons (map-func current) result)))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons (map-func current) result)))))
 
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|goldfish/liii/range.scm|true|false>
+  <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%for-each proc)
 
       (let loop ((current start))
 
-        (cond
+        (when (in-range? current)
 
-          ((or (and (\> step 0) (if inclusive? (\<= current end) (\< current end)))
+            \ \ (proc current)
 
-                (and (\< step 0) (if inclusive? (\>= current end) (\> current end))))
-
-            (proc current)
-
-            (loop (+ current step))))))
+            \ \ (loop (+ current step)))))
 
     \;
   </goldfish-chunk>
@@ -225,14 +235,12 @@
     \;
   </goldfish-chunk>
 
-  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|false>
-    (let1 r1 (range :inclusive -2 1)
+  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|true>
+    (let* ((r1 (range :inclusive -2 1))
 
-      (let1 map-func (lambda (x) (* x x))
+    \ \ \ \ \ \ \ (r2 (r1 :map (lambda (x) (* x x)))))
 
-      (let1 r2 (r1 :map map-func)
-
-      (check r2 =\<gtr\> (rich-list (list 4 1 0 1))))))
+    \ \ (check r2 =\<gtr\> (rich-list (list 4 1 0 1))))
 
     \;
   </goldfish-chunk>
@@ -246,25 +254,17 @@
 
     \ \ \ \ \ \ (let loop ((i start) (return '()))
 
-    \ \ \ \ \ \ \ \ (cond
+    \ \ \ \ \ \ \ \ (if (not-in-range? i)
 
-    \ \ \ \ \ \ \ \ \ \ ((or (and (\<gtr\> step 0) (\<gtr\> i end))
+    \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse return))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (\<less\> step 0) (\<less\> i end))
+    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i step)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (and (= i end) (not inclusive?)))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
 
-    \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse return)))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
 
-    \ \ \ \ \ \ \ \ \ \ (else
-
-    \ \ \ \ \ \ \ \ \ \ \ (loop (+ i step)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return)))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return))))))
 
     \;
   </goldfish-chunk>
@@ -283,6 +283,8 @@
     (let1 r (range 5 1 -1 #t)
 
     \ \ (check (r :filter odd?) =\<gtr\> ($ (list 5 3 1))))
+
+    \;
   </goldfish-chunk>
 
   <subsection|结尾>
