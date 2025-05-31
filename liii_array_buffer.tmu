@@ -112,6 +112,8 @@
 
     (check-set-mode! 'report-failed)
 
+    (define == class=?)
+
     \;
   </goldfish-chunk>
 

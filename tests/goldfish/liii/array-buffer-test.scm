@@ -20,6 +20,7 @@
         (liii lang))
 
 (check-set-mode! 'report-failed)
+(define == class=?)
 
 (check (array-buffer :from-vector #(1 2 3) :collect) => #(1 2 3))
 

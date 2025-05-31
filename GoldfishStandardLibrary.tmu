@@ -834,6 +834,8 @@
 
     (check-set-mode! 'report-failed)
 
+    (define == class=?)
+
     \;
   </scm-chunk>
 
