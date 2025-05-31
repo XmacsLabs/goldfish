@@ -248,23 +248,19 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%filter f)
 
-    \ \ (if (%empty?)
+    \ \ (let loop ((i start) (return '()))
 
-    \ \ \ \ \ \ <code*|(rich-list :empty)>
+    \ \ \ \ (if (not-in-range? i)
 
-    \ \ \ \ \ \ (let loop ((i start) (return '()))
+    \ \ \ \ \ \ \ \ (rich-list (reverse return))
 
-    \ \ \ \ \ \ \ \ (if (not-in-range? i)
+    \ \ \ \ \ \ \ \ (loop (+ i step)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse return))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ i step)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (f i)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons i return)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return))))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ return)))))
 
     \;
   </goldfish-chunk>

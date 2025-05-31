@@ -53,15 +53,13 @@
           (loop (+ current step)))))
 
 (define (%filter f)
-  (if (%empty?)
-      (rich-list :empty)
-      (let loop ((i start) (return '()))
-        (if (not-in-range? i)
-            (rich-list (reverse return))
-            (loop (+ i step)
-                  (if (f i)
-                      (cons i return)
-                      return))))))
+  (let loop ((i start) (return '()))
+    (if (not-in-range? i)
+        (rich-list (reverse return))
+        (loop (+ i step)
+              (if (f i)
+                  (cons i return)
+                  return)))))
 
 ) ; define-case-cass
 ) ; begin
