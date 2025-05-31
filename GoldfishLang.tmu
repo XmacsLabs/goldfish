@@ -5840,7 +5840,7 @@
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%equals that)
 
-    \ \ (== value (that 'value)))
+    \ \ (class=? value (that 'value)))
 
     \;
   </goldfish-chunk>
@@ -6320,7 +6320,7 @@
 
     \ \ (and (%right?)
 
-    \ \ \ \ \ \ \ (== x value)))
+    \ \ \ \ \ \ \ (class=? x value)))
 
     \;
   </goldfish-chunk>
@@ -8638,7 +8638,7 @@
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%index-of x)
 
-    \ \ (or (vector-index (lambda (y) (== x y)) data)
+    \ \ (or (vector-index (lambda (y) (class=? x y)) data)
 
     \ \ \ \ \ \ -1))
 
@@ -8662,7 +8662,7 @@
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
     (define (%last-index-of x)
 
-    \ \ (or (vector-index-right (lambda (y) (== x y)) data)
+    \ \ (or (vector-index-right (lambda (y) (class=? x y)) data)
 
     \ \ \ \ \ \ -1))
 

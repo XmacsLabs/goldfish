@@ -647,7 +647,7 @@
         (option value))))
 
 (define (%equals that)
-  (== value (that 'value)))
+  (class=? value (that 'value)))
 
 (define (%defined?) (not (null? value)))
   
@@ -745,7 +745,7 @@
 
 (define (%contains x)
   (and (%right?)
-       (== x value)))
+       (class=? x value)))
 
 (define (%for-each f)
   (when (%right?)
@@ -1272,11 +1272,11 @@
   (vector-ref data i))
 
 (define (%index-of x)
-  (or (vector-index (lambda (y) (== x y)) data)
+  (or (vector-index (lambda (y) (class=? x y)) data)
       -1))
 
 (define (%last-index-of x)
-  (or (vector-index-right (lambda (y) (== x y)) data)
+  (or (vector-index-right (lambda (y) (class=? x y)) data)
       -1))
 
 (define (%find p)
