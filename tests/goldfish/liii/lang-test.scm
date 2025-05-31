@@ -741,9 +741,9 @@
 (check ($ "ABCabc" :filter (@ _ :upper?) :reverse) => "CBA")
 (check ($ "你好世界" :drop-while (@ _ :equals ($ "你" 0)) :reverse) => "界世好")
 
-(check ($ "" :count (@ == _ #\A)) => 0)
-(check ($ "hello" :count (@ == _ #\l)) => 2)
-(check ($ "你好，我是韩梅梅" :count (@ == _ (rich-char :from-string "#\\梅"))) => 2)
+(check ($ "" :count (@ class=? _ #\A)) => 0)
+(check ($ "hello" :count (@ class=? _ #\l)) => 2)
+(check ($ "你好，我是韩梅梅" :count (@ class=? _ (rich-char :from-string "#\\梅"))) => 2)
 
 (check ($ "Hello" :index-where (@ _ :equals (rich-char #\e))) => 1)
 (check ($ "" :index-where (@ _ :digit?)) => -1)

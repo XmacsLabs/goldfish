@@ -2203,34 +2203,6 @@
 
   <scm|%equals> 是 <scm|rich-integer> 样本类中的一个谓词方法，用于判断两个 <scm|rich-integer> 实例是否相等。谓词方法是指返回布尔值（<scm|#t> 或 <scm|#f>）的函数或方法，通常用于条件判断或逻辑操作。<scm|%equals> 方法由 <scm|define-case-class> 宏自动生成，确保了样本类实例之间的相等性比较能够正确进行。
 
-  \;
-
-  <subparagraph|方法定义>
-
-  <scm|%equals> 方法的定义如下：
-
-  <\goldfish-code>
-    (define (%equals that)
-
-    \ \ (== value (that 'value)))
-  </goldfish-code>
-
-  <\description>
-    <item*|关键点解析 >
-
-    <\itemize-minus>
-      <item><scm|that>: 这是 <scm|%equals> 方法的参数，表示要与当前 <scm|rich-integer> 实例进行比较的另一个 <scm|rich-integer> 实例。
-
-      <item><scm|==>: 这是 Goldfish Scheme 中的相等性比较函数，用于比较两个值是否相等。<scm|==> 函数支持样本类、普通 Scheme 值以及装箱（boxed）值之间的比较。
-
-      <item><scm|value>: 这是当前 <scm|rich-integer> 实例中封装的整数值。
-
-      <item><scm|(that 'value)>: 这是通过样本类的字段访问机制，获取 <scm|that> 实例中封装的整数值。
-    </itemize-minus>
-  </description>
-
-  \;
-
   <subparagraph|功能>
 
   <\description>
@@ -5028,11 +5000,11 @@
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (check ($ "" :count (@ == _ #\\A)) =\<gtr\> 0)
+    (check ($ "" :count (@ class=? _ #\\A)) =\<gtr\> 0)
 
-    (check ($ "hello" :count (@ == _ #\\l)) =\<gtr\> 2)
+    (check ($ "hello" :count (@ class=? _ #\\l)) =\<gtr\> 2)
 
-    (check ($ "你好，我是韩梅梅" :count (@ == _ (rich-char :from-string "#\\\\梅"))) =\<gtr\> 2)
+    (check ($ "你好，我是韩梅梅" :count (@ class=? _ (rich-char :from-string "#\\\\梅"))) =\<gtr\> 2)
 
     \;
   </goldfish-chunk>
@@ -7046,7 +7018,7 @@
 
     \ \ \ \ \ \ \ \ \ \ (cond ((null? left) #t)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((!= (car left) (car right)) #f)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((not (class=? (car left) (car right))) #f)
 
     \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (else (loop (cdr left) (cdr right))))))))
 
@@ -8930,7 +8902,7 @@
 
     \ \ (and (that :is-instance-of 'rich-vector)
 
-    \ \ \ \ \ \ \ (vector= == data (that 'data))))
+    \ \ \ \ \ \ \ (vector= class=? data (that 'data))))
 
     \;
   </goldfish-chunk>

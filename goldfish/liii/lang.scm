@@ -898,7 +898,7 @@
         #f
         (let loop ((left l1) (right l2))
           (cond ((null? left) #t)
-                ((!= (car left) (car right)) #f)
+                ((not (class=? (car left) (car right))) #f)
                 (else (loop (cdr left) (cdr right))))))))
 
 (define (%forall pred)
@@ -1329,7 +1329,7 @@
 
 (define (%equals that)
   (and (that :is-instance-of 'rich-vector)
-       (vector= == data (that 'data))))
+       (vector= class=? data (that 'data))))
 
 (define (%forall p)
   (vector-every p data))
