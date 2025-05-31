@@ -176,6 +176,8 @@
 
     \;
 
+    (define == class=?)
+
     (check-set-mode! 'report-failed)
 
     \;

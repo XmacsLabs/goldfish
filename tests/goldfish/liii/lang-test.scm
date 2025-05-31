@@ -21,6 +21,7 @@
         (liii case)
         (liii error))
 
+(define == class=?)
 (check-set-mode! 'report-failed)
 
 (check ((@ + _ 2) 1) => 3)
