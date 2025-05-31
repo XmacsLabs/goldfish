@@ -1,4 +1,5 @@
-(import (scheme time))
+(import (scheme time)
+        (liii range))
 
 (define (prime1? n)
   (define (iter i)
@@ -27,8 +28,8 @@
     (display* msg (number->string (- end start)) "\n")))
 
 (let1 n 1073729
-  (timing "R7RS: " (lambda () (($ 1 :to 100) :for-each (lambda (x) (prime1? n)))))
-  (timing "Goldfish: " (lambda () (($ 1 :to 100) :for-each (lambda (x) (prime2? n)))))
+  (timing "R7RS: " (lambda () ((range 1 100 1) :for-each (lambda (x) (prime1? n)))))
+  (timing "Goldfish: " (lambda () ((range 1 100 1) :for-each (lambda (x) (prime2? n)))))
   (display* (prime1? n) "\n")
 )
 

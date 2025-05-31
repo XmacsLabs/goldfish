@@ -114,7 +114,7 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define-case-class range
 
-    \ \ ((start integer?) (end integer?) (step integer?) (inclusive? boolean?))
+    \ \ ((start integer?) (end integer?) (step integer? 1) (inclusive? boolean? #f))
 
     \;
   </goldfish-chunk>
@@ -162,9 +162,9 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (in-range? x)
 
-    \ \ (or (and (\> step 0) (if inclusive? (\> x end) (\>= x end)))
+    \ \ (or (and (\<gtr\> step 0) (if inclusive? (\<less\>= x end) (\<less\> x end)))
 
-    \ \ \ \ \ \ (and (\< step 0) (if inclusive? (\< x end) (\<= x end)))))
+    \ \ \ \ \ \ (and (\<less\> step 0) (if inclusive? (\<gtr\>= x end) (\<gtr\> x end)))))
 
     \;
   </goldfish-chunk>
@@ -198,15 +198,19 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%map map-func)
 
-    \ \ (let loop ((current start) (result '()))
+    \ \ (if (%empty?)
 
-    \ \ \ \ (if (not-in-range? current)
+    \ \ \ \ \ \ (rich-list :empty)
 
-    \ \ \ \ \ \ \ \ (rich-list (reverse result))
+    \ \ \ \ \ \ (let loop ((current start) (result '()))
 
-    \ \ \ \ \ \ \ \ (loop (+ current step)
+    \ \ \ \ \ \ \ \ (if (not-in-range? current)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons (map-func current) result)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse result))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ current step)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons (map-func current) result))))))
 
     \;
   </goldfish-chunk>
@@ -214,13 +218,15 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
     (define (%for-each proc)
 
-    \ \ (let loop ((current start))
+    \ \ (when (not (%empty?))
 
-    \ \ \ \ \ \ (when (in-range? current)
+    \ \ \ \ (let loop ((current start))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (proc current)
+    \ \ \ \ \ \ \ \ \ (when (in-range? current)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ current step)))))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (proc current)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ current step))))))
 
     \;
   </goldfish-chunk>

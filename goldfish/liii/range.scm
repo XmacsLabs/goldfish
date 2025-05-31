@@ -20,14 +20,14 @@
 (begin
 
 (define-case-class range
-  ((start integer?) (end integer?) (step integer?) (inclusive? boolean?))
+  ((start integer?) (end integer?) (step integer? 1) (inclusive? boolean? #f))
 
 (define* (@inclusive start end (step 1))
   (range start end step #t))
 
 (define (in-range? x)
-  (or (and (> step 0) (if inclusive? (> x end) (>= x end)))
-      (and (< step 0) (if inclusive? (< x end) (<= x end)))))
+  (or (and (> step 0) (if inclusive? (<= x end) (< x end)))
+      (and (< step 0) (if inclusive? (>= x end) (> x end)))))
 
 (define (not-in-range? x)
   (or (and (> step 0) (> x end))
@@ -40,17 +40,20 @@
       (and (= start end) (not inclusive?))))
 
 (define (%map map-func)
-  (let loop ((current start) (result '()))
-    (if (not-in-range? current)
-        (rich-list (reverse result))
-        (loop (+ current step)
-              (cons (map-func current) result)))))
+  (if (%empty?)
+      (rich-list :empty)
+      (let loop ((current start) (result '()))
+        (if (not-in-range? current)
+            (rich-list (reverse result))
+            (loop (+ current step)
+                  (cons (map-func current) result))))))
 
 (define (%for-each proc)
-  (let loop ((current start))
-      (when (in-range? current)
-            (proc current)
-            (loop (+ current step)))))
+  (when (not (%empty?))
+    (let loop ((current start))
+         (when (in-range? current)
+               (proc current)
+               (loop (+ current step))))))
 
 (define (%filter f)
   (let loop ((i start) (return '()))
