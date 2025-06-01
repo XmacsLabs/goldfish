@@ -1,4 +1,4 @@
-<TMU|<tuple|1.1.0|2025.0.9>>
+<TMU|<tuple|1.1.0|2025.0.8>>
 
 <style|<tuple|generic|chinese|goldfish|literate|reduced-margins>>
 
@@ -303,9 +303,83 @@
     \ \ (check (r :filter odd?) =\<gtr\> ($ (list 5 3 1))))
 
     \;
+
+    (let1 r (range 5 1 1 #t)
+
+    \ \ (check (r :filter odd?) =\<gtr\> ($ (list ))))
+
+    \;
+
+    (let1 r (range 1 5 0 #t)
+
+    \ \ (check (r :filter odd?) =\<gtr\> ($ (list ))))
+
+    \;
+
+    (let1 r (range -5 -1 1 #t)
+
+    \ \ (check (r :filter odd?) =\<gtr\> ($ (list -5 -3 -1))))
+
+    \;
+
+    (let1 r (range 5 5 -1 #t)
+
+    \ \ (check (r :filter odd?) =\<gtr\> ($ (list 5)))
+
+    \ \ (check (r :filter even?) =\<gtr\> ($ (list ))))
+
+    \;
   </goldfish-chunk>
 
+  \;
+
+  <\goldfish-chunk|goldfish/liii/range.scm|true|false>
+    (define (%contains elem)
+
+    \ \ (if (%empty?)
+
+    \ \ \ \ \ \ #f
+
+    \ \ \ \ \ \ (if (\<gtr\> (* (- elem start) (- elem end)) 0) ;判断是否在范围内
+
+    \ \ \ \ \ \ \ \ \ \ \ (if (equal? step 0)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (equal? elem start)
+
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (= (modulo (- elem start) (abs step)) 0))
+
+    \ \ \ \ \ \ \ \ \ \ \ \ #f)))
+  </goldfish-chunk>
+
+  \;
+
+  <\goldfish-chunk|tests/goldfish/liii/range-test.scm|true|false>
+    (check-false ((range :inclusive 1 3) :contains 4))
+
+    (check-true ((range :inclusive 1 3) :contains 2))
+
+    (check-true ((range :inclusive 3 3) :contains 3))
+
+    (check-false ((range 3 3 1 #f) :contains 3))
+
+    (check-true ((range :inclusive 10 1 -3) :contains 4))
+
+    (check-false ((range :inclusive 10 1 -3) :contains 14))
+
+    (check-false ((range :inclusive 10 1 -3) :contains 3))
+
+    (check-false ((range :inclusive 10 1 0) :contains 4))
+
+    (check-false ((range :inclusive 10 1 -2) :contains 5))
+
+    (check-true \ ((range :inclusive 10 1 -2) :contains 6))
+  </goldfish-chunk>
+
+  \;
+
   <subsection|结尾>
+
+  \;
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|false>
     ) ; define-case-cass

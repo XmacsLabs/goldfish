@@ -46,5 +46,27 @@
 (let1 r (range 5 1 -1 #t)
   (check (r :filter odd?) => ($ (list 5 3 1))))
 
+(let1 r (range 5 1 1 #t)
+  (check (r :filter odd?) => ($ (list ))))
+
+(let1 r (range -5 -1 1 #t)
+  (check (r :filter odd?) => ($ (list -5 -3 -1))))
+
+(let1 r (range 5 5 -1 #t)
+  (check (r :filter odd?) => ($ (list 5)))
+  (check (r :filter even?) => ($ (list ))))
+
+(check-false ((range :inclusive 1 3) :contains 4))
+(check-true ((range :inclusive 1 3) :contains 2))
+(check-true ((range :inclusive 3 3) :contains 3))
+(check-false ((range 3 3 1 #f) :contains 3))
+(check-true ((range :inclusive 10 1 -3) :contains 4))
+(check-false ((range :inclusive 10 1 -3) :contains 14))
+(check-false ((range :inclusive 10 1 -3) :contains 3))
+(check-false ((range :inclusive 10 1 0) :contains 4))
+(check-false ((range :inclusive 10 1 -2) :contains 5))
+(check-true  ((range :inclusive 10 1 -2) :contains 6))
+
+
 (check-report)
 
