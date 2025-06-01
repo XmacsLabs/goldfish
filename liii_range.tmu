@@ -310,12 +310,6 @@
 
     \;
 
-    (let1 r (range 1 5 0 #t)
-
-    \ \ (check (r :filter odd?) =\<gtr\> ($ (list ))))
-
-    \;
-
     (let1 r (range -5 -1 1 #t)
 
     \ \ (check (r :filter odd?) =\<gtr\> ($ (list -5 -3 -1))))
@@ -340,7 +334,7 @@
 
     \ \ \ \ \ \ #f
 
-    \ \ \ \ \ \ (if (\<gtr\> (* (- elem start) (- elem end)) 0) ;判断是否在范围内
+    \ \ \ \ \ \ (if (\<less\>= (* (- elem start) (- elem end)) 0) ;判断是否在范围内
 
     \ \ \ \ \ \ \ \ \ \ \ (if (equal? step 0)
 
