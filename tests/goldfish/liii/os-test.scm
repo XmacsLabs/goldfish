@@ -21,7 +21,8 @@
         (liii uuid)
         (scheme time)
         (liii base)
-        (liii oop))
+        (liii oop)
+        (liii lang))
 
 (check-set-mode! 'report-failed)
 

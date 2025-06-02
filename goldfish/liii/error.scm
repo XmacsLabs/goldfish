@@ -40,7 +40,7 @@
   (apply error (cons 'type-error args)))
 
 (define (type-error? err)
-  (member err `(type-error wrong-type-arg)))
+  (not (null? (member err `(type-error wrong-type-arg)))))
 
 (define (key-error . args)
   (apply error (cons 'key-error args)))

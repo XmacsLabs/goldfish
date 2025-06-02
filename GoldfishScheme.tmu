@@ -5320,7 +5320,7 @@
   <\scm-chunk|goldfish/liii/error.scm|true|true>
     (define (type-error? err)
 
-    \ \ (member err `(type-error wrong-type-arg)))
+    \ \ (not (null? (member err `(type-error wrong-type-arg)))))
 
     \;
   </scm-chunk>
