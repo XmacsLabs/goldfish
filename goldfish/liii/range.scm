@@ -25,6 +25,10 @@
 (define* (@inclusive start end (step 1))
   (range start end step #t))
 
+(define (check-step)
+  (when (zero? step)
+      (value-error "zero can't be zero")))
+
 (define (in-range? x)
   (or (and (> step 0) (if inclusive? (<= x end) (< x end)))
       (and (< step 0) (if inclusive? (>= x end) (> x end)))))
@@ -35,6 +39,7 @@
       (and (= x end) (not inclusive?))))
 
 (define (%empty?)
+  (check-step)
   (or (and (> start end) (> step 0))
       (and (< start end) (< step 0))
       (and (= start end) (not inclusive?))))
@@ -67,12 +72,11 @@
                        return))))))
 
 (define (%contains elem)
+  (check-step)
   (if (%empty?)
       #f
       (if (in-range? elem) ;判断是否在范围内
-          (if (zero? step)
-              (= elem start)
-              (zero? (modulo (- elem start) (abs step))))
+          (zero? (modulo (- elem start) (abs step)))
           #f)))
 
            
