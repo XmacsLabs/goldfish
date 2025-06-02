@@ -432,7 +432,7 @@
 
     \ \ ; Extra routines
 
-    \ \ loose-car loose-cdr in? compose identity any?
+    \ \ loose-car loose-cdr compose identity any?
 
     \ \ ; Extra structure
 
@@ -4923,64 +4923,6 @@
     \ \ \ \ \ \ '()
 
     \ \ \ \ \ \ (cdr pair-or-empty)))
-
-    \;
-  </scm-chunk>
-
-  <paragraph|in?><index|in?><scm|(x sequence) =\<gtr\> bool>
-
-  判断一个元素是否在对象中：
-
-  <\enumerate>
-    <item>一个元素是否在列表中
-
-    <item>一个元素是否在向量中
-
-    <item>一个字符是否在字符串中
-  </enumerate>
-
-  其中的相等性判断使用的是<scm|==>，也就是R7RS定义的<scm|equal?>。
-
-  <\scm-chunk|tests/goldfish/liii/base-test.scm|true|true>
-    (check (in? 1 (list )) =\<gtr\> #f)
-
-    (check (in? 1 (list 3 2 1)) =\<gtr\> #t)
-
-    (check (in? #\\x "texmacs") =\<gtr\> #t)
-
-    (check (in? 1 (vector )) =\<gtr\> #f)
-
-    (check (in? 1 (vector 3 2 1)) =\<gtr\> #t)
-
-    (check-catch 'type-error (in? 1 "123"))
-
-    \;
-  </scm-chunk>
-
-  <\scm-chunk|goldfish/liii/base.scm|true|true>
-    (define (in? elem l)
-
-    \ \ (cond ((list? l) (not (not (member elem l))))
-
-    \ \ \ \ \ \ \ \ ((vector? l)
-
-    \ \ \ \ \ \ \ \ \ (let loop ((i (- (vector-length l) 1)))
-
-    \ \ \ \ \ \ \ \ \ \ \ (if (\<less\> i 0)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ #f
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (if (equal? elem (vector-ref l i))
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ #t
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (loop (- i 1))))))
-
-    \ \ \ \ \ \ \ \ ((and (char? elem) (string? l))
-
-    \ \ \ \ \ \ \ \ \ (in? elem (string-\<gtr\>list l)))
-
-    \ \ \ \ \ \ \ \ (else (error 'type-error "type mismatch"))))
 
     \;
   </scm-chunk>

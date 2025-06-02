@@ -1144,15 +1144,8 @@
 
 (check (eof-object) => #<eof>)
 
-(check (in? 1 (list )) => #f)
-(check (in? 1 (list 3 2 1)) => #t)
-(check (in? #\x "texmacs") => #t)
-(check (in? 1 (vector )) => #f)
-(check (in? 1 (vector 3 2 1)) => #t)
-(check-catch 'type-error (in? 1 "123"))
-
 (check-true ((compose not zero?) 1))
-(check-false ((compose not zero?) 0))
+(check-false ((compose not zero?) 0)) 
 
 (check (let1 x 1 x) => 1)
 (check (let1 x 1 (+ x 1)) => 2)
