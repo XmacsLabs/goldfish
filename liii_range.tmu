@@ -336,11 +336,11 @@
 
     \ \ \ \ \ \ (if (\<less\>= (* (- elem start) (- elem end)) 0) ;判断是否在范围内
 
-    \ \ \ \ \ \ \ \ \ \ (if (= step 0)
+    \ \ \ \ \ \ \ \ \ \ (if (zero? step)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (equal? elem start)
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (= elem start)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (= (modulo (- elem start) (abs step)) 0))
+    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (zero? (modulo (- elem start) (abs step))))
 
     \ \ \ \ \ \ \ \ \ \ #f)))
   </goldfish-chunk>
