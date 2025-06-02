@@ -5320,7 +5320,7 @@
   <\scm-chunk|goldfish/liii/error.scm|true|true>
     (define (type-error? err)
 
-    \ \ (in? err `(type-error wrong-type-arg)))
+    \ \ (member err `(type-error wrong-type-arg)))
 
     \;
   </scm-chunk>
@@ -17590,17 +17590,17 @@
 
     \ \ \ \ \ \ \ (vs (hash-table-map-\<gtr\>list (lambda (k v) v) ht)))
 
-    \ \ (check-true (in? 'a ks))
+    \ \ (check-true (not (null? (member 'a ks))))
 
-    \ \ (check-true (in? 'b ks))
+    \ \ (check-true (not (null? (member 'b ks))))
 
-    \ \ (check-true (in? 'c ks))
+    \ \ (check-true (not (null? (member 'c ks))))
 
-    \ \ (check-true (in? 1 vs))
+    \ \ (check-true (not (null? (member 1 vs))))
 
-    \ \ (check-true (in? 2 vs))
+    \ \ (check-true (not (null? (member 2 vs))))
 
-    \ \ (check-true (in? 3 vs)))
+    \ \ (check-true (not (null? (member 3 vs)))))
 
     \;
   </scm-chunk>
