@@ -1145,7 +1145,7 @@
 (check (eof-object) => #<eof>)
 
 (check-true ((compose not zero?) 1))
-(check-false ((compose not zero?) 0)) 
+(check-false ((compose not zero?) 0))
 
 (check (let1 x 1 x) => 1)
 (check (let1 x 1 (+ x 1)) => 2)
