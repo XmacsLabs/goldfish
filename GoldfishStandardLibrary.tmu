@@ -6832,7 +6832,7 @@
 
     \ \ \ \ (type-error "type of the argument must be symbol"))
 
-    \ \ (in? type '(string number)))
+    \ \ (member type '(string number)))
 
     \;
   </scm-chunk>
