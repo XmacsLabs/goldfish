@@ -70,10 +70,10 @@
   (if (%empty?)
       #f
       (if (<= (* (- elem start) (- elem end)) 0) ;判断是否在范围内
-           (if (equal? step 0)
-               (equal? elem start)
-               (= (modulo (- elem start) (abs step)) 0))
-            #f)))
+          (if (= step 0)
+              (equal? elem start)
+              (= (modulo (- elem start) (abs step)) 0))
+          #f)))
 
            
            
