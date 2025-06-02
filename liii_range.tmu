@@ -202,7 +202,7 @@
 
     (check-true ((range :inclusive 3 1) :empty?))
 
-    (check-false ((range :inclusive 1 3 0) :empty?))
+    (check-catch 'value-error ((range :inclusive 1 3 0) :empty?))
 
     \;
   </goldfish-chunk>
@@ -330,17 +330,15 @@
   <\goldfish-chunk|goldfish/liii/range.scm|true|false>
     (define (%contains elem)
 
+    \ \ (check-step)
+
     \ \ (if (%empty?)
 
     \ \ \ \ \ \ #f
 
     \ \ \ \ \ \ (if (in-range? elem) ;判断是否在范围内
 
-    \ \ \ \ \ \ \ \ \ \ (if (zero? step)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (= elem start)
-
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ (zero? (modulo (- elem start) (abs step))))
+    \ \ \ \ \ \ \ \ \ \ (zero? (modulo (- elem start) (abs step)))
 
     \ \ \ \ \ \ \ \ \ \ #f)))
   </goldfish-chunk>
@@ -360,7 +358,7 @@
 
     (check-false ((range :inclusive 10 1 -3) :contains 3))
 
-    (check-false ((range :inclusive 10 1 0) :contains 4))
+    (check-catch 'value-error ((range :inclusive 10 1 0) :contains 4))
 
     (check-false ((range :inclusive 10 1 -2) :contains 5))
 

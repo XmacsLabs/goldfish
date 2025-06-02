@@ -29,7 +29,7 @@
 
 (define (check-step)
   (when (zero? step)
-      (value-error "zero can't be zero")))
+      (value-error "step can't be zero")))
 
 (define (in-range? x)
   (or (and (> step 0) (if inclusive? (and (<= x end) (>= x start)) (and (< x end) (>= x start))))
