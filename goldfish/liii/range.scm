@@ -15,7 +15,9 @@
 ;
 
 (define-library (liii range)
-(import (liii oop) (only (liii lang) rich-list))
+(import (liii oop) 
+        (only (liii lang) rich-list) 
+        (liii error)) 
 (export range)
 (begin
 
@@ -30,12 +32,12 @@
       (value-error "zero can't be zero")))
 
 (define (in-range? x)
-  (or (and (> step 0) (if inclusive? (<= x end) (< x end)))
-      (and (< step 0) (if inclusive? (>= x end) (> x end)))))
+  (or (and (> step 0) (if inclusive? (and (<= x end) (>= x start)) (and (< x end) (>= x start))))
+      (and (< step 0) (if inclusive? (and (>= x end) (<= x start)) (and (> x end) (<= x start))))))
 
 (define (not-in-range? x)
-  (or (and (> step 0) (> x end))
-      (and (< step 0) (< x end))
+  (or (and (> step 0) (or (> x end) (< x start)))
+      (and (< step 0) (or (< x end) (> x start)))
       (and (= x end) (not inclusive?))))
 
 (define (%empty?)
