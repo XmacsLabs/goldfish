@@ -74,6 +74,12 @@
 (define (rich-integer-s7 data)
   (define %this (inlet 'data data))
 
+  (define (%set-number! new-num . rest-agrs) 
+    (let-set! %this 'data new-num)
+    (if (null? rest-agrs)
+        %this
+        (apply %this rest-agrs)))
+  
   (define (%get) (%this 'data))
 
   (define (%to-string) (number->string (%this 'data)))
@@ -89,6 +95,7 @@
 
   (varlet %this 
     'get %get
+    'set-number! %set-number!
     'to-string %to-string 
     'to-rich-char %to-rich-char
     'sqrt %sqrt)
@@ -111,8 +118,11 @@
 (timing "rich-integer-s7%sqrt:\t\t" (lambda () (repeat 100000 (lambda () ((rich-integer-s7 65536) :sqrt)))))
 
 
-(display "\nBench of integer\n")
+(display "\nBench of origin-rich-integer\n")
 (timing "rich-integer%sqrt:\t\t" (lambda () (repeat 100000 (lambda () ((rich-integer 65536) :sqrt)))))
+
+(display "\nBench of new-rich-integer\n")
+(timing "rich-integer-s7%set!+sqrt:\t" (lambda () (repeat 100000 (lambda () ((rich-integer-s7 65536) :set-number! 65536 :sqrt)))))
 
 (display* ((rint 65535) :sqrt))
 ; slow because of rich-string
