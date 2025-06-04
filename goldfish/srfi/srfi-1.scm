@@ -157,11 +157,23 @@
 (define (fold f initial . lists)
   (unless (procedure? f)
     (error 'type-error "expected procedure, got ~S" f))
-  (if (or (null? lists) (any null? lists))
-      initial
-      (apply fold f
-            (apply f (append (map car lists) (list initial)))
-            (map cdr lists))))
+  
+  (cond
+    ((null? lists) initial)
+    
+    ((and (= (length lists) 1) (list? (car lists)))
+     (let loop ((acc initial) (lst (car lists)))
+       (if (null? lst)
+           acc
+           (loop (f (car lst) acc) (cdr lst)))))
+    
+    (else
+     (let loop ((acc initial) (lsts lists))
+       (if (any null? lsts)
+           acc
+           (let* ((cars (map car lsts))
+                  (cdrs (map cdr lsts)))
+             (loop (apply f (append cars (list acc))) cdrs)))))))
 
 (define (fold-right f initial . lists)
   (unless (procedure? f)
