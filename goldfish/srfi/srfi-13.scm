@@ -230,12 +230,7 @@
   (let* ((suffix-len (string-length suffix))
          (str-len (string-length str)))
     (and (<= suffix-len str-len)
-         (let loop ((i 0)
-                    (j (- str-len suffix-len)))
-           (or (= i suffix-len)
-               (and (char=? (string-ref suffix i)
-                            (string-ref str j))
-                    (loop (+ i 1) (+ j 1))))))))
+         (string=? suffix (substring str (- str-len suffix-len) str-len)))))
 
 (define (string-index str char/pred? . start+end)
   (define (string-index-sub str pred?)
