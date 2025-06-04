@@ -14,7 +14,8 @@
 ; under the License.
 ;
 
-(import (liii integer)
+(import (liii lang)
+        (liii integer)
         (liii check))
 
 ;; Test basic get functionality
