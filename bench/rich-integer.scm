@@ -71,35 +71,68 @@
             (inexact->exact (floor (sqrt data)))))
   (varlet (funclet rint) '%sqrt %sqrt))
 
-(define (rich-integer-s7 data)
-  (define %this (inlet 'data data))
 
-  (define (%set-number! new-num . rest-agrs) 
-    (let-set! %this 'data new-num)
-    (if (null? rest-agrs)
-        %this
-        (apply %this rest-agrs)))
-  
-  (define (%get) (%this 'data))
+(define (rich-integer-s7 . init-instance)
+  (define static-dispatcher (inlet 'init-instance init-instance))
+  (define (@max-value) 9223372036854775807)
+  (define (@min-value) -9223372036854775808)
 
-  (define (%to-string) (number->string (%this 'data)))
+  (define (rich-integer-instance data)
 
-  (define (%to-rich-char)
-    (rich-char data))
+    (define %this (inlet 'data data))
 
-  (define (%sqrt)
-    (if (< data 0)
-        (value-error
-          (format #f "sqrt of negative integer is undefined!         ** Got ~a **" data))
-        (inexact->exact (floor (sqrt data)))))
+    (define (%is-instance-of x) (eq? x 'rich-integer))
 
-  (varlet %this 
-    'get %get
-    'set-number! %set-number!
-    'to-string %to-string 
-    'to-rich-char %to-rich-char
-    'sqrt %sqrt)
-  %this)
+    (define (%apply msg . args)
+      (if (defined? msg %this)
+          (apply (%this msg) args)))
+
+    (define (%equals that)
+      (= (%this 'data) (that 'data)))
+
+    (define (%set-number! new-num . rest-agrs) 
+      (let-set! %this 'data new-num)
+      (if (null? rest-agrs)
+          %this
+          (apply %this rest-agrs)))
+
+    (define (%get-number) (%this 'data))
+
+    (define (%to-string) (number->string (%this 'data)))
+
+    (define (%to-rich-string) (rich-string (number->string (%this 'data))))
+
+    (define (%to n) 
+      (if (< n (%this 'data)) 
+        (list) 
+        (iota (+ (- n (%this 'data)) 1) (%this 'data))))
+
+    (define (%sqrt) 
+      (if (< data 0) 
+        (error 'value (format #f "sqrt of negative integer is undefined!         ** Got ~a **" data)) 
+        (inexact->exact (floor (sqrt data))))) 
+
+    (varlet %this 
+      'equals %equals 
+      'set-number! %set-number! 
+      'get-number %get-number 
+      'to-string %to-string 
+      'apply %apply
+      'to-rich-string %to-rich-string
+      'is-instance-of %is-instance-of
+      'to %to)
+
+    %this)
+
+    (varlet static-dispatcher
+      'max-value @max-value
+      'min-value @min-value)
+
+    (if (and (symbol? (car init-instance)) 
+             (defined? (car init-instance) static-dispatcher #t))
+        (apply static-dispatcher init-instance)
+        (apply rich-integer-instance init-instance))
+)
 
 (display* "Bench of number->string:\n")
 (timing "prim%to-string:\t\t\t" (lambda () (repeat 100000 (lambda () (number->string 65536)))))
