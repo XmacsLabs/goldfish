@@ -46,14 +46,20 @@
       (and (< start end) (< step 0))
       (and (= start end) (not inclusive?))))
 
-(define (%map map-func)
+(define (chain x . fs)
+  (if (null? fs) 
+    x 
+    (apply chain 
+      (cons ((car fs) x) (cdr fs)))))
+
+(define (%map map-func . f)
   (if (%empty?)
       (rich-list :empty)
       (let loop ((current start) (result '()))
         (if (not-in-range? current)
-            (rich-list (reverse result))
-            (loop (+ current step)
-                  (cons (map-func current) result))))))
+          (rich-list (reverse result))
+          (loop (+ current step)
+                (cons (chain-apply (cons current (cons map-func f)) chain) result))))))
 
 (define (%for-each proc)
   (when (not (%empty?))

@@ -181,6 +181,20 @@
     \;
   </goldfish-chunk>
 
+  <\goldfish-chunk|goldfish/liii/range.scm|true|true>
+    (define (chain x . fs)
+
+    \ \ (if (null? fs)
+
+    \ \ \ \ x
+
+    \ \ \ \ (apply chain
+
+    \ \ \ \ \ \ (cons ((car fs) x) (cdr fs)))))
+
+    \;
+  </goldfish-chunk>
+
   <subsection|谓词>
 
   <paragraph|range%empty?>
@@ -212,21 +226,21 @@
   <paragraph|range%map>
 
   <\goldfish-chunk|goldfish/liii/range.scm|true|true>
-    (define (%map map-func)
+    (define (%map map-func . f)
 
-    \ \ (if (%empty?)
+    \ (if (%empty?)
 
-    \ \ \ \ \ \ (rich-list :empty)
+    \ \ (rich-list :empty)
 
-    \ \ \ \ \ \ (let loop ((current start) (result '()))
+    \ \ (let loop ((current start) (result '()))
 
-    \ \ \ \ \ \ \ \ (if (not-in-range? current)
+    \ \ \ (if (not-in-range? current)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (rich-list (reverse result))
+    \ \ \ (rich-list (reverse result))
 
-    \ \ \ \ \ \ \ \ \ \ \ \ (loop (+ current step)
+    \ \ \ \ (loop (+ current step)
 
-    \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons (map-func current) result))))))
+    \ \ \ \ \ \ \ (cons (chain-apply (cons current (cons map-func f)) chain) result))))))
 
     \;
   </goldfish-chunk>
@@ -237,6 +251,14 @@
     \ \ \ \ \ \ \ (r2 (r1 :map (lambda (x) (* x x)))))
 
     \ \ (check r2 =\<gtr\> (rich-list (list 4 1 0 1))))
+    
+    \;
+
+    (let* ((r1 (range :inclusive -2 1))
+
+    \ \ \ \ \ \ \ (r2 (r1 :map (lambda (x) (+ x 1)) (lambda (x) (* x 2)))))
+
+    \ \ (check r2 =\<gtr\> (rich-list (list -2 0 2 4))))
 
     \;
   </goldfish-chunk>

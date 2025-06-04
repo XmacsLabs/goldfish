@@ -38,6 +38,10 @@
        (r2 (r1 :map (lambda (x) (* x x)))))
   (check r2 => (rich-list (list 4 1 0 1))))
 
+(let* ((r1 (range :inclusive -2 1))
+       (r2 (r1 :map (lambda (x) (+ x 1)) (lambda (x) (* x 2)))))
+(check r2 => (rich-list (list -2 0 2 4))))
+
 (let1 r (range 0 10 1 #f)
   (check (r :filter even?) => ($ (list 0 2 4 6 8)))
   (check (r :filter (lambda (x) (> x 5))) => ($ (list 6 7 8 9)))
