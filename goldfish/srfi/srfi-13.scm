@@ -224,11 +224,7 @@
   (let* ((prefix-len (string-length prefix))
          (str-len (string-length str)))
     (and (<= prefix-len str-len)
-         (let loop ((i 0))
-           (or (= i prefix-len)
-               (and (char=? (string-ref prefix i)
-                            (string-ref str i))
-                    (loop (+ i 1))))))))
+         (string=? prefix (substring str 0 prefix-len)))))
 
 (define (string-suffix? suffix str)
   (let* ((suffix-len (string-length suffix))
