@@ -664,10 +664,10 @@
       #f
       (f value)))
 
-(define (%contains pred?)
+(define (%contains elem)
   (if (null? value)
       #f
-      (pred? value)))
+      (equal? value elem)))
 
 (define (%for-each f)
   (when (not (null? value))

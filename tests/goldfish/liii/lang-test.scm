@@ -937,12 +937,12 @@
   (check-true (opt1 :exists (lambda (x) (== x 42))))
   (check-false (opt2 :exists (lambda (x) (== x 42)))))
 
-(check ((option "hello") :contains string?) => #t)
-(check ((option 42) :contains integer?) => #t)
-(check ((option #t) :contains boolean?) => #t)
-(check ((option '()) :contains null?) => #f)
-(check ((none) :contains string?) => #f)
-(check ((option "hello") :contains number?) => #f)
+(check ((option "hello") :contains "hello") => #t)
+(check ((option 42) :contains 42) => #t)
+(check ((option #t) :contains #t) => #t)
+(check ((option '()) :contains '()) => #f)
+(check ((none) :contains "hello") => #f)
+(check ((option "hello") :contains "world") => #f)
 
 (let ((opt1 (option 42))
       (opt2 (option '())))

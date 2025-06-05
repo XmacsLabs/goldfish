@@ -6215,32 +6215,32 @@
 
   <paragraph|option%contains>
 
-  如果 <with|font-family|tt|option> 是 <with|font-family|tt|none>，则返回 <with|font-family|tt|#f>；否则，对 <with|font-family|tt|option> 的值应用给定的谓词，并返回谓词的结果。
+  如果 <with|font-family|tt|option> 是 <with|font-family|tt|none>，则返回 <with|font-family|tt|#f>
 
   <\goldfish-chunk|goldfish/liii/lang.scm|true|true>
-    (define (%contains pred?)
+    (define (%contains elem)
 
     \ \ (if (null? value)
 
     \ \ \ \ \ \ #f
 
-    \ \ \ \ \ \ (pred? value)))
+    \ \ \ \ \ \ (equal? value elem)))
 
     \;
   </goldfish-chunk>
 
   <\goldfish-chunk|tests/goldfish/liii/lang-test.scm|true|true>
-    (check ((option "hello") :contains string?) =\<gtr\> #t)
+    (check ((option "hello") :contains "hello") =\<gtr\> #t)
 
-    (check ((option 42) :contains integer?) =\<gtr\> #t)
+    (check ((option 42) :contains 42) =\<gtr\> #t)
 
-    (check ((option #t) :contains boolean?) =\<gtr\> #t)
+    (check ((option #t) :contains #t) =\<gtr\> #t)
 
-    (check ((option '()) :contains null?) =\<gtr\> #f)
+    (check ((option '()) :contains '()) =\<gtr\> #f)
 
-    (check ((none) :contains string?) =\<gtr\> #f)
+    (check ((none) :contains "hello") =\<gtr\> #f)
 
-    (check ((option "hello") :contains number?) =\<gtr\> #f)
+    (check ((option "hello") :contains "world") =\<gtr\> #f)
 
     \;
   </goldfish-chunk>
