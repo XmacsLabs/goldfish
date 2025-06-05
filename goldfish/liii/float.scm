@@ -45,7 +45,7 @@
       (sqrt data)))
 
 (define (%apply msg . args)
-  (if (defined? msg %this)
+  (if (defined? msg %this #t)
       (apply (%this msg) args)))
 
 (varlet %this :equals %equals)
