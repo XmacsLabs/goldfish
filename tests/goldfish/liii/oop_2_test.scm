@@ -39,7 +39,6 @@
     (if (null? args)
         result
         (apply (result :apply) args))))
-
 )
 
 ;; Test case class with default values
@@ -200,5 +199,70 @@
 
 (let ((p (person "Test" 25)))
   (check (p 'nonexistent-field) => #<undefined>))
+
+;; Test :to-string method
+(let ((p (person "Alice" 25)))
+  (check (p :apply :to-string) => "(person :name \"Alice\" :age 25)"))
+
+(let ((acc (account "Bob" 100 #t)))
+  (check (acc :apply :to-string) => "(account :owner \"Bob\" :balance 100 :active #t)"))
+
+(let ((mbox (mutable-box 42)))
+  (check (mbox :apply :to-string) => "(mutable-box :data 42)"))
+
+;; Test predicate functions
+(let ((p (person "Charlie" 30))
+      (acc (account "David" 50))
+      (mbox (mutable-box 100))
+      (not-case-class 42))
+  ;; Test person?
+  (check (person? p) => #t)
+  (check (person? acc) => #f)
+  (check (person? mbox) => #f)
+  (check (person? not-case-class) => #f)
+  
+  ;; Test account?
+  (check (account? acc) => #t)
+  (check (account? p) => #f)
+  (check (account? mbox) => #f)
+  (check (account? not-case-class) => #f)
+  
+  ;; Test mutable-box?
+  (check (mutable-box? mbox) => #t)
+  (check (mutable-box? p) => #f)
+  (check (mutable-box? acc) => #f)
+  (check (mutable-box? not-case-class) => #f))
+
+;; Test :equals method
+(let ((p1 (person "Eve" 28))
+      (p2 (person "Eve" 28))
+      (p3 (person "Frank" 28))
+      (p4 (person "Eve" 30)))
+  (check (p1 :equals p2) => #t)
+  (check (p1 :equals p3) => #f)
+  (check (p1 :equals p4) => #f))
+
+(let ((acc1 (account "Grace"))
+      (acc2 (account "Grace" 0 #t))
+      (acc3 (account "Henry" 0 #t)))
+  (check (acc1 :equals acc2) => #t)
+  (check (acc1 :equals acc3) => #f))
+
+;; Test equals with different types
+(let ((p (person "Test" 25))
+      (acc (account "Test" 25)))
+  (check (p :equals acc) => #f))
+
+;; Test type metadata
+(let ((p (person "Alice" 25))
+      (acc (account "Bob" 100))
+      (mbox (mutable-box 42)))
+  (check (p '*type*) => 'case-class)
+  (check (acc '*type*) => 'case-class)
+  (check (mbox '*type*) => 'case-class)
+  
+  (check (p '*class-name*) => 'person)
+  (check (acc '*class-name*) => 'account)
+  (check (mbox '*class-name*) => 'mutable-box))
 
 (check-report) 

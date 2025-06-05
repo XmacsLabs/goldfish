@@ -46,33 +46,71 @@
                                                 (substring type-str 0 (- (string-length type-str) 1))
                                                 type-str))
                                          (object->string ,field-name)))))
-                          field-names field-types)))
+                          field-names field-types))
+         
+         ;; Generate class-name?
+         (class-name? (string->symbol (string-append (symbol->string class-name) "?"))))
 
-    `(define* (,class-name 
-               ,@(map (lambda (field-name field-default)
-                       (if field-default
-                           `(,field-name ,field-default)
-                           field-name))
-                     field-names field-defaults))
+    `(begin
+       (define (,class-name? obj)
+         (and (let? obj)
+              (defined? '*class-name* obj #t)
+              (eq? (obj '*class-name*) ',class-name)))
        
-       ,@type-checks
-       
-       (define %this (inlet ,@(apply append (map (lambda (name) `(',name ,name)) field-names))))
-       
-       ,@instance-methods
-       
-       (define (%apply msg . args)
-         (if (defined? msg %this #t)
-             (apply (%this msg) args)
-             (error 'undefined-method (format #f "Method ~a not found" msg))))
-       
-       ,@(map (lambda (method-sym method-name)
-                `(varlet %this ,method-name ,method-sym))
-             (map caadr instance-methods) instance-method-names)
-       
-       (varlet %this :apply %apply)
-       
-       %this)))
+       (define* (,class-name 
+                 ,@(map (lambda (field-name field-default)
+                         (if field-default
+                             `(,field-name ,field-default)
+                             field-name))
+                       field-names field-defaults))
+         
+         ,@type-checks
+         
+         (define %this (inlet ,@(apply append (map (lambda (name) `(',name ,name)) field-names))
+                               '*type* 'case-class
+                               '*class-name* ',class-name))
+         
+         ,@instance-methods
+         
+         ;; Standard methods
+         (define (%to-string)
+           (let ((field-strings
+                  (list ,@(map (lambda (field-name)
+                                `(string-append
+                                  ,(string-append ":" (symbol->string field-name)) " "
+                                  (object->string ,field-name)))
+                              field-names))))
+             (let loop ((strings field-strings)
+                        (acc ""))
+               (if (null? strings)
+                   (string-append "(" ,(symbol->string class-name) " " acc ")")
+                   (loop (cdr strings)
+                         (if (zero? (string-length acc))
+                             (car strings)
+                             (string-append acc " " (car strings))))))))
+         
+         (define (%equals that)
+           (and (,class-name? that)
+                ,@(map (lambda (field-name)
+                        `(equal? ,field-name (that ',field-name)))
+                      field-names)))
+         
+         (define (%apply msg . args)
+           (if (defined? msg %this #t)
+               (apply (%this msg) args)
+               (error 'undefined-method (format #f "Method ~a not found" msg))))
+         
+         ;; Register all methods as functions
+         ,@(map (lambda (method-sym method-name)
+                  `(varlet %this ,method-name ,method-sym))
+               (map caadr instance-methods) instance-method-names)
+         
+         ;; Register standard methods  
+         (varlet %this :to-string %to-string)
+         (varlet %this :equals %equals)
+         (varlet %this :apply %apply)
+         
+         %this))))
 
 ) ; end of begin
 ) ; end of define-library
