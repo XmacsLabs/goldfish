@@ -15,10 +15,85 @@
 ;
 
 (define-library (liii oop_2)
-(import (liii error)
+
+(import (srfi srfi-2) 
+        (liii list)
+        (liii error)
         (liii string))
-(export define-case-class-2 chain-apply)
+
+(export 
+  @ typed-define
+  define-case-class-2 chain-apply case-class? display* object->string)
+
 (begin
+
+(define-macro (@ . paras)
+  (letrec* ((slot? (lambda (x) (equal? '_ x)))
+            (exprs (filter (lambda (x) (not (slot? x))) paras))
+            (slots (filter slot? paras))
+
+            (exprs-sym-list (map (lambda (x) (gensym)) exprs))  
+            (slots-sym-list (map (lambda (x) (gensym)) slots))
+
+            (lets (map list exprs-sym-list exprs))
+
+            (parse
+              (lambda (exprs-sym-list slots-sym-list paras)
+                (cond
+                  ((null? paras) paras)
+                  ((not (list? paras)) paras)
+                  ((slot? (car paras)) 
+                    `(,(car slots-sym-list) 
+                      ,@(parse exprs-sym-list (cdr slots-sym-list) (cdr paras))))
+                  (else 
+                    `(,(car exprs-sym-list) 
+                      ,@(parse (cdr exprs-sym-list) slots-sym-list (cdr paras))))))))
+                
+  `(let ,lets 
+        (lambda ,slots-sym-list 
+                ,(parse exprs-sym-list slots-sym-list paras)))))
+
+(define-macro (typed-define name-and-params body . rest)
+  (let* ((name (car name-and-params))
+          (params (cdr name-and-params))
+          (param-names (map car params)))
+
+        `(define* 
+            (,name 
+            ,@(map  
+              (lambda (param)
+                (let  ((param-name (car param))
+                      (type-pred (cadr param))
+                      (default-value (cddr param)))
+                      (if (null? default-value)
+                          param-name
+                          `(,param-name ,(car default-value)))))
+              params))
+
+        ;; Runtime type check                    
+        ,@(map (lambda (param)
+                (let* ((param-name (car param))
+                      (type-pred (cadr param))
+                      ;;remove the '?' in 'type?'
+                      (type-name-str 
+                         (let ((s (symbol->string type-pred)))
+                           (if (and (positive? (string-length s))
+                                    (char=? (string-ref s (- (string-length s) 1)) #\?))
+                               (substring s 0 (- (string-length s) 1))
+                               s))))
+
+                  `(unless 
+                      (,type-pred ,param-name)
+                      (type-error 
+                          (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**"
+                                ,name
+                                ',param-names
+                                ',param-name
+                                ,type-name-str
+                                (object->string ,param-name))))))
+              params)
+       ,body
+       ,@rest)))
 
 (define-macro (define-case-class-2 class-name fields . instance-methods)
   (let* ((field-names (map car fields))
@@ -124,6 +199,25 @@
   (if (null? args)
       proc
       (apply proc args)))
+
+(define (case-class? obj)
+  (and  (let? obj) 
+        (defined? '*type* obj #t)
+        (eq? (obj '*type*) 'case-class)))
+
+(define (display* . params)
+  (define (%display x)
+    (if (case-class? x)
+        (display (x :to-string))
+        (display x)))
+  (for-each %display params))
+
+(define s7-object->string object->string)
+
+(define (object->string x)
+  (if (case-class? x)
+      (x :to-string)
+      (s7-object->string x)))
 
 ) ; end of begin
 ) ; end of define-library

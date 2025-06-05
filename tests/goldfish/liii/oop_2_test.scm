@@ -188,4 +188,26 @@
   (check (p '*class-name*) => 'person)
   (check (acc '*class-name*) => 'account))
 
+;; Test case-class? function
+(let ((p (person "Test" 30))
+      (acc (account "Test" 100))
+      (not-case-class 42)
+      (string-obj "hello")
+      (list-obj '(1 2 3)))
+  (check (case-class? p) => #t)
+  (check (case-class? acc) => #t)
+  (check (case-class? not-case-class) => #f)
+  (check (case-class? string-obj) => #f)
+  (check (case-class? list-obj) => #f))
+
+;; Test enhanced object->string function
+(let ((p (person "Charlie" 35))
+      (acc (account "David" 200 #f))
+      (regular-num 123)
+      (regular-str "test"))
+  (check (object->string p) => "(person :name \"Charlie\" :age 35)")
+  (check (object->string acc) => "(account :owner \"David\" :balance 200 :active #f)")
+  (check (object->string regular-num) => "123")
+  (check (object->string regular-str) => "\"test\""))
+
 (check-report) 
