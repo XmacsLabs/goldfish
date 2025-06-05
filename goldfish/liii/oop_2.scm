@@ -17,7 +17,7 @@
 (define-library (liii oop_2)
 (import (liii error)
         (liii string))
-(export define-case-class-2)
+(export define-case-class-2 chain-apply)
 (begin
 
 (define-macro (define-case-class-2 class-name fields . instance-methods)
@@ -100,17 +100,30 @@
                (apply (%this msg) args)
                (error 'undefined-method (format #f "Method ~a not found" msg))))
          
-         ;; Register all methods as functions
-         ,@(map (lambda (method-sym method-name)
-                  `(varlet %this ,method-name ,method-sym))
-               (map caadr instance-methods) instance-method-names)
+         ;; Register all methods
+         ;; call zero-parameter methods directly
+         ,@(map (lambda (method-sym method-name method-def)
+                  (let* ((method-params (if (>= (length method-def) 2)
+                                           (cdadr method-def)
+                                           '()))
+                         (is-zero-param? (null? method-params)))
+                    (if is-zero-param?
+                        `(varlet %this ,method-name (,method-sym))
+                        `(varlet %this ,method-name ,method-sym))))
+               (map caadr instance-methods) 
+               instance-method-names
+               instance-methods)
          
-         ;; Register standard methods  
-         (varlet %this :to-string %to-string)
+         (varlet %this :to-string (%to-string))
          (varlet %this :equals %equals)
          (varlet %this :apply %apply)
          
          %this))))
+
+(define (chain-apply args proc)
+  (if (null? args)
+      proc
+      (apply proc args)))
 
 ) ; end of begin
 ) ; end of define-library
