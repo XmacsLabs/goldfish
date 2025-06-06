@@ -23,7 +23,9 @@
 
 (export 
   @ typed-define
-  define-case-class-2 chain-apply case-class? display* object->string)
+  define-case-class-2 define-object
+  chain-apply case-class? display* object->string
+)
 
 (begin
 
@@ -94,6 +96,54 @@
               params)
        ,body
        ,@rest)))
+
+(define-macro (define-object object-name . definitions)
+  (let* ((static-methods (filter (lambda (def)
+                               (and (list? def) (>= (length def) 3)
+                                    (eq? (car def) 'define)
+                                    (list? (cadr def))
+                                    (caadr def)
+                                    (symbol? (caadr def))
+                                    (let ((name-str (symbol->string (caadr def))))
+                                      (and (> (string-length name-str) 0)
+                                           (char=? (string-ref name-str 0) #\@)))))
+                              definitions))
+         (method-infos (map (lambda (def-form)
+                              (let* ((static-name-sym (caadr def-form))
+                                     (static-name-str (symbol->string static-name-sym))
+                                     (method-name-str (substring static-name-str 1 (string-length static-name-str)))
+                                     (dispatch-keyword (string->symbol (string-append ":" method-name-str))))
+                                (list dispatch-keyword static-name-sym)))
+                            static-methods))
+         (varlet-bindings (map (lambda (def-form)
+                                 (let ((defined-sym
+                                         (if (list? (cadr def-form))
+                                             (caadr def-form)
+                                             (cadr def-form))))
+                                   `(varlet (curlet) ',defined-sym ,defined-sym)))
+                               definitions)))
+
+    `(begin
+       (define (,object-name . msgs-and-args)
+         (let ((env (funclet ,object-name)))
+           (if (null? msgs-and-args)
+               (value-error (string-append "Object '" (symbol->string ',object-name) "' called with no arguments"))
+               (let ((msg (car msgs-and-args))
+                     (args (cdr msgs-and-args)))
+                 (cond
+                   ,@(map (lambda (info)
+                            (let ((dispatch-key (car info))
+                                  (static-method-sym (cadr info)))
+                              `((eq? msg ',dispatch-key) (apply (env ',static-method-sym) args))))
+                          method-infos)
+                   (else (value-error (string-append "No such static method '"
+                                                     (if (symbol? msg) (symbol->string msg) (object->string msg))
+                                                     "' in object '" (symbol->string ',object-name) "'"))))))))
+       (with-let (funclet ,object-name)
+         ,@definitions
+         ,@varlet-bindings
+         #t 
+         ))))
 
 (define-macro (define-case-class-2 class-name fields . instance-methods)
   (let* ((field-names (map car fields))
