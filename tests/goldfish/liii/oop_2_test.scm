@@ -69,14 +69,14 @@
   (check (p 'name) => "Alice")
   (check (p 'age) => 25))
 
-;; Method calls without parameters (using direct call now)
+;; Method calls without parameters (using :apply for zero-parameter methods)
 (let ((p (person "Bob" 30)))
-  (check (p :get-name) => "Bob")
-  (check (p :get-age) => 30)
-  (check (p :is-adult) => #t))
+  (check (p :apply :get-name) => "Bob")
+  (check (p :apply :get-age) => 30)
+  (check (p :apply :is-adult) => #t))
 
 (let ((p (person "Charlie" 16)))
-  (check (p :is-adult) => #f))
+  (check (p :apply :is-adult) => #f))
 
 ;; Method calls with parameters (direct call)
 (let ((p (person "David" 28)))
@@ -86,41 +86,41 @@
 (let ((acc1 (account "John"))
       (acc2 (account "Jane" 100))
       (acc3 (account "Jack" 200 #f)))
-  (check (acc1 :get-balance) => 0)
-  (check (acc1 :is-active) => #t)
-  (check (acc2 :get-balance) => 100)
-  (check (acc2 :is-active) => #t)
-  (check (acc3 :get-balance) => 200)
-  (check (acc3 :is-active) => #f))
+  (check (acc1 :apply :get-balance) => 0)
+  (check (acc1 :apply :is-active) => #t)
+  (check (acc2 :apply :get-balance) => 100)
+  (check (acc2 :apply :is-active) => #t)
+  (check (acc3 :apply :get-balance) => 200)
+  (check (acc3 :apply :is-active) => #f))
 
 ;; Method calls that return new objects
 (let ((p (person "Eve" 20)))
-  (let ((older-p (p :birthday)))
-    (check (older-p :get-age) => 21)
-    (check (p :get-age) => 20)))
+  (let ((older-p (p :apply :birthday)))
+    (check (older-p :apply :get-age) => 21)
+    (check (p :apply :get-age) => 20)))
 
 ;; Chain operations
 (let ((p (person "Frank" 17)))
-  (let ((adult-p (p :birthday :birthday)))
-    (check (adult-p :get-age) => 19)
-    (check (adult-p :is-adult) => #t)))
+  (let ((adult-p (p :apply :birthday :apply :birthday)))
+    (check (adult-p :apply :get-age) => 19)
+    (check (adult-p :apply :is-adult) => #t)))
 
 ;; Account operations
 (let ((acc (account "Grace" 100)))
   (let ((new-acc (acc :deposit 50)))
-    (check (new-acc :get-balance) => 150))
+    (check (new-acc :apply :get-balance) => 150))
   
   (let ((withdrawn-acc (acc :withdraw 30)))
-    (check (withdrawn-acc :get-balance) => 70))
+    (check (withdrawn-acc :apply :get-balance) => 70))
   
   (let ((same-acc (acc :withdraw 200)))
-    (check (same-acc :get-balance) => 100)))
+    (check (same-acc :apply :get-balance) => 100)))
 
 ;; Chain operations on account
 (let ((acc (account "Henry" 100)))
-  (let ((final-acc (acc :deposit 50 :withdraw 30 :deactivate)))
-    (check (final-acc :get-balance) => 120)
-    (check (final-acc :is-active) => #f)))
+  (let ((final-acc (acc :deposit 50 :withdraw 30 :apply :deactivate)))
+    (check (final-acc :apply :get-balance) => 120)
+    (check (final-acc :apply :is-active) => #f)))
 
 ;; Type checking tests
 (check-catch 'type-error (person 123 25))
@@ -138,10 +138,10 @@
 
 ;; Test :to-string method
 (let ((p (person "Alice" 25)))
-  (check (p :to-string) => "(person :name \"Alice\" :age 25)"))
+  (check (p :apply :to-string) => "(person :name \"Alice\" :age 25)"))
 
 (let ((acc (account "Bob" 100 #t)))
-  (check (acc :to-string) => "(account :owner \"Bob\" :balance 100 :active #t)"))
+  (check (acc :apply :to-string) => "(account :owner \"Bob\" :balance 100 :active #t)"))
 
 ;; Test predicate functions
 (let ((p (person "Charlie" 30))

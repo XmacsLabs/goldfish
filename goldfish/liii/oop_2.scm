@@ -232,7 +232,7 @@
                instance-method-names
                instance-methods)
          
-         (varlet %this :to-string (%to-string))
+         (varlet %this :to-string %to-string)
          (varlet %this :equals %equals)
          (varlet %this :apply %apply)
          
@@ -251,7 +251,7 @@
 (define (display* . params)
   (define (%display x)
     (if (case-class? x)
-        (display (x :to-string))
+        (display (x :apply :to-string))
         (display x)))
   (for-each %display params))
 
@@ -259,7 +259,7 @@
 
 (define (object->string x)
   (if (case-class? x)
-      (x :to-string)
+      (x :apply :to-string)
       (s7-object->string x)))
 
 ) ; end of begin
