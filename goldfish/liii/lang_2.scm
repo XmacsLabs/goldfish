@@ -173,7 +173,9 @@
   (option '()))
 
 
-
+;;; ========================================
+;;; rich-list - Instance methods
+;;; ========================================
 
 (define-case-class-2 rich-list ((data list?))
 
@@ -570,7 +572,10 @@
 
 )
 
-;; Static methods using define-object
+;;; ========================================
+;;; rich-list - Static methods
+;;; ========================================
+
 (define-object rich-lists
 
 (define (@range start end . step-args)
