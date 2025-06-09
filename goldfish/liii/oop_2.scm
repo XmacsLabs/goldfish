@@ -225,16 +225,9 @@
                (apply (%this msg) args)
                (error 'undefined-method (format #f "Method ~a not found" msg))))
          
-         ;; Register all methods
-         ;; call zero-parameter methods directly
+         ;; Register all methods as functions (use :apply for all method calls)
          ,@(map (lambda (method-sym method-name method-def)
-                  (let* ((method-params (if (>= (length method-def) 2)
-                                           (cdadr method-def)
-                                           '()))
-                         (is-zero-param? (null? method-params)))
-                    (if is-zero-param?
-                        `(varlet %this ,method-name (,method-sym))
-                        `(varlet %this ,method-name ,method-sym))))
+                  `(varlet %this ,method-name ,method-sym))
                (map caadr instance-methods) 
                instance-method-names
                instance-methods)
