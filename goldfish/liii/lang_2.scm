@@ -187,12 +187,12 @@
       (else (loop (cdr lst))))))
 
 (define (%find-last pred)
-  (let ((reversed-list (reverse data)))
+  (let ((reversed-list (reverse data)))  ; 先反转列表
     (let loop ((lst reversed-list))
       (cond
-        ((null? lst) (none))
-        ((pred (car lst)) (option (car lst)))
-        (else (loop (cdr lst)))))))
+        ((null? lst) (none))  ; 遍历完未找到
+        ((pred (car lst)) (option (car lst)))  ; 找到第一个匹配项（即原列表最后一个）
+        (else (loop (cdr lst)))))))  ; 继续查找
 
 (define (%head)
   (if (null? data)
@@ -203,6 +203,7 @@
   (if (null? data)
       (none)
       (option (car data))))
+
 
 (define (%last)
   (if (null? data)
@@ -217,8 +218,8 @@
 (define (%slice from until . args)
   (chain-apply args
     (let* ((len (length data))
-           (start (max 0 (min from len)))
-           (end (max 0 (min until len))))
+          (start (max 0 (min from len)))
+          (end (max 0 (min until len))))
       (if (< start end)
           (rich-list (take (drop data start) (- end start)))
           (rich-list '())))))
@@ -227,8 +228,16 @@
   (null? data))
 
 (define (%equals that)
-  (and (rich-list? that)
-       (equal? data (that 'data))))
+  (let* ((l1 data)
+         (l2 (that 'data))
+         (len1 (length l1))
+         (len2 (length l2)))
+    (if (not (eq? len1 len2))
+        #f
+        (let loop ((left l1) (right l2))
+          (cond ((null? left) #t)
+                ((not (class=? (car left) (car right))) #f)
+                (else (loop (cdr left) (cdr right))))))))
 
 (define (%forall pred)
   (every pred data))
@@ -351,12 +360,28 @@
 (define (%sort-with less-p . args)
   (chain-apply args
     (let ((sorted-data (list-stable-sort less-p data)))
-      (rich-list sorted-data))))
+        (rich-list sorted-data))))
 
 (define (%sort-by f . args)
   (chain-apply args
     (let ((sorted-data (list-stable-sort (lambda (x y) (< (f x) (f y))) data)))
-      (rich-list sorted-data))))
+    (rich-list sorted-data))))
+
+(define (%group-by func)
+  (let ((group (make-hash-table)))
+    (for-each
+      (lambda (elem) 
+        (let ((key (func elem)))
+          (hash-table-update!/default
+            group
+            key
+            (lambda (current-list) (cons elem current-list))
+            '())))
+      data)
+    (hash-table-for-each 
+      (lambda (k v) (hash-table-set! group k (reverse v))) 
+      group)
+  (rich-hash-table group)))
 
 (define (%sliding size . step-arg)
   (unless (integer? size) (type-error "rich-list%sliding: size must be an integer " size))
@@ -539,6 +564,10 @@
 (define (%to-vector)
   (list->vector data))
 
+(define (%to-rich-vector)
+  (rich-vector (list->vector data)))
+
+
 )
 
 ;; Static methods using define-object
@@ -564,7 +593,7 @@
   (rich-list '()))
 
 (define (@concat lst1 lst2)
-  (rich-list (append (lst1 :collect) (lst2 :collect))))
+  (rich-list (append (lst1 :apply :collect) (lst2 :apply :collect))))
 
 (define (@fill n elem)
   (cond
