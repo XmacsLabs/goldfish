@@ -98,8 +98,7 @@
 
 (define (ninth x) (list-ref x 8))
 
-(define (tenth x) 
-  (cadr (cddddr (cddddr x))))
+(define (tenth x) (list-ref x 9))
 
 (define (take l k)
   (let loop ((l l) (k k))
