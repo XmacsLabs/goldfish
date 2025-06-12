@@ -275,35 +275,63 @@
 
 (define (%extract-maybe-equal maybe-equal)
   (let ((my-equal (if (null-list? maybe-equal)
-                      =
+                      equal?
                       (car maybe-equal))))
     (if (procedure? my-equal)
         my-equal
         (error 'wrong-type-arg "maybe-equal must be procedure"))))
+
 (define (delete x l . maybe-equal)
   (let ((my-equal (%extract-maybe-equal maybe-equal)))
     (filter (lambda (y) (not (my-equal x y))) l)))
+
+;; Check if equality function is supported by s7 hash-table
+(define (%can-use-hash-table? eq-func)
+  (memq eq-func '(eq? eqv? equal? equivalent? = string=? string-ci=? char=? char-ci=?)))
+
+;; Fast hash-table based deduplication using s7's native hash-table
+(define (%delete-duplicates-hash lis eq-func)
+  (let ((seen (make-hash-table 8 eq-func))
+        (result '()))
+    (for-each 
+      (lambda (x)
+        (unless (hash-table-ref seen x)
+          (hash-table-set! seen x #t)
+          (set! result (cons x result))))
+      lis)
+    (reverse result)))
+
+;; origin
+(define (%delete-duplicates-scan lis my-equal)
+  (let loop ((remaining lis) (seen '()) (result '()))
+    (cond
+      ((null? remaining)
+       (reverse result))
+      ((member (car remaining) seen my-equal)
+       (loop (cdr remaining) seen result))
+      (else
+       (loop (cdr remaining)
+             (cons (car remaining) seen)
+             (cons (car remaining) result))))))
 
 ;;; right-duplicate deletion
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; delete-duplicates delete-duplicates!
 ;;;
-;;; Beware -- these are N^2 algorithms. To efficiently remove duplicates
-;;; in long lists, sort the list to bring duplicates together, then use a
-;;; linear-time algorithm to kill the dups. Or use an algorithm based on
-;;; element-marking. The former gives you O(n lg n), the latter is linear.
+;;; Hybrid strategy: Use hash table O(n) for supported functions and 
+;;; optimized scan O(n²) for other functions
+;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define (delete-duplicates lis . maybe-equal)
   (let ((my-equal (%extract-maybe-equal maybe-equal)))
-    (let recur ((lis lis))
-      (if (null-list? lis)
-          lis
-          (let* ((x (car lis))
-                 (tail (cdr lis))
-                 (new-tail (recur (delete x tail my-equal))))
-            (if (eq? tail new-tail)
-                lis
-                (cons x new-tail)))))))
+    (cond
+      ((null? lis) lis)
+      ((%can-use-hash-table? my-equal)
+       (%delete-duplicates-hash lis my-equal))
+      (else
+       (%delete-duplicates-scan lis my-equal)))))
 
 (define (alist-cons key value alist)
   (cons (cons key value) alist))

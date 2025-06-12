@@ -369,6 +369,9 @@
 (check (delete-duplicates (list 1 1 2 3) (lambda (x y) #f))
        => (list 1 1 2 3))
 
+(check (delete-duplicates '(1 -2 3 2 -1) (lambda (x y) (= (abs x) (abs y))))
+       => (list 1 -2 3))
+
 (check
   (catch 'wrong-type-arg
     (lambda
