@@ -159,7 +159,7 @@
   (cond
     ((null? lists) initial)
     
-    ((and (= (length lists) 1) (list? (car lists)))
+    ((and (pair? lists) (null? (cdr lists)) (list? (car lists)))
      (let loop ((acc initial) (lst (car lists)))
        (if (null? lst)
            acc
@@ -176,11 +176,21 @@
 (define (fold-right f initial . lists)
   (unless (procedure? f)
     (error 'type-error "expected procedure, got ~S" f))
-  (if (or (null? lists) (any null? lists))
-      initial
-      (apply f 
-            (append (map car lists)
-                    (list (apply fold-right f initial (map cdr lists)))))))
+  
+  (cond
+    ((null? lists) initial)
+    ((and (pair? lists) (null? (cdr lists)) (list? (car lists)))
+     (let loop ((lst (car lists)))
+       (if (null? lst)
+           initial
+           (f (car lst) (loop (cdr lst))))))
+    (else
+     (let loop ((lsts lists))
+       (if (any null? lsts)
+           initial
+           (let* ((cars (map car lsts))
+                  (cdrs (map cdr lsts)))
+             (apply f (append cars (list (loop cdrs))))))))))
 
 (define (reduce f initial l)
   (if (null-list? l) initial
