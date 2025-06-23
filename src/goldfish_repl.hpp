@@ -26,7 +26,7 @@
 
 // Include necessary definitions from goldfish.hpp
 #ifndef GOLDFISH_VERSION
-#define GOLDFISH_VERSION "17.11.16"
+#define GOLDFISH_VERSION "17.11.17"
 #endif
 
 // macOS specific headers for readline support
