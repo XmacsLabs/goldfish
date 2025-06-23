@@ -4,6 +4,7 @@
         (liii sort)
         (liii hash-table)
         (liii string)
+        (liii option)
         (srfi srfi-8))
 (export rich-list)
 (begin

@@ -20,8 +20,7 @@
         (liii cut)
         (liii case)
         (liii error)
-        (liii list)
-        (liii rich-list))
+        (liii list))
 
 (define == class=?)
 (check-set-mode! 'report-failed)

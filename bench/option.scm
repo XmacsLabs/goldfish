@@ -15,7 +15,7 @@
 ;
 
 (import (scheme time)
-        (liii lang))
+        (liii option))
 
 (define (timing msg thunk)
   (let* ((start (current-jiffy))
