@@ -14,7 +14,7 @@
 ; under the License.
 ;
 
-(import (liii list))
+(import (liii rich-list))
 (import (scheme time))
 
 (define (timing msg thunk)

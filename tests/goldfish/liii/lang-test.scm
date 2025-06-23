@@ -19,7 +19,9 @@
         (only (liii base) let1 identity)
         (liii cut)
         (liii case)
-        (liii error))
+        (liii error)
+        (liii list)
+        (liii rich-list))
 
 (define == class=?)
 (check-set-mode! 'report-failed)
