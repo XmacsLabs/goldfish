@@ -19,6 +19,8 @@
 ```
 ### Unicode支持
 ``` scheme
+(import (liii lang))
+
 ($ "你好，世界" 0) ; => 你
 ($ "你好，世界" 4) ; => 界
 ($ "你好，世界" :length) ; => 5
@@ -29,6 +31,8 @@
 
 在`prime?`已提供的情况下，用如下方法过滤出1到100的孪生质数（致敬张益唐）：
 ``` scheme
+(import (liii lang))
+
 (($ 1 :to 100)
  :filter prime?
  :filter (lambda (x) (prime? (+ x 2)))
@@ -163,7 +167,7 @@ based on S7 Scheme 10.11 (2-July-2024)
 `-m`帮助您指定预加载的标准库。
 
 + `default`: `-m default`等价于`-m liii`
-+ `liii`: 预加载`(liii lang)`, `(liii base)`和`(liii error)`的Goldfish Scheme
++ `liii`: 预加载`(liii oop)`, `(liii base)`和`(liii error)`的Goldfish Scheme
 + `scheme`: 预加载`(liii base)`和`(liii error)`的Goldfish Scheme
 + `sicp`: 预加载`(srfi sicp)`和`(scheme base)`的S7 Scheme
 + `r7rs`: 预加载`(scheme base)`的S7 Scheme

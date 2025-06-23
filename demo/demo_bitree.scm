@@ -1,4 +1,4 @@
-(import (liii check))
+(import (liii check) (liii lang))
 
 (define (bitree? x)
   (or (null? x) (bitree :is-type-of x)))
@@ -22,7 +22,7 @@
           :make-string "(" " " ")")))
 
 (define (%to-string)
-  ((%make-string) :to-string))
+  (%make-string))
 
 ) ; end of define-case-class
 

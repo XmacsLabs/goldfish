@@ -991,7 +991,7 @@ customize_goldfish_by_mode (s7_scheme* sc, string mode,
   }
 
   if (mode == "default" || mode == "liii") {
-    s7_eval_c_string (sc, "(import (liii base) (liii error) (liii lang))");
+    s7_eval_c_string (sc, "(import (liii base) (liii error) (liii oop))");
   }
   else if (mode == "scheme") {
     s7_eval_c_string (sc, "(import (liii base) (liii error))");

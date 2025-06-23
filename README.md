@@ -19,6 +19,8 @@ Goldfish Scheme is a Scheme interpreter with the following features:
 ```
 ### Unicode Support
 ``` scheme
+(import (liii lang))
+
 ($ "你好，世界" 0) ; => 你
 ($ "你好，世界" 4) ; => 界
 ($ "你好，世界" :length) ; => 5
@@ -29,6 +31,8 @@ Goldfish Scheme is a Scheme interpreter with the following features:
 
 With `prime?` provided, filter twin prime numbers in this way:
 ``` scheme
+(import (liii lang))
+
 (($ 1 :to 100)
  :filter prime?
  :filter (lambda (x) (prime? (+ x 2)))
@@ -159,7 +163,7 @@ based on S7 Scheme 10.11 (2-July-2024)
 `-m` helps you specify the standard libray mode.
 
 + `default`: `-m default` is the equiv of `-m liii`
-+ `liii`: Goldfish Scheme with `(liii lang)`, `(liii base)` and `(liii error)`
++ `liii`: Goldfish Scheme with `(liii oop)`, `(liii base)` and `(liii error)`
 + `scheme`: Goldfish Scheme with `(liii base)` and `(liii error)`
 + `sicp`: S7 Scheme with `(scheme base)` and `(srfi sicp)`
 + `r7rs`: S7 Scheme with `(scheme base)`

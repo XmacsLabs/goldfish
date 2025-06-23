@@ -1,5 +1,7 @@
 (import (scheme time)
-        (liii range))
+        (liii range)
+        (liii rich-list)
+        (liii lang))
 
 (define (prime1? n)
   (define (iter i)
