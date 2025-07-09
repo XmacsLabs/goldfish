@@ -3,18 +3,6 @@ name: ci-ubuntu-gitee
 displayName: ci-ubuntu-gitee
 triggers:
   trigger: auto
-  pr:
-    branches:
-      precise:
-        - main
-    paths:
-      precise:
-        - goldfish/
-        - tests/
-        - src/
-        - xmake/packages/
-        - xmake.lua
-        - .workflow/
   push:
     branches:
       precise:
@@ -27,12 +15,24 @@ triggers:
         - xmake/packages/
         - xmake.lua
         - .workflow/
-
+  pr:
+    branches:
+      precise:
+        - main
+    paths:
+      precise:
+        - goldfish/
+        - tests/
+        - src/
+        - xmake/packages/
+        - xmake.lua
+        - .workflow/
 variables:
-  XMAKE_MAIN_REPO: 'https://gitee.com/tboox/xmake-repo.git'
-  XMAKE_BINARY_REPO: 'https://gitee.com/xmake-mirror/build-artifacts.git'
-  XMAKE_ROOT: y
-
+  XMAKE_MAIN_REPO: https://gitee.com/tboox/xmake-repo.git
+  XMAKE_BINARY_REPO: https://gitee.com/xmake-mirror/build-artifacts.git
+  XMAKE_ROOT: 'y'
+  global:
+    - PASSWORD
 stages:
   - name: build_and_test
     displayName: build_and_test
@@ -57,11 +57,9 @@ stages:
           - xmake config --yes -vD
           - xmake build --yes -vD goldfish
           - bin/goldfish -l tests/test_all.scm
-        caches: [
-            ~/.xmake/packages
-        ]
+        caches:
+          - ~/.xmake/packages
         notify: []
         strategy:
           retry: '0'
           stepTimeout: 15
-
