@@ -45,6 +45,7 @@ stages:
         displayName: Build and Test
         gccVersion: '8.4'
         commands:
+          - env
           - wget https://gitee.com/XmacsLabs/mogan/attach_files/1813514/download -O /tmp/xmake.deb
           - sha1sum /tmp/xmake.deb | grep ac3629bd0fa66f179aef35dc00b7a1c89735651a
           - apt install /tmp/xmake.deb
