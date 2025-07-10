@@ -14,10 +14,10 @@
 
 (define start-time (current-jiffy))
 (define result
-  ((rich-list :range 0 1000 1)
+  ((rich-vector :range 0 1000 1)
    :map
    (lambda (y)
-      ((rich-list :range 0 10000 1)
+      ((rich-vector :range 0 10000 1)
        :map (lambda (x) (* x x))
        :filter (lambda (z) (zero? (modulo z 3)))
        :collect))
@@ -25,7 +25,7 @@
 (define end-time (current-jiffy))
 
 (display "Length of each result: ")
-(display (length (car result)))
+(display (length (result 0)))
 (newline)
 
 (display* "Elapsed time: " (/ (- end-time start-time) 1000.0) " ms\n")
