@@ -1,3 +1,19 @@
+;
+; Copyright (C) 2025 The Goldfish Scheme Authors
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+; http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+; WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+; License for the specific language governing permissions and limitations
+; under the License.
+;
+
 (import (liii check)
         (liii datetime))
 
@@ -36,6 +52,41 @@
 
 (check ((datetime :year 2025 :month 1 :day 1 :micro-second 999999) :to-string)
   => "2025-01-01 00:00:00.999999")
+
+#|
+datetime%plus-days
+计算当前日期增加/减少指定天数后的新日期对象。
+
+语法
+----
+(datetime%plus-days days)
+
+参数
+----
+days:integer
+	整数，表示要增加的天数（正数）或减少的天数（负数）。
+
+返回值
+-----
+datetime
+	新的日期时间对象。
+
+错误
+----
+type-error
+	若 days 不是整数，则引发类型错误。
+
+额外信息
+----
+能自动识别闰年（如 2024）与非闰年（如 2023）
+跨月时自动调整月份/年份
+跨年时自动递增/递减年份
+days=0 时返回原日期副本
+
+|#
+
+;; Example for type-error
+(check-catch 'type-error ((datetime :year 2024 :month 1 :day 31) :plus-days 1.1))
 
 ;; Test plus-days with positive days
 (check ((datetime :year 2024 :month 1 :day 1) :plus-days 10) 
