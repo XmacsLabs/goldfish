@@ -125,22 +125,22 @@ datetime%plus-days
 
 语法
 ----
-(datetime%plus-days days)
+(datetime-object :plus-days days)
 
 参数
 ----
 days:integer
-	整数，表示要增加的天数（正数）或减少的天数（负数）。
+    整数，表示要增加的天数（正数）或减少的天数（负数）。
 
 返回值
 -----
 datetime
-	新的日期时间对象。
+    新的日期时间对象。
 
 错误
 ----
 type-error
-	若 days 不是整数，则引发类型错误。
+    若 days 不是整数，则引发类型错误。
 
 额外信息
 ----
