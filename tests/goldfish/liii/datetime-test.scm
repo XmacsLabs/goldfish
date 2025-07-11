@@ -22,6 +22,36 @@
 (check-true (years :leap? 2000))
 (check-false (years :leap? 1000))
 
+#|
+datetime@now
+创建一个表示当前系统时间的日期时间对象。
+该对象精确到微秒级别，可用于获取当前时间的各个时间分量。
+
+语法
+----
+(datetime :now)
+
+参数
+----
+无参数（使用 :now 关键字创建当前时间对象）
+
+返回值
+-----
+返回一个表示当前日期时间的对象，该对象支持以下字段查询：
+    'year         : 年份 (>= 2023)
+    'mouth        : 月份 (1-12)
+    'day          : 日期 (1-31)
+    'hour         : 小时 (0-23)
+    'minute       : 分钟 (0-59)
+    'second       : 秒   (0-59)
+    'micro-second : 微秒 (0-999999)
+
+错误
+----
+无特定错误（始终返回有效时间对象）
+
+|#
+
 (let ((now (datetime :now)))
   (check-true (datetime :is-type-of now))
   (check-true (>= (now 'year) 2023))  ; Assuming test is run in 2023 or later
