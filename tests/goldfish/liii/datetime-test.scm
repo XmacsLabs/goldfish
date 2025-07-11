@@ -298,6 +298,37 @@ months=0 时返回原日期副本
     => (datetime :year 2024 :month 2 :day 15 
                 :hour 12 :minute 30 :second 45 :micro-second 123456)))
 
+#|
+datetime%plus-years
+计算当前日期增加/减少指定年数后的新日期对象。
+
+语法
+----
+(datetime-object :plus-years years)
+
+参数
+----
+years:integer
+    整数，表示要增加的年（正数）或减少的年（负数）。
+
+返回值
+-----
+datetime
+    新的日期时间对象。
+
+错误
+----
+type-error
+    若 years 不是整数，则引发类型错误。
+
+额外信息
+----
+能自动识别闰年（如 2024）与非闰年（如 2023）；
+当原始日期为闰年2月29日且目标年份非闰年时，日期将调整为2月28日；
+years=0 时返回原日期副本。
+
+|#
+
 ;; Test plus-years with positive years
 (check ((datetime :year 2024 :month 1 :day 15) :plus-years 1) 
   => (datetime :year 2025 :month 1 :day 15))
