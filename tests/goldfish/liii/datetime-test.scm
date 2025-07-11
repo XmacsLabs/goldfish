@@ -209,6 +209,41 @@ days=0 时返回原日期副本
     => (datetime :year 2024 :month 1 :day 11 
                 :hour 12 :minute 30 :second 45 :micro-second 123456)))
 
+#|
+datetime%plus-months
+计算当前日期增加/减少指定月数后的新日期对象，自动处理月末日期调整。
+
+语法
+----
+(datetime-object :plus-months months)
+
+参数
+----
+months:integer
+    整数，表示要增加的月数（正数）或减少的月数（负数）。
+
+返回值
+-----
+datetime
+	新的日期时间对象。
+
+错误
+----
+type-error
+	若 months 不是整数，则引发类型错误。
+
+额外信息
+----
+当原始日期是月末时，结果自动调整为目标月份的最后一天
+跨年时自动调整年份
+二月天数根据目标年份的闰年状态自动确定
+months=0 时返回原日期副本
+
+|#
+
+;; Example for type-error
+(check-catch 'type-error ((datetime :year 2024 :month 1 :day 31) :plus-months 1.1))
+
 ;; Test plus-months with positive months
 (check ((datetime :year 2024 :month 1 :day 15) :plus-months 1) 
   => (datetime :year 2024 :month 2 :day 15))
