@@ -1246,6 +1246,33 @@ any
 (check (null? '(1)) => #f)
 (check (null? '(1 2)) => #f)
 
+#|
+car
+一个序对由两部分组成：
+    car （第一个元素）
+    cdr （第二个元素）
+结构表示为： (car . cdr)
+car 是 S7 Scheme 内置的 R7RS 定义的函数，用于获取序对的第一个元素。
+
+语法
+----
+(car pair)
+
+参数
+----
+pair : pair?
+    必须是一个序对（非空列表或显式点对）。
+
+返回值
+-----
+序对的 car 部分（即第一个元素）。
+
+错误
+----
+如果参数不是序对（如空列表 '() ），抛出 wrong-type-arg 错误。
+
+|#
+
 (check (car '(a b c . d)) => 'a)
 (check (car '(a b c)) => 'a)
 
