@@ -415,6 +415,30 @@ any
     (get-name da))
   => "Darcy")
 
+#|
+number?
+判断一个对象是否是数（包括整数、浮点数、有理数、复数）。
+
+语法
+----
+(number? obj)
+
+参数
+----
+obj : any
+    任意类型的对象。
+
+返回值
+-----
+boolean?
+    如果 obj 是数值类型（整数、浮点数、有理数、复数）返回 #t，否则返回 #f。
+
+错误
+----
+无错误情况。
+
+|#
+
 (check-true (number? 123))          ; 整数
 (check-true (number? 123.456))      ; 浮点数
 (check-true (number? 1/2))          ; 有理数
@@ -423,6 +447,7 @@ any
 (check-false (number? #t))          ; 布尔值
 (check-false (number? 'symbol))     ; 符号
 (check-false (number? '(1 2 3)))    ; 列表
+
 (check-true (complex? 1+2i))        ; 复数
 (check-true (complex? 123))         ; 整数也是复数
 (check-true (complex? 123.456))     ; 浮点数也是复数
@@ -1370,21 +1395,21 @@ member
 参数
 ----
 item:any
-	待查找的元素（支持任意类型，包括数字、字符串、点对、列表等）。
+    待查找的元素（支持任意类型，包括数字、字符串、点对、列表等）。
 list:list
-	被搜索的列表（可为空列表）。
+    被搜索的列表（可为空列表）。
 
 返回值
 -----
 list
-	若 item 在 list 中，返回从第一个匹配项开始直到列表末尾的子列表。
+    若 item 在 list 中，返回从第一个匹配项开始直到列表末尾的子列表。
 #f
-	若未找到或 list 为空，返回 #f。
+    若未找到或 list 为空，返回 #f。
 
 错误
 ----
 wrong-type-arg
-	若 list 不是有效列表（如非列表结构），可能引发类型错误。
+    若 list 不是有效列表（如非列表结构），可能引发类型错误。
 
 额外信息
 ----
