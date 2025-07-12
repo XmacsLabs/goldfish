@@ -211,6 +211,33 @@
   (check-false (path :from-parts #("/" "tmp" "/" "tmpxxxx") :file?))
   (rmdir "tmpxxxx"))
 
+#|
+path%dir?
+判断路径所指向目录是否存在。
+
+语法
+----
+(path :from-parts string-vector :dir?) ; 通过字符串数组显式构造路径对象
+    示例：(path :from-parts #("/" "tmp" "log")) ; ⇒ /tmp/log
+(path :/ segment1 segment2 ...) ; 构建 Unix 风格绝对路径
+    示例：(path :/ "tmp" "app.log") ; ⇒ /tmp/app.log
+
+参数
+----
+无显式参数（通过 path 对象隐式操作文件系统）。
+
+返回值
+-----
+boolean
+    #t: 路径存在且为目录
+    #f: 路径不存在或不是目录
+
+错误
+----
+无（不存在的路径返回 #f 而非报错）。
+
+|#
+
 (when (or (os-linux?) (os-macos?))
   (check-true (path :/ "tmp" :dir?))
   (check-true (path :/ "tmp/" :dir?))
@@ -220,6 +247,23 @@
   (mkdir "tmpxxxx")
   (check-true (path :from-parts #("/" "tmp" "/" "tmpxxxx" "") :dir?))
   (rmdir "tmpxxxx"))
+
+(when (os-windows?)
+  ;; 基本目录检测
+  (check-true (path :from-parts #("C:" "Windows") :dir?))
+  (check-true (path :from-parts #("C:\\" "Windows\\") :dir?))
+  
+  ;; 大小写不敏感测试
+  (check-true (path :from-parts #("C:" "WINDOWS") :dir?))
+  
+  ;; 不存在的路径
+  (check-false (path :from-parts #("C:" "Windows\\InvalidPath") :dir?))
+  
+  ;; 带空格的路径
+  (check-true (path :from-parts #("C:" "Program Files") :dir?))
+  
+  ;; 特殊目录（需存在）
+  (check-true (path :from-parts #("C:" "Windows" "System32") :dir?)))
 
 (check-false ((path) :absolute?))
 (check (path :/ "C:" :get-type) => 'windows)
