@@ -17,9 +17,45 @@
 (import (liii check)
         (liii datetime))
 
+#|
+datetime@leap?
+判断指定年份是否为闰年。
+
+语法
+----
+(years :leap? year)
+
+参数
+----
+year:integer
+    待判断的年份。
+
+返回值
+-----
+boolean
+    新的日期时间对象。
+
+错误
+----
+type-error
+    若 year 不是整数，则引发类型错误。
+
+额外信息
+----
+闰年判定规则
+    能被 4 整除但不能被 100 整除 → 闰年（如 2024）
+    能被 400 整除 → 闰年（如 2000）
+    其他情况 → 非闰年（如 2025, 1000）
+
+|#
+
+;; Example for type-error
+(check-catch 'type-error (years :leap? 2024.1))
+
 (check-true (years :leap? 2024))
-(check-false (years :leap? 2025))
 (check-true (years :leap? 2000))
+
+(check-false (years :leap? 2025))
 (check-false (years :leap? 1000))
 
 #|
