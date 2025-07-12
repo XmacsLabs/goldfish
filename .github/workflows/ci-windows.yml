@@ -25,7 +25,7 @@ on:
 
 jobs:
   windowsbuild:
-    runs-on: windows-2019
+    runs-on: windows-2025
     env:
         # Force xmake to a specific folder (for cache)
         XMAKE_GLOBALDIR: ${{ github.workspace }}/.xmake-global
