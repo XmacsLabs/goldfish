@@ -910,6 +910,58 @@ glue_liii_datetime (s7_scheme* sc) {
   glue_date_now (sc);
 }
 
+// -------------------------------- iota-list --------------------------------
+static inline s7_pointer iota_list(s7_scheme *sc, s7_int count, s7_pointer start, s7_int step)
+{
+  s7_pointer res = s7_nil(sc);
+  s7_int val;
+  for (val = s7_integer(start) + step * (count - 1); count > 0; count--) {
+    res = s7_cons(sc, s7_make_integer(sc, val), res);
+    val -= step;
+  }
+  return res;
+}
+
+static s7_pointer iota_list_p_ppp(s7_scheme *sc, s7_pointer count, s7_pointer start, s7_pointer step)
+{
+  if (!s7_is_integer(count)) {
+    return s7_wrong_type_arg_error(sc, "iota-list", 1, count, "an integer");
+  }
+  if (!s7_is_integer(start)) {
+    return s7_wrong_type_arg_error(sc, "iota-list", 2, start, "an integer");
+  }
+  if (!s7_is_integer(step)) {
+    return s7_wrong_type_arg_error(sc, "iota-list", 3, step, "an integer");
+  }
+  s7_int cnt = s7_integer(count);
+  if (cnt < 0) {
+    return s7_out_of_range_error(sc, "iota-list", 1, count, "count is negative");
+  }
+  s7_int st  = s7_integer(start);
+  s7_int stp = s7_integer(step);
+  return iota_list(sc, cnt, start, stp);
+}
+
+static s7_pointer g_iota_list(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer arg1 = s7_car(args); // count
+  s7_pointer rest1 = s7_cdr(args);
+  s7_pointer arg2 = (s7_is_pair(rest1)) ? s7_car(rest1) : s7_make_integer(sc, 0);  // start value, default 0
+  s7_pointer rest2 = s7_cdr(rest1);
+  s7_pointer arg3 = (s7_is_pair(rest2)) ? s7_car(rest2) : s7_make_integer(sc, 1); // step size, default 1
+  return iota_list_p_ppp(sc, arg1, arg2, arg3);
+}
+
+inline void glue_iota_list(s7_scheme* sc) {
+  const char* name = "iota-list";
+  const char* desc = "(iota-list count [start [step]]) => list, returns a list of count elements starting from start (default 0) with step (default 1)";
+  s7_define_function(sc, name, g_iota_list, 1, 2, false, desc);
+}
+
+inline void glue_liii_list(s7_scheme* sc) {
+  glue_iota_list(sc);
+}
+
 void
 glue_for_community_edition (s7_scheme* sc) {
   glue_goldfish (sc);
@@ -918,6 +970,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_sys (sc);
   glue_liii_os (sc);
   glue_liii_path (sc);
+  glue_liii_list (sc);
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
 }
