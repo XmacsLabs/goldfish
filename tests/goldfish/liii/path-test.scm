@@ -139,6 +139,34 @@
 (check ((path) :get-type) => 'posix)
 (check ((path) :get-parts) => #("."))
 
+#|
+path@of-drive
+根据驱动器字母构造 Windows 盘符根路径。
+
+语法
+----
+(path :of-drive drive-letter)
+
+参数
+----
+drive-letter : char
+    驱动器字母（A-Z，大小写不敏感，但应加 #\ 前缀）。
+
+返回值
+-----
+string
+    格式化后的盘符根路径（字母大写 + :\\ 后缀）。
+
+错误
+----
+type-error
+    若 drive-letter 不是 char 类型或无法被大写化（非英文字母）。
+
+|#
+
+;; Example of type-error
+(check-catch 'type-error (path :of-drive 1 :to-string))
+
 (check (path :of-drive #\D :to-string) => "D:\\")
 (check (path :of-drive #\d :to-string) => "D:\\")
 
