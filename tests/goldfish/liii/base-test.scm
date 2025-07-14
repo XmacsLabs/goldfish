@@ -786,119 +786,128 @@ boolean?
 
 (check-catch 'type-error (min 1+2i 2))
 
+#|
++
+计算所有给定数字的和。
+
+语法
+----
+(+ num ...)
+
+参数
+----
+num : number?
+    任意个数字。
+
+返回值
+------
+number?
+    如果没有参数，返回加法单位元 0
+    否则，返回其所有参数的和
+
+错误
+----
+wrong-type-arg
+    如果存在任何参数不是数字，抛出错误。
+
+|#
+
+(check (+) => 0)
+(check (+ 1) => 1)
 (check (+ 1 2) => 3)
-(check (- 2 1) => 1)
+(check (+ 1 2 3) => 6)
+(check (+ 1 2 3 4) => 10)
 
-(check (< (abs(- 3.3 (+ 1.1 2.2))) 1e-15) => #t)
-(check (< (abs(- 1.08 (- 2.2 1.12))) 1e-15) => #t)
-
+(check (+ 1.5 2.5) => 4.0)
 (check (+ 0.1 0.2) => 0.30000000000000004)
+(check (< (abs (- 3.3 (+ 1.1 2.2))) 1e-15) => #t)
 
+(check (+ 1/2 1/2) => 1)
 (check (+ 1/3 1/2) => 5/6)
-(check (- 2/3 1/3) => 1/3)
+(check (+ 1/3 1/4 1/5) => 47/60)
 
 (check (+ 1+i 2+2i) => 3.0+3.0i)
-(check (- 2+2i 1+i) => 1.0+1.0i)
 (check (+ 3+2i 4-3i) => 7.0-1.0i)
+(check (+ 1+i 1) => 2.0+1.0i)
+(check (+ 1+i 1/2) => 1.5+1.0i)
 
 (check (+ +inf.0 0.7) => +inf.0)
 (check (+ -inf.0 7) => -inf.0)
 (check (+ +inf.0 1+i) => +inf.0+1.0i)
+(check (nan? (+ +nan.0 1)) => #t)
+(check (nan? (+ +inf.0 -inf.0)) => #t)
+
+(check (+ 1.0e308 1.0e308) => +inf.0)
+(check (+ -1.0e308 -1.0e308) => -inf.0)
+(check (+ #x7fffffffffffffff 1) => #x8000000000000000)
+
+(check-catch 'wrong-type-arg (+ 'hello 7))
+(check-catch 'wrong-type-arg (+ "world" 7))
+(check-catch 'wrong-type-arg (+ #t 7))
+(check-catch 'wrong-type-arg (+ '(1 3 5) 7))
+(check-catch 'unbound-variable (+ 1+i 2i))
+
+#|
+-
+计算所有给定数字的差。
+
+语法
+----
+(- num ...)
+
+参数
+----
+num : number?
+    一个或多个数字。
+
+返回值
+------
+number?
+    如果只有一个参数，返回其加法逆元（相反数）
+    如果有多个参数，返回其所有参数左结合的差
+
+错误
+----
+wrong-type-arg
+    如果存在任何参数不是数字，抛出错误。
+wrong-number-of-args
+    如果没有提供参数，抛出错误。
+
+|#
+
+(check (- 5) => -5)
+(check (- 2 1) => 1)
+(check (- 7 2 1) => 4)
+(check (- 10 1 2 3) => 4)
+
+(check (- 1.5 0.5) => 1.0)
+(check (< (abs(- 2.7 (- 6.98 2.5 1.78))) 1e-15) => #t)
+
+(check (- 2/3 1/3) => 1/3)
+(check (- 1/2 1/5 1/7) => 11/70)
+(check (- 1 1/3) => 2/3)
+
+(check (- 2+2i 1+i) => 1.0+1.0i)
+(check (- 2+i 1) => 1.0+1.0i)
+(check (- 1+i 1/2) => 0.5+1.0i)
+(check (- 3+4i 0+2i 1+i) => 2.0+1.0i)
+
 (check (- -inf.0 1) => -inf.0)
 (check (- +inf.0 1) => +inf.0)
 (check (- +inf.0 1+i) => +inf.0-1.0i)
 (check (- 1 +inf.0) => -inf.0)
 (check (- 1 -inf.0) => +inf.0)
-(check (- 1+i -inf.0) => +inf.0+1.0i)
-
-(check (nan? (+ +nan.0 1)) => #t)
-(check (nan? (- +nan.0 0.5)) => #t)
-(check (nan? (+ +nan.0 1+i)) => #t)
-(check (+ 1 2 3) => 6)
-(check (- 7 2 1) => 4)
-
-(check (< (abs(- 12.7 (+ 1.2 6.7 4.8))) 1e-15) => #t)
-(check (< (abs(- 2.7 (- 6.98 2.5 1.78))) 1e-15) => #t)
-
-(check (+ 1/3 1/4 1/5) => 47/60)
-(check (- 1/2 1/5 1/7) => 11/70)
-
-(check (+ 1+2i 2+3i 3+4i) => 6.0+9.0i)
-(check (- 3+4i 0+2i 1+i) => 2.0+1.0i)
-
-(check (+ +inf.0 1 2) => +inf.0)
-(check (+ -inf.0 1 2) => -inf.0)
-(check (+ 1 2 -inf.0) => -inf.0)
-(check (- +inf.0 1 2) => +inf.0)
-(check (- -inf.0 1 2) => -inf.0)
-(check (- 1 2 -inf.0) => +inf.0)
-
-(check (nan? (+ 1 2 +nan.0)) => #t)
-(check (nan? (- 1 2 -nan.0)) => #t)
-(check (< (abs(- 5.0 (+ 4 1.0))) 1e-15) => #t)
-(check (+ 1 1/3) => 4/3)
-(check (< (abs(- 1.5 (+ 1.0 1/2))) 1e-15) => #t)
-(check (< (abs(- 5.5 (+ 4 1.0 1/2))) 1e-15) => #t)
-(check (+ 1+i 1) => 2.0+1.0i)
-(check (+ 1+i 1/2) => 1.5+1.0i)
-(check (and (< (abs (- (real-part (+ 1+1i 1.0)) 2.0)) 1e-10)(< (abs (- (imag-part (+ 1+1i 1.0)) 1.0)) 1e-10))=> #t)
-(check (< (abs(- 3.0 (- 4 1.0))) 1e-15) => #t)
-(check (- 1 1/3) => 2/3)
-(check (< (abs(- 0.5 (- 1.0 1/2))) 1e-15) => #t)
-(check (< (abs(- 2.5 (- 4 1.0 1/2))) 1e-15) => #t)
-(check (- 2+i 1) => 1.0+1.0i)
-(check (- 1+i 1/2) => 0.5+1.0i)
-(check (and (< (abs (- (real-part (- 2+1i 1+0.5i)) 1.0)) 1e-10)(< (abs (- (imag-part (- 2+1i 1+0.5i)) 0.5)) 1e-10)) => #t)
-
-(check (+ 3.0 2 +inf.0) => +inf.0)
-(check (+ 1/3 2 -inf.0) => -inf.0)
-(check (+ 1+i +inf.0) => +inf.0+1.0i)
-(check (- +inf.0 1/3 2.0) => +inf.0)
-(check (- -inf.0 3 2.0) => -inf.0)
-(check (- 1/3 -inf.0 2.0 4) => +inf.0)
 (check (- 1+i +inf.0) => -inf.0+1.0i)
-(check (- 1+i -inf.0) => +inf.0+1.0i)
+(check (nan? (- +nan.0 0.5)) => #t)
+(check (nan? (- 1 2 -nan.0)) => #t)
+(check (nan? (- +inf.0 +inf.0)) => #t)
 
-(check (nan? (+ 1 1.0 +nan.0)) => #t)
-(check (nan? (+ +inf.0 +nan.0)) => #t)
-(check (nan? (+ +inf.0 -inf.0 +nan.0)) => #t)
-(check (nan? (+ 1+i +nan.0)) => #t)
-(check (nan? (- 1 1.0 +nan.0)) => #t)
-(check (nan? (- +inf.0 +nan.0)) => #t)
-(check (nan? (- +inf.0 -inf.0 +nan.0)) => #t)
-(check (nan? (- 1+i +nan.0)) => #t)
-(check (< (abs(- 1 (- 1 4.9e-324))) 1e-323) => #t)
-(check (< (abs(- 1 (+ 1 4.9e-324))) 1e-323) => #t)
-
-(check (+ 1.0e308 1.0e308) => +inf.0)
-(check (+ -1.0e308 -1.0e308) => -inf.0)
-
-(check (<= (abs (- (+ 1.0 1e-16) 1.0000000000000001)) 1e-15) => #t)
-(check (<= (abs (- (- 1.0 1e-16) 1.0000000000000001)) 1e-15) => #t)
-(check (+ ) => 0)
-(check-catch 'wrong-number-of-args (- ))
-
-(check-catch 'wrong-type-arg (+ 'hello 7))
+(check-catch 'wrong-number-of-args (-))
 (check-catch 'wrong-type-arg (- 'hello 7))
-
-(check-catch 'wrong-type-arg (+ "world" 7))
 (check-catch 'wrong-type-arg (- "world" 7))
-
-(check-catch 'wrong-type-arg (+ #t 7))
-(check-catch 'wrong-type-arg (+ #f 7))
-(check-catch 'wrong-type-arg (- #t 7))
 (check-catch 'wrong-type-arg (- #f 7))
-
-(check-catch 'wrong-type-arg (+ '(1 3 5) 7))
-(check-catch 'wrong-type-arg (+ '() 7))
 (check-catch 'wrong-type-arg (- '(1 3 5) 7))
-(check-catch 'wrong-type-arg (- '() 7) )
-
-(check-catch 'unbound-variable (+ 1+i 2i))
 (check-catch 'unbound-variable (- 1+i 2i))
-
-(check (+ #x7fffffffffffffff 1) => #x8000000000000000)
-(check (- #x8000000000000000 1) => #x7fffffffffffffff)
 
 (check (* 0 0) => 0)
 (check (* 0 -1) => 0)
