@@ -27,6 +27,11 @@
         (s7-sqrt (inexact x))
       (s7-sqrt x)))
 
+(define (finite? x)
+  (and (number? x)
+       (not (infinite? x))
+       (not (nan? x))))
+
 ) ; end of begin
 ) ; end of define-library
 
