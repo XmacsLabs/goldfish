@@ -34,6 +34,8 @@
 #elif TB_CONFIG_OS_MACOSX
 #include <limits.h>
 #include <mach-o/dyld.h>
+#elif defined(__EMSCRIPTEN__)
+#include <limits.h>
 #else
 #include <linux/limits.h>
 #endif
@@ -42,7 +44,9 @@
 #include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
+#if !defined(__EMSCRIPTEN__)
 #include <wordexp.h>
+#endif
 #endif
 
 #define GOLDFISH_VERSION "17.11.17"
@@ -206,7 +210,6 @@ goldfish_exe () {
       return string (real_path);
     }
   }
-  return "";
 #elif TB_CONFIG_OS_LINUX
   char    buffer[GOLDFISH_PATH_MAXN];
   ssize_t len= readlink ("/proc/self/exe", buffer, sizeof (buffer) - 1);
@@ -214,8 +217,8 @@ goldfish_exe () {
     buffer[len]= '\0';
     return std::string (buffer);
   }
-  return "";
 #endif
+  return "";
 }
 
 static s7_pointer
@@ -278,6 +281,9 @@ f_os_call (s7_scheme* sc, s7_pointer args) {
 
 #if _MSC_VER
   ret= (int) std::system (cmd_c);
+#elif defined(__EMSCRIPTEN__)
+  tb_char_t* argv[] = {(tb_char_t*) cmd_c, tb_null};
+  ret = (int) tb_process_run (argv[0], (tb_char_t const**) argv, &attr);
 #else
   wordexp_t p;
   ret= wordexp (cmd_c, &p, 0);

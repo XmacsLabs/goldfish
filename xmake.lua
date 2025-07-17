@@ -5,7 +5,7 @@ set_allowedmodes("releasedbg", "release", "debug", "profile")
 add_rules("mode.releasedbg", "mode.release", "mode.debug", "mode.profile")
 
 -- plat
-set_allowedplats("linux", "macosx", "windows")
+set_allowedplats("linux", "macosx", "windows", "wasm")
 
 -- proj
 set_project("Goldfish Scheme")
@@ -30,11 +30,20 @@ else
     add_requires("tbox " .. TBOX_VERSION, {system=false, configs=tbox_configs})
 end
 
+if is_plat("wasm") then
+    add_requires("emscripten 3.1.55")
+    set_toolchains("emcc@emscripten")
+end
+
 target ("goldfish") do
     set_languages("c++11")
     set_targetdir("$(projectdir)/bin/")
     if is_plat("linux") then
         add_syslinks("stdc++")
+    end
+    if is_plat("wasm") then
+        -- preload goldfish stdlib in `bin/goldfish.data`
+        add_ldflags("--preload-file goldfish@/goldfish")
     end
     add_files ("src/goldfish.cpp")
     add_packages("s7")

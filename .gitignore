@@ -7,7 +7,7 @@
 build/
 bin/goldfish
 bin/goldfish_repl
-bin/goldfish.exe
+bin/goldfish.*
 bin/http
 bin/http.exe
 goldfish/**/*-test.scm
