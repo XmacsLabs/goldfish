@@ -1,10 +1,11 @@
 (import (liii range)
+        (liii rich-list)
         (scheme time))
 
 (((range 0 1000)
   :map
   (lambda (y)
-    (((range 0 10000) :map (lambda (x) (* x x)))
+    (((range 0 1000) :map (lambda (x) (* x x)))
      :filter (lambda (z) (zero? (modulo z 3)))
      :collect)))
  :collect)
@@ -17,7 +18,7 @@
   ((rich-list :range 0 1000 1)
    :map
    (lambda (y)
-      ((rich-list :range 0 10000 1)
+      ((rich-list :range 0 1000 1)
        :map (lambda (x) (* x x))
        :filter (lambda (z) (zero? (modulo z 3)))
        :collect))

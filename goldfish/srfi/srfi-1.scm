@@ -41,17 +41,6 @@
       a
       (cons a (apply cons* b))))
 
-; 0 clause BSD, from S7 repo stuff.scm
-(define* (iota count (start 0) (step 1))
-  (when (not (integer? count))
-    (type-error "iota: count must be an integer"))
-  (when (< count 0)
-    (value-error "iota: count must be non-negative but received ~d" count))
-  (do ((i count (- i 1))
-       (val (+ start (* (- count 1) step)) (- val step))
-       (result '() (cons val result)))
-      ((zero? i) result)))
-
 (define (proper-list? x)
   (let loop ((x x) (lag x))
     (if (pair? x)

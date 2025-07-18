@@ -916,7 +916,7 @@ glue_liii_datetime (s7_scheme* sc) {
   glue_date_now (sc);
 }
 
-// -------------------------------- iota-list --------------------------------
+// -------------------------------- iota --------------------------------
 static inline s7_pointer iota_list(s7_scheme *sc, s7_int count, s7_pointer start, s7_int step)
 {
   s7_pointer res = s7_nil(sc);
@@ -931,17 +931,21 @@ static inline s7_pointer iota_list(s7_scheme *sc, s7_int count, s7_pointer start
 static s7_pointer iota_list_p_ppp(s7_scheme *sc, s7_pointer count, s7_pointer start, s7_pointer step)
 {
   if (!s7_is_integer(count)) {
-    return s7_wrong_type_arg_error(sc, "iota-list", 1, count, "an integer");
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "iota: count must be an integer"), count));
   }
   if (!s7_is_integer(start)) {
-    return s7_wrong_type_arg_error(sc, "iota-list", 2, start, "an integer");
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "iota: start must be an integer"), start));
   }
   if (!s7_is_integer(step)) {
-    return s7_wrong_type_arg_error(sc, "iota-list", 3, step, "an integer");
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "iota: step must be an integer"), step));
   }
   s7_int cnt = s7_integer(count);
   if (cnt < 0) {
-    return s7_out_of_range_error(sc, "iota-list", 1, count, "count is negative");
+    return s7_error(sc, s7_make_symbol(sc, "value-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "iota: count is negative"), count));
   }
   s7_int st  = s7_integer(start);
   s7_int stp = s7_integer(step);
@@ -959,8 +963,8 @@ static s7_pointer g_iota_list(s7_scheme *sc, s7_pointer args)
 }
 
 inline void glue_iota_list(s7_scheme* sc) {
-  const char* name = "iota-list";
-  const char* desc = "(iota-list count [start [step]]) => list, returns a list of count elements starting from start (default 0) with step (default 1)";
+  const char* name = "iota";
+  const char* desc = "(iota count [start [step]]) => list, returns a list of count elements starting from start (default 0) with step (default 1)";
   s7_define_function(sc, name, g_iota_list, 1, 2, false, desc);
 }
 

@@ -66,7 +66,7 @@
           (let ((result-old (iota-old count start step))
                 (result-reverse (iota-reverse count start step))
                 (result-new (iota-new count start step))
-                (result-c (iota-list count start step)))
+                (result-c (iota count start step)))
             (if (and (equal? result-old result-reverse)
                      (equal? result-old result-new)
                      (equal? result-old result-c))
@@ -91,7 +91,7 @@
   (timing "新版本:\t\t" 
     (lambda () (repeat 1000 (lambda () (iota-new 1000)))))
   (timing "c版本:\t\t"
-    (lambda () (repeat 1000 (lambda () (iota-list 1000)))))
+    (lambda () (repeat 1000 (lambda () (iota 1000)))))
   
   (display "\n")
   
@@ -104,7 +104,7 @@
   (timing "新版本:\t\t" 
     (lambda () (repeat 100 (lambda () (iota-new 10000)))))
   (timing "c版本:\t\t"
-    (lambda () (repeat 100 (lambda () (iota-list 10000)))))
+    (lambda () (repeat 100 (lambda () (iota 10000)))))
   
   (display "\n")
   
@@ -117,7 +117,7 @@
   (timing "新版本:\t\t" 
     (lambda () (repeat 10 (lambda () (iota-new 100000)))))
   (timing "c版本:\t\t"
-    (lambda () (repeat 10 (lambda () (iota-list 100000)))))
+    (lambda () (repeat 10 (lambda () (iota 100000)))))
   
   (display "\n")
   
@@ -130,7 +130,7 @@
   (timing "新版本:\t\t" 
     (lambda () (repeat 200 (lambda () (iota-new 5000 10 3)))))
   (timing "c版本:\t\t"
-    (lambda () (repeat 200 (lambda () (iota-list 5000 10 3)))))
+    (lambda () (repeat 200 (lambda () (iota 5000 10 3)))))
 )
 
 ;;; 运行测试
