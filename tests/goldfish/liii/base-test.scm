@@ -1629,3 +1629,106 @@ wrong-type-arg
 (check (list->vector '(0 1 2 3)) => #(0 1 2 3))
 (check (list->vector '()) => #())
 
+#|
+open-input-string
+将一个字符串转换为输入端口
+
+语法
+----
+(open-input-string string)
+
+参数
+----
+string : string?
+    一个字符串对象
+
+返回值
+-----
+port
+    一个文本输入端口，该端口会从给定的字符串中读取字符。
+    注意：如果在端口使用期间修改了原始字符串，其行为是未定义的。
+
+|#
+
+;; eof on empty
+(let1 port (open-input-string "")
+  (check (eof-object? (read-char port)) => #t))
+
+;; read-char
+(let1 port (open-input-string "abc")
+  (check (read-char port) => #\a)
+  (check (read-char port) => #\b)
+  (check (read-char port) => #\c)
+  (check (eof-object? (read-char port)) => #t))
+
+;; read-char, Unicode (Not Support)
+(let1 port (open-input-string "λμ") ; #\x03bb #\x03bc
+  (check (read-char port) => #\xce)
+  (check (read-char port) => #\xbb)
+  (check (read-char port) => #\xce)
+  (check (read-char port) => #\xbc))
+
+;; read-string, Unicode
+(let1 port (open-input-string "λμ")
+  (check (read-string 2 port) => "λ")
+  (check (read-string 2 port) => "μ"))
+
+#|
+open-output-string
+创建一个字符串输出端口用于累积字符
+
+语法
+----
+(open-output-string)
+
+返回值
+-----
+port
+    返回一个新的文本输出端口，所有写入该端口的字符会被累积，
+    可通过 get-output-string 函数获取累积的字符串。
+
+|#
+
+;; empty
+(let1 port (open-output-string)
+  (check (get-output-string port) => ""))
+
+(let1 port (open-output-string)
+  (display "abc" port)
+  (check (get-output-string port) => "abc"))
+
+(let1 port (open-output-string)
+  (display "λμ" port)
+  (check (get-output-string port) => "λμ"))
+
+#|
+get-output-string
+获取输出端口累积的字符串
+
+语法
+----
+(get-output-string port)
+
+参数
+----
+port : port?
+    必须是由 open-output-string 创建的输出端口
+
+返回值
+-----
+string?
+    返回一个字符串，包含按输出顺序累积到端口的所有字符。
+    注意：如果修改返回的字符串，其行为是未定义的。
+
+错误
+----
+wrong-type-arg
+    如果 port 参数不是由 open-output-string 创建的端口，抛出错误。
+|#
+
+(let1 port (open-output-string)
+  (display "xyz" port)
+  (check (get-output-string port) => "xyz"))
+
+(let1 port (open-input-string "ERROR")
+  (check-catch 'wrong-type-arg (get-output-string port)))
