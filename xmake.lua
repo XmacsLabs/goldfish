@@ -19,7 +19,7 @@ option("tbox")
     set_values(false, true)
 option_end()
 
-local S7_VERSION = "20241230"
+local S7_VERSION = "20250721"
 add_requires("s7 "..S7_VERSION, {system=false})
 
 local TBOX_VERSION = "1.7.6"

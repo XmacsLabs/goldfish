@@ -290,6 +290,9 @@
 
 (check (filter even? '(-2 -1 0 1 2)) => '(-2 0 2))
 
+; 下面的代码如果使用旧版的S7 Scheme，会Crash
+(filter (lambda (x) #t) (make-list 100000 1))
+
 (check
   (partition symbol? '(one 2 3 four five 6))
   => (cons '(five four one) '(6 3 2)))

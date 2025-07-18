@@ -1,0 +1,12 @@
+use os
+
+trash --version
+
+if (os:exists .xmake) {
+    echo trash .xmake/
+    trash .xmake/
+}
+if (os:exists build) {
+    echo trash build
+    trash build
+}

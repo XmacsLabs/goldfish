@@ -27,7 +27,7 @@ package("s7")
     -- add_urls("https://github.com/XmacsLabs/s7.git")
     set_sourcedir(path.join(os.scriptdir(), "../../../../3rdparty/s7"))
 
-    add_versions("20241230", "20241230")
+    add_versions("20250721", "20250721")
 
     add_configs("gmp", {description = "enable gmp support", default = false, type = "boolean"})
 
