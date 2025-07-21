@@ -31,67 +31,67 @@
 
 (define-library (liii trie)
 
-(export make-trie
-        trie?
-        trie-insert!
-        trie-ref
-        trie-ref*
-        trie-value
-        trie->list)
-(import (srfi srfi-1)
-        (srfi srfi-2)
-        (srfi srfi-9)
-        (liii alist))
+  (export make-trie
+          trie?
+          trie-insert!
+          trie-ref
+          trie-ref*
+          trie-value
+          trie->list)
+  (import (srfi srfi-1)
+          (srfi srfi-2)
+          (srfi srfi-9)
+          (liii alist))
 
-(begin
-  (define-record-type :trie
-    (make-trie* children value)
-    trie?
-    (children trie-children trie-children-set!)
-    (value trie-value trie-value-set!))
+  (begin
+    (define-record-type :trie
+      (make-trie* children value)
+      trie?
+      (children trie-children trie-children-set!)
+      (value trie-value trie-value-set!))
 
-  (define (make-trie)
-    (make-trie* (list) (list)))
+    (define (make-trie)
+      (make-trie* (list) (list)))
 
-  (define (trie-ref* trie key)
-    (alist-ref/default (trie-children trie) key #f))
+    (define (trie-ref* trie key)
+      (alist-ref/default (trie-children trie) key #f))
 
-  (define* (trie-ref trie key (default #f))
-    (let loop ((node trie)
-             (key key))
-      (if (null? key)
-        (if (null? (trie-value node))
-          default
-          (car (trie-value node)))
-        (let ((child (trie-ref* node (car key))))
-          (if child
-            (loop child (cdr key))
-            default)))))
+    (define* (trie-ref trie key (default #f))
+      (let loop ((node trie)
+                 (key key))
+        (if (null? key)
+          (if (null? (trie-value node))
+            default
+            (car (trie-value node)))
+          (let ((child (trie-ref* node (car key))))
+            (if child
+              (loop child (cdr key))
+              default)))))
 
-  (define (add-child! trie key child)
-    (trie-children-set!
-      trie (alist-cons key child (trie-children trie))))
+    (define (add-child! trie key child)
+      (trie-children-set!
+        trie (alist-cons key child (trie-children trie))))
 
-  (define (trie-insert! trie key val)
-    (let loop ((node trie)
-             (key key))
-      (if (null? key)
-        (trie-value-set! node (list val))
-        (let* ((ckey (car key))
-               (child (or (trie-ref* node ckey)
-                          (let ((child (make-trie)))
-                            (add-child! node ckey child)
-                            child))))
-          (loop child (cdr key))))))
+    (define (trie-insert! trie key val)
+      (let loop ((node trie)
+                 (key key))
+        (if (null? key)
+          (trie-value-set! node (list val))
+          (let* ((ckey (car key))
+                 (child (or (trie-ref* node ckey)
+                            (let ((child (make-trie)))
+                              (add-child! node ckey child)
+                              child))))
+            (loop child (cdr key))))))
 
-  (define (trie->list trie)
-    (cons
-      (let loop ((trie trie))
-        (map (lambda (child)
-               (cons (car child)
-                     (trie->list (cdr child))))
-             (trie-children trie)))
-      (trie-value trie)))
+    (define (trie->list trie)
+      (cons
+        (let loop ((trie trie))
+          (map (lambda (child)
+                 (cons (car child)
+                       (trie->list (cdr child))))
+               (trie-children trie)))
+        (trie-value trie)))
 
-) ; end of begin
-) ; end of library
+    ) ; end of begin
+  ) ; end of library

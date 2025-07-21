@@ -82,13 +82,13 @@
            (lambda () (begin (display "hello")
                              (+ 1 2))))
     => 'value)
-) ; end of let1
+  ) ; end of let1
 
 (let1 ht (make-hash-table)
   (hash-table-set! ht 'k1 'v1 'k2 'v2)
   (check (ht 'k1) => 'v1)
   (check (ht 'k2) => 'v2)
-)
+  )
 
 (let1 ht (make-hash-table)
   (hash-table-update! ht 'key 'value)
@@ -100,7 +100,7 @@
   (hash-table-update! ht 'key3 'value3)
   (hash-table-update! ht 'key4 'value4)
   (check (hash-table-delete! ht 'key1 'key2 'key3) => 3)
-)
+  )
 
 (let1 ht (make-hash-table)
   (hash-table-update! ht 'key 'value)
@@ -165,10 +165,10 @@
   (hash-table-set! ht 'c 3)
 
   (check (hash-table-find
-        (lambda (k v) (= v 2))
-        ht
-        (lambda () 'not-found))
-       => 2))
+           (lambda (k v) (= v 2))
+           ht
+           (lambda () 'not-found))
+    => 2))
 
 (let ((ht (make-hash-table)))
   (hash-table-set! ht 'a 1)
@@ -201,7 +201,7 @@
           (lambda (k v) (eq? k 'd))
           ht
           'not-found)
-        => 'not-found))
+    => 'not-found))
 
 (let ((empty-ht (make-hash-table)))
   (check (hash-table-find

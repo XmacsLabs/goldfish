@@ -89,10 +89,10 @@
   (hash-table-set! ht 'b #t)
   (let1 s (hash-set ht)
     (check (s :remove! 'a) => (let1 new-ht (make-hash-table)
-                              (hash-table-set! new-ht 'b #t)
-                              (hash-set new-ht)))
+                                (hash-table-set! new-ht 'b #t)
+                                (hash-set new-ht)))
     (check (s :remove! 'b) => (let1 new-ht (make-hash-table)
-                              (hash-set new-ht)))))
+                                (hash-set new-ht)))))
 
 (let1 ht (make-hash-table)
   (hash-table-set! ht 'a #t)

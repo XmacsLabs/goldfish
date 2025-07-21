@@ -81,7 +81,7 @@
     => #t))
 
 (when (or (os-macos?) (os-linux?))
-    ;; 测试 remove
+  ;; 测试 remove
   (let ((test-file (string-append (os-temp-dir) "/test_remove.txt")))
     ;; 创建临时文件
     (with-output-to-file test-file

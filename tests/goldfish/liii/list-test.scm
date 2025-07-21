@@ -224,8 +224,8 @@
 
 (check
   (fold-right (lambda (x count) (if (symbol? x) (+ count 1) count))
-        0
-        '(a b 1 2 3 4))
+    0
+    '(a b 1 2 3 4))
   =>
   2)
 
@@ -255,8 +255,8 @@
 
 (check
   (reduce-right (lambda (x count) (if (symbol? x) (+ count 1) count))
-        0
-        '(a b 1 2 3 4))
+    0
+    '(a b 1 2 3 4))
   => 6)
 
 (let* ((proc (lambda (x) (list x (* x 2))))

@@ -1,2 +1,5 @@
 #!/bin/bash
 clang-format-16 -i src/*
+
+node ./node_modules/parindent/cli.js  'tests/**/*.scm' --write
+node ./node_modules/parindent/cli.js  'goldfish/**/*.scm' --write

@@ -34,12 +34,12 @@
     (define add (@ + (* a 2) _))  
     (set! a 100)
     (add 5))
-=> 25)
+  => 25)
 
 (let ((x 5))
   (check 
     ((@ cons (+ x 1) _) 'y) 
-   => (cons 6 'y)))
+    => (cons 6 'y)))
 
 (check (procedure? (@ list 1 2)) => #t)
 (check ((@ list 1 2)) => '(1 2))
@@ -76,12 +76,12 @@
 
 (check-catch 'syntax-error
   (eval
-  '(define-case-class internal-methods-conflict-test
-      ((name string?)
-       (test-name string?)
-       (age integer?))
-      (define (test-name str)
-        (string-append str " ")))))
+    '(define-case-class internal-methods-conflict-test
+       ((name string?)
+        (test-name string?)
+        (age integer?))
+       (define (test-name str)
+         (string-append str " ")))))
 
 (define-case-class person
   ((name string? "Bob")
@@ -115,7 +115,7 @@
     (string-append "I am " name " " (number->string age) " years old!"))
   (define (%greet x)
     (string-append "Hi " x ", " (%to-string)))
-)
+  )
 
 (let1 bob (jerson "Bob" 21)
   (check (bob :to-string) => "I am Bob 21 years old!")
@@ -128,7 +128,7 @@
 
   (define (%set-name! x)
     (set! name x))
-)
+  )
 
 (let1 p (anonymous)
   (p :set-name! "Alice")
@@ -155,7 +155,7 @@
              (if x (r :set-true!) (r :set-false!)))
             (else (r :set-false!)))
       r))
-)
+  )
 
 (check-true ((my-bool 'true) :true?))
 (check-true ((my-bool 'false) :false?))
@@ -171,7 +171,7 @@
   
   (define (%this-is-a-instance-method)
     (test-case-class (string-append name "instance")))
-)
+  )
 
 (let1 hello (test-case-class "hello ")
   (check-catch 'value-error (hello :this-is-a-static-method))
@@ -223,7 +223,7 @@
 (define-object string-utils
   (define (@concat x y)
     (string-append x y))
-)
+  )
 
 (check (string-utils :concat "a" "b") => "ab")
 
@@ -231,12 +231,12 @@
   (define x 0)
   (define (@concat x y) 
     (string-append x y))
-)
+  )
 
 (define-object object2
   (define y 0)
   (define (@return-object1) object1)
-)
+  )
 
 (check ((object2 :return-object1) :concat "a" "b") => "ab")
 
@@ -270,7 +270,7 @@
   ;; 测试类型检查
   (check-catch 'type-error (p1 :set-name! 123))
   (check-catch 'type-error (p1 :set-age! "invalid"))
-)
+  )
 
 (check-false (case-class? (lambda (x) x)))
 (check-false (case-class? +))
@@ -280,7 +280,7 @@
   (check-true (case-class? bob))
   (check-false (case-class? +))
   (check-false (case-class? 42))
-)
+  )
 
 (check (class=? (list 1 2) (list 1 2)) => #t)
 (check (class=? (box 10) 10) => #t)  
@@ -341,7 +341,7 @@
   :map (@ + _ 1)
   :filter even?
   :collect)
-  => '(102 104 106 108 110))
+ => '(102 104 106 108 110))
 
 (check ($ 42 :get) => 42)
 
@@ -611,17 +611,17 @@
   (check-catch 'out-of-range (str :char-at 10)))
 
 (let1 str ($ "Hello，世界")
-   (check (str 0) => ($ #\H))
-   (check (str 7) => (rich-char :from-string "#\\界")))
+  (check (str 0) => ($ #\H))
+  (check (str 7) => (rich-char :from-string "#\\界")))
 
 (let1 s ($ "你好世界HelloWord")
   (check ((s :find (@ _ :equals ($ "你" 0))) :get) 
-          => ($ "你" 0))
+    => ($ "你" 0))
   (check-true ((s :find (@ _ :equals ($ "师" 0))) :empty?)))
 
 (let1 s ($ "你好世界HelloWord")
   (check ((s :find-last (@ _ :equals ($ "你" 0))) :get) 
-          => ($ "你" 0))
+    => ($ "你" 0))
   (check-true ((s :find-last (@ _ :equals ($ "师" 0))) :empty?)))
 
 (check ($ "你好" :head) => ($ "你" 0))
@@ -636,14 +636,14 @@
 (check (rich-string :empty :last-option) => (none))
 
 (let1 str ($ "Hello，世界")
-   (check (str :slice 0 5) => ($ "Hello"))
-   (check (str :slice -10 5) => ($ "Hello"))
-   (check (str :slice 6 100) => ($ "世界"))
-   (check (str :slice 6 2) => ($ ""))
-   (check (str :slice -3 -2) => ($ ""))
-   (check (str :slice 100 101) => ($ ""))
-   (check (str :slice -1 100) => ($ "Hello，世界"))
-   (check (str :slice 0 5 :to-string) => "Hello"))
+  (check (str :slice 0 5) => ($ "Hello"))
+  (check (str :slice -10 5) => ($ "Hello"))
+  (check (str :slice 6 100) => ($ "世界"))
+  (check (str :slice 6 2) => ($ ""))
+  (check (str :slice -3 -2) => ($ ""))
+  (check (str :slice 100 101) => ($ ""))
+  (check (str :slice -1 100) => ($ "Hello，世界"))
+  (check (str :slice 0 5 :to-string) => "Hello"))
 
 (let1 str ($ "Hello，世界")
   (check (str :take -1) => "")
@@ -913,7 +913,7 @@
 
   (check (opt1 :get-or-else (lambda () 0)) => 42)
   (check (opt2 :get-or-else (lambda () 0)) => 0)
-)
+  )
 
 (check ((none) :get-or-else ($ 1)) => ($ 1))
 
@@ -922,7 +922,7 @@
   (check (opt2 :or-else (option 0)) => (option 0))
   (check (opt2 :or-else (option 0) :or-else (option 1)) => (option 0))
   (check-catch 'type-error (opt1 :or-else 0))
-)
+  )
 
 (check-true ((option "str") :equals (option "str")))
 
@@ -1056,7 +1056,7 @@
 (check (rich-list :concat ($ (list 1 2)) ($ (list 3 4))) => ($ (list 1 2 3 4)))
 (check (rich-list :concat (rich-list :range 1 4) ($ (list 3 4))) => ($ (list 1 2 3 3 4)))
 (check (rich-list :concat ($ (list 1)) ($ (list 2))
-           :collect) => (list 1 2))
+         :collect) => (list 1 2))
 (check (rich-list :concat (rich-list '(1)) (rich-list '(2)) :count) => 2)
 
 (let1 result (rich-list :fill 3 "a")
@@ -1121,7 +1121,7 @@
 
   ;; 空切片
   (check (lst :slice 2 2 :collect) => '())
-)
+  )
 
 (check-true ($ (list) :empty?))
 (check-false ($ '(1 2 3) :empty?))
@@ -1131,7 +1131,7 @@
 (let1 lst ($ '(1 2 3 4 5))
   (check (lst :forall (@ > _ 0)) => #t)
   (check (lst :forall (@ > _ 3)) => #f)
-)
+  )
 
 (check (rich-list :empty :forall (@ > _ 0)) => #t)
 
@@ -1157,7 +1157,7 @@
   (check (lst :take 3 :collect) => '(1 2 3))
   (check (lst :take 5 :collect) => '(1 2 3 4 5))
   (check (lst :take 10 :collect) => '(1 2 3 4 5))
-)
+  )
 
 (let ((lst (rich-list '(1 2 3 4 5))))
   (check (lst :drop -1 :collect) => '(1 2 3 4 5))
@@ -1165,7 +1165,7 @@
   (check (lst :drop 3 :collect) => '(4 5))
   (check (lst :drop 5 :collect) => '())
   (check (lst :drop 10 :collect) => '())
-)
+  )
 
 (let ((lst (rich-list '(1 2 3 4 5))))
   (check (lst :take-right -1 :collect) => '())
@@ -1173,7 +1173,7 @@
   (check (lst :take-right 3 :collect) => '(3 4 5))
   (check (lst :take-right 5 :collect) => '(1 2 3 4 5))
   (check (lst :take-right 10 :collect) => '(1 2 3 4 5))
-)
+  )
 
 (let ((lst (rich-list '(1 2 3 4 5))))
   (check (lst :drop-right -1 :collect) => '(1 2 3 4 5))
@@ -1181,7 +1181,7 @@
   (check (lst :drop-right 3 :collect) => '(1 2))
   (check (lst :drop-right 5 :collect) => '())
   (check (lst :drop-right 10 :collect) => '())
-)
+  )
 
 (check ((rich-list (list 1 2 3)) :count) => 3)
 (check ((rich-list (list 1 2 3)) :count (cut > <> 1)) => 2)
@@ -1199,11 +1199,11 @@
 
   (check (lst :fold-right 0 +) => 15)
   (check (lst :fold-right '() (lambda (x acc) (cons x acc))) => '(1 2 3 4 5))
-)
+  )
 
 (check ($ '(3 1 2 4 5)
         :sort-with (lambda (x y) (< x y)))
-    => ($ '(1 2 3 4 5)))
+  => ($ '(1 2 3 4 5)))
 
 (check ($ (list 1 3 4 2 5) :sort-with < :take 2) => (list 1 2))
 
@@ -1249,7 +1249,7 @@
 
 (let ((result ($ '("apple" "banana" "cat" "dog") :group-by (@ string-length _))))
   (check (result :collect) 
-          => (hash-table 3 '("cat" "dog") 5 '("apple") 6 '("banana"))))
+    => (hash-table 3 '("cat" "dog") 5 '("apple") 6 '("banana"))))
 
 ;; Single-argument sliding for rich-list
 (check ($ '() :sliding 2) => #())
@@ -1331,7 +1331,7 @@
   (check (xs :index-where even?) => 1)
   (check (xs :index-where (@ > _ 3)) => 3)
   (check (xs :index-where (@ > _ 5)) => #f)
-)
+  )
 
 (check ($ '(1 2 3) :max-by identity) => 3)
 (check ($ '((1) (3) (2)) :max-by car) => '(3))
@@ -1364,7 +1364,7 @@
   (check-catch 'type-error (l :make-string 123 "," "]"))
   (check-catch 'type-error (l :make-string "[" 123 "]"))
   (check-catch 'type-error (l :make-string "[" "," 123))
-)
+  )
 
 (check ($ (list "a" "b") :make-string) => "ab")
 (check ($ (list "a" "b") :make-string " ") => "a b")
@@ -1508,7 +1508,7 @@
   (check (vec :take 3 :collect) => #(1 2 3))
   (check (vec :take 5 :collect) => #(1 2 3 4 5))
   (check (vec :take 10 :collect) => #(1 2 3 4 5))
-)
+  )
 
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :take-right -1 :collect) => #())
@@ -1516,7 +1516,7 @@
   (check (vec :take-right 3 :collect) => #(3 4 5))
   (check (vec :take-right 5 :collect) => #(1 2 3 4 5))
   (check (vec :take-right 10 :collect) => #(1 2 3 4 5))
-)
+  )
 
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :drop -1 :collect) => #(1 2 3 4 5))
@@ -1524,7 +1524,7 @@
   (check (vec :drop 3 :collect) => #(4 5))
   (check (vec :drop 5 :collect) => #())
   (check (vec :drop 10 :collect) => #())
-)
+  )
 
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :drop-right -1 :collect) => #(1 2 3 4 5)) 
@@ -1532,7 +1532,7 @@
   (check (vec :drop-right 3 :collect) => #(1 2)) 
   (check (vec :drop-right 5 :collect) => #()) 
   (check (vec :drop-right 10 :collect) => #()) 
-)
+  )
 
 (let ((vec (array #(1 2 3 4 5))) (empty-vec ($ #())))
   (check (vec :drop-while (@ < _ 3) :collect) => #(3 4 5))
@@ -1540,7 +1540,7 @@
   (check (vec :drop-while (@ < _ 3) :drop 1 :collect) => #(4 5))
   (check (empty-vec :drop-while (@ < _ 3) :drop 1 :collect) => #())
   (check (vec :drop-while (@ < _ 100) :collect) => #())
-)
+  )
 
 (let ((vec (array #(1 2 3 4 5))))
   (check (vec :fold 0 +) => 15)
@@ -1548,7 +1548,7 @@
 
   (check (vec :fold-right 0 +) => 15)
   (check (vec :fold-right '() (lambda (x acc) (cons x acc))) => '(1 2 3 4 5))
-)
+  )
 
 (check ($ #() :count) => 0)
 (check ($ #() :count (@ > _ 2)) => 0)
@@ -1595,7 +1595,7 @@
 
 (let ((result ($ #("apple" "banana" "cat" "dog") :group-by (@ string-length _))))
   (check (result :collect) 
-          => (hash-table 3 #("cat" "dog") 5 #("apple") 6 #("banana"))))
+    => (hash-table 3 #("cat" "dog") 5 #("apple") 6 #("banana"))))
 
 (check ($ #() :sliding 2) => #())
 (check ($ #(1) :sliding 2) => #(#(1)))
@@ -1652,12 +1652,12 @@
 (check ($ #(5) :reduce *) => 5)         ; 单个元素直接返回
 (check-catch 'value-error ($ #() :reduce +)) ; 空向量应该报错
 (check ($ #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))
-       :map vector-length
-       :reduce +)
-=> 10)
+         :map vector-length
+         :reduce +)
+  => 10)
 (check ($ #(#(1 1) #(2 2) #(3 3) #(4 4) #(5 5))
-       :map identity  ; 保持子向量不变
-       :reduce vector-append)
+         :map identity  ; 保持子向量不变
+         :reduce vector-append)
        => #(1 1 2 2 3 3 4 4 5 5))
 
 (let ((vec (array #(1 2 3 4 5))))
@@ -1714,7 +1714,7 @@
   (check-catch 'type-error (v :make-string 123 "," "]"))
   (check-catch 'type-error (v :make-string "[" 123 "]"))
   (check-catch 'type-error (v :make-string "[" "," 123))
-)
+  )
 
 (check ($ #("a" "b" "c") :make-string) => "abc")
 
@@ -1769,43 +1769,43 @@
   (check-false (ht :contains 'd)))
 
 (let1 ht ($ (hash-table 'a 5 'b 8 'c 10 'd 12))
-    (check (ht :forall (lambda (k v) (> v 4)))         => #t)  
-    (check (ht :forall (lambda (k v) (< v 13)))        => #t)  
-    (check (ht :forall (lambda (k v) (even? v)))       => #f)  
+  (check (ht :forall (lambda (k v) (> v 4)))         => #t)  
+  (check (ht :forall (lambda (k v) (< v 13)))        => #t)  
+  (check (ht :forall (lambda (k v) (even? v)))       => #f)  
   
-    (check (ht :forall (lambda (k v)                 
-                    (and (symbol? k) (> v 4))))        => #t)  
+  (check (ht :forall (lambda (k v)                 
+                       (and (symbol? k) (> v 4))))        => #t)  
 
-    (check (ht :forall (lambda (k v)                 
-                    (symbol? k)))                      => #t)  
+  (check (ht :forall (lambda (k v)                 
+                       (symbol? k)))                      => #t)  
   
-    (check (ht :forall (lambda (k v) (eq? k v)))       => #f)  
-)
+  (check (ht :forall (lambda (k v) (eq? k v)))       => #f)  
+  )
 
 (let1 ht-empty ($ (hash-table))
-    (check (ht-empty :forall (lambda (k v) (string? v))) => #t)
-)
+  (check (ht-empty :forall (lambda (k v) (string? v))) => #t)
+  )
 
 (let1 ht-mixed ($ (hash-table 'id 10 'score 85 3.14 "pi"))
-    (check (ht-mixed :forall (lambda (k v) (number? v))) => #f) 
-    (check (ht-mixed :forall (lambda (k v) (and (integer? v) (even? v)))) => #f) 
-)
+  (check (ht-mixed :forall (lambda (k v) (number? v))) => #f) 
+  (check (ht-mixed :forall (lambda (k v) (and (integer? v) (even? v)))) => #f) 
+  )
 
 (let1 ht-fail ($ (hash-table 'valid 42 'invalid "string"))
-    (check (ht-fail :forall (lambda (k v) (number? v)))    => #f) 
+  (check (ht-fail :forall (lambda (k v) (number? v)))    => #f) 
 
-    (check (ht-fail :forall (lambda (k v) 
-                         (and (symbol? k) (number? v) (positive? v)))) => #f)
-)
+  (check (ht-fail :forall (lambda (k v) 
+                            (and (symbol? k) (number? v) (positive? v)))) => #f)
+  )
 
 ;; nested hash table test
 (let1 ht-nested ($ (hash-table 
                     'a ($ (hash-table 'x 10)) 
                     'b ($ (hash-table 'y 20))))
   (check (ht-nested :forall 
-                   (lambda (k sub-ht) 
-                     (sub-ht :forall (lambda (k v) (> v 9))))) => #t)
-)
+           (lambda (k sub-ht) 
+             (sub-ht :forall (lambda (k v) (> v 9))))) => #t)
+  )
 
 (let ((ht ($ (hash-table 'a 1 'b "2" 'c 3))))
   (check (ht :exists (lambda (k v) (string? v))) => #t))
@@ -1830,21 +1830,21 @@
 (check (ht :count (lambda(k v) (and (number? v) (odd? v)))) => 2)
 
 (let  ((ht ($ (hash-table 'x 10 'y 20 'z 30 'new 40)))     
-      (sum 0))                                  
+       (sum 0))                                  
   (ht :for-each (lambda (k v) 
-               (set! sum (+ sum v))))             
+                  (set! sum (+ sum v))))             
   (check sum => 100)                             
-)
+  )
 
 ;; Empty hash table
 (let ((ht ($ (make-hash-table)))                      
       (call-counter 0))                          
   
   (ht :for-each (lambda (k v) 
-               (set! call-counter (+ call-counter 1))))
+                  (set! call-counter (+ call-counter 1))))
   
   (check call-counter => 0)                      
-)
+  )
 
 ;; Nested hash tables
 (let* ((inner ($ (hash-table 'x 100 'y 200)))      
@@ -1856,11 +1856,11 @@
       (if (case-class? v)
         (v  :for-each
             (lambda (k v)
-            (set! total (+ total v))))
+              (set! total (+ total v))))
         (set! total (+ total v)))))
   
   (check total => 342)                          
-)
+  )
 
 (let1 ht ($ (hash-table 'a 1 'b 2 'c 3))
   (let1 r (ht :filter (lambda (k v) (even? v)) :collect)

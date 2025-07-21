@@ -89,7 +89,7 @@
   (catch 'out-of-range
     (lambda () 
       (string-any 
-         char-alphabetic?
+        char-alphabetic?
         "01c345"
         2
         7))
@@ -101,10 +101,10 @@
   (catch 'out-of-range
     (lambda () 
       (string-any 
-         char-alphabetic?
+        char-alphabetic?
         "01c345"
-       2
-       1))
+        2
+        1))
     (lambda args #t))
   =>
   #t)

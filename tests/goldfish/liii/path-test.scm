@@ -150,17 +150,17 @@ path@of-drive
 参数
 ----
 drive-letter : char
-    驱动器字母（A-Z，大小写不敏感，但应加 #\ 前缀）。
+驱动器字母（A-Z，大小写不敏感，但应加 #\ 前缀）。
 
 返回值
 -----
 string
-    格式化后的盘符根路径（字母大写 + :\\ 后缀）。
+格式化后的盘符根路径（字母大写 + :\\ 后缀）。
 
 错误
 ----
 type-error
-    若 drive-letter 不是 char 类型或无法被大写化（非英文字母）。
+若 drive-letter 不是 char 类型或无法被大写化（非英文字母）。
 
 |#
 
@@ -246,9 +246,9 @@ path%dir?
 语法
 ----
 (path :from-parts string-vector :dir?) ; 通过字符串数组显式构造路径对象
-    示例：(path :from-parts #("/" "tmp" "log")) ; ⇒ /tmp/log
+示例：(path :from-parts #("/" "tmp" "log")) ; ⇒ /tmp/log
 (path :/ segment1 segment2 ...) ; 构建 Unix 风格绝对路径
-    示例：(path :/ "tmp" "app.log") ; ⇒ /tmp/app.log
+示例：(path :/ "tmp" "app.log") ; ⇒ /tmp/app.log
 
 参数
 ----
@@ -257,8 +257,8 @@ path%dir?
 返回值
 -----
 boolean
-    #t: 路径存在且为目录
-    #f: 路径不存在或不是目录
+#t: 路径存在且为目录
+#f: 路径不存在或不是目录
 
 错误
 ----
@@ -386,7 +386,7 @@ boolean
   (check (path "a\\b" :parent :to-string) => "a\\"))
 
 (when (or (os-macos?) (os-linux?))
-    ;; 测试删除文件
+  ;; 测试删除文件
   (let ((test-file (string-append (os-temp-dir) "/test_delete.txt")))
     ;; 创建临时文件
     (with-output-to-file test-file

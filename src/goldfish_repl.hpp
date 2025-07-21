@@ -151,7 +151,7 @@ interactive_repl (s7_scheme* sc, const string& mode) {
 #else
   // Fallback simple REPL for platforms without readline
   cout << "Basic input mode - readline not available." << endl;
-  
+
   while (true) {
     // Display prompt
     if (in_expression) {
@@ -229,9 +229,9 @@ interactive_repl (s7_scheme* sc, const string& mode) {
 extern "C" {
 #endif
 
-int eval_string(const char* code);
-const char* get_out();
-const char* get_err();
+int         eval_string (const char* code);
+const char* get_out ();
+const char* get_err ();
 
 #ifdef __cplusplus
 }

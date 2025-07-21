@@ -28,24 +28,24 @@ datetime@leap?
 参数
 ----
 year:integer
-    待判断的年份。
+待判断的年份。
 
 返回值
 -----
 boolean
-    新的日期时间对象。
+新的日期时间对象。
 
 错误
 ----
 type-error
-    若 year 不是整数，则引发类型错误。
+若 year 不是整数，则引发类型错误。
 
 额外信息
 ----
 闰年判定规则
-    能被 4 整除但不能被 100 整除 → 闰年（如 2024）
-    能被 400 整除 → 闰年（如 2000）
-    其他情况 → 非闰年（如 2025, 1000）
+能被 4 整除但不能被 100 整除 → 闰年（如 2024）
+能被 400 整除 → 闰年（如 2000）
+其他情况 → 非闰年（如 2025, 1000）
 
 |#
 
@@ -74,13 +74,13 @@ datetime@now
 返回值
 -----
 返回一个表示当前日期时间的对象，该对象支持以下字段查询：
-    'year         : 年份 (>= 2023)
-    'mouth        : 月份 (1-12)
-    'day          : 日期 (1-31)
-    'hour         : 小时 (0-23)
-    'minute       : 分钟 (0-59)
-    'second       : 秒   (0-59)
-    'micro-second : 微秒 (0-999999)
+'year         : 年份 (>= 2023)
+'mouth        : 月份 (1-12)
+'day          : 日期 (1-31)
+'hour         : 小时 (0-23)
+'minute       : 分钟 (0-59)
+'second       : 秒   (0-59)
+'micro-second : 微秒 (0-999999)
 
 错误
 ----
@@ -110,8 +110,8 @@ datetime@now
 #|
 datetime%to-string
 将 datetime 对象格式化为标准字符串表示。
-    当微秒为0时，返回 "YYYY-MM-DD HH:MM:SS"，
-    当微秒非0时，返回 "YYYY-MM-DD HH:MM:SS.MMMMMM" （6位微秒）。
+当微秒为0时，返回 "YYYY-MM-DD HH:MM:SS"，
+当微秒非0时，返回 "YYYY-MM-DD HH:MM:SS.MMMMMM" （6位微秒）。
 
 语法
 ----
@@ -124,9 +124,9 @@ datetime%to-string
 返回值
 -----
 返回日期时间字符串：
-    日期部分：年-月-日
-    时间部分：时:分:秒
-    微秒部分：.6位微秒数（不足6位补零）
+日期部分：年-月-日
+时间部分：时:分:秒
+微秒部分：.6位微秒数（不足6位补零）
 
 错误
 ----
@@ -166,17 +166,17 @@ datetime%plus-days
 参数
 ----
 days:integer
-    整数，表示要增加的天数（正数）或减少的天数（负数）。
+整数，表示要增加的天数（正数）或减少的天数（负数）。
 
 返回值
 -----
 datetime
-    新的日期时间对象。
+新的日期时间对象。
 
 错误
 ----
 type-error
-    若 days 不是整数，则引发类型错误。
+若 days 不是整数，则引发类型错误。
 
 额外信息
 ----
@@ -240,10 +240,10 @@ days=0 时返回原日期副本
 
 ;; Test preserving time components
 (let ((dt (datetime :year 2024 :month 1 :day 1 
-                   :hour 12 :minute 30 :second 45 :micro-second 123456)))
+            :hour 12 :minute 30 :second 45 :micro-second 123456)))
   (check (dt :plus-days 10) 
     => (datetime :year 2024 :month 1 :day 11 
-                :hour 12 :minute 30 :second 45 :micro-second 123456)))
+         :hour 12 :minute 30 :second 45 :micro-second 123456)))
 
 #|
 datetime%plus-months
@@ -256,17 +256,17 @@ datetime%plus-months
 参数
 ----
 months:integer
-    整数，表示要增加的月数（正数）或减少的月数（负数）。
+整数，表示要增加的月数（正数）或减少的月数（负数）。
 
 返回值
 -----
 datetime
-	新的日期时间对象。
+新的日期时间对象。
 
 错误
 ----
 type-error
-	若 months 不是整数，则引发类型错误。
+若 months 不是整数，则引发类型错误。
 
 额外信息
 ----
@@ -329,10 +329,10 @@ months=0 时返回原日期副本
 
 ;; Test preserving time components
 (let ((dt (datetime :year 2024 :month 1 :day 15 
-                   :hour 12 :minute 30 :second 45 :micro-second 123456)))
+            :hour 12 :minute 30 :second 45 :micro-second 123456)))
   (check (dt :plus-months 1) 
     => (datetime :year 2024 :month 2 :day 15 
-                :hour 12 :minute 30 :second 45 :micro-second 123456)))
+         :hour 12 :minute 30 :second 45 :micro-second 123456)))
 
 #|
 datetime%plus-years
@@ -345,17 +345,17 @@ datetime%plus-years
 参数
 ----
 years:integer
-    整数，表示要增加的年（正数）或减少的年（负数）。
+整数，表示要增加的年（正数）或减少的年（负数）。
 
 返回值
 -----
 datetime
-    新的日期时间对象。
+新的日期时间对象。
 
 错误
 ----
 type-error
-    若 years 不是整数，则引发类型错误。
+若 years 不是整数，则引发类型错误。
 
 额外信息
 ----
@@ -397,10 +397,10 @@ years=0 时返回原日期副本。
 
 ;; Test preserving time components
 (let ((dt (datetime :year 2024 :month 1 :day 15 
-                   :hour 12 :minute 30 :second 45 :micro-second 123456)))
+            :hour 12 :minute 30 :second 45 :micro-second 123456)))
   (check (dt :plus-years 1) 
     => (datetime :year 2025 :month 1 :day 15 
-                :hour 12 :minute 30 :second 45 :micro-second 123456)))
+         :hour 12 :minute 30 :second 45 :micro-second 123456)))
 
 (check-true (> ((date :now) 'year) 2023))
 
