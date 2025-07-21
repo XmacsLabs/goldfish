@@ -607,6 +607,31 @@ boolean?
 (check-catch 'wrong-type-arg (zero? #t))
 (check-catch 'wrong-type-arg (zero? #f))
 
+#|
+positive?
+判断一个对象是否是正数。
+
+语法
+----
+(positive? obj)
+
+参数
+----
+obj : any
+    任意类型的对象。
+
+返回值
+-----
+boolean?
+    如果 obj 是实数类型，当其为正数时返回 #t，否则返回 #f。
+
+错误
+----
+wrong-type-arg
+    如果参数不是实数类型（包括复数和非数值类型）
+
+|#
+
 (check-true (positive? 1))
 (check-true (positive? 0.1))
 (check-true (positive? 1/2))
