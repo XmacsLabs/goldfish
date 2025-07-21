@@ -618,7 +618,7 @@ positive?
 参数
 ----
 obj : any
-任意类型的对象。
+实数。
 
 返回值
 -----
@@ -651,6 +651,32 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (positive? "not-a-number"))
 (check-catch 'wrong-type-arg (positive? 'symbol))
 (check-catch 'wrong-type-arg (positive? '(1 2 3)))
+
+#|
+negative?
+判断一个对象是否是负数。
+
+语法
+----
+(negative? obj)
+
+参数
+----
+obj : real?
+实数。
+
+返回值
+-----
+boolean?
+如果 obj 是实数类型，当其为负数时返回 #t，否则返回 #f。
+
+错误
+----
+wrong-type-arg
+如果参数不是实数类型（包括复数和非数值类型）
+
+|#
+
 
 (check-true (negative? -1))
 (check-true (negative? -0.1))
