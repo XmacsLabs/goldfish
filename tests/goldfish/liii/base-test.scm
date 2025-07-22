@@ -698,6 +698,31 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (negative? 'symbol))
 (check-catch 'wrong-type-arg (negative? '(1 2 3)))
 
+#|
+odd?
+判断一个整数是否是奇数。
+
+语法
+----
+(odd? obj)
+
+参数
+----
+obj : integer?
+整数。
+
+返回值
+-----
+boolean?
+如果 obj 是整数类型，当其为奇数时返回 #t，否则返回 #f。
+
+错误
+----
+wrong-type-arg
+如果参数不是整数类型
+
+|#
+
 (check-true (odd? 1))
 (check-false (odd? 0))
 
@@ -707,6 +732,31 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (odd? #\A))
 (check-catch 'wrong-type-arg (odd? #t))
 (check-catch 'wrong-type-arg (odd? #f))
+
+#|
+even?
+判断一个整数是否是偶数。
+
+语法
+----
+(even? obj)
+
+参数
+----
+obj : integer?
+整数。
+
+返回值
+-----
+boolean?
+如果 obj 是整数类型，当其为偶数时返回 #t，否则返回 #f。
+
+错误
+----
+wrong-type-arg
+如果参数不是整数类型
+
+|#
 
 (check-true (even? 0))
 (check-false (even? 1))
