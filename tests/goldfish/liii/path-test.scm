@@ -583,7 +583,41 @@ boolean
   (check (path :home)
    =>    (path :/ (getenv "HOMEDRIVE") :/ "Users" :/ (getenv "USERNAME"))))
 
-;; 测试 path@temp-dir 方法
+#|
+path@tempdir
+构造指向系统临时目录的 path 对象。
+
+语法
+----
+(path :temp-dir)
+
+描述
+----
+该函数返回一个指向操作系统临时目录的 path 对象。
+
+在不同平台上表现：
+- **Unix/Linux/macOS**: 通常为 `/tmp`
+- **Windows**: 通常为 `C:\Users\[用户名]\AppData\Local\Temp`
+
+返回值
+-----
+**path对象**
+指向系统临时目录的 path 对象，可作为其他路径操作的基础进行链式调用。
+
+特性
+---
+- 返回的 path 对象总是指向存在的目录
+- 跨平台兼容性良好
+- 可以进行链式操作
+
+注意事项
+------
+- 返回的 path 对象始终指向有效目录，不需要检查目录存在性
+- 在不同的操作系统会话中，系统临时目录可能会发生变化
+- path对象是可变的，但临时目录路径通常保持不变
+|#
+
+;; 测试 path@tempdir 方法（path:temp-dir）
 (let1 temp-path (path :temp-dir)
   ;; 验证返回的是 path 对象
   (check-true (path :is-type-of temp-path))
@@ -600,7 +634,34 @@ boolean
     (check-true (string-starts? (temp-path :to-string) "C:\\")))
 
   (when (or (os-linux?) (os-macos?))
-    (check-true (string-starts? (temp-path :to-string) "/"))))
+    (check-true (string-starts? (temp-path :to-string) "/")))
+
+  ;; 验证可以进行文件操作
+  (let ((test-file (temp-path :/ "path_temp_dir_test.txt")))
+    ;; 确保文件不存在
+    (when (test-file :exists?)
+      (test-file :unlink))
+    
+    ;; 测试创建文件
+    (test-file :write-text "test content")
+    (check-true (test-file :exists?))
+    (check (test-file :read-text) => "test content")
+    
+    ;; 清理
+    (test-file :unlink))
+
+  ;; 验证临时目录内部路径构造正确
+  (let ((subdir (temp-path :/ "test_sub_directory")))
+    ;; 验证路径构造
+    (when (or (os-linux?) (os-macos?))
+      (check (subdir :to-string) => (string-append (os-temp-dir) "/test_sub_directory")))
+    
+    (when (os-windows?)
+      (check (subdir :to-string) => (string-append (os-temp-dir) "\\test_sub_directory"))))
+  
+  ;; 验证相对路径操作  
+  (let ((rel-path (path "relative")))
+    (check-false (rel-path :absolute?))))
 
 ;; 测试可以基于临时目录创建文件
 (let ((temp-file (path :temp-dir :/ "test_file.txt")))
