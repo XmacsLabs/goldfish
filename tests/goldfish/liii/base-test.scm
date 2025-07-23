@@ -1784,8 +1784,6 @@ wrong-number-of-args
 (check (add3 1 2 3) => 6)
 (check-catch 'type-error (add3 1.2 2 3))
 
-(check-report)
-
 (check (make-list 3 #\a) => (list #\a #\a #\a))
 (check (make-list 3) => (list #f #f #f))
 
