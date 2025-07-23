@@ -674,13 +674,6 @@ boolean
   ;; 特殊目录（需存在）
   (check-true (path :from-parts #("C:" "Windows" "System32") :dir?)))
 
-(check-false ((path) :absolute?))
-(check (path :/ "C:" :get-type) => 'windows)
-(check (path :/ "C:" :get-parts) => #())
-(check-true (path :/ "C:" :absolute?))
-(check-true (path :from-parts #("/" "tmp") :absolute?))
-(check-false (path :from-parts #("tmp") :absolute?))
-
 (when (or (os-linux?) (os-macos?))
   (check-true (path :/ "tmp" :exists?)))
 
@@ -1203,6 +1196,162 @@ integer
   
   ;; 清理
   (temp-file :unlink))
+
+#|
+path%absolute?
+判断路径是否为绝对路径。
+
+语法
+----
+(path-instance :absolute?) → boolean
+
+返回值
+-----
+boolean
+- #t : 路径是绝对路径
+- #f : 路径是相对路径
+
+描述
+----
+`path%absolute?` 用于判断当前 `path` 对象所表示的路径是否为绝对路径。
+
+绝对路径定义
+----------
+
+**Unix/Linux/macOS**：
+- 以斜杠 `/` 开头的路径为绝对路径
+- 示例：`/home/user/file.txt`、`/etc/passwd`
+
+**Windows**：
+- 以驱动器字母加冒号和反斜杠开头的路径为绝对路径
+- 示例：`C:\Users\user\file.txt`、`D:\data\test.txt`
+- 示例：`C:/Users/user/file.txt`（正斜杠也支持）
+
+相对路径特征
+----------
+
+**Unix/Linux/macOS**：
+- 不以 `/` 开头的路径
+- 示例：`file.txt`、`./subdir/file.txt`、`../parent/file.txt`
+
+**Windows**：
+- 不以驱动器字母加冒号开头的路径
+- 示例：`file.txt`、`subdir\file.txt`、`..\parent\file.txt`
+
+跨平台行为
+----------
+
+该函数会自动识别平台类型并应用相应的绝对路径判断标准：
+- 在类Unix系统上：只检查是否以 `/` 开头
+- 在Windows系统上：检查是否包含有效的驱动器字母格式
+
+错误处理
+------
+该函数不会抛出错误，对于任何有效的 `path` 对象都会返回明确的布尔值结果。
+
+相关函数
+--------
+- `path%relative?` : 判断是否为相对路径（`path%absolute?` 的逻辑取反）
+- `path@cwd` : 获取当前工作目录的绝对路径
+- `path@home` : 获取用户主目录的绝对路径
+
+使用注意事项
+------------
+1. 空路径对象（`path`）返回 `#f`（相对路径）
+2. 路径字符串中的大小写不影响绝对路径判断
+3. 路径可以是真实存在也可以是虚拟的，不影响绝对性判断
+4. Windows系统中的网络路径（如 `\\server\share`）被视为相对路径
+|#
+
+;; 基本绝对路径测试
+(check-false ((path) :absolute?))              ; 空路径是相对路径
+(check-true ((path :/ "file.txt") :absolute?)) ; Unix/Linux风格绝对路径
+(check-true ((path :/ "/tmp") :absolute?))      ; 根目录路径
+
+;; Windows风格绝对路径测试
+(check-true ((path :of-drive #\C) :absolute?)) ; C盘根目录
+(check-true ((path :of-drive #\C :/ "Users") :absolute?)) ; Windows完整路径
+(check-true ((path :of-drive #\c :/ "data") :absolute?)) ; 小写驱动器字母也支持
+
+;; Unix/Linux/macOS风格绝对路径测试
+(when (or (os-linux?) (os-macos?))
+  (check-true ((path :/ "etc") :absolute?))
+  (check-true ((path :/ "usr" :/ "bin") :absolute?))
+  (check-true ((path :/ "home" :/ "user" :/ "documents") :absolute?))
+  (check-true ((path :/ "") :absolute?)) ; 根目录本身是绝对的
+  (check-true ((path :/ ".") :absolute?))) ; "当前目录" 形式的绝对路径
+
+;; Windows风格绝对路径（在Windows系统上测试）
+(when (os-windows?)
+  (check-true ((path "C:\\Windows") :absolute?))
+  (check-true ((path "D:\\data\\file.txt") :absolute?))
+  (check-true ((path "C:\\Program Files") :absolute?))
+  (check-true ((path :of-drive #\Z :/ "projects") :absolute?)))
+
+;; 相对路径测试
+(check-false ((path :./ "file.txt") :absolute?))        ; 当前目录相对路径
+(check-false ((path :./ "dir" :/ "file.txt") :absolute?)) ; 多级相对路径
+(check-false ((path "relative.txt") :absolute?))        ; 默认相对路径
+(check-false ((path "subdir" :/ "file.txt") :absolute?)) ; 子目录中的文件
+
+;; 上级目录路径测试
+(check-false ((path ".." :/ "file.txt") :absolute?))     ; 上级目录相对路径
+(check-false ((path :./ ".." :/ "parent") :absolute?))  ; 复杂的相对路径
+
+;; 空路径和各种边界情况测试
+(check-false ((path "") :absolute?))                    ; 空字符串路径
+(let ((empty-path (path)))          ; 创建空path对象
+  (check-false (empty-path :absolute?)))
+
+;; 路径嵌套中的绝对路径测试
+(when (or (os-linux?) (os-macos?))
+  (check-true ((path :/ "tmp" :/ "subdir") :absolute?))
+  (check-true ((path :/ "var" :/ "log" :/ "syslog") :absolute?)))
+
+;; 绝对路径链式操作验证
+(when (or (os-linux?) (os-macos?))
+  (let ((abs-path (path :/ "usr" :/ "local" :/ "bin")))
+    (check-true (abs-path :absolute?))
+    (check-true ((abs-path :parent) :absolute?)))) ; 绝对路径的父目录也是绝对
+
+;; Windows相对路径测试
+(when (os-windows?)
+  (check-false ((path "file.txt") :absolute?))
+  (check-false ((path "subdir\\file.txt") :absolute?))
+  (check-false ((path "..\\parent\\file.txt") :absolute?)))
+
+;; 跨平台路径构建测试
+(let ((user-path (path :home :/ "documents" :/ "file.txt")))
+  (check-true (user-path :absolute?))) ; home目录产生的路径是绝对的
+
+;; 从环境中获取的路径测试
+(when (or (os-linux?) (os-macos?))
+  (let ((env-path (path :from-env "HOME")))
+    (check-true (env-path :absolute?))))
+
+(when (os-windows?)
+  (let ((env-path (path :from-env "USERPROFILE")))
+    (check-true (env-path :absolute?))))
+
+;; 临时目录测试
+(let ((temp-file (path :temp-dir :/ "test_file.txt")))
+  (check-true (temp-file :absolute?))) ; 临时目录产生的路径也是绝对的
+
+;; 绝对路径与相对路径的对比测试
+(let ((abs-path ((path :home) :to-string))
+      (rel-path "file.txt"))
+  ;; 通过字符串验证绝对性
+  (when (or (os-linux?) (os-macos?))
+    (check-true (string-starts? abs-path "/")))
+  
+  (check-false (string-starts? rel-path "/")))
+
+(check-false ((path) :absolute?))
+(check (path :/ "C:" :get-type) => 'windows)
+(check (path :/ "C:" :get-parts) => #())
+(check-true (path :/ "C:" :absolute?))
+(check-true (path :from-parts #("/" "tmp") :absolute?))
+(check-false (path :from-parts #("tmp") :absolute?))
 
 (check-report)
 
