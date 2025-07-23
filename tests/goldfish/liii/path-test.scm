@@ -377,6 +377,55 @@ type-error
 (when (os-windows?)
   (check (path :from-env "USERPROFILE" :to-string) => (path :home :to-string)))
 
+#|
+path%name
+获取路径的最终文件或目录名称部分。
+
+语法
+----
+(path-instance :name)
+
+参数
+----
+无
+
+返回值
+-----
+string
+返回路径的最终名称部分，即从最后一个路径分隔符到末尾的部分。
+
+描述
+----
+`path%name` 提取路径中的最终名称部分，忽略前面的所有路径层级。这个名称可以是文件名或最后一个目录名。
+
+行为特征
+------
+- 返回路径中的最终名称（文件名或目录名）
+- 处理空路径、当前目录 "."、上级目录 ".." 等特殊情况
+- 对于以 "." 结尾的路径返回空字符串
+- 保留完整文件名，包括所有后缀
+- 跨平台兼容 Windows、Unix/Linux/macOS 的路径规则
+
+特殊情况
+------
+- "" 空路径 → 返回空字符串
+- "." 当前目录 → 返回空字符串  
+- ".." 上级目录 → 返回 ".."
+- 以"/"结尾的路径 → 返回空字符串
+- 多级路径 → 返回最后一级的完整名称
+
+跨平台行为
+---------
+- Unix/Linux/macOS: 以 `/` 作为路径分隔符
+- Windows: 以 `\` 或 `/` 作为路径分隔符
+- 返回结果格式一致，不受平台影响
+
+相关函数
+--------
+- path%stem: 获取去除后缀的文件名
+- path%suffix: 获取文件扩展名
+|#
+
 (check (path "file.txt" :name) => "file.txt")
 (check (path "archive.tar.gz" :name) => "archive.tar.gz") 
 (check (path ".hidden" :name) => ".hidden") 
