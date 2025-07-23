@@ -19,7 +19,6 @@ if files_response.status_code != 200:
     exit(1)
 
 files = [f["filename"] for f in files_response.json()]
-print(f"📂 该 PR 修改了 {len(files)} 个文件")
 
 # 判断是否包含文档修改，并收集文档文件
 doc_files = [
@@ -33,7 +32,16 @@ if pr_info_response.status_code != 200:
     print("❌ 获取 PR 信息失败:", pr_info_response.status_code, pr_info_response.text)
     exit(1)
 
-commit_sha = pr_info_response.json().get("head", {}).get("sha", "")
+# 通过分支名获取任务编号
+pr_info = pr_info_response.json() 
+commit_sha = pr_info.get("head", {}).get("sha", "")
+source_branch = pr_info.get("head",{}).get("ref","")
+parts = source_branch.split("/")
+if len(parts)>= 2:
+    pr_number = parts[1]
+else :
+    pr_number = "分支命名不规范"
+
 if not commit_sha:
     print("❌ 无法获取 commit SHA")
     exit(1)
@@ -42,6 +50,7 @@ if not commit_sha:
 if doc_files:
     message_lines = [
         "[CI 自动评论]",
+        f"任务:{pr_number}",
         f"📂 该 PR 修改了 {len(files)} 个文件",
         "该 PR 包含文档修改 ✅，相关文件如下："
     ]
@@ -50,9 +59,30 @@ if doc_files:
         message_lines.append(f"- [{f}]({link})")
     message = "\n".join(message_lines)
 else:
-    message = "[CI 自动评论]\nPR 提交成功 ✅（未发现文档修改）"
+    message_lines = [
+        "[CI 自动评论]",
+        f"任务:❌ {pr_number}",
+        "PR 提交成功 ✅（未发现文档修改）"
+    ]
+    message = "\n".join(message_lines)
 
-print("📝 准备发送评论内容：\n", message)
+
+# 获取所有评论
+existing_comments_url = f"{api_base}/comments?access_token={access_token}"
+comments_response = requests.get(existing_comments_url, headers=headers)
+comments = comments_response.json() if comments_response.status_code == 200 else []
+
+# 删除已有的 CI 自动评论
+ci_comments = [c for c in comments if "[CI 自动评论]" in c["body"]]
+for c in ci_comments:
+    comment_id = c["id"]
+    delete_url = f"https://gitee.com/api/v5/repos/{repo}/pulls/comments/{comment_id}?access_token={access_token}"
+    del_response = requests.delete(delete_url, headers=headers)
+    if del_response.status_code == 204:
+        print(f"🗑️ 已删除旧评论 ID: {comment_id}")
+    else:
+        print(f"⚠️ 删除评论失败 ID: {comment_id}, 状态码: {del_response.status_code}")
+
 
 # 发送评论
 comment_url = f"{api_base}/comments?access_token={access_token}"

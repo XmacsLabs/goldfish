@@ -25,7 +25,7 @@ stages:
         certificate: ''
         image: docker.1ms.run/amd64/debian:bookworm
         command:
-          - bash .workflow/ustc_debian822_setup.sh  
+          - bash .workflow/aliyun_debian822_setup.sh  
           - apt-get update
           - apt-get install -y python3 python3-requests
           - echo "开始执行 Python 自动评论脚本..."
