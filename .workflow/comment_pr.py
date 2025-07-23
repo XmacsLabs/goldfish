@@ -40,31 +40,51 @@ parts = source_branch.split("/")
 if len(parts)>= 2:
     pr_number = parts[1]
 else :
-    pr_number = "分支命名不规范"
+    pr_number = "Nan"
 
 if not commit_sha:
     print("❌ 无法获取 commit SHA")
     exit(1)
 
+
 # 构建评论内容
+file_name = f"{pr_number}.md"
+file_url = f"https://gitee.com/XmacsLabs/goldfish/blob/main/devel/{file_name}"
 if doc_files:
     message_lines = [
         "[CI 自动评论]",
-        f"任务:{pr_number}",
         f"📂 该 PR 修改了 {len(files)} 个文件",
         "该 PR 包含文档修改 ✅，相关文件如下："
     ]
+    flag = False
     for f in doc_files:
         link = f"https://gitee.com/{repo}/blob/{commit_sha}/{f}"
+        if f.endswith(file_name):
+            flag = True
         message_lines.append(f"- [{f}]({link})")
+    if pr_number == "Nan":
+        message_lines.append("⚠️  分支命名不规范")
+    elif flag != True :
+        message_lines.append("⚠️ 分支名和被修改的文档不匹配")
+    if len(doc_files) >1:
+        message_lines.apeend("⚠️ 注意此处修改了多个文档")
     message = "\n".join(message_lines)
 else:
     message_lines = [
         "[CI 自动评论]",
-        f"任务:❌ {pr_number}",
         "PR 提交成功 ✅（未发现文档修改）"
     ]
+    check_response = requests.get(file_url,headers=headers)
+    print(pr_number,file_url)
+    if pr_number == "Nan":
+        message_lines.append(f"❌分支命名不规范,以至于无法找到对应文件")
+    elif check_response.status_code == 200:
+        message_lines.append(f"对应文档:[{file_name}]({file_url})")
+    else :
+        message_lines.append("⚠️ 找不到对应的文档")
+
     message = "\n".join(message_lines)
+
 
 
 # 获取所有评论
