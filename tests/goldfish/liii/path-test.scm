@@ -26,36 +26,34 @@
 path-dir?
 判断给定路径是否为目录
 
-**函数签名**
+函数签名
+----
 (path-dir? path) → boolean
 
-**参数**
-path : string 类型的文件路径
+参数
+----
+path : 文件路径（string类型）
 
-**返回值**
-当路径存在且为目录时返回 #t
-当路径不存在或不是目录时返回 #f
+返回值
+----
+#t : 路径存在且为目录
+#f : 路径不存在或不是目录
 
-**特殊情况**
-* "" (空字符串) → #f
-* "." (当前目录) → #t（总是存在）
-* ".." (上级目录) → #t（总是存在）
+特殊情况
+----
+- "" 空字符串 → #f
+- "."  当前目录 → #t（总是存在）
+- ".." 上级目录 → #t（总是存在）
 
-**跨平台行为**
-* 在类Unix系统上，根目录 "/" 总是返回 #t
-* 在Windows系统上，驱动器根目录如 "C:\" 总是返回 #t
-* 路径区分大小写：类Unix系统区分大小写，Windows系统不区分
+跨平台行为
+----
+在类Unix系统上：根目录 "/" 总是返回 #t
+在Windows系统上：驱动器根目录如 "C:\" 总是返回 #t
+路径区分大小写：类Unix系统区分大小写，Windows系统不区分
 
-**示例**
-```scheme
-(path-dir? "/tmp") → #t      ; 当/tmp目录存在时
-(path-dir? "/no/such/dir") → #f ; 目录不存在
-(path-dir? "/etc/passwd") → #f  ; 虽然存在，但是文件不是目录
-(path-dir? ".") → #t          ; 当前目录总返回#t
-```
-
-**错误处理**
-该函数不会因为路径不存在而报错，而是返回 #f
+错误处理
+----
+不存在的路径返回 #f，不会报错
 |#
 
 ;; 基本功能测试
@@ -102,11 +100,123 @@ path : string 类型的文件路径
   (check (path-dir? "C:/WINDOWS") => #t)
   (check (path-dir? "c:/windows") => #t))
 
+#|
+path-file?
+判断给定路径是否为文件
+
+函数签名
+----
+(path-file? path) → boolean
+
+参数
+----
+path : 文件路径（string类型）
+
+返回值
+----
+#t : 路径存在且为文件
+#f : 路径不存在或不是文件
+
+特殊情况
+----
+- "" 空字符串 → #f
+- "."  当前目录 → #f（目录不是文件）
+- ".." 上级目录 → #f（目录不是文件）
+
+跨平台行为
+----
+在类Unix系统上：普通文件返回 #t
+在Windows系统上：遵循驱动器路径规则
+路径区分大小写：类Unix系统区分大小写，Windows系统不区分相关内容
+
+错误处理
+----
+不存在的路径返回 #f，不会报错
+
+相关函数
+----
+- path-dir? : 判断是否为目录
+- path-exists? : 判断路径是否存在
+|#
+
+;; 基本功能测试
 (check (path-file? ".") => #f)
 (check (path-file? "..") => #f)
 
-(when (os-linux?)
-  (check (path-file? "/etc/passwd") => #t))
+;; 边界情况测试
+(check (path-file? "") => #f)
+(check (path-file? "nonexistent") => #f)
+(check (path-file? "#\null") => #f)
+
+;; 文件测试（是文件）
+(when (or (os-linux?) (os-macos?))
+  (check (path-file? "/etc/passwd") => #t)
+  (check (path-file? "/etc/hosts") => #t)
+  (check (path-file? "/bin/ls") => #t))
+
+(when (os-windows?)
+  (check (path-file? "C:/Windows/System32/drivers/etc/hosts") => #t)
+  (check (path-file? "C:/Windows/win.ini") => #t))
+
+(when (not (os-windows?))
+  ;; 根目录测试（不是文件）
+  (check (path-file? "/") => #f)
+  ;; 常用目录测试（不是文件）
+  (check (path-file? "/tmp") => #f)
+  (check (path-file? "/etc") => #f)
+  (check (path-file? "/var") => #f)
+  ;; 不存在的文件测试
+  (check (path-file? "/no_such_file.txt") => #f)
+  (check (path-file? "/not/a/real/file") => #f)
+  ;; 相对路径测试
+  (check (path-file? (os-temp-dir)) => #f)) ; temp-dir是目录
+
+(when (os-windows?)
+  ;; 根目录测试
+  (check (path-file? "C:/") => #f)
+  (check (path-file? "D:/") => #f)
+  ;; 常用目录测试
+  (check (path-file? "C:/Windows") => #f)
+  (check (path-file? "C:/Program Files") => #f)
+  ;; 不存在的文件测试
+  (check (path-file? "C:/no_such_file.txt") => #f)
+  (check (path-file? "Z:/definitely/not/exist") => #f)
+  ;; 大小写测试
+  (check (path-file? "C:/WINDOWS/explorer.exe") => #t)
+  (check (path-file? "c:/windows/explorer.exe") => #t))
+
+;; 测试临时文件
+(let ((test-file (string-append (os-temp-dir) "/test_path_file.txt")))
+  ;; Ensure file doesn't exist initially
+  (when (file-exists? test-file)
+    (delete-file test-file))
+  
+  ;; 测试不存在的文件
+  (check (path-file? test-file) => #f)
+  
+  ;; 创建文件
+  (with-output-to-file test-file
+    (lambda () (display "test content for path-file?")))
+  
+  ;; 测试存在的文件
+  (check-true (path-file? test-file))
+  
+  ;; 清理
+  (delete-file test-file))
+
+;; 测试真实文件
+(when (or (os-linux?) (os-macos?))
+  (let ((real-file (string-append (os-temp-dir) "/real_file.txt")))
+    
+    ;; 创建真实文件
+    (with-output-to-file real-file
+      (lambda () (display "real content")))
+    
+    ;; 测试真实文件
+    (check (path-file? real-file) => #t)
+    
+    ;; 清理
+    (delete-file real-file)))
 
 (when (not (os-windows?))
   (check-true (> (path-getsize "/") 0))
