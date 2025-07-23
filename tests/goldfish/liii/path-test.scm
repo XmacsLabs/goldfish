@@ -278,15 +278,75 @@ type-error
 (when (or (os-macos?) (os-linux?))
   (check (path "/path/to/file.txt" :name) => "file.txt"))
 
+#|
+path%stem
+获取路径的stem（去掉最后一个后缀的文件名部分）。
+
+语法
+----
+(path-instance :stem)
+
+参数
+----
+无
+
+返回值
+-----
+string
+返回去掉最后一个后缀的文件名部分（stem）。
+
+描述
+----
+`path%stem` 提取文件名中去掉最后一个扩展名的部分。这在处理文件时非常有用，特别是需要获取"基本文件名"而不关心其扩展名的情况。
+
+行为特征
+------
+- 保留隐藏文件（以点开头）的完整名称
+- 只去掉最后一个扩展名（如 "archive.tar.gz" → "archive.tar"）
+- 无扩展名的文件返回原名
+- 正确处理特殊目录名称（"." 和 ".."）
+
+扩展名规则
+------
+1. 文件名包含点号时需考虑多种情况
+2. 以点开头的隐藏文件视为无扩展名
+3. 多个点号的情况，只识别最后一个点号之后的部分为扩展名
+
+错误处理
+------
+不返回错误，对于所有输入都会返回合理的字符串结果。
+
+跨平台行为
+---------
+路径分隔符和扩展名规则在所有平台上保持一致。
+|#
+
+;; 基本功能测试
 (check (path "file.txt" :stem) => "file")
-(check (path "archive.tar.gz" :stem) => "archive.tar")  ; 只去掉最后一个后缀
-(check (path ".hidden" :stem) => ".hidden")  ; 隐藏文件保留完整名称
-(check (path "noext" :stem) => "noext")  ; 无后缀名保留完整名称
-(check (path "" :stem) => "")  ; 空路径
-(check (path "." :stem) => "")  ; 当前目录
-(check (path ".." :stem) => "..")  ; 上级目录
+(check (path "archive.tar.gz" :stem) => "archive.tar")
+(check (path ".hidden" :stem) => ".hidden")
+(check (path "noext" :stem) => "noext")
+(check (path "" :stem) => "")
+(check (path "." :stem) => "")
+(check (path ".." :stem) => "..")
+
+;; 扩展的测试案例
+(check (path "script.bin.sh" :stem) => "script.bin")
+(check (path "image.jpeg" :stem) => "image")
+(check (path "README" :stem) => "README")
+(check (path "config.yaml.bak" :stem) => "config.yaml")
+(check (path "test-file.name-with-dots.txt" :stem) => "test-file.name-with-dots")
+
+;; 隐藏文件测试
+(check (path ".gitignore" :stem) => ".gitignore")
+(check (path ".bashrc" :stem) => ".bashrc")
+(check (path ".profile" :stem) => ".profile")
+
+;; 复杂路径测试
 (when (or (os-linux?) (os-macos?))
-  (check (path "/path/to/file.txt" :stem) => "file"))  
+  (check (path "/usr/bin/file.txt" :stem) => "file")
+  (check (path "/path/to/archive.tar.gz" :stem) => "archive.tar")
+  (check (path "/home/user/.hidden" :stem) => ".hidden"))  
 
 (check (path "file.txt" :suffix) => ".txt")
 (check (path "archive.tar.gz" :suffix) => ".gz")  ; 只保留最后一个后缀
