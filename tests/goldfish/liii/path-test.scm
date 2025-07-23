@@ -22,17 +22,85 @@
 
 (check-set-mode! 'report-failed)
 
+#|
+path-dir?
+判断给定路径是否为目录
+
+**函数签名**
+(path-dir? path) → boolean
+
+**参数**
+path : string 类型的文件路径
+
+**返回值**
+当路径存在且为目录时返回 #t
+当路径不存在或不是目录时返回 #f
+
+**特殊情况**
+* "" (空字符串) → #f
+* "." (当前目录) → #t（总是存在）
+* ".." (上级目录) → #t（总是存在）
+
+**跨平台行为**
+* 在类Unix系统上，根目录 "/" 总是返回 #t
+* 在Windows系统上，驱动器根目录如 "C:\" 总是返回 #t
+* 路径区分大小写：类Unix系统区分大小写，Windows系统不区分
+
+**示例**
+```scheme
+(path-dir? "/tmp") → #t      ; 当/tmp目录存在时
+(path-dir? "/no/such/dir") → #f ; 目录不存在
+(path-dir? "/etc/passwd") → #f  ; 虽然存在，但是文件不是目录
+(path-dir? ".") → #t          ; 当前目录总返回#t
+```
+
+**错误处理**
+该函数不会因为路径不存在而报错，而是返回 #f
+|#
+
+;; 基本功能测试
 (check (path-dir? ".") => #t)
 (check (path-dir? "..") => #t)
 
-(when (not (os-windows?))
-  (check (path-dir? "/") => #t)
-  (check (path-dir? "/tmp") => #t)
-  (check (path-dir? "/no_such_dir") => #f))
+;; 边界情况测试
+(check (path-dir? "") => #f)
+(check (path-dir? "nonexistent") => #f)
+(check (path-dir? "#\null") => #f)
+
+;; 文件测试（不是目录）
+(when (or (os-linux?) (os-macos?))
+  (check (path-dir? "/etc/passwd") => #f))
 
 (when (os-windows?)
+  (check (path-dir? "C:\\Windows\\System32\\drivers\\etc\\hosts") => #f))
+
+(when (not (os-windows?))
+  ;; 根目录测试
+  (check (path-dir? "/") => #t)
+  ;; 常用目录测试
+  (check (path-dir? "/tmp") => #t)
+  (check (path-dir? "/etc") => #t)
+  (check (path-dir? "/var") => #t)
+  ;; 不存在的目录测试
+  (check (path-dir? "/no_such_dir") => #f)
+  (check (path-dir? "/not/a/real/path") => #f)
+  ;; 相对路径测试
+  (check-true (path-dir? (os-temp-dir)))
+  )
+
+(when (os-windows?)
+  ;; 根目录测试
   (check (path-dir? "C:/") => #t)
-  (check (path-dir? "C:/no_such_dir/") => #f))
+  (check (path-dir? "D:/") => #t)
+  ;; 常用目录测试
+  (check (path-dir? "C:/Windows") => #t)
+  (check (path-dir? "C:/Program Files") => #t)
+  ;; 不存在的目录测试
+  (check (path-dir? "C:/no_such_dir/") => #f)
+  (check (path-dir? "Z:/definitely/not/exist") => #f)
+  ;; 大小写测试
+  (check (path-dir? "C:/WINDOWS") => #t)
+  (check (path-dir? "c:/windows") => #t))
 
 (check (path-file? ".") => #f)
 (check (path-file? "..") => #f)
