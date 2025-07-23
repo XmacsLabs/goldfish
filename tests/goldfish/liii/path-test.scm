@@ -562,12 +562,63 @@ string
 
 (check-true ((path "/tmp/test") :equals (path "/tmp/test")))
 
+#|
+path%file?
+判断路径所指向文件是否存在。
+
+语法
+----
+(path-instance :file?)
+
+参数
+----
+无显式参数（通过 path 对象隐式操作文件系统）。
+
+返回值
+-----
+boolean
+#t: 路径存在且为文件
+#f: 路径不存在或不是文件
+
+错误
+----
+无（不存在的路径返回 #f 而非报错）。
+
+示例
+----
+(path "file.txt" :file?)        ; 相对路径文件测试
+(path "/etc/hosts" :file?)      ; 绝对路径文件测试
+(path "/usr/bin" :file?)        ; 目录路径返回 #f
+
+|#
+
 (when (or (os-linux?) (os-macos?))
   (check-false (path :/ "tmp" :file?))
   (chdir "/tmp")
   (mkdir "tmpxxxx") 
   (check-false (path :from-parts #("/" "tmp" "/" "tmpxxxx") :file?))
   (rmdir "tmpxxxx"))
+
+(when (or (os-linux?) (os-macos?))
+  (check-false (path :/ "tmp" :file?))
+  (check-true (path :/ "etc" :/ "hosts" :file?))
+  (check-false (path :from-parts #("/" "tmpxxxx" "file.txt") :file?))
+  (chdir "/tmp")
+  (let ((test-file (path "test_path_file.txt")))
+    (test-file :write-text "test content")
+    (check-true (test-file :file?))
+    (test-file :unlink)))
+
+(when (os-windows?)
+  ;; 基本文件检测
+  (check-true (path :from-parts #("C:" "Windows" "win.ini") :file?))
+  (check-true (path :from-parts #("C:" "Windows" "System32" "drivers" "etc" "hosts") :file?))
+  
+  ;; 目录不是文件
+  (check-false (path :from-parts #("C:" "Windows") :file?))
+  
+  ;; 不存在的文件
+  (check-false (path :from-parts #("C:" "Windows" "InvalidFile.txt") :file?)))
 
 #|
 path%dir?
