@@ -663,6 +663,110 @@ path@tempdir
   (let ((rel-path (path "relative")))
     (check-false (rel-path :absolute?))))
 
+#|
+path-getsize
+获取文件或目录的大小（字节数）。
+
+语法
+----
+(path-getsize path)
+
+参数
+----
+path : string
+要获取大小的文件或目录路径。路径可以是绝对路径或相对路径。
+
+返回值
+-----
+integer
+返回文件或目录的大小（以字节为单位）。
+
+描述
+----
+`path-getsize` 用于获取指定文件或目录的字节大小。如果路径指向文件，则返回文件大小；如果指向目录，则返回目录本身的大小（通常很小）。
+
+行为特征
+------
+- 对于存在的文件，返回其真实字节大小
+- 对于目录，返回目录项元数据的大小（不是内容总大小）
+- 不能用于获取目录内所有文件的总大小
+- 跨平台行为一致
+
+错误处理
+------
+- 如果路径不存在，函数会抛出 `'file-not-found-error` 错误
+- 对于空文件返回 0 字节
+- 不会返回负值或无效结果
+
+跨平台行为
+----------
+- Unix/Linux/macOS 和 Windows 行为一致
+- 路径分隔符不影响结果
+- 支持 Unicode 文件名
+
+注意事项
+------
+- 结果始终为非负整数
+- 对于大文件可能返回大整数值
+- 目录大小指目录本身元数据大小，而非内容总大小
+|#
+
+;; 基本功能测试
+(check-true (> (path-getsize "/") 0))
+(check-true (> (path-getsize "/etc/hosts") 0))
+
+;; 路径对象方法测试
+(let ((temp-file (path :temp-dir :/ "test_getsize.txt")))
+  ;; 确保文件不存在
+  (when (temp-file :exists?)
+    (temp-file :unlink))
+  
+  ;; 测试空文件
+  (temp-file :write-text "")
+  (check (path-getsize (temp-file :to-string)) => 0)
+  
+  ;; 测试小文件
+  (temp-file :write-text "test")
+  (check (path-getsize (temp-file :to-string)) => 4)
+  
+  ;; 测试较大内容
+  (temp-file :write-text "hello world test content")
+  (check (path-getsize (temp-file :to-string)) => 24)
+  
+  ;; 测试中文内容
+  (temp-file :write-text "中文测试")
+  (check (path-getsize (temp-file :to-string)) => 12)
+  
+  ;; 清理
+  (temp-file :unlink))
+
+;; 测试文件不存在错误
+(check-catch 'file-not-found-error
+  (path-getsize "/nonexistent/path/file.txt"))
+
+;; 测试现有文件大小
+(when (or (os-linux?) (os-macos?))
+  (check-true (> (path-getsize "/etc/passwd") 0)))
+
+(when (os-windows?)
+  (check-true (> (path-getsize "C:\\Windows\\System32\\drivers\\etc\\hosts") 0)))
+
+;; 目录大小测试
+(when (or (os-linux?) (os-macos?))
+  (check-true (> (path-getsize "/tmp") 0)))
+
+;; 相对路径测试
+(let ((rel-file "test_rel.txt"))
+  (when (file-exists? rel-file)
+    (delete-file rel-file))
+  
+  (with-output-to-file rel-file
+    (lambda () (display "temporary file for testing")))
+  
+  (check (path-getsize rel-file) => 26)
+  
+  (delete-file rel-file))
+
 ;; 测试可以基于临时目录创建文件
 (let ((temp-file (path :temp-dir :/ "test_file.txt")))
   ;; 写入测试文件
