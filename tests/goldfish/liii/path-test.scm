@@ -881,27 +881,6 @@ boolean
   ;; 清理
   (p :unlink)
   (p-windows :unlink))
-(let1 test-file (string-append (os-temp-dir) (string (os-sep)) "test_touch.txt")
-  ;; Ensure file doesn't exist initially
-  (when (file-exists? test-file)
-    (delete-file test-file))
-  
-  ;; Test creating new file with path object
-  (let1 p (path test-file)
-    (check-false (p :exists?))
-    (check-true (p :touch))
-    (check-true (p :exists?)))
-  
-  ;; Clean up
-  (delete-file test-file))
-
-;; Test with very long path
-(let ((long-name (make-string 200 #\x))
-      (temp-dir (os-temp-dir)))
-  (let ((p (path temp-dir :/ long-name)))
-    (check-true (p :touch))
-    (check-true (p :exists?))
-    (p :unlink)))
 
 (when (not (os-windows?))
   (check (path :/ "etc" :/ "host" :to-string) => "/etc/host")
@@ -1518,5 +1497,269 @@ string
   (path-write-text file-path file-content)
   (check (path-read-text file-path) => file-content)
   (delete-file file-path))
+
+#|
+path%touch
+创建或更新时间戳文件。如果文件已存在则更新其修改和访问时间戳，如果文件不存在则创建一个空文件。
+
+语法
+----
+(path-instance :touch) → boolean
+
+返回值
+-----
+boolean
+返回 #t 表示操作成功完成。
+
+描述
+----
+`path%touch` 是 `path-touch` 的面向对象版本，用于创建空文件或更新现有文件的时间戳，与Unix/Linux的`touch`命令功能相同。
+
+行为特征
+------
+- **文件不存在时**：创建一个新的空文件
+- **文件已存在时**：更新文件的最后修改时间和访问时间
+- **目录路径**：同样支持，会更新目录的时间戳
+- **路径对象**：直接对路径对象进行操作，更加直观
+
+错误处理
+------
+- **权限错误**：如果无权限创建文件，会报错
+- **路径无效**：如果父目录不存在，可能报错
+- **磁盘空间**：磁盘空间不足时可能失败
+
+与path-touch的关系
+----------------
+`path%touch` 是 `path-touch` 的面向对象版本：
+- `(path-file :touch)` 等同 `(path-touch (path-file :to-string))`
+- 但使用面向对象的语法更加简洁直观
+
+跨平台行为
+---------
+- **Unix/Linux/macOS**：支持所有文件系统的时间戳操作
+- **Windows**：支持NTFS、FAT等文件系统的时间戳操作
+
+应用场景
+--------
+- 创建用于测试的空文件
+- 更新文件时间戳以触发重新编译
+- 确保文件存在以备后续写入
+- 与文件存在性检查配合使用
+
+注意事项
+--------
+1. 目标路径的父目录必须存在
+2. 对于大文件操作效率高，无需读取文件内容
+3. 创建的文件大小为0字节
+4. 对已存在文件不会修改其内容
+|#
+
+;; 基本文件创建测试
+(let ((temp-file (path :temp-dir :/ "test_touch_basic.txt")))
+  ;; 确保文件不存在
+  (when (temp-file :exists?)
+    (temp-file :unlink))
+  
+  ;; 测试创建新文件
+  (check-true (temp-file :touch))
+  (check-true (temp-file :exists?))
+  (check-true (temp-file :file?))
+  (check (temp-file :read-text) => "") ; 空文件
+  
+  ;; 清理
+  (temp-file :unlink))
+
+;; 测试更新现有文件时间戳
+(let ((temp-file (path :temp-dir :/ "test_touch_update.txt")))
+  ;; 确保文件不存在
+  (when (temp-file :exists?)
+    (temp-file :unlink))
+  
+  ;; 创建文件并写入内容
+  (temp-file :write-text "initial content")
+  (let ((original-content (temp-file :read-text)))
+    (let ((original-size (string-length original-content)))
+    
+    ;; 更新时间戳
+    (check-true (temp-file :touch))
+    
+    ;; 验证文件内容未改变
+    (check (temp-file :read-text) => "initial content")
+    (check (string-length (temp-file :read-text)) => original-size)
+    
+    ;; 验证文件仍然存在
+    (check-true (temp-file :exists?))
+    (check-true (temp-file :file?))))
+  
+  ;; 清理
+  (temp-file :unlink))
+
+;; 测试目录时间戳更新
+(let ((temp-dir (path :temp-dir :/ "test_touch_dir")))
+  ;; 确保目录存在
+  (when (not (temp-dir :exists?))
+    (mkdir (temp-dir :to-string)))
+  
+  ;; 测试更新目录时间戳
+  (check-true (temp-dir :touch))
+  (check-true (temp-dir :exists?))
+  (check-true (temp-dir :dir?))
+  
+  ;; 清理空目录
+  (when (temp-dir :exists?)
+    (rmdir (temp-dir :to-string))))
+
+;; 测试多级路径文件创建
+(let ((deep-file (path :temp-dir :/ "level1" :/ "level2" :/ "deep_touch.txt")))
+  ;; 确保父目录存在
+  (let ((parent-dir (path :temp-dir :/ "level1" :/ "level2"))
+        (grandparent-dir (path :temp-dir :/ "level1")))
+    (when (not (grandparent-dir :exists?))
+      (mkdir (grandparent-dir :to-string)))
+    (when (not (parent-dir :exists?))
+      (mkdir (parent-dir :to-string)))) ; 创建多级目录
+  
+  ;; 测试创建多级路径文件
+  (check-true (deep-file :touch))
+  (check-true (deep-file :exists?))
+  (check (deep-file :read-text) => "")
+  
+  ;; 清理多级目录和文件
+  (when (deep-file :exists?)
+    (deep-file :unlink))
+  (let ((dir1 (path :temp-dir :/ "level1" :/ "level2"))
+        (dir2 (path :temp-dir :/ "level1")))
+    (when (dir1 :exists?) (rmdir (dir1 :to-string)))
+    (when (dir2 :exists?) (rmdir (dir2 :to-string)))))
+
+;; 测试特殊文件名中的touch
+(let ((special-file (path :temp-dir :/ "test-file.name with spaces&special#.txt")))
+  ;; 确保文件不存在
+  (when (special-file :exists?)
+    (special-file :unlink))
+  
+  ;; 测试特殊文件名创建
+  (check-true (special-file :touch))
+  (check-true (special-file :exists?))
+  
+  ;; 清理
+  (special-file :unlink))
+
+;; 测试中文文件名创建
+(let ((chinese-file (path :temp-dir :/ "触摸测试.txt")))
+  ;; 确保文件不存在
+  (when (chinese-file :exists?)
+    (chinese-file :unlink))
+  
+  ;; 测试中文文件名创建
+  (check-true (chinese-file :touch))
+  (check-true (chinese-file :exists?))
+  
+  ;; 清理
+  (chinese-file :unlink))
+
+
+;; 测试相对路径touch
+(let ((rel-file (path :./ "test_relative_touch.txt")))
+  ;; 确保文件不存在
+  (when (rel-file :exists?)
+    (rel-file :unlink))
+  
+  ;; 测试相对路径创建
+  (check-true (rel-file :touch))
+  (check-true (rel-file :exists?))
+  
+  ;; 清理
+  (rel-file :unlink))
+
+;; 测试绝对路径创建
+(when (or (os-linux?) (os-macos?))
+  (let ((abs-file (path :/ "tmp" :/ "test_absolute_touch.txt")))
+    ;; 确保文件不存在
+    (when (abs-file :exists?)
+      (abs-file :unlink))
+    
+    ;; 测试绝对路径创建
+    (check-true (abs-file :touch))
+    (check-true (abs-file :exists?))
+    
+    ;; 清理
+    (abs-file :unlink)))
+
+;; 测试Windows绝对路径创建
+(when (os-windows?)
+  (let ((win-abs-file (path :of-drive #\T :/ "test_win_touch.txt")))
+    ;; 确保文件不存在
+    (when (win-abs-file :exists?)
+      (win-abs-file :unlink))
+    
+    ;; 测试Windows绝对路径创建
+    (check-true (win-abs-file :touch))
+    (check-true (win-abs-file :exists?))
+    
+    ;; 清理
+    (win-abs-file :unlink)))
+
+;; 测试重复touch同一文件
+(let ((repeat-file (path :temp-dir :/ "test_repeat_touch.txt")))
+  ;; 确保文件不存在
+  (when (repeat-file :exists?)
+    (repeat-file :unlink))
+  
+  ;; 多次执行touch
+  (check-true (repeat-file :touch))
+  (check-true (repeat-file :touch))
+  (check-true (repeat-file :touch))
+  (check-true (repeat-file :exists?))
+  (check (repeat-file :read-text) => "") ; 内容保持为空
+  
+  ;; 清理
+  (repeat-file :unlink))
+
+;; 测试touch与证明存在性结合
+(let ((exist-test-file (path :temp-dir :/ "test_exist_touch.txt")))
+  ;; 确保文件不存在
+  (when (exist-test-file :exists?)
+    (exist-test-file :unlink))
+  
+  ;; 初始状态检查
+  (check-false (exist-test-file :exists?))
+  
+  ;; 使用touch确保文件存在
+  (check-true (exist-test-file :touch))
+  (check-true (exist-test-file :exists?))
+  (check-true (exist-test-file :file?))
+  
+  ;; 写入内容
+  (exist-test-file :write-text "test content")
+  
+  ;; 再次touch不影响内容
+  (check-true (exist-test-file :touch))
+  (check (exist-test-file :read-text) => "test content")
+  
+  ;; 清理
+  (exist-test-file :unlink))
+
+(let1 test-file (string-append (os-temp-dir) (string (os-sep)) "test_touch.txt")
+  ;; Ensure file doesn't exist initially
+  (when (file-exists? test-file)
+    (delete-file test-file))
+  
+  ;; Test creating new file with path object
+  (let1 p (path test-file)
+    (check-false (p :exists?))
+    (check-true (p :touch))
+    (check-true (p :exists?)))
+  
+  ;; Clean up
+  (delete-file test-file))
+
+;; Test with very long path
+(let ((long-name (make-string 200 #\x))
+      (temp-dir (os-temp-dir)))
+  (let ((p (path temp-dir :/ long-name)))
+    (check-true (p :touch))
+    (check-true (p :exists?))
+    (p :unlink)))
 
 (check-report)
