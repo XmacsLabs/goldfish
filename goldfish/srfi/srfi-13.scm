@@ -86,9 +86,11 @@
             (if (null-list? l) "" (string-append delim ret)))
           (else (error 'value-error "invalid grammer")))))
 
+
     (define (string-null? str)
-      (and (string? str) 
-           ((lambda (x) (= x 0)) (string-length str))))
+      (if (not (string? str))
+          (error 'type-error "string-null?: expected string~%~S" str)
+          (zero? (string-length str))))
 
     (define (string-every char/pred? str . start+end)
       (define (string-every-sub pred? str)
