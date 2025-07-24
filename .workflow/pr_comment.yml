@@ -1,0 +1,56 @@
+version: '1.0'
+name: pr_comment
+displayName: pr_comment
+triggers:
+  trigger: auto
+  pr:
+    branches:
+      precise:
+        - main
+    paths:
+      precise:
+        - goldfish/
+        - tests/
+        - src/
+        - xmake/packages/
+        - xmake.lua
+        - .workflow/
+  push:
+    branches:
+      precise:
+        - main
+    paths:
+      precise:
+        - goldfish/
+        - tests/
+        - src/
+        - xmake/packages/
+        - xmake.lua
+        - .workflow/
+
+variables:
+  global:
+    - Comment_TOKEN
+
+stages:
+  - name: build_and_test
+    displayName: build_and_test
+    strategy: fast
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@gcc
+        name: build
+        displayName: Build and Test
+        gccVersion: '8.4'
+        commands:
+          - apt-get update
+          - apt-get install -y python3 python3-requests
+          - echo "开始执行 Python 自动评论脚本..."
+          - python3 .workflow/comment_pr.py
+        notify: []
+        strategy:
+          retry: '0'
+          stepTimeout: 15
+
+
