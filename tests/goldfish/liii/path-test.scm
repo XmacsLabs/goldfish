@@ -218,15 +218,6 @@ path : 文件路径（string类型）
     ;; 清理
     (delete-file real-file)))
 
-(when (not (os-windows?))
-  (check-true (> (path-getsize "/") 0))
-  (check-true (> (path-getsize "/etc/hosts") 0)))
-
-(when (os-windows?)
-  (check-true (> (path-getsize "C:") 0))
-  (check-true (> (path-getsize "C:/Windows") 0))
-  (check-true (> (path-getsize "C:\\Windows\\System32\\drivers\\etc\\hosts") 0)))
-
 ; Test for path-read-bytes
 (let ((file-name "binary-test.dat")
       (file-content "Hello, binary world!"))
@@ -308,6 +299,188 @@ path : 文件路径（string类型）
 
 (check ((path) :get-type) => 'posix)
 (check ((path) :get-parts) => #("."))
+
+#|
+path-touch
+创建或更新时间戳文件。如果文件已存在则更新其修改和访问时间戳，如果文件不存在则创建一个空文件。
+
+函数签名
+----
+(path-touch path) ⇒ boolean
+
+参数
+----
+path : string
+文件路径（可以是绝对路径或相对路径）
+
+返回值  
+-----
+boolean
+返回 #t 表示操作成功完成。
+
+描述
+----
+`path-touch` 用于创建空文件或更新现有文件的时间戳，与Unix/Linux的`touch`命令功能相同。
+
+行为特征
+------
+- **文件不存在时**：创建一个新的空文件
+- **文件已存在时**：更新文件的最后修改时间和访问时间
+- **目录路径**：同样支持，会更新目录的时间戳
+- **空文件创建**：创建的文件大小为0字节
+- **内容不变**：对已存在文件不会修改其内容，只是更新时间
+
+错误处理
+------
+- **权限错误**：如果无权限创建文件或写入目录，会抛出异常
+- **路径无效**：如果父目录不存在，可能抛出异常  
+- **磁盘空间**：磁盘空间不足时可能失败
+
+跨平台行为
+---------
+- **Unix/Linux/macOS**：支持所有文件系统的时间戳操作，需注意目录权限
+- **Windows**：支持NTFS、FAT等文件系统的时间戳操作，路径分隔符兼容
+
+应用场景
+--------
+- 创建用于测试的空文件
+- 更新时间戳以触发重新编译或执行某些操作
+- 确保文件存在以备后续写入操作
+- 创建日志文件或其他需要存在的基础文件
+
+注意事项
+--------
+1. 目标路径的父目录必须存在，否则可能创建失败
+2. 不需要关心文件权限问题，系统会自动使用默认权限
+3. 不能在只读挂载的目录上创建文件
+4. 支持批量操作，可以多次调用同一文件，不会报错
+
+与Unix touch命令对比
+-----------------
+`path-touch` 功能与Unix/Linux系统的`touch`命令类似：
+- 支持所有兼容平台上的时间戳操作
+- 不修改已存在文件的内容
+- 创建0字节的文件（和空文件一致）
+- 跨平台一致的行为表现
+
+示例
+----
+```scheme
+;; 创建新空文件
+(path-touch "newfile.txt")
+
+;; 更新已存在文件的时间戳  
+(path-touch "existing.txt")
+
+;; 创建目录中的文件
+(path-touch "logs/app.log")
+
+;; 使用时间戳更新作为条件操作
+(when (not (file-exists? "temp.txt"))
+  (path-touch "temp.txt"))
+```
+
+与 path%touch 的区别
+-------------------
+- `path-touch` 是函数版本，直接操作字符串路径
+- `path%touch` 是方法版本，通过路径对象链式调用
+- 功能上完全等价，只是使用方式不同
+|#
+
+;; 基本功能测试：创建新文件
+(let ((test-file (string-append (os-temp-dir) (string (os-sep)) "test_path_touch_basic.txt")))
+  ;; 确保文件不存在
+  (when (file-exists? test-file)
+    (delete-file test-file))
+  
+  ;; 测试创建新文件
+  (check (path-touch test-file) => #t)
+  (check (file-exists? test-file) => #t)
+  (check (path-file? test-file) => #t)
+  (check (path-getsize test-file) => 0) ; 空文件
+  
+  ;; 清理
+  (delete-file test-file))
+
+;; 测试更新现有文件时间戳
+(let ((test-file (string-append (os-temp-dir) (string (os-sep)) "test_path_touch_update.txt")))
+  ;; 确保文件不存在
+  (when (file-exists? test-file)
+    (delete-file test-file))
+  
+  ;; 创建文件并写入内容
+  (path-write-text test-file "test content")
+  (let ((original-size (path-getsize test-file)))
+    
+    ;; 更新时间戳（不应改变内容）
+    (check (path-touch test-file) => #t)
+    
+    ;; 验证文件内容未改变
+    (check (path-read-text test-file) => "test content")
+    (check (path-getsize test-file) => original-size)
+    
+    ;; 验证文件仍然存在
+    (check (path-exists? test-file) => #t))
+  
+  ;; 清理
+  (delete-file test-file))
+
+;; 测试目录时间戳更新
+(let ((test-dir (string-append (os-temp-dir) (string (os-sep)) "test_path_touch_dir")))
+  ;; 确保目录存在
+  (when (not (file-exists? test-dir))
+    (mkdir test-dir))
+  
+  ;; 测试更新目录时间戳
+  (check (path-touch test-dir) => #t)
+  (check (path-exists? test-dir) => #t)
+  (check (path-dir? test-dir) => #t)
+  
+  ;; 清理
+  (rmdir test-dir))
+
+;; 测试特殊文件名支持
+(let ((special-file (string-append (os-temp-dir) (string (os-sep)) "path-touch-special_中文#.txt")))
+  ;; 确保文件不存在
+  (when (file-exists? special-file)
+    (delete-file special-file))
+  
+  ;; 测试特殊文件名创建
+  (check (path-touch special-file) => #t)
+  (check (file-exists? special-file) => #t)
+  
+  ;; 清理
+  (delete-file special-file))
+
+;; 测试相对路径创建
+(let ((relative-file "./test_relative_path_touch.txt"))
+  ;; 确保文件不存在
+  (when (file-exists? relative-file)
+    (delete-file relative-file))
+  
+  ;; 测试相对路径创建
+  (check (path-touch relative-file) => #t)
+  (check (file-exists? relative-file) => #t)
+  
+  ;; 清理
+  (delete-file relative-file))
+
+;; 测试重复调用行为
+(let ((repeat-file (string-append (os-temp-dir) (string (os-sep)) "test_repeat_path_touch.txt")))
+  ;; 确保文件不存在
+  (when (file-exists? repeat-file)
+    (delete-file repeat-file))
+  
+  ;; 多次调用不应导致错误
+  (check (path-touch repeat-file) => #t)
+  (check (path-touch repeat-file) => #t)
+  (check (path-touch repeat-file) => #t)
+  (check (file-exists? repeat-file) => #t)
+  (check (path-getsize repeat-file) => 0)
+  
+  ;; 清理
+  (delete-file repeat-file))
+
 
 #|
 path@of-drive
@@ -971,6 +1144,7 @@ boolean
 (when (os-windows?)
   (check (path :home)
    =>    (path :/ (getenv "HOMEDRIVE") :/ "Users" :/ (getenv "USERNAME"))))
+
 
 #|
 path@tempdir
@@ -1761,5 +1935,16 @@ boolean
     (check-true (p :touch))
     (check-true (p :exists?))
     (p :unlink)))
+
+
+(when (not (os-windows?))
+  (check-true (> (path-getsize "/") 0))
+  (check-true (> (path-getsize "/etc/hosts") 0)))
+
+(when (os-windows?)
+  (check-true (> (path-getsize "C:") 0))
+  (check-true (> (path-getsize "C:/Windows") 0))
+  (check-true (> (path-getsize "C:\\Windows\\System32\\drivers\\etc\\hosts") 0)))
+
 
 (check-report)
