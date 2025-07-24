@@ -21,6 +21,52 @@
 
 (check-set-mode! 'report-failed)
 
+#|
+string-join
+将一个字符串列表通过指定的分隔符连接起来。
+
+语法
+----
+(string-join string-list)
+(string-join string-list delimiter)
+(string-join string-list delimiter grammar)
+
+参数
+----
+string-list : list
+一个字符串列表，可以包含零个或多个字符串元素。
+
+delimiter : string
+用作分隔符的字符串，默认值为空字符串""（等价于不使用分隔符）。
+
+grammar : symbol
+指定连接语法模式，可选值包括：
+- 'infix（或省略）：在中缀模式下，分隔符放在每对相邻元素之间
+- 'suffix：在后缀模式下，分隔符放在每个元素（包括最后一个）之后
+- 'prefix：在前缀模式下，分隔符放在每个元素（包括第一个）之前
+- 'strict-infix：严格中缀模式，要求string-list不能为空，否则会抛错
+
+返回值
+----
+string
+返回由string-list中的字符串按指定语法模式连接而成的字符串。
+
+注意
+----
+当string-list为空列表时：
+- 中缀模式 ('infix) 和省略语法参数：返回空字符串""
+- 后缀模式 ('suffix) 返回空字符串""
+- 前缀模式 ('prefix) 返回空字符串""
+- 严格中缀模式 ('strict-infix) 抛出value-error异常
+
+错误处理
+----
+value-error 当语法模式为'strict-infix且string-list为空列表时
+value-error 当提供了无效的语法模式时
+type-error  当提供了无效的参数类型时
+wrong-number-of-args 当参数数量不正确时
+|#
+
 (check (string-join '("a" "b" "c")) => "abc")
 
 (check (string-join '("a" "b" "c") ":") => "a:b:c")
