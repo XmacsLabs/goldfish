@@ -227,14 +227,6 @@ path : 文件路径（string类型）
   (check-true (> (path-getsize "C:/Windows") 0))
   (check-true (> (path-getsize "C:\\Windows\\System32\\drivers\\etc\\hosts") 0)))
 
-(let ((file-name "中文文件名.txt")
-      (file-content "你好，世界！"))
-  (define temp-dir (os-temp-dir))
-  (define file-path (string-append temp-dir (string (os-sep)) file-name))
-  (path-write-text file-path file-content)
-  (check (path-read-text file-path) => file-content)
-  (delete-file file-path))
-
 ; Test for path-read-bytes
 (let ((file-name "binary-test.dat")
       (file-content "Hello, binary world!"))
@@ -1353,5 +1345,178 @@ boolean
 (check-true (path :from-parts #("/" "tmp") :absolute?))
 (check-false (path :from-parts #("tmp") :absolute?))
 
-(check-report)
+#|
+path%read-text
+从路径对象所指向的文件中读取文本内容。
 
+语法
+----
+(path-instance :read-text) → string
+
+返回值
+-----
+string
+返回文件的全部文本内容，编码默认为UTF-8。
+
+描述
+----
+`path%read-text` 是 `path-read-text` 的面向对象版本，用于从路径对象所指向的文件中读取全部文本内容并将其作为字符串返回。
+
+行为特征
+------
+- 文件必须存在且可读取
+- 如果文件不存在会抛出 `file-not-found-error` 错误
+- 返回完整的文件内容作为单个字符串
+- 支持任意文本文件，包括空文件
+- 支持各种字符编码格式的文本文件
+
+错误处理
+------
+- **file-not-found-error**: 当路径所指向的文件不存在时抛出
+- 其他IO错误：包括权限不足、磁盘故障等
+
+与path-read-text的关系
+-------------
+`path%read-text` 是 `path-read-text` 的面向对象版本：
+- `(path-file :read-text)` 等同 `(path-read-text (path-file :to-string))`
+- 但使用面向对象的语法更加简洁直观
+
+跨平台行为
+---------
+- Unix/Linux/macOS：支持所有文件系统的文本读取
+- Windows：支持NTFS、FAT等文件系统的文本读取，路径分隔符影响结果
+
+注意事项
+--------
+1. 读取大文件时请谨慎使用，会装入整个文件到内存
+2. 对二进制文件使用会导致数据损坏或错误
+3. 始终确保文件存在再读取以避免异常
+|#
+
+;; 基本的path%read-text测试
+(let ((test-file (path :temp-dir :/ "test_read_text.txt")))
+  ;; 确保文件不存在
+  (when (test-file :exists?)
+    (test-file :unlink))
+  
+  ;; 创建测试文件
+  (test-file :write-text "Hello, World!")
+  
+  ;; 读取文件内容
+  (check (test-file :read-text) => "Hello, World!")
+  
+  ;; 清理
+  (test-file :unlink))
+
+;; 测试读取空文件
+(let ((empty-file (path :temp-dir :/ "empty.txt")))
+  ;; 确保文件不存在
+  (when (empty-file :exists?)
+    (empty-file :unlink))
+  
+  ;; 创建空文件
+  (empty-file :write-text "")
+  
+  ;; 读取空文件
+  (check (empty-file :read-text) => "")
+  
+  ;; 清理
+  (empty-file :unlink))
+
+;; 测试读取中文文本
+(let ((chinese-file (path :temp-dir :/ "zh_cn.txt")))
+  ;; 确保文件不存在
+  (when (chinese-file :exists?)
+    (chinese-file :unlink))
+  
+  ;; 创建中文内容文件
+  (chinese-file :write-text "你好，世界！\n这是一段中文测试文本。")
+  
+  ;; 读取中文内容
+  (check (chinese-file :read-text) => "你好，世界！\n这是一段中文测试文本。")
+  
+  ;; 清理
+  (chinese-file :unlink))
+
+;; 测试路径对象的read-text与path-read-text等价性
+(let ((test-file (string-append (os-temp-dir) "/equiv_test.txt")))
+  (when (file-exists? test-file)
+    (delete-file test-file))
+  
+  ;; 使用字符串路径设置内容
+  (path-write-text test-file "Comparison test")
+  
+  ;; 验证path对象read-text与path-read-text结果相同
+  (let ((path-obj (path test-file)))
+    (check (path-obj :read-text) => (path-read-text test-file)))
+  
+  ;; 清理
+  (delete-file test-file))
+
+;; 测试文件不存在时的错误处理
+(let ((nonexistent-file (path :temp-dir :/ "not_exists.txt")))
+  (when (nonexistent-file :exists?)
+    (nonexistent-file :unlink))
+  
+  ;; 验证错误抛出
+  (check-catch 'file-not-found-error (nonexistent-file :read-text)))
+
+;; 测试大文件读取
+(let ((big-file (path :temp-dir :/ "large_test.txt"))
+      (large-content (make-string 10000 #\a)))
+  (when (big-file :exists?)
+    (big-file :unlink))
+  
+  ;; 创建大文件
+  (big-file :write-text large-content)
+  
+  ;; 读取大文件并验证内容完整性
+  (let ((read-content (big-file :read-text)))
+    (check (string-length read-content) => 10000)
+    (check (string=? read-content large-content) => #t))
+  
+  ;; 清理
+  (big-file :unlink))
+
+;; 测试跨路径分隔符兼容性
+(let ((unix-file (path :temp-dir :/ "unix_style.txt")))
+  (when (unix-file :exists?)
+    (unix-file :unlink))
+  
+  ;; 创建Unix风格路径文件
+  (unix-file :write-text "Unix style path test")
+  
+  ;; 读取验证
+  (check (unix-file :read-text) => "Unix style path test")
+  
+  ;; 清理
+  (unix-file :unlink))
+
+;; 测试多层路径对象的读取
+(let ((deep-file (path :temp-dir :/ "depth" :/ "nested" :/ "deep.txt")))
+  (when (deep-file :exists?)
+    (deep-file :unlink))
+  
+  ;; 确保目录存在
+  (let ((dir (path :temp-dir :/ "depth" :/ "nested")))
+    (when (not (dir :exists?))
+      (mkdir (dir :to-string))))
+  
+  ;; 创建文件并写入内容
+  (deep-file :write-text "Deeply nested file content")
+  
+  ;; 读取验证
+  (check (deep-file :read-text) => "Deeply nested file content")
+  
+  ;; 清理
+  (deep-file :unlink))
+
+(let ((file-name "中文文件名.txt")
+      (file-content "你好，世界！"))
+  (define temp-dir (os-temp-dir))
+  (define file-path (string-append temp-dir (string (os-sep)) file-name))
+  (path-write-text file-path file-content)
+  (check (path-read-text file-path) => file-content)
+  (delete-file file-path))
+
+(check-report)
