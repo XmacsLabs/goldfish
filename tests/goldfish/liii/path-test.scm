@@ -218,6 +218,121 @@ path : 文件路径（string类型）
     ;; 清理
     (delete-file real-file)))
 
+#|
+path-read-bytes
+以bytevector形式从文件中读取二进制数据。
+
+函数签名
+----
+(path-read-bytes path) → bytevector
+
+参数
+----
+path : string
+文件路径（可以是绝对路径或相对路径）
+
+返回值
+----
+bytevector
+二进制文件数据
+
+描述
+----
+path-read-bytes用于从指定路径的文件中读取二进制数据，并以bytevector形式返回。与path-read-text读取文本数据不同，此函数专门用于读取二进制文件，不会进行字符编码转换，确保数据的完整性。
+
+适用场景
+--------
+- 读取二进制文件（如图片、音频、视频等）
+- 读取结构化数据文件
+- 处理需要字节级精确度的文件操作
+- 与bytes相关函数联合使用
+
+错误处理
+------
+- 路径不存在：抛出file-not-found-error
+- 权限不足：抛出相应错误
+- 内存不足：抛出内存错误
+
+|#
+
+;; 基本二进制文件测试
+(let ((test-binary-file (string-append (os-temp-dir) (string (os-sep)) "test_binary.dat")))
+  (let ((test-data "\x00\x01\x02\xFF\xFE\xAB\xCD\xEF"))
+    ;; 创建二进制文件
+    (call-with-output-file test-binary-file
+      (lambda (port)
+        (write test-data port)))
+    
+    ;; 测试读取二进制数据
+    (let ((read-bytes (path-read-bytes test-binary-file)))
+      (check-true (bytevector? read-bytes))
+      (check-true (> (bytevector-length read-bytes) 0)))
+    
+    ;; 清理
+    (delete-file test-binary-file)))
+
+;; 测试空二进制文件
+(let ((empty-file (string-append (os-temp-dir) (string (os-sep)) "empty_binary.dat")))
+  ;; 创建空文件
+  (call-with-output-file empty-file (lambda (port) #f))
+  
+  ;; 测试读取空文件
+  (let ((empty-bytes (path-read-bytes empty-file)))
+    (check (bytevector-length empty-bytes) => 0))
+  
+  ;; 清理
+  (delete-file empty-file))
+
+;; 测试中文文件名二进制读取
+(let ((chinese-binary (string-append (os-temp-dir) (string (os-sep)) "中文_测试数据.bin")))
+  (let ((data "\x01\x02\x03\x04\x05"))
+    ;; 创建中文文件名二进制文件
+    (call-with-output-file chinese-binary
+      (lambda (port)
+        (write data port)))
+    
+    ;; 测试中文文件名读取
+    (let ((read-chinese (path-read-bytes chinese-binary)))
+      (check-true (bytevector? read-chinese))
+      (check-true (> (bytevector-length read-chinese) 0)))
+    
+    ;; 清理
+    (delete-file chinese-binary)))
+
+;; 测试特殊二进制数据
+(let ((special-binary (string-append (os-temp-dir) (string (os-sep)) "special_chars.bin")))
+  (let ((special-data "\x00\x7F\x80\xFF"))
+    ;; 创建特殊字符文件
+    (call-with-output-file special-binary
+      (lambda (port)
+        (write special-data port)))
+    
+    ;; 测试特殊字符读取
+    (let ((read-special (path-read-bytes special-binary)))
+      (check-true (bytevector? read-special))
+      (let ((length (bytevector-length read-special)))
+        (check-true (>= length 4))))
+    
+    ;; 清理
+    (delete-file special-binary)))
+
+;; 测试与path-read-text的对比
+(let ((comparison-file (string-append (os-temp-dir) (string (os-sep)) "comparison_test.dat")))
+  (let ((text-data "Hello, World!测试"))
+    (path-write-text comparison-file text-data)
+    
+    ;; 测试二进制读取
+    (let ((binary-data (path-read-bytes comparison-file)))
+      (check-true (bytevector? binary-data))
+      (let ((text-from-binary (utf8->string binary-data)))
+        (check (string=? text-from-binary text-data) => #t)))
+    
+    ;; 测试文本读取作为对比
+    (let ((text-data-verify (path-read-text comparison-file)))
+      (check (string=? text-data text-data-verify) => #t))
+    
+    (delete-file comparison-file)))
+
 ; Test for path-read-bytes
 (let ((file-name "binary-test.dat")
       (file-content "Hello, binary world!"))
@@ -237,6 +352,13 @@ path : 文件路径（string类型）
     (check (utf8->string read-content) => file-content))
   
   (delete-file file-path))
+
+
+;; 测试错误处理
+(check-catch 'file-not-found-error (path-read-bytes "/this/file/does/not/exist"))
+
+(check-catch 'file-not-found-error (path-read-bytes "/nonexistent"))
+
 
 ;; 测试 path-append-text
 (let ((file-name "append-test.txt")
@@ -1945,6 +2067,5 @@ boolean
   (check-true (> (path-getsize "C:") 0))
   (check-true (> (path-getsize "C:/Windows") 0))
   (check-true (> (path-getsize "C:\\Windows\\System32\\drivers\\etc\\hosts") 0)))
-
 
 (check-report)
