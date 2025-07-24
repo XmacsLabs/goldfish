@@ -17,6 +17,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 20px;
       border-radius: 8px;
+      position: relative;
     }
     .repl-entry {
       margin-bottom: 25px;
@@ -24,6 +25,21 @@
       padding: 15px;
       border-radius: 6px;
       background: #ffffff;
+      position: relative;
+    }
+    .entry-number {
+      position: absolute;
+      top: 18px;
+      left: -19px;
+      background: #f1f1f1;
+      color: #6272a4;
+      font-weight: bold;
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-size: 13px;
+      z-index: 2;
+      user-select: none;
+      border: 1px solid #e0e0e0;
     }
     .input-area {
       width: 100%;
@@ -75,6 +91,65 @@
       margin-bottom: 25px;
       text-align: center;
     }
+    .history-panel {
+      position: fixed;
+      right: 20px;
+      top: 80px;
+      width: 250px;
+      max-height: 600px;
+      background: #f7f7fa;
+      border-left: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 16px 10px 16px 16px;
+      overflow-y: auto;
+      font-size: 14px;
+      z-index: 1000;
+    }
+    .history-panel h2 {
+      font-size: 16px;
+      color: #44475a;
+      margin: 0 0 10px 0;
+      text-align: left;
+    }
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .history-item {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .history-item:hover {
+      background: #e9e9f7;
+    }
+    .cm-error-highlight {
+      background: #800020;
+      border-bottom: 2px solid #ff5555;
+    }
+    .CodeMirror-lint-marker-error {
+      background: none !important;
+      color: #ff5555 !important;
+      font-size: 18px;
+      top: 2px;
+    }
+    .CodeMirror-lint-tooltip {
+      background: #fff0f0;
+      color: #b22222;
+      border: 1px solid #ff5555;
+      border-radius: 4px;
+      font-size: 14px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 8px rgba(255,85,85,0.15);
+    }
   </style>
 </head>
 <body>
@@ -88,6 +163,10 @@
       </div>
       <div class="output-area"></div>
     </div>
+    <div class="history-panel" id="history-panel">
+      <h2>历史输入</h2>
+      <ul class="history-list" id="history-list"></ul>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
@@ -96,130 +175,267 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/continue-list.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/comment/comment.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
   <script src="goldfish_repl_wasm.js"></script>
   <script>
-    // REPL 入口创建函数
-    function createNewEntry() {
-        const template = `
-            <div class="repl-entry">
-                <div class="input-area">
-                    <textarea placeholder="输入Scheme代码..."></textarea>
-                    <button class="eval-button">求值 (Ctrl+Enter)</button>
-                </div>
-                <div class="output-area"></div>
-            </div>
-        `.trim();
-        return template;
+(function() {
+  // ---- 历史管理 ----
+  const History = {
+    data: [],
+    pointer: null,
+    add(item) {
+      if (item && (this.data.length === 0 || this.data[this.data.length-1] !== item)) {
+        this.data.push(item);
+      }
+      this.pointer = null;
+    },
+    prev() {
+      if (this.data.length === 0) return null;
+      if (this.pointer === null) this.pointer = this.data.length - 1;
+      else if (this.pointer > 0) this.pointer--;
+      return this.data[this.pointer];
+    },
+    next() {
+      if (this.data.length === 0 || this.pointer === null) return '';
+      if (this.pointer < this.data.length - 1) {
+        this.pointer++;
+        return this.data[this.pointer];
+      } else {
+        this.pointer = null;
+        return '';
+      }
+    },
+    render(panel, onSelect) {
+      panel.innerHTML = '';
+      this.data.slice().reverse().forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        li.textContent = item;
+        li.title = '点击回填到输入区';
+        li.addEventListener('click', () => onSelect(item));
+        panel.appendChild(li);
+      });
     }
+  };
 
-    // 处理求值结果的显示
-    function displayOutput(output, { stderr, stdout, result }) {
-        output.style.display = 'block';
-        output.innerHTML = '';
-
-        if (stderr) output.innerHTML += `<div class="error">${stderr}</div>`;
-        if (stdout) output.innerHTML += `<div class="stdout">${stdout}</div>`;
-        if (result) output.innerHTML += `<div class="result">${result}</div>`;
-    }
-
-    // 执行 Scheme 代码
-    async function GoldfishScheme(code) {
-        // 检查 eval_string 是否存在
-        if (typeof Module._eval_string !== 'function') {
-            throw new Error('WASM模块未正确加载或未导出 _eval_string');
-        }
-        // 分配 Scheme 代码到 WASM 内存
-        const wrappedCode = `(begin ${code})`;
-        const codePtr = Module.allocateUTF8(wrappedCode);
-
-        // 调用底层 C 函数
-        const status = Module._eval_string(codePtr);
-        // 获取输出和错误
-        let stdout = '', stderr = '';
-        if (typeof Module._get_out === 'function') {
-            const outPtr = Module._get_out();
-            stdout = Module.UTF8ToString(outPtr);
-        }
-        if (typeof Module._get_err === 'function') {
-            const errPtr = Module._get_err();
-            stderr = Module.UTF8ToString(errPtr);
-        }
-        Module._free(codePtr);
-        return { stdout, stderr, result: status };
-    }
-
-    // 设置 REPL 入口
-    function setupEntry(entry) {
-        const button = entry.querySelector('.eval-button');
-        const textarea = entry.querySelector('textarea');
-        const output = entry.querySelector('.output-area');
-
-        const editor = CodeMirror.fromTextArea(textarea, {
-            mode: 'scheme',
-            theme: 'dracula',
-            lineNumbers: true,
-            lineWrapping: true,
-            viewportMargin: Infinity,
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            indentUnit: 2,
-            smartIndent: true,
-            electricChars: true,
-            indentWithTabs: false,
-            styleActiveLine: true,
-            tabSize: 2,
-            autofocus: true,
-            extraKeys: {
-                "Tab": cm => {
-                    cm.somethingSelected() 
-                        ? cm.indentSelection("add")
-                        : cm.replaceSelection("  ", "end");
-                },
-                "Ctrl-Enter": cm => button.click()
-            }
-        });
-
-        editor.on('change', () => {
-            output.style.display = 'none';
-            output.innerHTML = '';
-        });
-
-        button.addEventListener('click', async () => {
-            try {
-                const evalResult = await GoldfishScheme(editor.getValue());
-                displayOutput(output, evalResult);
-
-                const allEntries = document.querySelectorAll('.repl-entry');
-                const isLastEntry = allEntries[allEntries.length - 1] === entry;
-                
-                if (isLastEntry) {
-                    entry.insertAdjacentHTML('afterend', createNewEntry());
-                    setupEntry(entry.nextElementSibling);
-                    entry.nextElementSibling.querySelector('.CodeMirror').focus();
-                }
-            } catch(e) {
-                displayOutput(output, { 
-                    stderr: `错误: ${e.message}`,
-                    stdout: '',
-                    result: ''
-                });
-            }
-        });
-    }
-
-    // 页面加载时禁用按钮
-    window.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.eval-button').forEach(btn => btn.disabled = true);
+  // ---- CodeMirror 配置 ----
+  function createEditor(textarea, onEval, onChange, onFocus, onHistoryNav) {
+    const editor = CodeMirror.fromTextArea(textarea, {
+      mode: 'scheme',
+      theme: 'dracula',
+      lineNumbers: true,
+      lineWrapping: true,
+      viewportMargin: Infinity,
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      indentUnit: 2,
+      smartIndent: true,
+      electricChars: true,
+      indentWithTabs: false,
+      styleActiveLine: true,
+      tabSize: 2,
+      autofocus: true,
+      extraKeys: {
+        "Tab": cm => {
+          cm.somethingSelected() 
+            ? cm.indentSelection("add")
+            : cm.replaceSelection("  ", "end");
+        },
+        "Ctrl-Enter": cm => onEval()
+      }
     });
+    editor.on('focus', onFocus);
+    editor.on('change', () => onChange(editor.getValue()));
+    editor.on('keydown', (cm, e) => onHistoryNav(cm, e));
+    return editor;
+  }
 
-    // WASM 加载完成后启用按钮
-    Module.onRuntimeInitialized = () => {
-        console.log('goldfish 已加载');
-        document.querySelectorAll('.eval-button').forEach(btn => btn.disabled = false);
-        setupEntry(document.querySelector('.repl-entry'));
-    };
+  // ---- Scheme 执行与校验 ----
+  async function GoldfishScheme(code) {
+    if (typeof Module._eval_string !== 'function') {
+      throw new Error('WASM模块未正确加载或未导出 _eval_string');
+    }
+    const wrappedCode = `(begin ${code})`;
+    const codePtr = Module.allocateUTF8(wrappedCode);
+    const status = Module._eval_string(codePtr);
+    let stdout = '', stderr = '';
+    if (typeof Module._get_out === 'function') {
+      const outPtr = Module._get_out();
+      stdout = Module.UTF8ToString(outPtr);
+    }
+    if (typeof Module._get_err === 'function') {
+      const errPtr = Module._get_err();
+      stderr = Module.UTF8ToString(errPtr);
+    }
+    Module._free(codePtr);
+    return { stdout, stderr, result: status };
+  }
+  function isSchemeErrorResult(result) {
+    if (!result) return false;
+    const errKeywords = [
+      'unbound-variable','syntax-error','undefined','error','exception','invalid','not found','wrong type','argument count',
+      '未定义','错误','异常','语法',
+    ];
+    return errKeywords.some(k => result.toString().toLowerCase().includes(k));
+  }
+  function schemeLinter(text, editor) {
+    clearErrorHighlights(editor);
+    let stack = [];
+    for (let i = 0; i < text.length; ++i) {
+      if (text[i] === '(') stack.push(i);
+      if (text[i] === ')') {
+        if (stack.length === 0) {
+          if (editor && editor.posFromIndex) {
+            const pos = editor.posFromIndex(i);
+            highlightError(editor, pos.line + 1, pos.ch + 1, pos.ch + 2);
+          }
+        } else {
+          stack.pop();
+        }
+      }
+    }
+    stack.forEach(idx => {
+      if (editor && editor.posFromIndex) {
+        const pos = editor.posFromIndex(idx);
+        highlightError(editor, pos.line + 1, pos.ch + 1, pos.ch + 2);
+      }
+    });
+  }
+  function clearErrorHighlights(editor) {
+    if (editor._errorMarks) {
+      editor._errorMarks.forEach(mark => mark.clear());
+    }
+    editor._errorMarks = [];
+  }
+  function highlightError(editor, line, chStart, chEnd) {
+    if (!editor._errorMarks) editor._errorMarks = [];
+    const mark = editor.markText(
+      {line: line-1, ch: chStart-1},
+      {line: line-1, ch: chEnd-1},
+      {className: "cm-error-highlight"}
+    );
+    editor._errorMarks.push(mark);
+  }
+
+  // ---- REPL 管理 ----
+  const REPL = {
+    entryCount: 1,
+    activeEditor: null,
+    init() {
+      const firstEntry = document.querySelector('.repl-entry');
+      const container = firstEntry.parentNode;
+      firstEntry.outerHTML = this.createEntry(this.entryCount);
+      this.setupEntry(container.querySelector('.repl-entry'));
+      this.updateHistoryPanel();
+    },
+    createEntry(number) {
+      return `
+        <div class="repl-entry">
+          <div class="entry-number">#${number}</div>
+          <div class="input-area">
+            <textarea placeholder="输入Scheme代码..."></textarea>
+            <button class="eval-button">求值 (Ctrl+Enter)</button>
+          </div>
+          <div class="output-area"></div>
+        </div>
+      `.trim();
+    },
+    setupEntry(entry) {
+      const button = entry.querySelector('.eval-button');
+      const textarea = entry.querySelector('textarea');
+      const output = entry.querySelector('.output-area');
+      const editor = createEditor(
+        textarea,
+        () => button.click(),
+        (text) => {
+          output.style.display = 'none';
+          output.innerHTML = '';
+          schemeLinter(text, editor);
+        },
+        () => {
+          this.activeEditor = editor;
+          History.pointer = null;
+        },
+        (cm, e) => {
+          if (e.key === 'ArrowUp' && !cm.somethingSelected() && cm.getCursor().line === 0 && cm.getCursor().ch === 0) {
+            const prev = History.prev();
+            if (prev !== null) {
+              cm.setValue(prev);
+              setTimeout(() => cm.setCursor(cm.lineCount()-1, 0), 0);
+              e.preventDefault();
+            }
+          } else if (e.key === 'ArrowDown' && !cm.somethingSelected()) {
+            const next = History.next();
+            cm.setValue(next);
+            setTimeout(() => cm.setCursor(cm.lineCount()-1, 0), 0);
+            e.preventDefault();
+          }
+        }
+      );
+      button.addEventListener('click', async () => {
+        try {
+          const code = editor.getValue();
+          History.pointer = null;
+          clearErrorHighlights(editor);
+          if (code.trim() !== '') {
+            const evalResult = await GoldfishScheme(code);
+            this.displayOutput(output, evalResult);
+            if (
+              evalResult.result === 0 &&
+              !evalResult.stderr &&
+              !isSchemeErrorResult(evalResult.stdout)
+            ) {
+              History.add(code);
+              this.updateHistoryPanel();
+            }
+          } else {
+            this.displayOutput(output, {stderr: '', stdout: '', result: ''});
+          }
+          const allEntries = document.querySelectorAll('.repl-entry');
+          const isLastEntry = allEntries[allEntries.length - 1] === entry;
+          if (isLastEntry) {
+            this.entryCount++;
+            entry.insertAdjacentHTML('afterend', this.createEntry(this.entryCount));
+            this.setupEntry(entry.nextElementSibling);
+            entry.nextElementSibling.querySelector('.CodeMirror').focus();
+          }
+        } catch(e) {
+          this.displayOutput(output, { 
+            stderr: `错误: ${e.message}`,
+            stdout: '',
+            result: ''
+          });
+        }
+      });
+    },
+    displayOutput(output, {stderr, stdout, result}) {
+      output.style.display = 'block';
+      output.innerHTML = '';
+      if (stderr) output.innerHTML += `<div class="error">${stderr}</div>`;
+      if (stdout) output.innerHTML += `<div class="stdout">${stdout}</div>`;
+      if (result) output.innerHTML += `<div class="result">${result}</div>`;
+    },
+    updateHistoryPanel() {
+      const list = document.getElementById('history-list');
+      History.render(list, item => {
+        if (this.activeEditor) {
+          this.activeEditor.setValue(item);
+          this.activeEditor.focus();
+        }
+      });
+    }
+  };
+
+  // ---- 页面初始化 ----
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.eval-button').forEach(btn => btn.disabled = true);
+  });
+  Module.onRuntimeInitialized = () => {
+    console.log('goldfish 已加载');
+    document.querySelectorAll('.eval-button').forEach(btn => btn.disabled = false);
+    REPL.init();
+  };
+})();
   </script>
 </body>
 </html>
