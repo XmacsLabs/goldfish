@@ -49,7 +49,7 @@ if not commit_sha:
 
 # 构建评论内容
 file_name = f"{pr_number}.md"
-file_url = f"https://gitee.com/XmacsLabs/goldfish/blob/main/devel/{file_name}"
+file_url = f"https://gitee.com/XmacsLabs/goldfish/blob/{source_branch}/devel/{file_name}"
 if doc_files:
     message_lines = [
         "[CI 自动评论]",
@@ -85,7 +85,7 @@ else:
 
     message = "\n".join(message_lines)
 
-
+print(message)
 
 # 获取所有评论
 existing_comments_url = f"{api_base}/comments?access_token={access_token}"
