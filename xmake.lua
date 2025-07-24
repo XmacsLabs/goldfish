@@ -54,30 +54,6 @@ target ("goldfish") do
     add_installfiles("$(projectdir)/goldfish/(liii/*.scm)", {prefixdir = "share/goldfish"})
 end
 
-
-target ("goldfish_repl") do
-    set_languages("c++11")
-    add_defines("GOLDFISH_ENABLE_REPL")
-    if is_plat("linux") then
-        -- for Ubuntu 20.04
-        add_syslinks("stdc++")
-        -- Add readline support for Linux
-        add_syslinks("readline")
-    end
-    if is_plat("macosx") then
-        -- Add readline support for macOS
-        add_syslinks("readline")
-    end
-    set_targetdir("$(projectdir)/bin/")
-    add_files ("src/goldfish_repl.cpp")
-    add_packages("s7")
-    add_packages("tbox")
-
-    add_installfiles("$(projectdir)/goldfish/(scheme/*.scm)", {prefixdir = "share/goldfish"})
-    add_installfiles("$(projectdir)/goldfish/(srfi/*.scm)", {prefixdir = "share/goldfish"})
-    add_installfiles("$(projectdir)/goldfish/(liii/*.scm)", {prefixdir = "share/goldfish"})
-end
-
 target("goldfish_repl_wasm")
     set_kind("binary")
     set_languages("c++11")
