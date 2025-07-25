@@ -188,6 +188,8 @@
     (define s7-lcm lcm)
 
     (define (lcm2 x y)
+      (when (or (not (real? x)) (not (real? y)))
+        (error 'type-error "lcm: parameters must be reals"))
       (cond ((and (inexact? x) (exact? y))
              (inexact (s7-lcm (exact x) y)))
             ((and (exact? x) (inexact? y))
@@ -199,7 +201,7 @@
     (define (lcm . args)
       (cond ((null? args) 1)
             ((null? (cdr args))
-             (car args))
+             (lcm2 (car args) 1))
             ((null? (cddr args))
              (lcm2 (car args) (cadr args)))
             (else (apply lcm (cons (lcm (car args) (cadr args))
