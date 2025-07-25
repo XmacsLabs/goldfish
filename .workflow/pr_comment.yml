@@ -7,26 +7,6 @@ triggers:
     branches:
       precise:
         - main
-    paths:
-      precise:
-        - goldfish/
-        - tests/
-        - src/
-        - xmake/packages/
-        - xmake.lua
-        - .workflow/
-  push:
-    branches:
-      precise:
-        - main
-    paths:
-      precise:
-        - goldfish/
-        - tests/
-        - src/
-        - xmake/packages/
-        - xmake.lua
-        - .workflow/
 
 variables:
   global:
