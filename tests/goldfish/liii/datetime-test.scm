@@ -59,6 +59,36 @@ type-error
 (check-false (years :leap? 1000))
 
 #|
+datetime@is-type-of
+判断给定对象是否为 datetime 类型的实例。
+通过 define-case-class 实现的类型检查方法，无需额外实现。
+
+语法
+----
+(datetime :is-type-of obj)
+
+参数
+----
+obj:any
+待检查的对象，可以是任何Goldfish Scheme值。
+
+返回值
+-----
+boolean
+若对象obj为datetime类型实例则返回#t，否则返回#f。
+
+额外信息
+----
+这是通过 define-case-class 宏自动生成的方法，所有案例类都具备类似功能。
+|#
+
+(let ((now (datetime :now)))
+  (check-true (datetime :is-type-of now)))
+
+(let ((not-date "2025-01-01"))
+  (check-false (datetime :is-type-of not-date)))
+
+#|
 datetime@now
 创建一个表示当前系统时间的日期时间对象。
 该对象精确到微秒级别，可用于获取当前时间的各个时间分量。
