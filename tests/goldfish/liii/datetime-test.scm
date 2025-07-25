@@ -465,6 +465,36 @@ date@now
   (check-true (<= 1 (today 'month) 12))
   (check-true (<= 1 (today 'day) 31)))
 
+#|
+date%to-string
+将日期转换为格式化的日期字符串，格式为"YYYY-MM-DD"。
+
+语法
+----
+(date-object :to-string)
+
+参数
+----
+无参数
+
+返回值
+-----
+string
+格式化的日期字符串。
+
+格式说明
+----
+- 年份：4位数字
+- 月份：2位数字，01-12
+- 日期：2位数字，01-31
+
+当数值小于10时，前导补零确保固定长度格式。
+
+错误
+----
+无特定错误（始终返回格式化的日期字符串）
+|#
+
 (check ((date :year 2025 :month 1 :day 1) :to-string)
   => "2025-01-01")
 
