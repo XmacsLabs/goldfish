@@ -156,4 +156,680 @@
   (check-false (parse-result-successful? r-invalid)))
 (hash-table-clear! calc-env)
 
+#|
+make-result
+构造表示成功解析的 parse-result 对象
+
+语法
+----
+(make-result semantic-value next-parse-results)
+
+参数
+----
+semantic-value : any
+作为语义值使用的对象
+next-results : parse-results
+表示继续解析位置的 parse-results 对象
+
+返回值
+-----
+parse-result
+表示成功的解析结果
+
+|#
+
+(let ()
+  (define success (make-result 42 #f))
+  (check-true (parse-result? success)))
+
+#|
+parse-result?
+判断对象是否为 parse-result 对象
+
+语法
+----
+(parse-result? obj)
+
+参数
+----
+obj : any
+待判断的对象
+
+返回值
+-----
+bool
+若为 parse-result 对象则返回 #t，否则返回 #f
+
+|#
+
+(let ()
+  (check-true (parse-result? (make-result 42 #f)))
+  (check-false (parse-result? 42)))
+
+#|
+parse-result-successful?
+判断解析结果是否表示成功解析
+
+语法
+----
+(parse-result-successful? result)
+
+参数
+----
+result : parse-result
+待判断的 parse-result 对象
+
+返回值
+-----
+bool
+若为成功解析则返回 #t，否则返回 #f
+
+|#
+
+(let ()
+  (define success (make-result 42 #f))
+  (check-true (parse-result-successful? success)))
+
+#|
+parse-result-semantic-value
+获取成功解析的语义值
+
+语法
+----
+(parse-result-semantic-value result)
+
+参数
+----
+result: parse-result
+
+返回值
+-----
+any
+若解析成功则返回成功解析的语义值，否则返回 #f
+
+|#
+
+(let ()
+  (define success (make-result 42 #f))
+  (check (parse-result-semantic-value success) => 42))
+
+#|
+make-expected-result
+构造表示期望失败的 parse-result 对象
+
+语法
+----
+(make-expected-result position expected)
+
+参数
+----
+position : parse-position
+解析位置
+expected : any
+期望的对象
+
+返回值
+-----
+parse-result
+表示失败的解析结果
+
+|#
+
+(let ()
+  (define fail (make-expected-result (make-parse-position #f 1 0) "num"))
+  (check-false (parse-result-successful? fail)))
+
+#|
+make-message-result
+构造表示带有错误消息的 parse-result 对象
+
+语法
+----
+(make-message-result position message)
+
+参数
+----
+position : parse-position
+解析位置
+message : string
+错误消息字符串
+
+返回值
+-----
+parse-result
+表示带有错误消息的失败解析结果
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 1 5))
+  (define message (make-message-result pos "error"))
+  (check-false (parse-result-successful? message)))
+
+#|
+parse-result-next
+获取解析后剩余输入流的位置信息
+
+语法
+----
+(parse-result-next result)
+
+参数
+----
+result : parse-result
+待查询的 parse-result 对象
+
+返回值
+-----
+parse-results or #f
+后续输入流的 parse-results 对象，或 #f 表示输入结束
+
+|#
+
+(let ()
+  (define success (make-result 42 #f))
+  (check (parse-result-next success) => #f))
+
+#|
+create-parse-position
+构造解析位置对象
+
+语法
+----
+(make-parse-position filename line column)
+
+参数
+----
+filename : string or #f
+文件名
+column : number
+列号（从 0 开始）
+line : number
+行号（从 1 开始）
+
+返回值
+-----
+parse-position
+表示文件中的位置信息
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 3 15))
+  (check-true (parse-position? pos)))
+
+#|
+parse-position?
+判断对象是否为解析位置记录
+
+语法
+----
+(parse-position? obj)
+
+参数
+----
+obj : any
+待判断的对象
+
+返回值
+-----
+bool
+#t 若为 parse-position 对象，#f 否则
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 3 15))
+  (check-true (parse-position? pos)))
+
+#|
+parse-position-file
+获取解析位置关联的文件名
+
+语法
+----
+(parse-position-file position)
+
+参数
+----
+position : parse-position
+parse-position 对象
+
+返回值
+-----
+string or #f
+关联的文件名，或 #f 表示文件名未知
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 3 15))
+  (check (parse-position-file pos) => "test.scm"))
+
+#|
+parse-position-line
+获取解析位置的行号
+
+语法
+----
+(parse-position-line position)
+
+参数
+----
+position : parse-position
+parse-position 对象
+
+返回值
+-----
+number
+行号（从 1 开始）
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 3 15))
+  (check (parse-position-line pos) => 3))
+
+#|
+parse-position-column
+获取解析位置的列号
+
+语法
+----
+(parse-position-column position)
+
+参数
+----
+position : parse-position
+parse-position 对象
+
+返回值
+-----
+number
+列号（从 0 开始）
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 3 15))
+  (check (parse-position-column pos) => 15))
+
+#|
+base-generator->results
+将基础 token 生成器转换为 parse-results 对象
+
+语法
+----
+(base-generator->results generator)
+
+参数
+----
+generator : procedure
+基础 token 生成函数，应返回两个值：parse-position 或 #f，以及 token 对或 #f
+
+返回值
+-----
+parse-results
+表示从生成器读取的解析结果
+
+|#
+
+(let ()
+  (define gen (lambda () (values (make-parse-position "test" 1 0) #f)))
+  (define results (base-generator->results gen))
+  (check-true (parse-results? results)))
+
+#|
+parse-results?
+判断对象是否为 parse-results 记录
+
+语法
+----
+(parse-results? obj)
+
+参数
+----
+obj : any
+待判断的对象
+
+返回值
+-----
+bool
+若为 parse-results 对象则返回 #t，否则返回 #f
+
+|#
+
+(let ()
+  (define gen (let ((tokens '((num . 100) (id . x))))
+                (lambda ()
+                  (if (null? tokens)
+                      (values #f #f)
+                      (let ((token (car tokens)))
+                        (set! tokens (cdr tokens))
+                        (values #f token))))))
+  (define results (base-generator->results gen))
+  (check (parse-results-token-kind results) => 'num))
+
+#|
+parse-results-token-kind
+获取基础 token 的类型标识符
+
+语法
+----
+(parse-results-token-kind results)
+
+参数
+----
+results : parse-results
+parse-results 对象
+
+返回值
+-----
+kind-object or #f
+token 类型标识符，或 #f 表示输入结束
+
+|#
+
+(let ()
+  (define gen (let ((tokens '((num . 100))))
+                (lambda ()
+                  (if (null? tokens)
+                      (values #f #f)
+                      (let ((token (car tokens)))
+                        (set! tokens (cdr tokens))
+                        (values #f token))))))
+  (define results (base-generator->results gen))
+  (check (parse-results-token-kind results) => 'num))
+
+#|
+parse-results-token-value
+获取基础 token 的语义值
+
+语法
+----
+(parse-results-token-value results)
+
+参数
+----
+results : parse-results
+parse-results 对象
+
+返回值
+-----
+value-object or #f
+token 的语义值，或 #f 表示输入结束
+
+|#
+
+(let ()
+  (define gen (let ((tokens '((num . 100))))
+                (lambda ()
+                  (if (null? tokens)
+                      (values #f #f)
+                      (let ((token (car tokens)))
+                        (set! tokens (cdr tokens))
+                        (values #f token))))))
+  (define results (base-generator->results gen))
+  (check (parse-results-token-value results) => 100))
+
+#|
+make-error-expected
+构造期望类型的解析错误对象
+
+语法
+----
+(make-error-expected position expected)
+
+参数
+----
+position : parse-position
+解析位置
+expected : any
+期望的对象
+
+返回值
+-----
+parse-error
+表示期望错误的解析错误对象
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 2 10))
+  (define error-ex (make-error-expected pos "open-paren"))
+  (check-true (parse-error? error-ex)))
+
+#|
+make-error-message
+构造带有错误消息的解析错误对象
+
+语法
+----
+(make-error-message position message)
+
+参数
+----
+position : parse-position
+解析位置
+message : string
+错误消息字符串
+
+返回值
+-----
+parse-error
+表示带有错误消息的解析错误对象
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 2 10))
+  (define error-msg (make-error-message pos "syntax error"))
+  (check-true (parse-error? error-msg)))
+
+#|
+parse-error?
+判断对象是否为解析错误记录
+
+语法
+----
+(parse-error? obj)
+
+参数
+----
+obj : any
+待判断的对象
+
+返回值
+-----
+bool
+若为 parse-error 对象则返回 #t，否则返回 #f
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 2 10))
+  (check-true (parse-error? (make-error-expected pos "test"))))
+
+#|
+parse-error-position
+获取解析错误的位置信息
+
+语法
+----
+(parse-error-position error)
+
+参数
+----
+error : parse-error
+parse-error 对象
+
+返回值
+-----
+parse-position or #f
+解析位置的 parse-position 对象，或 #f 表示未知位置
+
+|#
+
+(let ()
+  (define pos (make-parse-position "test.scm" 2 10))
+  (define error-ex (make-error-expected pos "open-paren"))
+  (check (parse-error-position error-ex) => pos))
+
+#|
+packrat-check-base
+构造匹配指定类型 token 的基础 combinator
+
+语法
+----
+(packrat-check-base kind acceptor)
+
+参数
+----
+kind : kind-object
+token 类型标识符
+acceptor : procedure
+语义值接受器函数，接收 token 语义值并返回 combinator
+
+返回值
+-----
+procedure
+token 匹配 combinator 函数
+
+|#
+
+(let ((gen (generator '((num . 42)))))
+  (define %parse-num (packrat-check-base 'num (lambda (v) (lambda (r) (make-result v r)))))
+  (define result (%parse-num (base-generator->results gen)))
+  (check-true (parse-result-successful? result))
+  (check (parse-result-semantic-value result) => 42))
+
+#|
+packrat-or
+构造尝试多个可选解析方案的 combinator
+
+语法
+----
+(packrat-or comb1 comb2)
+
+参数
+----
+comb1 : procedure
+第一个 combinator
+comb2 : procedure
+第二个 combinator
+
+返回值
+-----
+procedure
+选择 combinator 函数
+
+|#
+
+(let* ((gen (generator '((num . 777))))
+       (%parse-num (packrat-check-base 'num (lambda (v) (lambda (r) (make-result v r)))))
+       (%parse-id (packrat-check-base 'id (lambda (v) (lambda (r) (make-result v r)))))
+       (%parse-or (packrat-or %parse-num %parse-id)))
+  (let ((r (%parse-or (base-generator->results gen))))
+    (check-true (parse-result-successful? r))
+    (check (parse-result-semantic-value r) => 777)))
+
+#|
+packrat-check
+构造变换解析结果的 combinator
+
+语法
+----
+(packrat-check comb transformer)
+
+参数
+----
+comb : procedure
+基础 combinator
+transformer : procedure
+结果变换函数，接收解析结果语义值并返回 combinator
+
+返回值
+-----
+procedure
+变换 combinator 函数
+
+|#
+
+(let ((gen (generator '((num . 25)))))
+  (define %parse-num (packrat-check-base 'num (lambda (v) (lambda (r) (make-result v r)))))
+  (define %parse-check (packrat-check %parse-num (lambda (n) (lambda (r) (make-result (* n 2) r)))))
+  (define result (%parse-check (base-generator->results gen)))
+  (check-true (parse-result-successful? result))
+  (check (parse-result-semantic-value result) => 50))
+
+#|
+packrat-unless
+构造排除规则 not-followed-by 的 combinator
+
+语法
+----
+(packrat-unless message not-wanted fallback)
+
+参数
+----
+message : string
+失败时显示的消息
+not-wanted : procedure
+不希望的 token 匹配 combinator
+fallback : procedure
+备选 combinator
+
+返回值
+-----
+procedure
+条件 combinator 函数
+
+|#
+
+(let ((gen-id (generator '((id . test)))))
+  (define %parse-num (packrat-check-base 'num (lambda (v) (lambda (r) (make-result v r)))))
+  (define %parse-id (packrat-check-base 'id (lambda (v) (lambda (r) (make-result v r)))))
+  (define %parse-unless (packrat-unless "not expected" %parse-num %parse-id))
+  (let ((r (%parse-unless (base-generator->results gen-id))))
+    (check-true (parse-result-successful? r))
+    (check (parse-result-semantic-value r) => 'test)))
+
+#|
+packrat-parser
+创建基于 packrat 的完整解析器
+
+语法
+----
+(packrat-parser result-expr nonterminal-def ...)
+
+参数
+----
+result-expr : any
+结果表达式，作为最终返回的解析器
+nonterminal-def : list
+非终结符定义列表
+
+返回值
+-----
+procedure
+完整解析器过程
+
+|#
+
+(let ()
+  (define calc
+    (packrat-parser expr
+      (expr ((a <- mulexp '+ b <- expr) (+ a b))
+            ((a <- mulexp) a))
+      (mulexp ((a <- simple '* b <- mulexp) (* a b))
+              ((a <- simple) a))
+      (simple ((a <- 'num) a)
+              (('oparen a <- expr 'cparen) a))))
+
+  (let* ((g (generator '((num . 2) (+) (num . 3))))
+         (expected (+ 2 3))
+         (r (calc (base-generator->results g))))
+    (check-true (parse-result-successful? r))
+    (check (parse-result-semantic-value r) => expected)))
+
 (check-report)
