@@ -402,7 +402,38 @@ years=0 时返回原日期副本。
     => (datetime :year 2025 :month 1 :day 15 
          :hour 12 :minute 30 :second 45 :micro-second 123456)))
 
+#|
+date@now
+创建一个表示当前系统日期的日期对象。
+可用于获取当前日期的年份、月份、日期等字段。
+
+语法
+----
+(date :now)
+
+参数
+----
+无参数（使用 :now 关键字创建当前日期对象）
+
+返回值
+-----
+返回一个表示当前日期的对象，该对象支持以下字段查询：
+'year  : 年份 (>= 2023)
+'month : 月份 (1-12)
+'day   : 日期 (1-31)
+
+错误
+----
+无特定错误（始终返回有效日期对象）
+
+|#
+
 (check-true (> ((date :now) 'year) 2023))
+(let ((today (date :now)))
+  (check-true (date :is-type-of today))
+  (check-true (>= (today 'year) 2023))
+  (check-true (<= 1 (today 'month) 12))
+  (check-true (<= 1 (today 'day) 31)))
 
 (check ((date :year 2025 :month 1 :day 1) :to-string)
   => "2025-01-01")
