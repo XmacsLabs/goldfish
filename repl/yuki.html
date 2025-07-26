@@ -123,7 +123,7 @@
         border-left: 1px solid #e0e0e0;
         border-radius: 8px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        padding: 16px 10px 16px 16px;
+        padding: 16px 16px 16px 16px;
         overflow-y: auto;
         font-size: 14px;
         z-index: 1000;
@@ -172,6 +172,19 @@
         padding: 6px 10px;
         box-shadow: 0 2px 8px rgba(255, 85, 85, 0.15);
       }
+      .history-actions {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        gap: 8px;
+        z-index: 1001;
+      }
+      .history-actions button {
+        flex: 0 1 auto;
+        font-size: 13px;
+        padding: 4px 8px;
+      }
     </style>
   </head>
   <body>
@@ -189,6 +202,13 @@
           <button class="eval-button">求值 (Ctrl+Enter)</button>
         </div>
         <div class="output-area"></div>
+      </div>
+      <div class="history-actions">
+        <button id="clear-history">清空历史</button>
+        <button id="export-history">导出历史</button>
+        <button id="import-history">导入历史</button>
+        <button id="share-history">分享历史</button>
+        <input type="file" id="import-file" style="display:none" accept=".json"/>
       </div>
       <div class="history-panel" id="history-panel">
         <h2>历史输入</h2>
@@ -217,6 +237,7 @@
                 this.data[this.data.length - 1] !== item)
             ) {
               this.data.push(item);
+              this.saveToLocal();
             }
             this.pointer = null;
           },
@@ -250,6 +271,98 @@
                 panel.appendChild(li);
               });
           },
+        };
+
+        // 清空历史
+        History.clear = function() {
+          this.data = [];
+          this.pointer = null;
+          try {
+            localStorage.removeItem('goldfish_repl_history');
+          } catch (e) {
+            console.error('清空本地存储失败:', e);
+          }
+        };
+
+        // 导出历史
+        History.export = function() {
+          return JSON.stringify(this.data, null, 2);
+        };
+
+        // 导入历史
+        History.import = function(json) {
+          try {
+            const arr = JSON.parse(json);
+            if (Array.isArray(arr)) {
+              this.data = arr;
+              this.pointer = null;
+              return true;
+            }
+          } catch (e) {}
+          return false;
+        };
+
+        // 保存到本地存储
+        History.saveToLocal = function() {
+          try {
+            localStorage.setItem('goldfish_repl_history', JSON.stringify(this.data));
+            return true;
+          } catch (e) {
+            console.error('保存历史失败:', e);
+            return false;
+          }
+        };
+
+        // 从本地存储加载
+        History.loadFromLocal = function() {
+          try {
+            const saved = localStorage.getItem('goldfish_repl_history');
+            if (saved) {
+              const arr = JSON.parse(saved);
+              if (Array.isArray(arr)) {
+                this.data = arr;
+                this.pointer = null;
+                return true;
+              }
+            }
+          } catch (e) {
+            console.error('加载历史失败:', e);
+          }
+          return false;
+        };
+
+        // 生成分享链接
+        History.generateShareLink = function() {
+          try {
+            const data = JSON.stringify(this.data);
+            const encoded = btoa(unescape(encodeURIComponent(data)));
+            const url = new URL(window.location.href);
+            url.searchParams.set('history', encoded);
+            return url.toString();
+          } catch (e) {
+            console.error('生成分享链接失败:', e);
+            return null;
+          }
+        };
+
+        // 从URL参数加载历史
+        History.loadFromURL = function() {
+          try {
+            const url = new URL(window.location.href);
+            const encoded = url.searchParams.get('history');
+            if (encoded) {
+              const data = decodeURIComponent(escape(atob(encoded)));
+              const arr = JSON.parse(data);
+              if (Array.isArray(arr)) {
+                this.data = arr;
+                this.pointer = null;
+                return true;
+              }
+            }
+          } catch (e) {
+            console.error('从URL加载历史失败:', e);
+          }
+          return false;
         };
 
         // ---- CodeMirror 配置 ----
@@ -782,6 +895,10 @@
           document
             .querySelectorAll(".eval-button")
             .forEach((btn) => (btn.disabled = true));
+          
+          if (!History.loadFromURL()) {
+            History.loadFromLocal();
+          }
         });
         Module.onRuntimeInitialized = () => {
           console.log("goldfish 已加载");
@@ -789,8 +906,84 @@
             .querySelectorAll(".eval-button")
             .forEach((btn) => (btn.disabled = false));
           REPL.init();
+          REPL.updateHistoryPanel();
+        };
+
+        document.getElementById('clear-history').onclick = function() {
+          const modalMask = document.getElementById('modal-mask');
+          const modalDialog = document.getElementById('modal-dialog');
+          const modalMessage = document.getElementById('modal-message');
+          const modalOk = document.getElementById('modal-ok');
+          const modalCancel = document.getElementById('modal-cancel');
+
+          modalMessage.textContent = "确定要清空所有历史吗？";
+          modalMask.style.display = 'block';
+          modalDialog.style.display = 'block';
+
+          modalOk.onclick = function() {
+            History.clear();
+            REPL.updateHistoryPanel();
+            modalMask.style.display = 'none';
+            modalDialog.style.display = 'none';
+          };
+          modalCancel.onclick = function() {
+            modalMask.style.display = 'none';
+            modalDialog.style.display = 'none';
+          };
+        };
+
+        document.getElementById('export-history').onclick = function() {
+          const blob = new Blob([History.export()], {type: "application/json"});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = "goldfish_repl_history.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        document.getElementById('import-history').onclick = function() {
+          document.getElementById('import-file').click();
+        };
+        document.getElementById('import-file').onchange = function(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            if (History.import(evt.target.result)) {
+              REPL.updateHistoryPanel();
+              alert('历史导入成功');
+            } else {
+              alert('导入失败，文件格式不正确');
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        document.getElementById('share-history').onclick = function() {
+          const shareLink = History.generateShareLink();
+          if (shareLink) {
+            // 创建临时文本区域并自动复制
+            const textArea = document.createElement('textarea');
+            textArea.value = shareLink;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('分享链接已复制到剪贴板！');
+          } else {
+            alert('生成分享链接失败');
+          }
         };
       })();
     </script>
+    <div id="modal-mask" style="display:none;position:fixed;z-index:2000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);"></div>
+    <div id="modal-dialog" style="display:none;position:fixed;z-index:2001;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.18);padding:24px 32px;min-width:260px;text-align:center;">
+      <div id="modal-message" style="font-size:16px;color:#44475a;margin-bottom:18px;">确定要清空所有历史吗？</div>
+      <button id="modal-ok" style="margin-right:16px;padding:6px 18px;background:#6272a4;color:#fff;border:none;border-radius:4px;cursor:pointer;">确定</button>
+      <button id="modal-cancel" style="padding:6px 18px;background:#f1f1f1;color:#44475a;border:1px solid #ddd;border-radius:4px;cursor:pointer;">取消</button>
+    </div>
   </body>
 </html>
