@@ -2312,19 +2312,179 @@ wrong-number-of-args
 (check-catch 'wrong-number-of-args (integer->char 65 66))  
 
 
-(check (bytevector 1) => #u8(1))
-(check (bytevector) => #u8())
-(check (bytevector 1 2 3) => #u8(1 2 3))
 
+#|
+bytevector
+返回一个新分配的字节向量，其元素包含传递给过程的所有参数。每个参数都必须是一个介于0到255之间的整数，表示字节向量中的一个字节。如果没有提供任何参数，将创建一个空的字节向量。
+
+语法
+----
+(bytevector byte ...)
+
+参数
+----
+byte... : integer?
+零个或多个介于0到255之间的整数（包含边界），表示字节值。
+
+返回值
+------
+bytevector?
+新创建的字节向量，包含所有参数指定的字节值。
+
+说明
+----
+1. 可以接受零个或多个参数
+2. 每个参数必须在0-255的范围内
+3. 无参数时创建空字节向量
+4. 参数顺序就是字节向量中元素的顺序
+
+错误处理
+--------
+wrong-type-arg
+当任何参数不是在0-255范围内的整数时抛出错误。
+|#
+
+;; bytevector 基本测试
+(check (bytevector) => #u8())
 (check (bytevector 255) => #u8(255))
+(check (bytevector 1 2 3 4) => #u8(1 2 3 4))
+(check (bytevector 10 20 30 40 50) => #u8(10 20 30 40 50))
+
+;; 边界测试
+(check (bytevector 0) => #u8(0))
+(check (bytevector 255) => #u8(255))
+(check (bytevector 0 255) => #u8(0 255))
+
+;; 不同长度测试
+(check (bytevector) => #u8())
+(check (bytevector 15) => #u8(15))
+(check (bytevector 85 170) => #u8(85 170))
+(check (bytevector 1 2 3 4 5 6 7 8 9 10) => #u8(1 2 3 4 5 6 7 8 9 10))
+
+;; 错误处理测试
 (check-catch 'wrong-type-arg (bytevector 256))
 (check-catch 'wrong-type-arg (bytevector -1))
+(check-catch 'wrong-type-arg (bytevector 123.0))
+(check-catch 'wrong-type-arg (bytevector 123 #u8(1 2 3)))
 
-(check-true (bytevector? #u8(0)))
+#|
+bytevector?
+判断一个对象是否为字节向量类型的谓词。
+
+语法
+----
+(bytevector? obj)
+
+参数
+----
+obj : any?
+任意对象。
+
+返回值
+------
+boolean?
+如果对象是一个字节向量，返回#t；否则返回#f。
+
+说明
+----
+1. 用于检查对象是否为字节向量类型
+2. #u8()形式创建的也是字节向量，即使为空
+3. 能够正确识别所有类型的字节向量实例
+
+错误处理
+--------
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; bytevector? 基本测试
 (check-true (bytevector? #u8()))
+(check-true (bytevector? #u8(0)))
+(check-true (bytevector? #u8(255)))
+(check-true (bytevector? #u8(1 2 3 4 5)))
+(check-true (bytevector? (bytevector)))
+(check-true (bytevector? (bytevector 1 2 3)))
 
-(check (make-bytevector 3 0) => #u8(0 0 0))
-(check (make-bytevector 3 3) => #u8(3 3 3))
+;; 类型判别测试
+(check-true (bytevector? (bytevector 5 15 25)))
+(check-false (bytevector? 123))
+(check-false (bytevector? "hello"))
+(check-false (bytevector? "list"))
+(check-false (bytevector? 'symbol))
+
+;; 错误处理测试
+(check-catch 'wrong-number-of-args (bytevector?))
+(check-catch 'wrong-number-of-args (bytevector? #u8(1 2 3) #u8(4 5 6)))
+
+#|
+make-bytevector
+创建一个新的字节向量，指定长度和初始值为所有组成字节。
+
+语法
+----
+(make-bytevector k [fill])
+
+参数
+----
+k : integer?
+必须是非负的精确整数，表示字节向量的长度。
+
+fill : integer? 可选, 默认为0
+0到255之间的整数，作为所有字节的初始值。
+
+返回值
+------
+bytevector?
+创建的字节向量，所有元素都设为指定的fill值。
+
+说明
+----
+1. 可以指定长度和填充值
+2. 填充值默认为0，如果提供必须在0-255范围内
+3. 特殊字符如#等会被转换为对应的字节值
+
+错误处理
+--------
+out-of-range
+当k小于0时抛出错误。
+wrong-type-arg
+当任何参数不正确时抛出错误。
+wrong-number-of-args
+当参数数量不为1或2个时抛出错误。
+|#
+
+;; make-bytevector 基本测试
+(check (make-bytevector 0) => #u8())
+(check (make-bytevector 1) => #u8(0))
+(check (make-bytevector 3) => #u8(0 0 0))
+(check (make-bytevector 5 42) => #u8(42 42 42 42 42))
+(check (make-bytevector 2 255) => #u8(255 255))
+
+;; 不同长度测试
+(check (make-bytevector 0 0) => #u8())
+(check (make-bytevector 1 128) => #u8(128))
+(check (make-bytevector 10 99) => #u8(99 99 99 99 99 99 99 99 99 99))
+
+;; 边界条件测试
+(check (make-bytevector 0) => #u8())
+(check (make-bytevector 1 0) => #u8(0))
+(check (make-bytevector 1 255) => #u8(255))
+
+;; 特殊值测试
+(check (make-bytevector 4 0) => #u8(0 0 0 0))
+(check (make-bytevector 3 170) => #u8(170 170 170))
+(check (make-bytevector 8 255) => #u8(255 255 255 255 255 255 255 255))
+
+;; 错误处理测试
+(check-catch 'out-of-range (make-bytevector -5))
+(check-catch 'wrong-type-arg (make-bytevector 3 256))
+(check-catch 'wrong-type-arg (make-bytevector 2 -1))
+(check-catch 'wrong-type-arg (make-bytevector 3.5))
+(check-catch 'wrong-type-arg (make-bytevector "hello"))
+(check-catch 'wrong-number-of-args (make-bytevector))
+(check-catch 'wrong-number-of-args (make-bytevector 1 2 3))
+
+
 
 (check (bytevector-length (bytevector 10 20 30 40)) => 4)
 (check (bytevector-length (make-bytevector 7 1)) => 7)
