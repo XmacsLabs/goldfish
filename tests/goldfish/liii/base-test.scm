@@ -2170,16 +2170,147 @@ wrong-number-of-args
 (check-catch 'wrong-number-of-args (char=? #\A))
 
 
-(check (char->integer #\A) => 65)
-(check (char->integer #\a) => 97)
-(check (char->integer #\newline) => 10)
-(check (char->integer #\space) => 32)
-(check (char->integer #\tab) => 9)
+#|
+char->integer
+将字符转换为其对应的码点值。
 
-(check (integer->char 65) => #\A)   
-(check (integer->char 97) => #\a)  
+语法
+----
+(char->integer char)
+
+参数
+----
+char : char?
+字符。
+
+返回值
+------
+integer?
+字符对应的码点值
+
+说明
+----
+将字符转换为对应的整数值
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; char->integer 基本测试
+(check (char->integer #\0) => 48)
+(check (char->integer #\9) => 57)
+
+
+;; 字符边界测试
+(check (char->integer #\tab) => 9)
+(check (char->integer #\newline) => 10)
+(check (char->integer #\return) => 13)
+(check (char->integer #\backspace) => 8)
+
+;; 特殊字符测试
+(check (char->integer #\!) => 33)
+(check (char->integer #\@) => 64)
+(check (char->integer #\#) => 35)
+(check (char->integer #\$) => 36)
+(check (char->integer #\%) => 37)
+
+;; 扩展字符测试
+(check (char->integer #\~) => 126)
+(check (char->integer #\_) => 95)
+
+;; 数字边界测试
+(check (char->integer #\A) => 65)
+(check (char->integer #\B) => 66)
+(check (char->integer #\Z) => 90)
+(check (char->integer #\a) => 97)
+(check (char->integer #\z) => 122)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char->integer 65))
+(check-catch 'wrong-type-arg (char->integer "A"))
+(check-catch 'wrong-number-of-args (char->integer))
+(check-catch 'wrong-number-of-args (char->integer #\A #\B))
+
+#|
+integer->char
+将整数码点转换为对应的字符。
+
+语法
+----
+(integer->char n)
+
+参数
+----
+n : integer?
+整数值，必须是有效的码点值，通常范围在0到255之间。
+返回值
+------
+char?
+对应的字符
+
+说明
+----
+1. 将整数转换为对应的字符
+4. 与char->integer互逆操作
+
+
+错误处理
+--------
+out-of-range
+当码点超出有效范围时抛出错误。
+wrong-type-arg
+当参数不是整数时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; integer->char 基本测试
+(check (integer->char 65) => #\A)
+(check (integer->char 97) => #\a)
 (check (integer->char 48) => #\0)
-(check (integer->char 36) => #\$)
+(check (integer->char 57) => #\9)
+(check (integer->char 10) => #\newline)
+(check (integer->char 32) => #\space)
+(check (integer->char 9) => #\tab)
+
+;; 大写和小写字符
+(check (integer->char 65) => #\A)
+(check (integer->char 90) => #\Z)
+(check (integer->char 97) => #\a)
+(check (integer->char 122) => #\z)
+
+;; 数字字符
+(check (integer->char 48) => #\0)
+(check (integer->char 49) => #\1)
+(check (integer->char 57) => #\9)
+
+;; 特殊字符测试
+(check (integer->char 33) => #\!)
+(check (integer->char 64) => #\@)
+(check (integer->char 35) => #\#)
+
+;; 边界测试
+(check (integer->char 0) => #\null)
+(check (integer->char 126) => #\~)
+
+;; 反向验证
+(check (integer->char (char->integer #\A)) => #\A)
+(check (integer->char (char->integer #\a)) => #\a)
+(check (integer->char (char->integer #\0)) => #\0)
+(check (char->integer (integer->char 65)) => 65)
+(check (char->integer (integer->char 97)) => 97)
+
+;; 错误处理测试
+(check-catch 'out-of-range (integer->char -1))
+(check-catch 'out-of-range (integer->char 256))
+(check-catch 'wrong-type-arg (integer->char 65.0))
+(check-catch 'wrong-number-of-args (integer->char))
+(check-catch 'wrong-number-of-args (integer->char 65 66))  
+
 
 (check (bytevector 1) => #u8(1))
 (check (bytevector) => #u8())
