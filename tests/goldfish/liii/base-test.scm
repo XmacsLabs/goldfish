@@ -1842,11 +1842,98 @@ wrong-type-arg
 (check (denominator (inexact->exact 0.25)) => 4)
 
 
+#|
+square
+计算给定数值的平方。
+
+语法
+----
+(square x)
+
+参数
+----
+x : number?
+数值。支持整数、有理数、浮点数等各种数值类型。
+
+返回值
+------
+返回x的平方值，保持与输入相同的数值类型精度。
+对于整数，返回精确的平方值；对于浮点数，返回浮点数平方值。
+
+错误处理
+--------
+wrong-type-arg
+当参数不是数值时抛出错误。
+|#
+
+;; square测试
 (check (square 2) => 4)
+(check (square 0) => 0)
+(check (square -2) => 4)
+(check (square 5) => 25)
+(check (square -5) => 25)
+(check (square 1/2) => 1/4)
+(check (square -1/3) => 1/9)
+(check (square 2.5) => 6.25)
+(check (square 0.0) => 0.0)
+(check (square 10) => 100)
+(check (square 1+2i) => -3+4i)
+(check-catch 'wrong-type-arg (square "a"))
+
+
+;; 补充square边界测试
+(check (square 1) => 1)
+(check (square -1) => 1)
+(check (square 1000) => 1000000)
+(check (square 1/100) => 1/10000)
+(check (square 0.001) => 0.000001)
+
+#|
+exact-integer-sqrt
+计算给定非负精确整数的精确平方根。
+
+语法
+----
+(exact-integer-sqrt n)
+
+参数
+----
+n : exact?
+n是确切的非负整数。
+
+返回值
+------
+values
+返回两个值：
+1. 整数r：满足r² ≤ n的最大整数
+2. 整数remainder：n - r²，始终为非负
+
+说明
+----
+该函数专为精确计算设计，要求参数必须是非负的准确整数。
+对于完全平方数，remainder将为0；非完全平方数返回最大的整数根和余量。
+
+错误处理
+--------
+type-error
+当参数不是准确的整数时抛出错误。
+value-error
+当参数是负数时抛出错误。
+|#
 
 (check (list (exact-integer-sqrt 9)) => (list 3 0))
 (check (list (exact-integer-sqrt 5)) => (list 2 1))
 (check (list (exact-integer-sqrt 0)) => (list 0 0))
+(check (list (exact-integer-sqrt 1)) => (list 1 0))
+(check (list (exact-integer-sqrt 4)) => (list 2 0))
+(check (list (exact-integer-sqrt 16)) => (list 4 0))
+(check (list (exact-integer-sqrt 2)) => (list 1 1))
+(check (list (exact-integer-sqrt 3)) => (list 1 2))
+(check (list (exact-integer-sqrt 8)) => (list 2 4))
+(check (list (exact-integer-sqrt 25)) => (list 5 0))
+(check (list (exact-integer-sqrt 100)) => (list 10 0))
+(check (list (exact-integer-sqrt 1000)) => (list 31 39))
+(check (list (exact-integer-sqrt 1000000)) => (list 1000 0))
 (check-catch 'type-error (exact-integer-sqrt "a"))
 (check-catch 'value-error (exact-integer-sqrt -1))
 (check-catch 'type-error (exact-integer-sqrt 1.1))
