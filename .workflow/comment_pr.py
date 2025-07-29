@@ -67,7 +67,7 @@ if doc_files:
     elif flag != True :
         message_lines.append("⚠️ 分支名和被修改的文档不匹配")
     if len(doc_files) >1:
-        message_lines.apeend("⚠️ 注意此处修改了多个文档")
+        message_lines.append("⚠️ 注意此处修改了多个文档")
     message = "\n".join(message_lines)
 else:
     message_lines = [
