@@ -54,7 +54,7 @@ stages:
           - sed -i '/github\.com/d' xmake/packages/t/tbox/xmake.lua
           - xmake config --yes -vD
           - xmake build --yes -vD goldfish
-          - bin/goldfish -l tests/test_all.scm
+          - bin/goldfish tests/test_all.scm
         caches: [
             ~/.xmake/packages
         ]

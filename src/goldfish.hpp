@@ -15,6 +15,7 @@
 //
 
 #include <algorithm>
+#include <argh.h>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -1001,26 +1002,20 @@ glue_for_community_edition (s7_scheme* sc) {
 static void
 display_help () {
   cout << "Goldfish Scheme " << GOLDFISH_VERSION << " by LiiiLabs" << endl;
-  cout << "--help    \t"
-       << "Display this help message" << endl;
-  cout << "--version\t"
-       << "Display version" << endl;
-  cout << "-m default\t"
-       << "Allowed mode: default, liii, sicp, r7rs, s7" << endl;
-  cout << "-e       \t"
-       << "Load the scheme code on the command line" << endl
-       << "\t\teg. -e '(begin (display `Hello) (+ 1 2))'" << endl;
-  cout << "-l FILE  \t"
-       << "Load the scheme code on path" << endl;
+  cout << "--help, -h    \tDisplay this help message" << endl;
+  cout << "--version, -v \tDisplay version" << endl;
+  cout << "--mode, -m    \tAllowed mode: default, liii, sicp, r7rs, s7" << endl;
+  cout << "--eval, -e    \tLoad and evaluate Scheme code from the command line" << endl
+       << "\t\t  e.g. -e '(begin (display `Hello) (+ 1 2))'" << endl;
+  cout << "--load, -l FILE\tLoad Scheme code from FILE" << endl;
 #ifdef GOLDFISH_WITH_REPL
-  cout << "-i       \t"
-       << "Enter interactive REPL mode" << endl;
+  cout << "--repl, -i    \tEnter interactive REPL mode" << endl;
 #else
-  cout << "-i       \t"
-       << "*Interactive REPL is not available in this build*" << endl;
+  cout << "--repl, -i    \t*Interactive REPL is not available in this build*" << endl;
 #endif
-  cout << "FILE     \t"
-       << "Load the scheme code on path and print the evaluated result" << endl;
+  cout << "FILE [FILE...]\tLoad and evaluate Scheme code from one or more files" << endl
+       << "\t\t  (all non-option arguments are treated as files to load)" << endl;
+  cout << endl << "If no FILE is specified, REPL is entered by default (if available)." << endl;
 }
 
 static void
@@ -1030,8 +1025,11 @@ display_version () {
 }
 
 static void
-display_for_invalid_options () {
-  cerr << "Invalid command line options!" << endl << endl;
+display_for_invalid_options (const std::vector<std::string>& invalid_opts) {
+  for (const auto& opt : invalid_opts) {
+    std::cerr << "Invalid option: " << opt << "\n";
+  }
+  std::cerr << "\n";
   display_help ();
 }
 
@@ -1522,84 +1520,99 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
   string      gf_boot_path= find_goldfish_boot (gf_lib);
   const char* gf_boot     = gf_boot_path.c_str ();
 
-  vector<string> all_args (argv, argv + argc);
-  int            all_args_N= all_args.size ();
-  for (int i= 0; i < all_args_N; i++) {
-    command_args.push_back (all_args[i]);
-  }
+  // 供 goldfish `g_command-line` procedure 查询
+  command_args.assign (argv, argv + argc);
 
-  // zero args
-  vector<string> args (argv + 1, argv + argc);
-  if (args.size () == 0) {
+  // params: 如 `--mode r7rs` 或 `-m=r7rs`，使用 operator() 取值
+  // flag  : 如 `--mode`      或 `-m`，     使用 operator[] 取存在与否
+
+  const std::vector<std::pair<std::string, std::string>> reg_params_pairs= {
+      {"--mode", "-m"}, {"--eval", "-e"}, {"--load", "-l"}};
+
+  // 初始化解析器（使用预定义的向量来注册 params）
+  argh::parser cmdl;
+  for (const auto& fp : reg_params_pairs) {
+    cmdl.add_params ({fp.first.c_str (), fp.second.c_str ()});
+  }
+  cmdl.parse (argc, argv);
+
+  // 只要存在 help 或 version 参数，忽略其他所有参数，打印相应信息后正常退出
+  if (cmdl[{"--help", "-h"}]) {
     display_help ();
     exit (0);
   }
+  if (cmdl[{"--version", "-v"}]) {
+    display_version ();
+    exit (0);
+  }
 
+  // --mode / -m: Load the standard library by mode
+  std::string mode    = "default";
+  auto        mode_arg= cmdl ({"--mode", "-m"});
+  auto        eval_arg= cmdl ({"--eval", "-e"});
+  auto        load_arg= cmdl ({"--load", "-l"});
+
+  for (const auto& reg_params : reg_params_pairs) {
+    // 使用 operator[] 检查是否是 flag，即非 params
+    if (cmdl[{reg_params.first.c_str (), reg_params.second.c_str ()}]) {
+      std::cerr << "Error: '" << reg_params.first << "' or '" << reg_params.second << "' requires a parameter."
+                << std::endl;
+      exit (1);
+    }
+  }
+
+  auto repl_flag=
+      cmdl[{"--repl", "-i"}] || (cmdl.get_unaccessed_flags ().empty () && cmdl.get_unaccessed_params ().empty ());
+
+  // 没有注册为 params 的默认都是 flag，因此只需要检查未访问的 flag
+  if (!cmdl.get_unaccessed_flags ().empty ()) {
+    display_for_invalid_options (cmdl.get_unaccessed_flags ());
+    exit (1);
+  }
+
+  if (mode_arg) mode= mode_arg.str ();
+  customize_goldfish_by_mode (sc, mode, gf_boot);
+
+  // start capture error output
   const char* errmsg  = NULL;
   s7_pointer  old_port= s7_set_current_error_port (sc, s7_open_output_string (sc));
   int         gc_loc  = -1;
   if (old_port != s7_nil (sc)) gc_loc= s7_gc_protect (sc, old_port);
 
-  // -m: Load the standard library by mode
-  string mode_flag= "-m";
-  string mode     = "default";
-  int    args_N   = args.size ();
-  int    i;
-  for (i= 0; i < args_N; i++) {
-    if (args[i] == mode_flag) {
-      break;
-    }
+  if (eval_arg) {
+    std::string code= eval_arg.str ();
+    goldfish_eval_code (sc, code);
   }
-  if (i < args_N && i + 1 >= args_N) {
-    cerr << "No mode specified after -m" << endl;
-    exit (-1);
-  }
-  if (i < args_N) {
-    mode= args[i + 1];
-    args.erase (args.begin () + i);
-    args.erase (args.begin () + i);
+  if (load_arg) {
+    std::string file= load_arg.str ();
+    cout << " * " << file << " evaluated" << endl;
+    goldfish_eval_file (sc, file, true);
   }
 
-  customize_goldfish_by_mode (sc, mode, gf_boot);
+  // eval all files passed as positional args
+  auto& files= cmdl.pos_args ();
+  for (auto it= files.begin () + 1; it != files.end (); ++it) {
+    goldfish_eval_file (sc, *it, true);
+    // 如果有指定文件且没有显示传入 --repl, -i 参数，不进入 repl
+    if (repl_flag && !cmdl[{"--repl", "-i"}]) repl_flag= false;
+  }
 
-  // Command options
-  if (args.size () == 1 && args[0].size () > 0 && args[0][0] == '-') {
-    if (args[0] == "--version") {
-      display_version ();
-    }
-    if (args[0] == "--help") {
-      display_help ();
-    }
-    else if (args[0] == "-i") {
+  if (repl_flag) {
 #ifdef GOLDFISH_WITH_REPL
-      errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
-      if ((errmsg) && (*errmsg)) ic_printf ("[red]%s[/]\n", errmsg);
-      s7_close_output_port (sc, s7_current_error_port (sc));
-      s7_set_current_error_port (sc, old_port);
-      if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+    errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
+    if ((errmsg) && (*errmsg)) ic_printf ("[red]%s[/]\n", errmsg);
+    s7_close_output_port (sc, s7_current_error_port (sc));
+    s7_set_current_error_port (sc, old_port);
+    if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
 
-      goldfish_repl (sc, mode);
-      return 0;
+    goldfish_repl (sc, mode);
+    return 0;
 #else
-      cerr << "Interactive REPL is not available in this build." << endl;
-      exit (-1);
+    std::cerr << "Interactive REPL is not available in this build.\n" << std::endl;
+    // 如果没有指定 --repl, -i，额外打印 help 消息
+    if (!cmdl[{"--repl", "-i"}]) display_help ();
+    exit (-1);
 #endif
-    }
-    else {
-      display_for_invalid_options ();
-    }
-  }
-  else if (args.size () >= 2 && args[0] == "-e") {
-    goldfish_eval_code (sc, args[1]);
-  }
-  else if (args.size () >= 2 && args[0] == "-l") {
-    goldfish_eval_file (sc, args[1], true);
-  }
-  else if (args.size () >= 1 && args[0].size () > 0 && args[0][0] != '-') {
-    goldfish_eval_file (sc, args[0], false);
-  }
-  else {
-    display_for_invalid_options ();
   }
 
   errmsg= s7_get_output_string (sc, s7_current_error_port (sc));

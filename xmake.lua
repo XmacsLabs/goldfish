@@ -44,6 +44,8 @@ end
 local IC_VERSION = "v1.0.9"
 add_requires("isocline " .. IC_VERSION, {system=false})
 
+add_requires("argh v1.3.2")
+
 target ("goldfish") do
     set_languages("c++11")
     set_targetdir("$(projectdir)/bin/")
@@ -57,6 +59,7 @@ target ("goldfish") do
     add_files ("src/goldfish.cpp")
     add_packages("s7")
     add_packages("tbox")
+    add_packages("argh")
 
     -- only enable REPL if repl option is enabled
     if has_config("repl") then
