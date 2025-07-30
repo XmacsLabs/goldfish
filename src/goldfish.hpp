@@ -1131,6 +1131,12 @@ find_goldfish_boot (const char* gf_lib) {
 
 #ifdef GOLDFISH_WITH_REPL
 static std::vector<std::string> cached_symbols;
+
+// UNLIMITED history
+// TODO(jinser): 1. programatic value-history procedure api in scheme
+//               2. `,option value-history` meta command
+static std::vector<s7_pointer> history_values;
+
 inline void
 update_symbol_cache (s7_scheme* sc) {
   cached_symbols.clear ();
@@ -1158,10 +1164,15 @@ ic_goldfish_eval (s7_scheme* sc, const char* code) {
     ic_printf ("[error]%s[/]\n", errmsg); // 美化输出
   }
   if (result) {
+    history_values.push_back (result);
+    s7_gc_protect (sc, result);
+    std::string name   = "$" + std::to_string (history_values.size ());
+    s7_pointer  cur_env= s7_curlet (sc);
+    s7_define (sc, cur_env, s7_make_symbol (sc, name.c_str ()), result);
+
     char* result_str= s7_object_to_c_string (sc, result);
     if (result_str) {
-      // TODO: auto intern variable (guile like)
-      ic_printf ("[gray] =[/] %s\n", result_str);
+      ic_printf ("%s [gray]=[/] %s\n", name.c_str (), result_str);
       free (result_str);
     }
   }
