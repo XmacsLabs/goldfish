@@ -49,6 +49,11 @@
 #endif
 #endif
 
+#ifdef GOLDFISH_WITH_REPL
+#include <functional>
+#include <isocline.h>
+#endif
+
 #define GOLDFISH_VERSION "17.11.18"
 
 #define GOLDFISH_PATH_MAXN TB_PATH_MAXN
@@ -191,8 +196,8 @@ goldfish_exe () {
   GetModuleFileName (NULL, buffer, GOLDFISH_PATH_MAXN);
   return string (buffer);
 #elif TB_CONFIG_OS_MACOSX
-  char        buffer[PATH_MAX];
-  uint32_t    size= sizeof (buffer);
+  char     buffer[PATH_MAX];
+  uint32_t size= sizeof (buffer);
   if (_NSGetExecutablePath (buffer, &size) == 0) {
     char real_path[GOLDFISH_PATH_MAXN];
     if (realpath (buffer, real_path) != NULL) {
@@ -996,6 +1001,8 @@ glue_for_community_edition (s7_scheme* sc) {
 static void
 display_help () {
   cout << "Goldfish Scheme " << GOLDFISH_VERSION << " by LiiiLabs" << endl;
+  cout << "--help    \t"
+       << "Display this help message" << endl;
   cout << "--version\t"
        << "Display version" << endl;
   cout << "-m default\t"
@@ -1005,6 +1012,13 @@ display_help () {
        << "\t\teg. -e '(begin (display `Hello) (+ 1 2))'" << endl;
   cout << "-l FILE  \t"
        << "Load the scheme code on path" << endl;
+#ifdef GOLDFISH_WITH_REPL
+  cout << "-i       \t"
+       << "Enter interactive REPL mode" << endl;
+#else
+  cout << "-i       \t"
+       << "*Interactive REPL is not available in this build*" << endl;
+#endif
   cout << "FILE     \t"
        << "Load the scheme code on path and print the evaluated result" << endl;
 }
@@ -1117,6 +1131,390 @@ find_goldfish_boot (const char* gf_lib) {
   return string (gf_boot);
 }
 
+#ifdef GOLDFISH_WITH_REPL
+static std::vector<std::string> cached_symbols;
+inline void
+update_symbol_cache (s7_scheme* sc) {
+  cached_symbols.clear ();
+  s7_pointer cur_env = s7_curlet (sc);
+  s7_pointer sym_list= s7_let_to_list (sc, cur_env);
+  int        n       = s7_list_length (sc, sym_list);
+  for (int i= 0; i < n; ++i) {
+    s7_pointer pair= s7_list_ref (sc, sym_list, i);
+    s7_pointer sym = s7_car (pair);
+    cached_symbols.emplace_back (s7_symbol_name (sym));
+  }
+}
+
+inline void
+ic_goldfish_eval (s7_scheme* sc, const char* code) {
+  int        gc_loc  = -1;
+  s7_pointer old_port= s7_set_current_error_port (sc, s7_open_output_string (sc));
+  if (old_port != s7_nil (sc)) gc_loc= s7_gc_protect (sc, old_port);
+
+  s7_pointer result= s7_eval_c_string (sc, code);
+
+  const char* errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
+
+  if (errmsg && *errmsg) {
+    ic_printf ("[error]%s[/]\n", errmsg); // 美化输出
+  }
+  if (result) {
+    char* result_str= s7_object_to_c_string (sc, result);
+    if (result_str) {
+      // TODO: auto intern variable (guile like)
+      ic_printf ("[gray] =[/] %s\n", result_str);
+      free (result_str);
+    }
+  }
+
+  s7_close_output_port (sc, s7_current_error_port (sc));
+  s7_set_current_error_port (sc, old_port);
+  if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+
+  update_symbol_cache (sc);
+}
+
+inline std::string
+get_history_path () {
+#ifdef TB_CONFIG_OS_WINDOWS
+  const char* appdata= getenv ("APPDATA");
+  std::string dir    = appdata ? std::string (appdata) + "\\goldfish" : ".";
+  tb_directory_create (dir.c_str ());
+  std::string path= dir + "\\history";
+#else
+  const char* xdg_state= getenv ("XDG_STATE_HOME");
+  const char* xdg_data = getenv ("XDG_DATA_HOME");
+  const char* home     = getenv ("HOME");
+  std::string dir;
+  if (xdg_data) {
+    dir= std::string (xdg_data) + "/goldfish";
+  }
+  else if (home) {
+    dir= std::string (home) + "/.local/share/goldfish";
+  }
+  else {
+    dir= ".";
+  }
+  // 可选：创建目录
+  tb_directory_create (dir.c_str ());
+  std::string path= dir + "/history";
+#endif
+  return path;
+}
+
+inline void
+symbol_completer (ic_completion_env_t* cenv, const char* symbol) {
+  size_t input_len= strlen (symbol);
+  for (const auto& name : cached_symbols) {
+    if (strncmp (name.c_str (), symbol, input_len) == 0) {
+      ic_add_completion (cenv, name.c_str ());
+    }
+  }
+}
+
+inline void
+goldfish_completer (ic_completion_env_t* cenv, const char* input) {
+  ic_complete_word (cenv, input, &symbol_completer, NULL);
+}
+
+inline bool
+is_symbol_char (const char* s, long len) {
+  int c= (unsigned char) *s;
+  return isalnum (c) || strchr ("!$%&*/:<=>?^_~+-.", c);
+}
+
+inline void
+goldfish_highlighter (ic_highlight_env_t* henv, const char* input, void* arg) {
+  static const char* keywords[]= {"define",
+                                  "lambda",
+                                  "if",
+                                  "else",
+                                  "let",
+                                  "let*",
+                                  "letrec",
+                                  "begin",
+                                  "quote",
+                                  "set!",
+                                  "cond",
+                                  "case",
+                                  "and",
+                                  "or",
+                                  "do",
+                                  "delay",
+                                  "quasiquote",
+                                  "unquote",
+                                  "unquote-splicing",
+                                  NULL};
+  long               len       = (long) strlen (input);
+  for (long i= 0; i < len;) {
+    long tlen;
+    if ((tlen= ic_match_any_token (input, i, &ic_char_is_idletter, keywords)) > 0) {
+      // 关键字
+      ic_highlight (henv, i, tlen, "keyword");
+      i+= tlen;
+    }
+    else if ((tlen= ic_is_token (input, i, &is_symbol_char)) > 0) {
+      // 已定义符号
+
+      std::string token (input + i, tlen);
+      if (std::find (cached_symbols.begin (), cached_symbols.end (), token) != cached_symbols.end ()) {
+        ic_highlight (henv, i, tlen, "symbol");
+      }
+      else {
+        ic_highlight (henv, i, tlen, nullptr);
+      }
+      i+= tlen;
+    }
+    else if ((tlen= ic_is_token (input, i, &ic_char_is_digit)) > 0) {
+      // 数字
+      ic_highlight (henv, i, tlen, "number");
+      i+= tlen;
+    }
+    else if (input[i] == '#' && (input[i + 1] == 't' || input[i + 1] == 'f')) {
+      // 布尔值
+      ic_highlight (henv, i, 2, "constant");
+      i+= 2;
+    }
+    else if (input[i] == '"') {
+      long start= i;
+      i++;
+      while (i < len && input[i] != '"') {
+        if (input[i] == '\\' && i + 1 < len) i++; // 跳过转义
+        i++;
+      }
+      if (i < len) i++; // 包含结尾引号
+      ic_highlight (henv, start, i - start, "string");
+    }
+    else if (input[i] == ';') {
+      // 注释
+      long start= i;
+      while (i < len && input[i] != '\n')
+        i++;
+      ic_highlight (henv, start, i - start, "comment");
+    }
+    else {
+      // 其它
+      ic_highlight (henv, i, 1, nullptr);
+      i++;
+    }
+  }
+}
+
+struct MetaCommand {
+  const char* name;
+  const char* help;
+  bool        exact;
+
+  std::function<bool (const char* input, s7_scheme* sc, const char* arg)> handler;
+};
+
+inline bool meta_quit (const char*, s7_scheme*, const char*);
+inline bool meta_help (const char*, s7_scheme*, const char*);
+inline bool meta_import (const char*, s7_scheme*, const char*);
+inline bool meta_apropos (const char*, s7_scheme* sc, const char* arg);
+inline bool meta_describe (const char*, s7_scheme* sc, const char* arg);
+
+const MetaCommand commands[]= {
+    {",quit", "exit REPL", true, meta_quit},
+    {",q", "exit REPL", true, meta_quit},
+    {",help", "show this help", true, meta_help},
+    {",?", "show this help", true, meta_help},
+    {",import", "import Scheme module", false, meta_import},
+    {",apropos", "search symbols by substring", false, meta_apropos},
+    {",a", "search symbols by substring", false, meta_apropos},
+    {",describe", "describe symbol", false, meta_describe},
+    {",d", "describe symbol", false, meta_describe},
+};
+const size_t commands_count= sizeof (commands) / sizeof (commands[0]);
+
+inline bool
+meta_quit (const char*, s7_scheme*, const char*) {
+  return true;
+}
+
+// TODO: ,help <command>
+inline bool
+meta_help (const char*, s7_scheme*, const char*) {
+  ic_printf ("[b]Meta commands:[/]\n");
+  for (const auto& cmd : commands) {
+    ic_printf ("[b]%-16s[/] %s\n", cmd.name, cmd.help);
+  }
+  return false;
+}
+
+inline bool
+meta_import (const char*, s7_scheme* sc, const char* arg) {
+  if (!arg || *arg == 0) {
+    ic_printf ("[red]Usage:[/] ,import <module>\n");
+    return false;
+  }
+  std::string mod = arg;
+  std::string code= "(import " + mod + ")";
+
+  ic_goldfish_eval (sc, code.c_str ());
+
+  return false;
+}
+
+inline bool
+meta_apropos (const char*, s7_scheme* sc, const char* arg) {
+  if (!arg || !*arg) {
+    ic_printf ("[b]Usage:[/] ,apropos <substring>\n");
+    return false;
+  }
+  s7_pointer cur_env = s7_curlet (sc);
+  s7_pointer sym_list= s7_let_to_list (sc, cur_env);
+  int        n       = s7_list_length (sc, sym_list);
+
+  int found= false;
+  for (int i= 0; i < n; ++i) {
+    s7_pointer  pair= s7_list_ref (sc, sym_list, i);
+    s7_pointer  sym = s7_car (pair);
+    s7_pointer  val = s7_cdr (pair);
+    const char* name= s7_symbol_name (sym);
+    if (strstr (name, arg)) {
+      const char* doc= s7_documentation (sc, val);
+      ic_printf ("[b cyan]%s[/] [dim](procedure)[/] %s\n", name, doc);
+      found= true;
+    }
+  }
+  if (!found) ic_printf ("[dim]No symbol matches '%s'[/]\n", arg);
+  return false;
+}
+
+inline bool
+meta_describe (const char*, s7_scheme* sc, const char* arg) {
+  if (!arg || !*arg) {
+    ic_printf ("[b]Usage:[/] ,describe <symbol>\n");
+    return false;
+  }
+  // 查找符号
+  s7_pointer sym= s7_make_symbol (sc, arg);
+
+  // 检查是否已定义
+  if (!s7_is_defined (sc, s7_symbol_name (sym))) {
+    ic_printf ("[dim]Symbol not defined: %s[/]\n", arg);
+    return false;
+  }
+  s7_pointer  val = s7_symbol_value (sc, sym);
+  const char* type= s7_object_to_c_string (sc, s7_type_of (sc, val));
+  ic_printf ("[b]%s[/] [dim](%s)[/]\n", arg, type);
+
+  if (s7_is_procedure (val)) {
+    // 参数信息
+    s7_pointer arity   = s7_arity (sc, val);
+    s7_int     min_args= s7_integer (s7_car (arity));
+    s7_int     max_args= s7_integer (s7_cdr (arity));
+
+    std::string max_str= (max_args >= 0x20000000) ? "any" : std::to_string (max_args);
+    ic_printf ("  [gray]Arity:[/] min [number]%d[/], max [number]%s[/]\n", min_args, max_str.c_str ());
+
+    s7_pointer sig= s7_signature (sc, val);
+    if (sig && !s7_is_null (sc, sig)) {
+      char* sig_str= s7_object_to_c_string (sc, sig);
+      if (sig_str) {
+        ic_printf ("  [gray]Signature:[/] %s\n", sig_str);
+        free (sig_str);
+      }
+    }
+
+    // 文档
+    const char* doc= s7_documentation (sc, val);
+    if (doc && *doc) {
+      ic_printf ("  [gray]Doc:[/] %s\n", doc);
+    }
+  }
+  else {
+    char*       val_str= s7_object_to_c_string (sc, val);
+    std::string preview;
+    if (val_str) {
+      preview= std::string (val_str).substr (0, 80);
+      if (strlen (val_str) > 80) preview+= "...";
+    }
+    else {
+      preview= "";
+    }
+    ic_printf ("  [gray]Value:[/] %s\n", preview.c_str ());
+    if (val_str) free (val_str);
+  }
+  return false;
+}
+
+inline bool
+handle_meta_command (const char* input, s7_scheme* sc) {
+  for (const auto& cmd : commands) {
+    size_t len= strlen (cmd.name);
+    if (cmd.exact) {
+      if (strcmp (input, cmd.name) == 0) return cmd.handler (input, sc, nullptr);
+    }
+    else {
+      if (strncmp (input, cmd.name, len) == 0) {
+        // 跳过空格
+        const char* arg= input + len + 1;
+        while (*arg == ' ')
+          ++arg;
+        return cmd.handler (input, sc, input + len + 1);
+      }
+    }
+  }
+  ic_printf ("[red]Unknown meta command:[/] %s\n", input);
+  return false;
+}
+
+inline void
+goldfish_repl (s7_scheme* sc, const string& mode) {
+  setlocale (LC_ALL, "C.UTF-8");
+  ic_style_def ("kbd", "gray underline");
+  ic_style_def ("ic-prompt", "gold");
+
+  // 自定义样式
+  ic_style_def ("error", "red");
+  ic_style_def ("symbol", "cyan");
+
+  ic_printf ("[b gold]Goldfish Scheme[/] [b plum]%s[/] by LiiiLabs\n"
+             "[i]Based on S7 Scheme %s [dim](%s)[/][/]\n"
+             "[b]Mode:[/] [b]%s[/]\n\n",
+             GOLDFISH_VERSION, S7_VERSION, S7_DATE, mode.c_str ());
+  ic_printf ("- Type ',quit' or ',q' to quit. (or use [kbd]ctrl-d[/]).\n"
+             "- Type ',help' for REPL commands help.\n"
+             "- Press [kbd]F1[/] for help on editing commands.\n"
+             "- Use [kbd]shift-tab[/] for multiline input. (or [kbd]ctrl-enter[/], or [kbd]ctrl-j[/])\n"
+             "- Use [kbd]ctrl-r[/] to search the history.\n\n");
+
+  auto history_path= get_history_path ();
+  ic_set_history (history_path.c_str (), -1);
+
+  ic_set_default_completer (&goldfish_completer, sc);
+  ic_set_default_highlighter (&goldfish_highlighter, nullptr);
+
+  //  prompt_marker, continuation_prompt_marker
+  ic_set_prompt_marker ("> ", "... ");
+  ic_enable_auto_tab (true);
+  // 缓存的符号向量，只需要查表，没有必要延迟
+  ic_set_hint_delay (0);
+
+  update_symbol_cache (sc);
+
+  while (true) {
+    char* input= ic_readline ("gf");
+    if (!input) break;
+    if (strlen (input) == 0) {
+      free (input);
+      continue;
+    }
+    if (input[0] == ',') {
+      bool quit= handle_meta_command (input, sc);
+      free (input);
+      if (quit) break;
+      continue;
+    }
+
+    ic_goldfish_eval (sc, input);
+  }
+}
+#endif
+
 int
 repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
   string      gf_lib_dir  = find_goldfish_library ();
@@ -1169,9 +1567,23 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
     if (args[0] == "--version") {
       display_version ();
     }
+    if (args[0] == "--help") {
+      display_help ();
+    }
     else if (args[0] == "-i") {
+#ifdef GOLDFISH_WITH_REPL
+      errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
+      if ((errmsg) && (*errmsg)) ic_printf ("[red]%s[/]\n", errmsg);
+      s7_close_output_port (sc, s7_current_error_port (sc));
+      s7_set_current_error_port (sc, old_port);
+      if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+
+      goldfish_repl (sc, mode);
+      return 0;
+#else
       cerr << "Interactive REPL is not available in this build." << endl;
       exit (-1);
+#endif
     }
     else {
       display_for_invalid_options ();

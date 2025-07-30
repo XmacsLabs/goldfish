@@ -19,6 +19,12 @@ option("tbox")
     set_values(false, true)
 option_end()
 
+option("repl")
+    set_description("Enable REPL (isocline) support")
+    set_default(false)
+    set_values(false, true)
+option_end()
+
 local S7_VERSION = "20250721"
 add_requires("s7 "..S7_VERSION, {system=false})
 
@@ -35,6 +41,9 @@ if is_plat("wasm") then
     set_toolchains("emcc@emscripten")
 end
 
+local IC_VERSION = "v1.0.9"
+add_requires("isocline " .. IC_VERSION, {system=false})
+
 target ("goldfish") do
     set_languages("c++11")
     set_targetdir("$(projectdir)/bin/")
@@ -48,6 +57,12 @@ target ("goldfish") do
     add_files ("src/goldfish.cpp")
     add_packages("s7")
     add_packages("tbox")
+
+    -- only enable REPL if repl option is enabled
+    if has_config("repl") then
+        add_packages("isocline")
+        add_defines("GOLDFISH_WITH_REPL")
+    end
 
     add_installfiles("$(projectdir)/goldfish/(scheme/*.scm)", {prefixdir = "share/goldfish"})
     add_installfiles("$(projectdir)/goldfish/(srfi/*.scm)", {prefixdir = "share/goldfish"})
