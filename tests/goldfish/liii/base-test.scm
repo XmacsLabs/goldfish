@@ -23,6 +23,166 @@
 
 (check-set-mode! 'report-failed)
 
+
+#|
+eqv?
+判断两个对象是否值相等，根据R7RS规范，eqv?在不同类型的数据上表现不同。
+
+语法
+----
+(eqv? obj1 obj2)
+
+参数
+----
+obj1, obj2 : any
+任意类型的对象
+
+返回值
+-----
+boolean?
+如果两个对象值相等则返回 #t，否则返回 #f。
+
+|#
+
+;; Test eqv? for boolean values
+(check-true (eqv? #t #t))
+(check-true (eqv? #f #f))
+(check-false (eqv? #t #f))
+
+;; Test eqv? for exact numbers
+(check-true (eqv? 42 42))
+(check-false (eqv? 42 43))
+
+;; Test eqv? for inexact numbers
+(check-true (eqv? 3.14 3.14))
+(check-false (eqv? 3.14 2.71))
+
+;; Test eqv? for characters
+(check-true (eqv? #\a #\a))
+(check-false (eqv? #\a #\b))
+
+;; Test eqv? for symbols
+(check-true (eqv? 'abc 'abc))
+(check-false (eqv? 'abc 'def))
+
+;; Test eqv? for lists (same instance)
+(check-true (let ((lst (list 1 2 3)))
+              (eqv? lst lst)))
+
+;; Test eqv? for lists (different instances)
+(check-false (eqv? (list 1 2 3) (list 1 2 3)))
+
+;; Test eqv? for strings (always #f due to different instances)
+(check-false (eqv? "hello" "hello"))
+(check-false (eqv? "hello" "world"))
+
+;; Test eqv? for procedures
+(check-true (eqv? car car))
+(check-false (eqv? car cdr))
+
+;;; eq?
+
+#|
+eq?
+判断两个对象是否引用相同（对象为同一），即判断对象标识。
+
+语法
+----
+(eq? obj1 obj2)
+
+参数
+----
+obj1, obj2 : any
+任意类型的对象
+
+返回值
+-----
+boolean?
+如果两个对象是同一对象则返回 #t，否则返回 #f。
+|#
+
+;; Test eq? for boolean values
+(check-true (eq? #t #t))
+(check-true (eq? #f #f))
+(check-false (eq? #t #f))
+
+;; Test eq? for exact numbers (may return #f for different instances)
+(check-true (eq? 42 42))
+(check-false (eq? 42 43))
+
+;; Test eq? for symbols
+(check-true (eq? 'abc 'abc))
+(check-false (eq? 'abc 'def))
+
+;; Test eq? for lists (not the same instance)
+(check-false (eq? (list 1 2 3) (list 1 2 3)))
+(check-true (let ((lst (list 1 2 3)))
+              (eq? lst lst)))
+
+;; Test eq? for strings (always #f due to different instances)
+(check-false (eq? "hello" "hello"))
+
+;; Test eq? for procedures
+(check-true (eq? car car))
+(check-false (eq? car cdr))
+
+;;; equal?
+
+#|
+equal?
+判断两个对象结构是否相等，根据R7RS规范，equal?对复杂数据结构进行深比较。
+
+语法
+----
+(equal? obj1 obj2)
+
+参数
+----
+obj1, obj2 : any
+任意类型的对象
+
+返回值
+-----
+boolean?
+如果两个对象结构相等则返回 #t，否则返回 #f。
+|#
+
+;; Test equal? for simple types
+(check-true (equal? #t #t))
+(check-true (equal? 42 42))
+(check-true (equal? 3.14 3.14))
+(check-true (equal? "hello" "hello"))
+(check-true (equal? 'abc 'abc))
+
+;; Test equal? for lists
+(check-true (equal? (list 1 2 3) (list 1 2 3)))
+(check-false (equal? (list 1 2 3) (list 1 2 4)))
+
+;; Test equal? for nested lists
+(check-true (equal? (list (list 1 2) (list 3 4)) (list (list 1 2) (list 3 4))))
+(check-false (equal? (list (list 1 2) (list 3 4)) (list (list 1 2) (list 3 5))))
+
+;; Test equal? for vectors
+(check-true (equal? (vector 1 2 3) (vector 1 2 3)))
+(check-false (equal? (vector 1 2 3) (vector 1 2 4)))
+
+;; Test equal? for nested vectors
+(check-true (equal? (vector (vector 1 2) (vector 3 4)) (vector (vector 1 2) (vector 3 4))))
+(check-false (equal? (vector (vector 1 2) (vector 3 4)) (vector (vector 1 2) (vector 3 5))))
+
+;; Test equal? for mixed structures
+(check-true (equal? (list 1 (vector 2 3) 4) (list 1 (vector 2 3) 4)))
+(check-false (equal? (list 1 (vector 2 3) 4) (list 1 (vector 2 4) 4)))
+
+;; Test equal? for empty structures
+(check-true (equal? (list) (list)))
+(check-true (equal? (vector) (vector)))
+
+;; Test equal? for different types
+(check-false (equal? 42 "hello"))
+(check-false (equal? #\a "a"))
+
+
 (check ((lambda (x) (* x x)) 5) => 25)
 (check ((lambda (x) (* x x)) 0) => 0)
 (check ((lambda (x) (* x x)) -3) => 9)
@@ -2743,734 +2903,6 @@ wrong-number-of-args
 (check-catch 'wrong-number-of-args (boolean=? #t))
 
 
-#|
-char?
-判断对象是否为字符的谓词。
-
-语法
-----
-(char? obj)
-
-参数
-----
-obj : any?
-任意对象。
-
-返回值
-------
-boolean?
-如果对象是字符则返回 #t，否则返回 #f。
-
-说明
-----
-1. 用于检查对象是否为字符类型
-2. 能够正确识别各种字符形式：字母、数字、特殊字符等
-3. 返回布尔值，便于在条件判断中使用
-
-错误处理
---------
-wrong-number-of-args
-当参数数量不为1时抛出错误。
-|#
-
-;; char? 基础测试
-(check (char? #\A) => #t)
-(check (char? #\a) => #t)
-(check (char? #\0) => #t)
-(check (char? #\space) => #t)
-(check (char? #\!) => #t)
-(check (char? 123) => #f)
-(check (char? "A") => #f)
-(check (char? 'a) => #f)
-
-;; 错误处理测试
-(check-catch 'wrong-number-of-args (char?))
-(check-catch 'wrong-number-of-args (char? #\A #\B))
-
-#|
-char=?
-比较两个或多个字符是否相等。
-
-语法
-----
-(char=? char1 char2 . more-chars)
-
-参数
-----
-char1, char2, ... : char?
-字符值。
-
-返回值
-------
-boolean?
-如果所有给定的字符都相等，则返回 #t (真)，否则返回 #f (假)。
-
-说明
-----
-1. 至少需要两个参数
-2. 所有参数必须都是字符
-3. 当所有字符相等时返回 #t，否则返回 #f
-4. 支持比较两个或多个字符
-5. 区分大小写
-
-错误处理
---------
-wrong-type-arg
-当参数不是字符时抛出错误。
-wrong-number-of-args
-当参数数量少于2个时抛出错误。
-|#
-
-;; char=? 基本测试
-(check (char=? #\A #\A) => #t)
-(check (char=? #\a #\a) => #t)
-(check (char=? #\A #\a) => #f)
-(check (char=? #\a #\A) => #f)
-(check (char=? #\0 #\0) => #t)
-(check (char=? #\9 #\9) => #t)
-(check (char=? #\0 #\9) => #f)
-
-;; 特殊字符测试
-(check (char=? #\space #\space) => #t)
-(check (char=? #\newline #\newline) => #t)
-(check (char=? #\tab #\tab) => #t)
-(check (char=? #\space #\newline) => #f)
-
-;; 多参数测试
-(check (char=? #\A #\A #\A) => #t)
-(check (char=? #\a #\a #\a) => #t)
-(check (char=? #\A #\A #\a) => #f)
-(check (char=? #\a #\b #\c) => #f)
-
-;; 边界测试
-(check (char=? #\0 #\0 #\0 #\0 #\0) => #t)
-(check (char=? #\A #\A #\A #\A #\a) => #f)
-(check (char=? #\z #\z #\z) => #t)
-(check (char=? #\! #\! #\!) => #t)
-
-;; 数字字符测试
-(check (char=? #\1 #\1) => #t)
-(check (char=? #\1 #\! ) => #f)
-
-;; 大小写混合测试
-(check (char=? #\a #\b #\c #\d) => #f)
-(check (char=? #\A #\B #\C) => #f)
-
-;; 错误处理测试
-(check-catch 'wrong-type-arg (char=? 1 #\A))
-(check-catch 'wrong-type-arg (char=? #\A 'symbol))
-(check-catch 'wrong-type-arg (char=? 123 #\a))
-(check-catch 'wrong-number-of-args (char=?))
-(check-catch 'wrong-number-of-args (char=? #\A))
-
-
-#|
-char->integer
-将字符转换为其对应的码点值。
-
-语法
-----
-(char->integer char)
-
-参数
-----
-char : char?
-字符。
-
-返回值
-------
-integer?
-字符对应的码点值
-
-说明
-----
-将字符转换为对应的整数值
-
-错误处理
---------
-wrong-type-arg
-当参数不是字符时抛出错误。
-wrong-number-of-args
-当参数数量不为1时抛出错误。
-|#
-
-;; char->integer 基本测试
-(check (char->integer #\0) => 48)
-(check (char->integer #\9) => 57)
-
-
-;; 字符边界测试
-(check (char->integer #\tab) => 9)
-(check (char->integer #\newline) => 10)
-(check (char->integer #\return) => 13)
-(check (char->integer #\backspace) => 8)
-
-;; 特殊字符测试
-(check (char->integer #\!) => 33)
-(check (char->integer #\@) => 64)
-(check (char->integer #\#) => 35)
-(check (char->integer #\$) => 36)
-(check (char->integer #\%) => 37)
-
-;; 扩展字符测试
-(check (char->integer #\~) => 126)
-(check (char->integer #\_) => 95)
-
-;; 数字边界测试
-(check (char->integer #\A) => 65)
-(check (char->integer #\B) => 66)
-(check (char->integer #\Z) => 90)
-(check (char->integer #\a) => 97)
-(check (char->integer #\z) => 122)
-
-;; 错误处理测试
-(check-catch 'wrong-type-arg (char->integer 65))
-(check-catch 'wrong-type-arg (char->integer "A"))
-(check-catch 'wrong-number-of-args (char->integer))
-(check-catch 'wrong-number-of-args (char->integer #\A #\B))
-
-#|
-integer->char
-将整数码点转换为对应的字符。
-
-语法
-----
-(integer->char n)
-
-参数
-----
-n : integer?
-整数值，必须是有效的码点值，通常范围在0到255之间。
-返回值
-------
-char?
-对应的字符
-
-说明
-----
-1. 将整数转换为对应的字符
-4. 与char->integer互逆操作
-
-
-错误处理
---------
-out-of-range
-当码点超出有效范围时抛出错误。
-wrong-type-arg
-当参数不是整数时抛出错误。
-wrong-number-of-args
-当参数数量不为1时抛出错误。
-|#
-
-;; integer->char 基本测试
-(check (integer->char 65) => #\A)
-(check (integer->char 97) => #\a)
-(check (integer->char 48) => #\0)
-(check (integer->char 57) => #\9)
-(check (integer->char 10) => #\newline)
-(check (integer->char 32) => #\space)
-(check (integer->char 9) => #\tab)
-
-;; 大写和小写字符
-(check (integer->char 65) => #\A)
-(check (integer->char 90) => #\Z)
-(check (integer->char 97) => #\a)
-(check (integer->char 122) => #\z)
-
-;; 数字字符
-(check (integer->char 48) => #\0)
-(check (integer->char 49) => #\1)
-(check (integer->char 57) => #\9)
-
-;; 特殊字符测试
-(check (integer->char 33) => #\!)
-(check (integer->char 64) => #\@)
-(check (integer->char 35) => #\#)
-
-;; 边界测试
-(check (integer->char 0) => #\null)
-(check (integer->char 126) => #\~)
-
-;; 反向验证
-(check (integer->char (char->integer #\A)) => #\A)
-(check (integer->char (char->integer #\a)) => #\a)
-(check (integer->char (char->integer #\0)) => #\0)
-(check (char->integer (integer->char 65)) => 65)
-(check (char->integer (integer->char 97)) => 97)
-
-;; 错误处理测试
-(check-catch 'out-of-range (integer->char -1))
-(check-catch 'out-of-range (integer->char 256))
-(check-catch 'wrong-type-arg (integer->char 65.0))
-(check-catch 'wrong-number-of-args (integer->char))
-(check-catch 'wrong-number-of-args (integer->char 65 66))  
-
-
-
-#|
-bytevector
-返回一个新分配的字节向量，其元素包含传递给过程的所有参数。每个参数都必须是一个介于0到255之间的整数，表示字节向量中的一个字节。如果没有提供任何参数，将创建一个空的字节向量。
-
-语法
-----
-(bytevector byte ...)
-
-参数
-----
-byte... : integer?
-零个或多个介于0到255之间的整数（包含边界），表示字节值。
-
-返回值
-------
-bytevector?
-新创建的字节向量，包含所有参数指定的字节值。
-
-说明
-----
-1. 可以接受零个或多个参数
-2. 每个参数必须在0-255的范围内
-3. 无参数时创建空字节向量
-4. 参数顺序就是字节向量中元素的顺序
-
-错误处理
---------
-wrong-type-arg
-当任何参数不是在0-255范围内的整数时抛出错误。
-|#
-
-;; bytevector 基本测试
-(check (bytevector) => #u8())
-(check (bytevector 255) => #u8(255))
-(check (bytevector 1 2 3 4) => #u8(1 2 3 4))
-(check (bytevector 10 20 30 40 50) => #u8(10 20 30 40 50))
-
-;; 边界测试
-(check (bytevector 0) => #u8(0))
-(check (bytevector 255) => #u8(255))
-(check (bytevector 0 255) => #u8(0 255))
-
-;; 不同长度测试
-(check (bytevector) => #u8())
-(check (bytevector 15) => #u8(15))
-(check (bytevector 85 170) => #u8(85 170))
-(check (bytevector 1 2 3 4 5 6 7 8 9 10) => #u8(1 2 3 4 5 6 7 8 9 10))
-
-;; 错误处理测试
-(check-catch 'wrong-type-arg (bytevector 256))
-(check-catch 'wrong-type-arg (bytevector -1))
-(check-catch 'wrong-type-arg (bytevector 123.0))
-(check-catch 'wrong-type-arg (bytevector 123 #u8(1 2 3)))
-
-#|
-bytevector?
-判断一个对象是否为字节向量类型的谓词。
-
-语法
-----
-(bytevector? obj)
-
-参数
-----
-obj : any?
-任意对象。
-
-返回值
-------
-boolean?
-如果对象是一个字节向量，返回#t；否则返回#f。
-
-说明
-----
-1. 用于检查对象是否为字节向量类型
-2. #u8()形式创建的也是字节向量，即使为空
-3. 能够正确识别所有类型的字节向量实例
-
-错误处理
---------
-wrong-number-of-args
-当参数数量不为1时抛出错误。
-|#
-
-;; bytevector? 基本测试
-(check-true (bytevector? #u8()))
-(check-true (bytevector? #u8(0)))
-(check-true (bytevector? #u8(255)))
-(check-true (bytevector? #u8(1 2 3 4 5)))
-(check-true (bytevector? (bytevector)))
-(check-true (bytevector? (bytevector 1 2 3)))
-
-;; 类型判别测试
-(check-true (bytevector? (bytevector 5 15 25)))
-(check-false (bytevector? 123))
-(check-false (bytevector? "hello"))
-(check-false (bytevector? "list"))
-(check-false (bytevector? 'symbol))
-
-;; 错误处理测试
-(check-catch 'wrong-number-of-args (bytevector?))
-(check-catch 'wrong-number-of-args (bytevector? #u8(1 2 3) #u8(4 5 6)))
-
-#|
-make-bytevector
-创建一个新的字节向量，指定长度和初始值为所有组成字节。
-
-语法
-----
-(make-bytevector k [fill])
-
-参数
-----
-k : integer?
-必须是非负的精确整数，表示字节向量的长度。
-
-fill : integer? 可选, 默认为0
-0到255之间的整数，作为所有字节的初始值。
-
-返回值
-------
-bytevector?
-创建的字节向量，所有元素都设为指定的fill值。
-
-说明
-----
-1. 可以指定长度和填充值
-2. 填充值默认为0，如果提供必须在0-255范围内
-3. 特殊字符如#等会被转换为对应的字节值
-
-错误处理
---------
-out-of-range
-当k小于0时抛出错误。
-wrong-type-arg
-当任何参数不正确时抛出错误。
-wrong-number-of-args
-当参数数量不为1或2个时抛出错误。
-|#
-
-;; make-bytevector 基本测试
-(check (make-bytevector 0) => #u8())
-(check (make-bytevector 1) => #u8(0))
-(check (make-bytevector 3) => #u8(0 0 0))
-(check (make-bytevector 5 42) => #u8(42 42 42 42 42))
-(check (make-bytevector 2 255) => #u8(255 255))
-
-;; 不同长度测试
-(check (make-bytevector 0 0) => #u8())
-(check (make-bytevector 1 128) => #u8(128))
-(check (make-bytevector 10 99) => #u8(99 99 99 99 99 99 99 99 99 99))
-
-;; 边界条件测试
-(check (make-bytevector 0) => #u8())
-(check (make-bytevector 1 0) => #u8(0))
-(check (make-bytevector 1 255) => #u8(255))
-
-;; 特殊值测试
-(check (make-bytevector 4 0) => #u8(0 0 0 0))
-(check (make-bytevector 3 170) => #u8(170 170 170))
-(check (make-bytevector 8 255) => #u8(255 255 255 255 255 255 255 255))
-
-;; 错误处理测试
-(check-catch 'out-of-range (make-bytevector -5))
-(check-catch 'wrong-type-arg (make-bytevector 3 256))
-(check-catch 'wrong-type-arg (make-bytevector 2 -1))
-(check-catch 'wrong-type-arg (make-bytevector 3.5))
-(check-catch 'wrong-type-arg (make-bytevector "hello"))
-(check-catch 'wrong-number-of-args (make-bytevector))
-(check-catch 'wrong-number-of-args (make-bytevector 1 2 3))
-
-
-
-#|
-bytevector-length
-返回字节向量中的元素个数。
-
-语法
-----
-(bytevector-length bv)
-
-参数
-----
-bv : bytevector?
-字节向量。
-
-返回值
-------
-integer?
-字节向量中的元素数量。
-
-说明
-----
-1. 返回字节向量中的字节数
-2. 空字节向量返回0
-3. 结果是非负的精确整数
-
-错误处理
---------
-wrong-type-arg
-当参数不是字节向量时抛出错误。
-wrong-number-of-args
-当参数数量不为1时抛出错误。
-|#
-
-;; bytevector-length 基本测试
-(check (bytevector-length #u8()) => 0)
-(check (bytevector-length #u8(1)) => 1)
-(check (bytevector-length #u8(1 2 3)) => 3)
-(check (bytevector-length #u8(255)) => 1)
-(check (bytevector-length #u8(1 2 3 4 5 6 7 8 9 10)) => 10)
-
-;; 使用不同类型创建的字节向量测试
-(check (bytevector-length (bytevector)) => 0)
-(check (bytevector-length (bytevector 50 150 250)) => 3)
-(check (bytevector-length (make-bytevector 5 42)) => 5)
-(check (bytevector-length (make-bytevector 10 0)) => 10)
-(check (bytevector-length (make-bytevector 0)) => 0)
-(check (bytevector-length "hello") => 5)
-(check (bytevector-length 123) => #f)
-(check (bytevector-length 'symbol) => #f)
-
-;; 错误处理测试
-
-(check-catch 'wrong-number-of-args (bytevector-length))
-(check-catch 'wrong-number-of-args (bytevector-length #u8(1 2 3) #u8(4 5)))
-
-#|
-bytevector-u8-ref
-返回字节向量中指定索引位置的字节值。
-
-语法
-----
-(bytevector-u8-ref bv k)
-
-参数
-----
-bv : bytevector?
-字节向量。
-
-k : integer?
-非负的精确整数，表示字节索引位置，必须小于字节向量的长度。
-
-返回值
-------
-integer?
-位置k处的字节值，是一个0到255之间的整数。
-
-说明
-----
-1. 用0基索引访问字节向量中的元素
-2. 索引必须是从0到长度减1的非负整数
-3. 返回对应位置的字节值
-
-错误处理
---------
-type-error
-当bv不是字节向量时或k不是整数时抛出错误。
-out-of-range
-当k小于0或大于等于字节向量长度时抛出错误。
-|#
-
-;; bytevector-u8-ref 基本测试
-(check (bytevector-u8-ref #u8(5 15 25) 0) => 5)
-(check (bytevector-u8-ref #u8(5 15 25) 1) => 15)
-(check (bytevector-u8-ref #u8(5 15 25) 2) => 25)
-(check (bytevector-u8-ref #u8(255) 0) => 255)
-(check (bytevector-u8-ref #u8(0) 0) => 0)
-
-
-;; 使用其他函数创建的字节向量测试
-(check (bytevector-u8-ref (bytevector 10 20 30 40) 0) => 10)
-(check (bytevector-u8-ref (bytevector 10 20 30 40) 1) => 20)
-(check (bytevector-u8-ref (bytevector 10 20 30 40) 3) => 40)
-(check (bytevector-u8-ref (bytevector 200 150 100 50) 2) => 100)
-
-(check (bytevector-u8-ref (make-bytevector 4 99) 0) => 99)
-(check (bytevector-u8-ref (make-bytevector 4 99) 3) => 99)
-(check (bytevector-u8-ref #u8(1) 0) => 1)  
-
-;; 复杂字节向量测试
-(check (bytevector-u8-ref #u8(10 20 30 40 50 60 70 80 90 100) 9) => 100)
-(check (bytevector-u8-ref #u8(128 64 32 16 8 4 2 1) 4) => 8)
-
-;; UTF-8转换测试
-(check (bytevector-u8-ref (string->utf8 "XYZ") 0) => 88) ;; ASCII 'X'
-(check (bytevector-u8-ref (string->utf8 "XYZ") 1) => 89) ;; ASCII 'Y'
-(check (bytevector-u8-ref (string->utf8 "A") 0) => 65)
-
-;; 错误处理测试
-
-(check-catch 'wrong-type-arg (bytevector-u8-ref 123 0))
-(check-catch 'wrong-type-arg (bytevector-u8-ref "hello" 0))
-(check-catch 'wrong-type-arg (bytevector-u8-ref #u8(1 2 3) 1.5))
-(check-catch 'out-of-range (bytevector-u8-ref #u8() 0)) ;; empty case
-(check-catch 'out-of-range (bytevector-u8-ref #u8(1 2 3) -1))
-(check-catch 'out-of-range (bytevector-u8-ref #u8(1 2 3) 3))
-(check-catch 'out-of-range (bytevector-u8-ref #u8(1 2 3) 1 3))
-(check-catch 'out-of-range (bytevector-u8-ref #u8() 0))
-(check-catch 'wrong-number-of-args (bytevector-u8-ref #u8(1 2 3)))
-
-
-#|
-bytevector-u8-set!
-修改字节向量中指定位置的字节值。
-
-语法
-----
-(bytevector-u8-set! bv k byte)
-
-参数
-----
-bv : bytevector?
-要修改的字节向量。
-
-k : integer?
-非负的精确整数，表示字节索引位置，必须小于字节向量的长度。
-
-byte : integer?
-0到255之间的整数，表示要设置的新的字节值。
-
-返回值
-------
-unspecified
-过程修改字节向量后立即返回，没有特定的返回值。
-
-错误处理
---------
-out-of-range
-当k小于0或大于等于字节向量长度时抛出错误。
-wrong-type-arg
-当byte不是0-255之间的整数时抛出错误。
-|#
-
-(let1 bv (bytevector 1 2 3 4 5)
-  (bytevector-u8-set! bv 1 4)
-  (check bv => #u8(1 4 3 4 5))
-  (bytevector-u8-set! bv 0 10)
-  (check bv => #u8(10 4 3 4 5))
-  (bytevector-u8-set! bv 4 255)
-  (check bv => #u8(10 4 3 4 255)) 
-)
-
-(let1 bv (bytevector 5)
-  (bytevector-u8-set! bv 0 10)
-  (check bv => #u8(10))  
-)
-
-
-;; 错误处理测试
-(check-catch 'out-of-range (bytevector-u8-set! #u8() 0 5))
-(check-catch 'out-of-range (bytevector-u8-set! #u8(1 2 3) -1 5))
-(check-catch 'out-of-range (bytevector-u8-set! #u8(1 2 3) 3 5))
-(check-catch 'wrong-type-arg (bytevector-u8-set! 123 0 5))
-(check-catch 'wrong-type-arg (bytevector-u8-set! "hello" 0 5))
-(check-catch 'wrong-type-arg (bytevector-u8-set! #u8(1 2 3) 1 256))
-(check-catch 'wrong-type-arg (bytevector-u8-set! #u8(1 2 3) 1 -1))
-
-#|
-bytevector-copy
-创建一个新的字节向量，它是现有字节向量的完整或部分副本。
-
-语法
-----
-(bytevector-copy bv [start [end]])
-
-参数
-----
-bv : bytevector?
-要被复制的源字节向量。
-
-start : integer? 可选, 默认为0
-非负的精确整数，表示复制开始的索引位置，必须小于bv的长度。
-
-end : integer? 可选, 默认为(bytevector-length bv)
-非负的精确整数，表示复制结束的索引位置（不包括该位置），必须大于等于start且小于等于bv的长度。
-
-返回值
-------
-bytevector?
-新的字节向量，包含从start到end-1位置的元素副本。
-
-错误处理
---------
-wrong-type-arg
-当bv不是字节向量抛出错误。
-
-out-of-range
-当start或end超出有效范围时抛出错误。
-
-wrong-number-of-args
-参数数量不正确时抛出错误。
-|#
-
-;; bytevector-copy 基本测试
-(check (bytevector-copy #u8()) => #u8())
-(check (bytevector-copy #u8(1 2 3)) => #u8(1 2 3))
-(check (bytevector-copy #u8(255 0 128)) => #u8(255 0 128))
-
-;; 段复制测试
-(check (bytevector-copy #u8(1 2 3 4 5) 0 3) => #u8(1 2 3))
-(check (bytevector-copy #u8(1 2 3 4 5) 1 4) => #u8(2 3 4))
-(check (bytevector-copy #u8(1 2 3 4 5) 2) => #u8(3 4 5))
-
-;; 边界测试
-(check (bytevector-copy #u8(50 100 150) 0 0) => #u8())
-(check (bytevector-copy #u8(50 100 150) 0 1) => #u8(50))
-(check (bytevector-copy #u8(50 100 150) 2 3) => #u8(150))
-
-;; 完整范围
-(check (bytevector-copy #u8(10 20 30 40 50) 0 5) => #u8(10 20 30 40 50))
-
-;; 独立对象测试
-(let1 bv (bytevector 1 2 3 4 5)
-  (check (bytevector-copy bv 1 4) => #u8(2 3 4)))
-
-;; 错误处理
-(check-catch 'wrong-type-arg (bytevector-copy 123))
-(check-catch 'wrong-type-arg (bytevector-copy "hello"))
-(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) -1))
-(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) 4))
-(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) 0 5))
-(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) 2 1))
-
-
-(check (bytevector-append #u8() #u8()) => #u8())
-(check (bytevector-append #u8() #u8(1)) => #u8(1))
-(check (bytevector-append #u8(1) #u8()) => #u8(1))
-
-(check (u8-string-length "中文") => 2)
-(check (u8-string-length "") => 0)
-
-(check (utf8->string (bytevector #x48 #x65 #x6C #x6C #x6F)) => "Hello")
-(check (utf8->string #u8(#xC3 #xA4)) => "ä")
-(check (utf8->string #u8(#xE4 #xB8 #xAD)) => "中")
-(check (utf8->string #u8(#xF0 #x9F #x91 #x8D)) => "👍")
-
-(check-catch 'value-error (utf8->string (bytevector #xFF #x65 #x6C #x6C #x6F)))
-
-(check (string->utf8 "Hello") => (bytevector #x48 #x65 #x6C #x6C #x6F))
-(check (utf8->string (string->utf8 "Hello" 1 2)) => "e")
-(check (utf8->string (string->utf8 "Hello" 0 2)) => "He")
-(check (utf8->string (string->utf8 "Hello" 2)) => "llo")
-(check (utf8->string (string->utf8 "Hello" 2 5)) => "llo")
-
-(check-catch 'out-of-range (string->utf8 "Hello" 2 6))
-
-(check (utf8->string (string->utf8 "汉字书写")) => "汉字书写")
-(check (utf8->string (string->utf8 "汉字书写" 1)) => "字书写")
-(check (utf8->string (string->utf8 "汉字书写" 2)) => "书写")
-(check (utf8->string (string->utf8 "汉字书写" 3)) => "写")
-
-(check-catch 'out-of-range (string->utf8 "汉字书写" 4))
-
-(check (string->utf8 "ä") => #u8(#xC3 #xA4))
-(check (string->utf8 "中") => #u8(#xE4 #xB8 #xAD))
-(check (string->utf8 "👍") => #u8(#xF0 #x9F #x91 #x8D))
-
-(check (string->utf8 "") => #u8())
-
-(check (u8-substring "汉字书写" 0 1) => "汉")
-(check (u8-substring "汉字书写" 0 4) => "汉字书写")
-(check (u8-substring "汉字书写" 0) => "汉字书写")
-
 (check (apply + (list 3 4)) => 7)
 (check (apply + (list 2 3 4)) => 9)
 
@@ -4001,6 +3433,269 @@ wrong-number-of-args
 (check (string->symbol (symbol->string `MathAgape)) => `MathAgape)
 
 
+#|
+char?
+判断对象是否为字符的谓词。
+
+语法
+----
+(char? obj)
+
+参数
+----
+obj : any?
+任意对象。
+
+返回值
+------
+boolean?
+如果对象是字符则返回 #t，否则返回 #f。
+
+说明
+----
+1. 用于检查对象是否为字符类型
+2. 能够正确识别各种字符形式：字母、数字、特殊字符等
+3. 返回布尔值，便于在条件判断中使用
+
+错误处理
+--------
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; char? 基础测试
+(check (char? #\A) => #t)
+(check (char? #\a) => #t)
+(check (char? #\0) => #t)
+(check (char? #\space) => #t)
+(check (char? #\!) => #t)
+(check (char? 123) => #f)
+(check (char? "A") => #f)
+(check (char? 'a) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-number-of-args (char?))
+(check-catch 'wrong-number-of-args (char? #\A #\B))
+
+#|
+char=?
+比较两个或多个字符是否相等。
+
+语法
+----
+(char=? char1 char2 . more-chars)
+
+参数
+----
+char1, char2, ... : char?
+字符值。
+
+返回值
+------
+boolean?
+如果所有给定的字符都相等，则返回 #t (真)，否则返回 #f (假)。
+
+说明
+----
+1. 至少需要两个参数
+2. 所有参数必须都是字符
+3. 当所有字符相等时返回 #t，否则返回 #f
+4. 支持比较两个或多个字符
+5. 区分大小写
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量少于2个时抛出错误。
+|#
+
+;; char=? 基本测试
+(check (char=? #\A #\A) => #t)
+(check (char=? #\a #\a) => #t)
+(check (char=? #\A #\a) => #f)
+(check (char=? #\a #\A) => #f)
+(check (char=? #\0 #\0) => #t)
+(check (char=? #\9 #\9) => #t)
+(check (char=? #\0 #\9) => #f)
+
+;; 特殊字符测试
+(check (char=? #\space #\space) => #t)
+(check (char=? #\newline #\newline) => #t)
+(check (char=? #\tab #\tab) => #t)
+(check (char=? #\space #\newline) => #f)
+
+;; 多参数测试
+(check (char=? #\A #\A #\A) => #t)
+(check (char=? #\a #\a #\a) => #t)
+(check (char=? #\A #\A #\a) => #f)
+(check (char=? #\a #\b #\c) => #f)
+
+;; 边界测试
+(check (char=? #\0 #\0 #\0 #\0 #\0) => #t)
+(check (char=? #\A #\A #\A #\A #\a) => #f)
+(check (char=? #\z #\z #\z) => #t)
+(check (char=? #\! #\! #\!) => #t)
+
+;; 数字字符测试
+(check (char=? #\1 #\1) => #t)
+(check (char=? #\1 #\! ) => #f)
+
+;; 大小写混合测试
+(check (char=? #\a #\b #\c #\d) => #f)
+(check (char=? #\A #\B #\C) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char=? 1 #\A))
+(check-catch 'wrong-type-arg (char=? #\A 'symbol))
+(check-catch 'wrong-type-arg (char=? 123 #\a))
+(check-catch 'wrong-number-of-args (char=?))
+(check-catch 'wrong-number-of-args (char=? #\A))
+
+
+#|
+char->integer
+将字符转换为其对应的码点值。
+
+语法
+----
+(char->integer char)
+
+参数
+----
+char : char?
+字符。
+
+返回值
+------
+integer?
+字符对应的码点值
+
+说明
+----
+将字符转换为对应的整数值
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; char->integer 基本测试
+(check (char->integer #\0) => 48)
+(check (char->integer #\9) => 57)
+
+
+;; 字符边界测试
+(check (char->integer #\tab) => 9)
+(check (char->integer #\newline) => 10)
+(check (char->integer #\return) => 13)
+(check (char->integer #\backspace) => 8)
+
+;; 特殊字符测试
+(check (char->integer #\!) => 33)
+(check (char->integer #\@) => 64)
+(check (char->integer #\#) => 35)
+(check (char->integer #\$) => 36)
+(check (char->integer #\%) => 37)
+
+;; 扩展字符测试
+(check (char->integer #\~) => 126)
+(check (char->integer #\_) => 95)
+
+;; 数字边界测试
+(check (char->integer #\A) => 65)
+(check (char->integer #\B) => 66)
+(check (char->integer #\Z) => 90)
+(check (char->integer #\a) => 97)
+(check (char->integer #\z) => 122)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char->integer 65))
+(check-catch 'wrong-type-arg (char->integer "A"))
+(check-catch 'wrong-number-of-args (char->integer))
+(check-catch 'wrong-number-of-args (char->integer #\A #\B))
+
+#|
+integer->char
+将整数码点转换为对应的字符。
+
+语法
+----
+(integer->char n)
+
+参数
+----
+n : integer?
+整数值，必须是有效的码点值，通常范围在0到255之间。
+返回值
+------
+char?
+对应的字符
+
+说明
+----
+1. 将整数转换为对应的字符
+4. 与char->integer互逆操作
+
+
+错误处理
+--------
+out-of-range
+当码点超出有效范围时抛出错误。
+wrong-type-arg
+当参数不是整数时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; integer->char 基本测试
+(check (integer->char 65) => #\A)
+(check (integer->char 97) => #\a)
+(check (integer->char 48) => #\0)
+(check (integer->char 57) => #\9)
+(check (integer->char 10) => #\newline)
+(check (integer->char 32) => #\space)
+(check (integer->char 9) => #\tab)
+
+;; 大写和小写字符
+(check (integer->char 65) => #\A)
+(check (integer->char 90) => #\Z)
+(check (integer->char 97) => #\a)
+(check (integer->char 122) => #\z)
+
+;; 数字字符
+(check (integer->char 48) => #\0)
+(check (integer->char 49) => #\1)
+(check (integer->char 57) => #\9)
+
+;; 特殊字符测试
+(check (integer->char 33) => #\!)
+(check (integer->char 64) => #\@)
+(check (integer->char 35) => #\#)
+
+;; 边界测试
+(check (integer->char 0) => #\null)
+(check (integer->char 126) => #\~)
+
+;; 反向验证
+(check (integer->char (char->integer #\A)) => #\A)
+(check (integer->char (char->integer #\a)) => #\a)
+(check (integer->char (char->integer #\0)) => #\0)
+(check (char->integer (integer->char 65)) => 65)
+(check (char->integer (integer->char 97)) => 97)
+
+;; 错误处理测试
+(check-catch 'out-of-range (integer->char -1))
+(check-catch 'out-of-range (integer->char 256))
+(check-catch 'wrong-type-arg (integer->char 65.0))
+(check-catch 'wrong-number-of-args (integer->char))
+(check-catch 'wrong-number-of-args (integer->char 65 66))  
+
+
 (check (string? "MathAgape") => #t)
 (check (string? "") => #t)
 
@@ -4092,6 +3787,472 @@ wrong-number-of-args
 
 (check (list->vector '(0 1 2 3)) => #(0 1 2 3))
 (check (list->vector '()) => #())
+
+
+#|
+bytevector
+返回一个新分配的字节向量，其元素包含传递给过程的所有参数。每个参数都必须是一个介于0到255之间的整数，表示字节向量中的一个字节。如果没有提供任何参数，将创建一个空的字节向量。
+
+语法
+----
+(bytevector byte ...)
+
+参数
+----
+byte... : integer?
+零个或多个介于0到255之间的整数（包含边界），表示字节值。
+
+返回值
+------
+bytevector?
+新创建的字节向量，包含所有参数指定的字节值。
+
+说明
+----
+1. 可以接受零个或多个参数
+2. 每个参数必须在0-255的范围内
+3. 无参数时创建空字节向量
+4. 参数顺序就是字节向量中元素的顺序
+
+错误处理
+--------
+wrong-type-arg
+当任何参数不是在0-255范围内的整数时抛出错误。
+|#
+
+;; bytevector 基本测试
+(check (bytevector) => #u8())
+(check (bytevector 255) => #u8(255))
+(check (bytevector 1 2 3 4) => #u8(1 2 3 4))
+(check (bytevector 10 20 30 40 50) => #u8(10 20 30 40 50))
+
+;; 边界测试
+(check (bytevector 0) => #u8(0))
+(check (bytevector 255) => #u8(255))
+(check (bytevector 0 255) => #u8(0 255))
+
+;; 不同长度测试
+(check (bytevector) => #u8())
+(check (bytevector 15) => #u8(15))
+(check (bytevector 85 170) => #u8(85 170))
+(check (bytevector 1 2 3 4 5 6 7 8 9 10) => #u8(1 2 3 4 5 6 7 8 9 10))
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (bytevector 256))
+(check-catch 'wrong-type-arg (bytevector -1))
+(check-catch 'wrong-type-arg (bytevector 123.0))
+(check-catch 'wrong-type-arg (bytevector 123 #u8(1 2 3)))
+
+#|
+bytevector?
+判断一个对象是否为字节向量类型的谓词。
+
+语法
+----
+(bytevector? obj)
+
+参数
+----
+obj : any?
+任意对象。
+
+返回值
+------
+boolean?
+如果对象是一个字节向量，返回#t；否则返回#f。
+
+说明
+----
+1. 用于检查对象是否为字节向量类型
+2. #u8()形式创建的也是字节向量，即使为空
+3. 能够正确识别所有类型的字节向量实例
+
+错误处理
+--------
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; bytevector? 基本测试
+(check-true (bytevector? #u8()))
+(check-true (bytevector? #u8(0)))
+(check-true (bytevector? #u8(255)))
+(check-true (bytevector? #u8(1 2 3 4 5)))
+(check-true (bytevector? (bytevector)))
+(check-true (bytevector? (bytevector 1 2 3)))
+
+;; 类型判别测试
+(check-true (bytevector? (bytevector 5 15 25)))
+(check-false (bytevector? 123))
+(check-false (bytevector? "hello"))
+(check-false (bytevector? "list"))
+(check-false (bytevector? 'symbol))
+
+;; 错误处理测试
+(check-catch 'wrong-number-of-args (bytevector?))
+(check-catch 'wrong-number-of-args (bytevector? #u8(1 2 3) #u8(4 5 6)))
+
+#|
+make-bytevector
+创建一个新的字节向量，指定长度和初始值为所有组成字节。
+
+语法
+----
+(make-bytevector k [fill])
+
+参数
+----
+k : integer?
+必须是非负的精确整数，表示字节向量的长度。
+
+fill : integer? 可选, 默认为0
+0到255之间的整数，作为所有字节的初始值。
+
+返回值
+------
+bytevector?
+创建的字节向量，所有元素都设为指定的fill值。
+
+说明
+----
+1. 可以指定长度和填充值
+2. 填充值默认为0，如果提供必须在0-255范围内
+3. 特殊字符如#等会被转换为对应的字节值
+
+错误处理
+--------
+out-of-range
+当k小于0时抛出错误。
+wrong-type-arg
+当任何参数不正确时抛出错误。
+wrong-number-of-args
+当参数数量不为1或2个时抛出错误。
+|#
+
+;; make-bytevector 基本测试
+(check (make-bytevector 0) => #u8())
+(check (make-bytevector 1) => #u8(0))
+(check (make-bytevector 3) => #u8(0 0 0))
+(check (make-bytevector 5 42) => #u8(42 42 42 42 42))
+(check (make-bytevector 2 255) => #u8(255 255))
+
+;; 不同长度测试
+(check (make-bytevector 0 0) => #u8())
+(check (make-bytevector 1 128) => #u8(128))
+(check (make-bytevector 10 99) => #u8(99 99 99 99 99 99 99 99 99 99))
+
+;; 边界条件测试
+(check (make-bytevector 0) => #u8())
+(check (make-bytevector 1 0) => #u8(0))
+(check (make-bytevector 1 255) => #u8(255))
+
+;; 特殊值测试
+(check (make-bytevector 4 0) => #u8(0 0 0 0))
+(check (make-bytevector 3 170) => #u8(170 170 170))
+(check (make-bytevector 8 255) => #u8(255 255 255 255 255 255 255 255))
+
+;; 错误处理测试
+(check-catch 'out-of-range (make-bytevector -5))
+(check-catch 'wrong-type-arg (make-bytevector 3 256))
+(check-catch 'wrong-type-arg (make-bytevector 2 -1))
+(check-catch 'wrong-type-arg (make-bytevector 3.5))
+(check-catch 'wrong-type-arg (make-bytevector "hello"))
+(check-catch 'wrong-number-of-args (make-bytevector))
+(check-catch 'wrong-number-of-args (make-bytevector 1 2 3))
+
+
+
+#|
+bytevector-length
+返回字节向量中的元素个数。
+
+语法
+----
+(bytevector-length bv)
+
+参数
+----
+bv : bytevector?
+字节向量。
+
+返回值
+------
+integer?
+字节向量中的元素数量。
+
+说明
+----
+1. 返回字节向量中的字节数
+2. 空字节向量返回0
+3. 结果是非负的精确整数
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字节向量时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; bytevector-length 基本测试
+(check (bytevector-length #u8()) => 0)
+(check (bytevector-length #u8(1)) => 1)
+(check (bytevector-length #u8(1 2 3)) => 3)
+(check (bytevector-length #u8(255)) => 1)
+(check (bytevector-length #u8(1 2 3 4 5 6 7 8 9 10)) => 10)
+
+;; 使用不同类型创建的字节向量测试
+(check (bytevector-length (bytevector)) => 0)
+(check (bytevector-length (bytevector 50 150 250)) => 3)
+(check (bytevector-length (make-bytevector 5 42)) => 5)
+(check (bytevector-length (make-bytevector 10 0)) => 10)
+(check (bytevector-length (make-bytevector 0)) => 0)
+(check (bytevector-length "hello") => 5)
+(check (bytevector-length 123) => #f)
+(check (bytevector-length 'symbol) => #f)
+
+;; 错误处理测试
+
+(check-catch 'wrong-number-of-args (bytevector-length))
+(check-catch 'wrong-number-of-args (bytevector-length #u8(1 2 3) #u8(4 5)))
+
+#|
+bytevector-u8-ref
+返回字节向量中指定索引位置的字节值。
+
+语法
+----
+(bytevector-u8-ref bv k)
+
+参数
+----
+bv : bytevector?
+字节向量。
+
+k : integer?
+非负的精确整数，表示字节索引位置，必须小于字节向量的长度。
+
+返回值
+------
+integer?
+位置k处的字节值，是一个0到255之间的整数。
+
+说明
+----
+1. 用0基索引访问字节向量中的元素
+2. 索引必须是从0到长度减1的非负整数
+3. 返回对应位置的字节值
+
+错误处理
+--------
+type-error
+当bv不是字节向量时或k不是整数时抛出错误。
+out-of-range
+当k小于0或大于等于字节向量长度时抛出错误。
+|#
+
+;; bytevector-u8-ref 基本测试
+(check (bytevector-u8-ref #u8(5 15 25) 0) => 5)
+(check (bytevector-u8-ref #u8(5 15 25) 1) => 15)
+(check (bytevector-u8-ref #u8(5 15 25) 2) => 25)
+(check (bytevector-u8-ref #u8(255) 0) => 255)
+(check (bytevector-u8-ref #u8(0) 0) => 0)
+
+
+;; 使用其他函数创建的字节向量测试
+(check (bytevector-u8-ref (bytevector 10 20 30 40) 0) => 10)
+(check (bytevector-u8-ref (bytevector 10 20 30 40) 1) => 20)
+(check (bytevector-u8-ref (bytevector 10 20 30 40) 3) => 40)
+(check (bytevector-u8-ref (bytevector 200 150 100 50) 2) => 100)
+
+(check (bytevector-u8-ref (make-bytevector 4 99) 0) => 99)
+(check (bytevector-u8-ref (make-bytevector 4 99) 3) => 99)
+(check (bytevector-u8-ref #u8(1) 0) => 1)  
+
+;; 复杂字节向量测试
+(check (bytevector-u8-ref #u8(10 20 30 40 50 60 70 80 90 100) 9) => 100)
+(check (bytevector-u8-ref #u8(128 64 32 16 8 4 2 1) 4) => 8)
+
+;; UTF-8转换测试
+(check (bytevector-u8-ref (string->utf8 "XYZ") 0) => 88) ;; ASCII 'X'
+(check (bytevector-u8-ref (string->utf8 "XYZ") 1) => 89) ;; ASCII 'Y'
+(check (bytevector-u8-ref (string->utf8 "A") 0) => 65)
+
+;; 错误处理测试
+
+(check-catch 'wrong-type-arg (bytevector-u8-ref 123 0))
+(check-catch 'wrong-type-arg (bytevector-u8-ref "hello" 0))
+(check-catch 'wrong-type-arg (bytevector-u8-ref #u8(1 2 3) 1.5))
+(check-catch 'out-of-range (bytevector-u8-ref #u8() 0)) ;; empty case
+(check-catch 'out-of-range (bytevector-u8-ref #u8(1 2 3) -1))
+(check-catch 'out-of-range (bytevector-u8-ref #u8(1 2 3) 3))
+(check-catch 'out-of-range (bytevector-u8-ref #u8(1 2 3) 1 3))
+(check-catch 'out-of-range (bytevector-u8-ref #u8() 0))
+(check-catch 'wrong-number-of-args (bytevector-u8-ref #u8(1 2 3)))
+
+
+#|
+bytevector-u8-set!
+修改字节向量中指定位置的字节值。
+
+语法
+----
+(bytevector-u8-set! bv k byte)
+
+参数
+----
+bv : bytevector?
+要修改的字节向量。
+
+k : integer?
+非负的精确整数，表示字节索引位置，必须小于字节向量的长度。
+
+byte : integer?
+0到255之间的整数，表示要设置的新的字节值。
+
+返回值
+------
+unspecified
+过程修改字节向量后立即返回，没有特定的返回值。
+
+错误处理
+--------
+out-of-range
+当k小于0或大于等于字节向量长度时抛出错误。
+wrong-type-arg
+当byte不是0-255之间的整数时抛出错误。
+|#
+
+(let1 bv (bytevector 1 2 3 4 5)
+  (bytevector-u8-set! bv 1 4)
+  (check bv => #u8(1 4 3 4 5))
+  (bytevector-u8-set! bv 0 10)
+  (check bv => #u8(10 4 3 4 5))
+  (bytevector-u8-set! bv 4 255)
+  (check bv => #u8(10 4 3 4 255)) 
+)
+
+(let1 bv (bytevector 5)
+  (bytevector-u8-set! bv 0 10)
+  (check bv => #u8(10))  
+)
+
+
+;; 错误处理测试
+(check-catch 'out-of-range (bytevector-u8-set! #u8() 0 5))
+(check-catch 'out-of-range (bytevector-u8-set! #u8(1 2 3) -1 5))
+(check-catch 'out-of-range (bytevector-u8-set! #u8(1 2 3) 3 5))
+(check-catch 'wrong-type-arg (bytevector-u8-set! 123 0 5))
+(check-catch 'wrong-type-arg (bytevector-u8-set! "hello" 0 5))
+(check-catch 'wrong-type-arg (bytevector-u8-set! #u8(1 2 3) 1 256))
+(check-catch 'wrong-type-arg (bytevector-u8-set! #u8(1 2 3) 1 -1))
+
+#|
+bytevector-copy
+创建一个新的字节向量，它是现有字节向量的完整或部分副本。
+
+语法
+----
+(bytevector-copy bv [start [end]])
+
+参数
+----
+bv : bytevector?
+要被复制的源字节向量。
+
+start : integer? 可选, 默认为0
+非负的精确整数，表示复制开始的索引位置，必须小于bv的长度。
+
+end : integer? 可选, 默认为(bytevector-length bv)
+非负的精确整数，表示复制结束的索引位置（不包括该位置），必须大于等于start且小于等于bv的长度。
+
+返回值
+------
+bytevector?
+新的字节向量，包含从start到end-1位置的元素副本。
+
+错误处理
+--------
+wrong-type-arg
+当bv不是字节向量抛出错误。
+
+out-of-range
+当start或end超出有效范围时抛出错误。
+
+wrong-number-of-args
+参数数量不正确时抛出错误。
+|#
+
+;; bytevector-copy 基本测试
+(check (bytevector-copy #u8()) => #u8())
+(check (bytevector-copy #u8(1 2 3)) => #u8(1 2 3))
+(check (bytevector-copy #u8(255 0 128)) => #u8(255 0 128))
+
+;; 段复制测试
+(check (bytevector-copy #u8(1 2 3 4 5) 0 3) => #u8(1 2 3))
+(check (bytevector-copy #u8(1 2 3 4 5) 1 4) => #u8(2 3 4))
+(check (bytevector-copy #u8(1 2 3 4 5) 2) => #u8(3 4 5))
+
+;; 边界测试
+(check (bytevector-copy #u8(50 100 150) 0 0) => #u8())
+(check (bytevector-copy #u8(50 100 150) 0 1) => #u8(50))
+(check (bytevector-copy #u8(50 100 150) 2 3) => #u8(150))
+
+;; 完整范围
+(check (bytevector-copy #u8(10 20 30 40 50) 0 5) => #u8(10 20 30 40 50))
+
+;; 独立对象测试
+(let1 bv (bytevector 1 2 3 4 5)
+  (check (bytevector-copy bv 1 4) => #u8(2 3 4)))
+
+;; 错误处理
+(check-catch 'wrong-type-arg (bytevector-copy 123))
+(check-catch 'wrong-type-arg (bytevector-copy "hello"))
+(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) -1))
+(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) 4))
+(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) 0 5))
+(check-catch 'out-of-range (bytevector-copy #u8(1 2 3) 2 1))
+
+
+(check (bytevector-append #u8() #u8()) => #u8())
+(check (bytevector-append #u8() #u8(1)) => #u8(1))
+(check (bytevector-append #u8(1) #u8()) => #u8(1))
+
+(check (u8-string-length "中文") => 2)
+(check (u8-string-length "") => 0)
+
+(check (utf8->string (bytevector #x48 #x65 #x6C #x6C #x6F)) => "Hello")
+(check (utf8->string #u8(#xC3 #xA4)) => "ä")
+(check (utf8->string #u8(#xE4 #xB8 #xAD)) => "中")
+(check (utf8->string #u8(#xF0 #x9F #x91 #x8D)) => "👍")
+
+(check-catch 'value-error (utf8->string (bytevector #xFF #x65 #x6C #x6C #x6F)))
+
+(check (string->utf8 "Hello") => (bytevector #x48 #x65 #x6C #x6C #x6F))
+(check (utf8->string (string->utf8 "Hello" 1 2)) => "e")
+(check (utf8->string (string->utf8 "Hello" 0 2)) => "He")
+(check (utf8->string (string->utf8 "Hello" 2)) => "llo")
+(check (utf8->string (string->utf8 "Hello" 2 5)) => "llo")
+
+(check-catch 'out-of-range (string->utf8 "Hello" 2 6))
+
+(check (utf8->string (string->utf8 "汉字书写")) => "汉字书写")
+(check (utf8->string (string->utf8 "汉字书写" 1)) => "字书写")
+(check (utf8->string (string->utf8 "汉字书写" 2)) => "书写")
+(check (utf8->string (string->utf8 "汉字书写" 3)) => "写")
+
+(check-catch 'out-of-range (string->utf8 "汉字书写" 4))
+
+(check (string->utf8 "ä") => #u8(#xC3 #xA4))
+(check (string->utf8 "中") => #u8(#xE4 #xB8 #xAD))
+(check (string->utf8 "👍") => #u8(#xF0 #x9F #x91 #x8D))
+
+(check (string->utf8 "") => #u8())
+
+(check (u8-substring "汉字书写" 0 1) => "汉")
+(check (u8-substring "汉字书写" 0 4) => "汉字书写")
+(check (u8-substring "汉字书写" 0) => "汉字书写")
+
 
 #|
 open-input-string
@@ -4196,166 +4357,5 @@ wrong-type-arg
 
 (let1 port (open-input-string "ERROR")
   (check-catch 'wrong-type-arg (get-output-string port)))
-
-;; R7RS Equivalence Predicates Tests
-;; According to 201_2 task: eqv?, eq?, equal?
-
-#|
-eqv?
-判断两个对象是否值相等，根据R7RS规范，eqv?在不同类型的数据上表现不同。
-
-语法
-----
-(eqv? obj1 obj2)
-
-参数
-----
-obj1, obj2 : any
-任意类型的对象
-
-返回值
------
-boolean?
-如果两个对象值相等则返回 #t，否则返回 #f。
-
-|#
-
-;; Test eqv? for boolean values
-(check-true (eqv? #t #t))
-(check-true (eqv? #f #f))
-(check-false (eqv? #t #f))
-
-;; Test eqv? for exact numbers
-(check-true (eqv? 42 42))
-(check-false (eqv? 42 43))
-
-;; Test eqv? for inexact numbers
-(check-true (eqv? 3.14 3.14))
-(check-false (eqv? 3.14 2.71))
-
-;; Test eqv? for characters
-(check-true (eqv? #\a #\a))
-(check-false (eqv? #\a #\b))
-
-;; Test eqv? for symbols
-(check-true (eqv? 'abc 'abc))
-(check-false (eqv? 'abc 'def))
-
-;; Test eqv? for lists (same instance)
-(check-true (let ((lst (list 1 2 3)))
-              (eqv? lst lst)))
-
-;; Test eqv? for lists (different instances)
-(check-false (eqv? (list 1 2 3) (list 1 2 3)))
-
-;; Test eqv? for strings (always #f due to different instances)
-(check-false (eqv? "hello" "hello"))
-(check-false (eqv? "hello" "world"))
-
-;; Test eqv? for procedures
-(check-true (eqv? car car))
-(check-false (eqv? car cdr))
-
-;;; eq?
-
-#|
-eq?
-判断两个对象是否引用相同（对象为同一），即判断对象标识。
-
-语法
-----
-(eq? obj1 obj2)
-
-参数
-----
-obj1, obj2 : any
-任意类型的对象
-
-返回值
------
-boolean?
-如果两个对象是同一对象则返回 #t，否则返回 #f。
-|#
-
-;; Test eq? for boolean values
-(check-true (eq? #t #t))
-(check-true (eq? #f #f))
-(check-false (eq? #t #f))
-
-;; Test eq? for exact numbers (may return #f for different instances)
-(check-true (eq? 42 42))
-(check-false (eq? 42 43))
-
-;; Test eq? for symbols
-(check-true (eq? 'abc 'abc))
-(check-false (eq? 'abc 'def))
-
-;; Test eq? for lists (not the same instance)
-(check-false (eq? (list 1 2 3) (list 1 2 3)))
-(check-true (let ((lst (list 1 2 3)))
-              (eq? lst lst)))
-
-;; Test eq? for strings (always #f due to different instances)
-(check-false (eq? "hello" "hello"))
-
-;; Test eq? for procedures
-(check-true (eq? car car))
-(check-false (eq? car cdr))
-
-;;; equal?
-
-#|
-equal?
-判断两个对象结构是否相等，根据R7RS规范，equal?对复杂数据结构进行深比较。
-
-语法
-----
-(equal? obj1 obj2)
-
-参数
-----
-obj1, obj2 : any
-任意类型的对象
-
-返回值
------
-boolean?
-如果两个对象结构相等则返回 #t，否则返回 #f。
-|#
-
-;; Test equal? for simple types
-(check-true (equal? #t #t))
-(check-true (equal? 42 42))
-(check-true (equal? 3.14 3.14))
-(check-true (equal? "hello" "hello"))
-(check-true (equal? 'abc 'abc))
-
-;; Test equal? for lists
-(check-true (equal? (list 1 2 3) (list 1 2 3)))
-(check-false (equal? (list 1 2 3) (list 1 2 4)))
-
-;; Test equal? for nested lists
-(check-true (equal? (list (list 1 2) (list 3 4)) (list (list 1 2) (list 3 4))))
-(check-false (equal? (list (list 1 2) (list 3 4)) (list (list 1 2) (list 3 5))))
-
-;; Test equal? for vectors
-(check-true (equal? (vector 1 2 3) (vector 1 2 3)))
-(check-false (equal? (vector 1 2 3) (vector 1 2 4)))
-
-;; Test equal? for nested vectors
-(check-true (equal? (vector (vector 1 2) (vector 3 4)) (vector (vector 1 2) (vector 3 4))))
-(check-false (equal? (vector (vector 1 2) (vector 3 4)) (vector (vector 1 2) (vector 3 5))))
-
-;; Test equal? for mixed structures
-(check-true (equal? (list 1 (vector 2 3) 4) (list 1 (vector 2 3) 4)))
-(check-false (equal? (list 1 (vector 2 3) 4) (list 1 (vector 2 4) 4)))
-
-;; Test equal? for empty structures
-(check-true (equal? (list) (list)))
-(check-true (equal? (vector) (vector)))
-
-;; Test equal? for different types
-(check-false (equal? 42 "hello"))
-(check-false (equal? #\a "a"))
 
 (check-report)
