@@ -3744,13 +3744,73 @@ wrong-number-of-args
 (check-false (string? 3.14))
 
 ;; 边界情况测试
-(check (string? "\0") => #t)
+(check (string? "\n") => #t)
 (check (string? "\t") => #t)
 (check (string? " ") => #t)
 
 ;; 特殊字符测试
 (check (string? "$$$") => #t)
 (check (string? "中国") => #t)
+
+
+#|
+make-string
+创建一个由指定字符重复填充的新字符串。
+
+语法
+----
+(make-string k [char])
+
+参数
+----
+k : exact?
+必须是非负的精确整数，表示要创建的字符串长度。
+
+char : char? 可选
+用于填充字符串的字符。如果未提供，**默认字符由实现定义**。
+
+返回值
+------
+string?
+新创建的字符串，长度为 k，所有字符均为 char（或实现定义的默认字符）。
+
+说明
+----
+1. 可以指定字符串长度和填充字符
+2. 若未指定 char，**默认字符未在 R7RS 中定义**
+3. 当 k 为 0 时返回空字符串 ""
+
+错误处理
+--------
+out-of-range
+当 k 为负数时抛出错误。
+wrong-type-arg
+当 k 不是精确整数或 char 不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为 1 或 2 个时抛出错误。
+
+|#
+
+(check (string-length (make-string 0)) => 0)
+(check (string-length (make-string 1)) => 1)
+(check (string-length (make-string 1000)) => 1000)
+(check (string-length (make-string 1000000)) => 1000000)
+
+(check (make-string 0 #\a) => "")
+(check (make-string 1 #\a) => "a")
+
+(check (string-length (make-string 1000 #\a)) => 1000)
+(let1 str (make-string 10000 #\a)
+  (check (string-length str) => 10000)
+  (check (string-ref str 0) => #\a)
+  (check (string-ref str 9999) => #\a))
+
+(check-catch 'out-of-range (make-string -1))
+(check-catch 'out-of-range (make-string -5 #\a))
+(check-catch 'wrong-type-arg (make-string 3.5))
+(check-catch 'wrong-type-arg (make-string 3 "a"))
+(check-catch 'wrong-number-of-args (make-string))
+(check-catch 'wrong-number-of-args (make-string 3 #\a #\b))
 
 
 (check (string->list "MathAgape")
