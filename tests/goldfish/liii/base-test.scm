@@ -4560,6 +4560,141 @@ wrong-number-of-args
 
 
 #|
+char-upper-case?
+判断字符是否为大写字母字符。
+
+语法
+----
+(char-upper-case? char)
+
+参数
+----
+char : char?
+要判断的字符
+
+返回值
+------
+boolean?
+如果字符是大写字母则返回 #t，否则返回 #f
+
+特殊情况
+--------
+- 仅识别大写字母，小写字母返回 #f
+- 非字母字符也返回 #f
+- 对数字、符号和空白字符都返回 #f
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; char-upper-case? 大写字母测试
+(check (char-upper-case? #\A) => #t)
+(check (char-upper-case? #\B) => #t)
+(check (char-upper-case? #\Z) => #t)
+
+;; 小写字母测试
+(check (char-upper-case? #\a) => #f)
+(check (char-upper-case? #\z) => #f)
+(check (char-upper-case? #\b) => #f)
+
+;; 特殊测试
+(check (char-upper-case? #\@) => #f)
+(check (char-upper-case? #\[) => #f)
+(check (char-upper-case? #\`) => #f)
+
+;; 非字母字符测试
+(check (char-upper-case? #\0) => #f)
+(check (char-upper-case? #\9) => #f)
+(check (char-upper-case? #\!) => #f)
+(check (char-upper-case? #\space) => #f)
+(check (char-upper-case? #\newline) => #f)
+
+;; 混合测试
+(check (char-upper-case? #\@) => #f)
+(check (char-upper-case? #\_) => #f)
+(check (char-upper-case? #\`) => #f)
+
+;; 字母测试
+(check (char-upper-case? #\M) => #t)
+(check (char-upper-case? #\m) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-upper-case? 1))
+(check-catch 'wrong-type-arg (char-upper-case? "A"))
+(check-catch 'wrong-number-of-args (char-upper-case?))
+(check-catch 'wrong-number-of-args (char-upper-case? #\A #\B))
+
+
+#|
+char-lower-case?
+判断字符是否为小写字母字符。
+
+语法
+----
+(char-lower-case? char)
+
+参数
+----
+char : char?
+要判断的字符
+
+返回值
+------
+boolean?
+如果字符是小写字母则返回 #t，否则返回 #f
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; char-lower-case? 小写字母测试
+(check (char-lower-case? #\a) => #t)
+(check (char-lower-case? #\b) => #t)
+(check (char-lower-case? #\z) => #t)
+
+;; 大写字母测试
+(check (char-lower-case? #\A) => #f)
+(check (char-lower-case? #\B) => #f)
+(check (char-lower-case? #\Z) => #f)
+
+;; 边界测试
+(check (char-lower-case? #\`) => #f)
+(check (char-lower-case? #\{) => #f)
+
+;; 非字母字符测试
+(check (char-lower-case? #\0) => #f)
+(check (char-lower-case? #\9) => #f)
+(check (char-lower-case? #\!) => #f)
+(check (char-lower-case? #\space) => #f)
+(check (char-lower-case? #\newline) => #f)
+
+;; 混合边界测试
+(check (char-lower-case? #\a) => #t)
+(check (char-lower-case? #\z) => #t)
+(check (char-lower-case? #\_) => #f)
+(check (char-lower-case? #\`) => #f)
+(check (char-lower-case? #\{) => #f)
+
+;; 字母测试
+(check (char-lower-case? #\m) => #t)
+(check (char-lower-case? #\M) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-lower-case? 1))
+(check-catch 'wrong-type-arg (char-lower-case? "a"))
+(check-catch 'wrong-number-of-args (char-lower-case?))
+(check-catch 'wrong-number-of-args (char-lower-case? #\a #\b))
+
+
+#|
 char->integer
 将字符转换为其对应的码点值。
 
