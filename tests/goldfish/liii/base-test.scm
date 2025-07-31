@@ -4166,6 +4166,188 @@ wrong-number-of-args
 
 
 #|
+char-ci<=?
+按大小写不敏感的方式按字典序比较字符是否非严格升序排列。
+
+语法
+----
+(char-ci<=? char1 char2 char3 ...)
+
+参数
+----
+char1, char2, char3, ... : char?  
+要比较的字符，至少需要两个字符。
+
+返回值
+------
+boolean?
+如果所有字符按大小写不敏感方式按非严格升序排列则返回 #t，否则返回 #f。
+
+说明
+----
+1. 至少需要两个参数
+2. 所有参数必须都是字符
+3. 按字符的小写形式进行比较（大小写不敏感）
+4. 当字符按非严格升序排列（允许相等）时返回 #t，否则返回 #f
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量少于2个时抛出错误。
+|#
+
+;; char-ci<=? 基本功能测试
+(check (char-ci<=? #\a #\B) => #t)
+(check (char-ci<=? #\A #\b) => #t)
+(check (char-ci<=? #\A #\a) => #t)  ; 等大写和小写满足非严格升序
+(check (char-ci<=? #\a #\A) => #t)
+(check (char-ci<=? #\Z #\a) => #f)  ; A-Z在a-z之前大写
+(check (char-ci<=? #\z #\a) => #f)
+
+;; 大小写一致测试
+(check (char-ci<=? #\a #\b) => #t)
+(check (char-ci<=? #\A #\B) => #t)
+(check (char-ci<=? #\B #\a) => #f)  ; B > a小写
+(check (char-ci<=? #\z #\A) => #f)
+
+;; 相等字符测试（非严格升序）
+(check (char-ci<=? #\a #\A) => #t)
+(check (char-ci<=? #\A #\a) => #t)
+(check (char-ci<=? #\A #\A) => #t)
+(check (char-ci<=? #\a #\a) => #t)
+
+;; 多参数非严格升序测试
+(check (char-ci<=? #\a #\B #\c #\D) => #t)
+(check (char-ci<=? #\A #\a #\b #\B) => #t)  ; 等大写和小写
+(check (char-ci<=? #\A #\A #\B #\b) => #t)
+(check (char-ci<=? #\a #\a #\a) => #t)
+(check (char-ci<=? #\z #\a #\b) => #f)
+
+;; 多参数混合测试
+(check (char-ci<=? #\A #\B #\b #\c) => #t)
+(check (char-ci<=? #\a #\z #\z #\y) => #f)
+(check (char-ci<=? #\Z #\z #\Z #\y) => #f)
+
+;; 边界测试
+(check (char-ci<=? #\a #\z) => #t)
+(check (char-ci<=? #\A #\Z) => #t)
+(check (char-ci<=? #\z #\z) => #t)
+(check (char-ci<=? #\0 #\9) => #t)
+
+;; 特殊字符测试
+(check (char-ci<=? #\space #\newline) => #f)
+(check (char-ci<=? #\tab #\tab) => #t)  ; 相等返回 true
+(check (char-ci<=? #\@ #\newline) => #f)
+(check (char-ci<=? #\! #\") => #t)
+(check (char-ci<=? #\! #\!) => #t)
+
+;; 数字与字母混合测试
+(check (char-ci<=? #\0 #\A) => #t)
+(check (char-ci<=? #\9 #\z) => #t)
+(check (char-ci<=? #\A #\a #\Z) => #t)
+(check (char-ci<=? #\Z #\a #\Z) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-ci<=? 1 #\A))
+(check-catch 'wrong-type-arg (char-ci<=? #\A 'symbol))
+(check-catch 'wrong-number-of-args (char-ci<=?))
+(check-catch 'wrong-number-of-args (char-ci<=? #\A))
+
+
+#|
+char-ci>=?
+按大小写不敏感的方式按字典序比较字符是否非严格降序排列。
+
+语法
+----
+(char-ci>=? char1 char2 char3 ...)
+
+参数
+----
+char1, char2, char3, ... : char?
+要比较的字符，至少需要两个字符。
+
+返回值
+------
+boolean?
+如果所有字符按大小写不敏感方式按非严格降序排列则返回 #t，否则返回 #f。
+
+说明
+----
+1. 至少需要两个参数
+2. 所有参数必须都是字符
+3. 按字符的小写形式进行比较（大小写不敏感）
+4. 当字符按非严格降序排列（允许相等）时返回 #t，否则返回 #f
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量少于2个时抛出错误。
+|#
+
+;; char-ci>=? 基本功能测试
+(check (char-ci>=? #\B #\a) => #t)
+(check (char-ci>=? #\b #\A) => #t)
+(check (char-ci>=? #\a #\A) => #t)  ; 等大写和小写满足非严格降序
+(check (char-ci>=? #\A #\a) => #t)
+(check (char-ci>=? #\a #\z) => #f)
+(check (char-ci>=? #\Z #\a) => #t)  ; Z > a
+
+;; 大小写一致测试
+(check (char-ci>=? #\b #\a) => #t)
+(check (char-ci>=? #\B #\A) => #t)
+(check (char-ci>=? #\a #\B) => #f)  ; a < B
+(check (char-ci>=? #\z #\a) => #t)
+
+;; 相等字符测试（非严格降序）  
+(check (char-ci>=? #\a #\A) => #t)
+(check (char-ci>=? #\A #\a) => #t)
+(check (char-ci>=? #\A #\A) => #t)
+(check (char-ci>=? #\a #\a) => #t)
+
+;; 多参数非严格降序测试
+(check (char-ci>=? #\d #\C #\b #\A) => #t)
+(check (char-ci>=? #\z #\z #\a) => #t)  ; 等大写和小写
+(check (char-ci>=? #\Z #\z #\Z #\y) => #t)
+(check (char-ci>=? #\a #\a #\a) => #t)
+(check (char-ci>=? #\A #\b #\a) => #f)
+
+;; 多参数混合测试
+(check (char-ci>=? #\z #\y #\Y #\x) => #t)
+(check (char-ci>=? #\C #\B #\b #\a) => #t)
+(check (char-ci>=? #\a #\Z #\z #\a) => #f)
+
+;; 边界测试
+(check (char-ci>=? #\z #\a) => #t)
+(check (char-ci>=? #\Z #\A) => #t)
+(check (char-ci>=? #\z #\z) => #t)
+(check (char-ci>=? #\9 #\0) => #t)
+
+;; 特殊字符测试
+(check (char-ci>=? #\newline #\space) => #f)
+(check (char-ci>=? #\tab #\tab) => #t)  ; 相等返回 true
+(check (char-ci>=? #\~ #\newline) => #t)
+(check (char-ci>=? #\! #\#) => #f)
+(check (char-ci>=? #\! #\!) => #t)
+
+;; 数字与字母混合测试
+(check (char-ci>=? #\z #\0 #\A) => #f)
+(check (char-ci>=? #\a #\1 #\2) => #f)
+(check (char-ci>=? #\Z #\a #\Z) => #f)
+(check (char-ci>=? #\y #\Y #\x) => #t)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-ci>=? 1 #\A))
+(check-catch 'wrong-type-arg (char-ci>=? #\A 'symbol))
+(check-catch 'wrong-number-of-args (char-ci>=?))
+(check-catch 'wrong-number-of-args (char-ci>=? #\A))
+
+
+#|
 char->integer
 将字符转换为其对应的码点值。
 
