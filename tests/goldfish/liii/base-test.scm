@@ -4347,6 +4347,218 @@ wrong-number-of-args
 (check-catch 'wrong-number-of-args (char-ci>=? #\A))
 
 
+
+
+#|
+char-alphabetic?
+判断字符是否为字母、
+
+语法
+----
+(char-alphabetic? char)
+
+参数
+----
+char : char?
+要判断的字符，
+
+返回值
+------
+boolean?
+如果字符是字母则返回 #t，否则返回 #f。
+
+示例
+----
+(char-alphabetic? #\a) => #t
+(char-alphabetic? #\A) => #t
+(char-alphabetic? #\1) => #f
+(char-alphabetic? #\!) => #f
+
+边界情况
+--------
+- 区分大小写：大写和小写字母都返回 #t
+- 字母范围：仅识别字母字符，数字和符号无效
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; 小写字母测试
+(check (char-alphabetic? #\a) => #t)
+(check (char-alphabetic? #\b) => #t)
+(check (char-alphabetic? #\z) => #t)
+
+;; 大写字母测试
+(check (char-alphabetic? #\A) => #t)
+(check (char-alphabetic? #\B) => #t)
+(check (char-alphabetic? #\Z) => #t)
+
+;; 非字母字符测试
+(check (char-alphabetic? #\0) => #f)
+(check (char-alphabetic? #\1) => #f)
+(check (char-alphabetic? #\9) => #f)
+(check (char-alphabetic? #\!) => #f)
+(check (char-alphabetic? #\@) => #f)
+(check (char-alphabetic? #\#) => #f)
+
+;; 特殊字符测试
+(check (char-alphabetic? #\space) => #f)
+(check (char-alphabetic? #\newline) => #f)
+(check (char-alphabetic? #\tab) => #f)
+(check (char-alphabetic? #\return) => #f)
+
+;; 边界字符测试
+(check (char-alphabetic? #\[) => #f)
+(check (char-alphabetic? #\\) => #f)
+(check (char-alphabetic? #\`) => #f)
+(check (char-alphabetic? #\{) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-alphabetic? 1))
+(check-catch 'wrong-type-arg (char-alphabetic? "a"))
+(check-catch 'wrong-number-of-args (char-alphabetic?))
+(check-catch 'wrong-number-of-args (char-alphabetic? #\a #\b))
+
+
+#|
+char-numeric?
+判断字符是否为数字。
+
+语法
+----
+(char-numeric? char)
+
+参数
+----
+char : char?
+要判断的字符，
+
+返回值
+------
+boolean?
+如果字符是数字则返回 #t，否则返回 #f。
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; 数字范围测试
+(check (char-numeric? #\0) => #t)
+(check (char-numeric? #\1) => #t)
+(check (char-numeric? #\2) => #t)
+(check (char-numeric? #\3) => #t)
+(check (char-numeric? #\4) => #t)
+(check (char-numeric? #\5) => #t)
+(check (char-numeric? #\6) => #t)
+(check (char-numeric? #\7) => #t)
+(check (char-numeric? #\8) => #t)
+(check (char-numeric? #\9) => #t)
+
+;; 非数字字符测试
+(check (char-numeric? #\a) => #f)
+(check (char-numeric? #\A) => #f)
+(check (char-numeric? #\z) => #f)
+(check (char-numeric? #\Z) => #f)
+(check (char-numeric? #\!) => #f)
+(check (char-numeric? #\@) => #f)
+(check (char-numeric? #\#) => #f)
+
+;; 特殊字符测试
+(check (char-numeric? #\space) => #f)
+(check (char-numeric? #\newline) => #f)
+(check (char-numeric? #\tab) => #f)
+(check (char-numeric? #\.) => #f)
+(check (char-numeric? #\-) => #f)
+
+;; 字母与数字边界测试
+(check (char-numeric? #\/) => #f)
+(check (char-numeric? #\:) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-numeric? 1))
+(check-catch 'wrong-type-arg (char-numeric? "1"))
+(check-catch 'wrong-number-of-args (char-numeric?))
+(check-catch 'wrong-number-of-args (char-numeric? #\1 #\2))
+
+
+#|
+char-whitespace?
+判断字符是否为空白字符。
+
+语法
+----
+(char-whitespace? char)
+
+参数
+----
+char : char?
+要判断的字符，
+
+返回值
+------
+boolean?
+如果字符是空白字符则返回 #t，否则返回 #f。
+
+说明
+----
+R7RS定义的空白字符包括：
+- 空格字符 
+- 换行符 
+- 回车符 
+- 制表符 
+- 换页符 
+- 垂直制表符 
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符时抛出错误。
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; char-whitespace? 标准空白测试
+(check (char-whitespace? #\space) => #t)
+(check (char-whitespace? #\newline) => #t)
+(check (char-whitespace? #\tab) => #t)
+
+;; 控制字符测试
+(check (char-whitespace? #\return) => #t)
+(check (char-whitespace? #\backspace) => #f)
+
+;; 非空白字符测试
+(check (char-whitespace? #\a) => #f)
+(check (char-whitespace? #\A) => #f)
+(check (char-whitespace? #\0) => #f)
+(check (char-whitespace? #\9) => #f)
+(check (char-whitespace? #\!) => #f)
+(check (char-whitespace? #\@) => #f)
+
+;; 特殊边界测试
+(check (char-whitespace? #\0) => #f)
+(check (char-whitespace? #\a) => #f)
+
+
+;; 符号
+(check (char-whitespace? #\.) => #f)
+(check (char-whitespace? #\,) => #f)
+(check (char-whitespace? #\;) => #f)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (char-whitespace? 1))
+(check-catch 'wrong-type-arg (char-whitespace? " "))
+(check-catch 'wrong-number-of-args (char-whitespace?))
+(check-catch 'wrong-number-of-args (char-whitespace? #\space #\a))
+
+
 #|
 char->integer
 将字符转换为其对应的码点值。
