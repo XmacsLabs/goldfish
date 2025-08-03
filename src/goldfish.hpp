@@ -53,6 +53,23 @@
 #ifdef GOLDFISH_WITH_REPL
 #include <functional>
 #include <isocline.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+typedef SOCKET socket_t;
+#define CLOSESOCK closesocket
+#define SOCK_ERR SOCKET_ERROR
+#else
+#include <atomic>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <thread>
+typedef int socket_t;
+#define CLOSESOCK close
+#define SOCK_ERR -1
+#endif
+
 #endif
 
 #define GOLDFISH_VERSION "17.11.18"
@@ -1130,6 +1147,106 @@ find_goldfish_boot (const char* gf_lib) {
 }
 
 #ifdef GOLDFISH_WITH_REPL
+class ReplServer {
+public:
+  ReplServer (s7_scheme* sc, int port= 37146) : sc_ (sc), port_ (port), running_ (false) {}
+
+  bool start () {
+    if (running_) return false;
+    running_      = true;
+    server_thread_= std::thread ([this] () { this->run (); });
+    return true;
+  }
+
+  void stop () {
+    running_= false;
+// 触发 accept 退出
+#if defined(_WIN32)
+    if (listen_sock_ != INVALID_SOCKET) {
+      shutdown (listen_sock_, SD_BOTH);
+      CLOSESOCK (listen_sock_);
+    }
+#else
+    if (listen_sock_ >= 0) {
+      shutdown (listen_sock_, SHUT_RDWR);
+      CLOSESOCK (listen_sock_);
+    }
+#endif
+    if (server_thread_.joinable ()) server_thread_.join ();
+  }
+
+  ~ReplServer () { stop (); }
+
+private:
+  void run () {
+#if defined(_WIN32)
+    WSADATA wsaData;
+    WSAStartup (MAKEWORD (2, 2), &wsaData);
+#endif
+    listen_sock_= socket (AF_INET, SOCK_STREAM, 0);
+    if (listen_sock_ == SOCK_ERR) return;
+
+    sockaddr_in addr{};
+    addr.sin_family     = AF_INET;
+    addr.sin_addr.s_addr= htonl (INADDR_ANY);
+    addr.sin_port       = htons (port_);
+
+    int opt= 1;
+    setsockopt (listen_sock_, SOL_SOCKET, SO_REUSEADDR, (char*) &opt, sizeof (opt));
+    if (bind (listen_sock_, (sockaddr*) &addr, sizeof (addr)) == SOCK_ERR) return;
+    if (listen (listen_sock_, 1) == SOCK_ERR) return;
+
+    while (running_) {
+      sockaddr_in cli_addr{};
+      socklen_t   cli_len = sizeof (cli_addr);
+      socket_t    cli_sock= accept (listen_sock_, (sockaddr*) &cli_addr, &cli_len);
+      if (cli_sock == SOCK_ERR) break;
+
+      handle_client (cli_sock);
+
+      CLOSESOCK (cli_sock);
+    }
+#if defined(_WIN32)
+    WSACleanup ();
+#endif
+  }
+
+  void handle_client (socket_t cli_sock) {
+    char        buf[4096];
+    std::string input;
+    while (running_) {
+      int n= recv (cli_sock, buf, sizeof (buf) - 1, 0);
+      if (n <= 0) break;
+      buf[n]= 0;
+      input.append (buf, n);
+
+      // 按行处理
+      size_t pos;
+      while ((pos= input.find ('\n')) != std::string::npos) {
+        std::string code= input.substr (0, pos);
+        input.erase (0, pos + 1);
+        std::string result= eval_scheme (code);
+        send (cli_sock, result.c_str (), result.size (), 0);
+        send (cli_sock, "\n", 1, 0);
+      }
+    }
+  }
+
+  std::string eval_scheme (const std::string& code) {
+    s7_pointer  res   = s7_eval_c_string (sc_, code.c_str ());
+    char*       str   = s7_object_to_c_string (sc_, res);
+    std::string result= str ? str : "";
+    if (str) free (str);
+    return result;
+  }
+
+  s7_scheme*        sc_;
+  int               port_;
+  std::atomic<bool> running_;
+  std::thread       server_thread_;
+  socket_t          listen_sock_{-1};
+};
+
 static std::vector<std::string> cached_symbols;
 
 // UNLIMITED history
@@ -1563,6 +1680,10 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
   auto        eval_arg= cmdl ({"--eval", "-e"});
   auto        load_arg= cmdl ({"--load", "-l"});
 
+  cmdl.add_params ("--listen");
+  auto listen_flag= cmdl["--listen"];
+  auto listen_arg = cmdl ("--listen");
+
   for (const auto& reg_params : reg_params_pairs) {
     // 使用 operator[] 检查是否是 flag，即非 params
     if (cmdl[{reg_params.first.c_str (), reg_params.second.c_str ()}]) {
@@ -1615,6 +1736,27 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
     s7_close_output_port (sc, s7_current_error_port (sc));
     s7_set_current_error_port (sc, old_port);
     if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+
+    int listen_port= 37146;
+    if (listen_flag) {
+#ifdef GOLDFISH_WITH_REPL
+      if (listen_arg && !listen_arg.str ().empty ()) {
+        try {
+          listen_port= std::stoi (listen_arg.str ());
+        } catch (...) {
+          listen_port= 37146;
+        }
+      }
+      // 否则用默认端口
+      static goldfish::ReplServer repl_server (sc, listen_port);
+      repl_server.start ();
+      std::cout << "REPL server listening on port " << listen_port << std::endl;
+#else
+      std::cerr << "REPL server is not available in this build.\n" << std::endl;
+      if (!cmdl[{"--listen", ""}]) display_help ();
+      exit (-1);
+#endif
+    }
 
     goldfish_repl (sc, mode);
     return 0;
