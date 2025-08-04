@@ -21,7 +21,7 @@
     define-values define-record-type
     ; R7RS 6.2: Numbers
     square exact inexact max min floor s7-floor ceiling s7-ceiling truncate s7-truncate
-    round s7-round floor-quotient gcd lcm s7-lcm boolean=? exact-integer-sqrt
+    round s7-round floor-quotient gcd lcm s7-lcm modulo boolean=? exact-integer-sqrt
     numerator denominator
     ; R7RS 6.4: list
     pair? cons car cdr set-car! set-cdr! caar cadr cdar cddr
@@ -184,6 +184,15 @@
           (s7-round x)))
 
     (define (floor-quotient x y) (floor (/ x y)))
+
+    (define s7-modulo modulo)
+
+    (define (modulo x y)
+      (when (or (not (real? x)) (not (real? y)))
+        (error 'type-error "modulo: parameters must be reals"))
+      (when (zero? y)
+        (error 'division-by-zero "modulo: division by zero"))
+      (s7-modulo x y))
 
     (define s7-lcm lcm)
 

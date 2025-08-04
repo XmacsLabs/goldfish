@@ -1871,8 +1871,7 @@ wrong-number-of-args
 
 #|
 modulo
-当除数不为零时，用于计算实数的取模运算（满足恒等式 dividend = quotient*divisor + remainder）。
-当除数为零时，返回被除数本身
+计算实数的取模运算。
 
 语法
 ----
@@ -1886,15 +1885,18 @@ divisor : real? - 除数，不能为零
 返回值
 ------
 real?
-返回 dividend 除以 divisor 的余数，该余数保持与 divisor 相同的符号。
-如果参数中存在不精确值，返回值也是不精确的，否则返回值是精确的。
+返回 dividend 除以 divisor 的余数。
 
 错误
 ----
-wrong-type-arg
-当参数不是实数时抛出错误。
+type-error
+当任一参数不是实数类型时抛出错误。包括复数（如 1+2i）、字符串、符号等其他类型。
+
+division-by-zero  
+当除数 divisor 为零时抛出错误。
+
 wrong-number-of-args
-当参数数量不为二时抛出错误。
+当参数数量不为两个时抛出错误。
 |#
 
 (check (modulo 13 4) => 1)
@@ -1915,13 +1917,13 @@ wrong-number-of-args
 (check (modulo 20 7) => 6)
 (check (modulo -20 7) => 1)
 (check (modulo 20 -7) => -1)
-(check (modulo 3 0) => 3)
 
 
-(check-catch 'wrong-type-arg (modulo 1+i 2))
-(check-catch 'wrong-type-arg (modulo 'hello 2))
+(check-catch 'type-error (modulo 1+i 2))
+(check-catch 'type-error (modulo 'hello 2))
 (check-catch 'wrong-number-of-args (modulo 5))
 (check-catch 'wrong-number-of-args (modulo 5 3 2))
+(check-catch 'division-by-zero (modulo 1 0))
 
 #|
 gcd
