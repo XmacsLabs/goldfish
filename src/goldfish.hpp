@@ -1130,7 +1130,11 @@ find_goldfish_boot (const char* gf_lib) {
 }
 
 #ifdef GOLDFISH_WITH_REPL
-static std::vector<std::string> cached_symbols;
+struct SymbolInfo {
+  std::string name;
+  std::string doc;
+};
+static std::vector<SymbolInfo> cached_symbols;
 
 // UNLIMITED history
 // TODO(jinser): 1. programatic value-history procedure api in scheme
@@ -1144,9 +1148,12 @@ update_symbol_cache (s7_scheme* sc) {
   s7_pointer sym_list= s7_let_to_list (sc, cur_env);
   int        n       = s7_list_length (sc, sym_list);
   for (int i= 0; i < n; ++i) {
-    s7_pointer pair= s7_list_ref (sc, sym_list, i);
-    s7_pointer sym = s7_car (pair);
-    cached_symbols.emplace_back (s7_symbol_name (sym));
+    s7_pointer  pair= s7_list_ref (sc, sym_list, i);
+    s7_pointer  sym = s7_car (pair);
+    s7_pointer  val = s7_cdr (pair);
+    const char* name= s7_symbol_name (sym);
+    const char* doc = s7_documentation (sc, val);
+    cached_symbols.push_back ({name, doc ? doc : ""});
   }
 }
 
@@ -1214,10 +1221,22 @@ get_history_path () {
 
 inline void
 symbol_completer (ic_completion_env_t* cenv, const char* symbol) {
-  size_t input_len= strlen (symbol);
-  for (const auto& name : cached_symbols) {
-    if (strncmp (name.c_str (), symbol, input_len) == 0) {
-      ic_add_completion (cenv, name.c_str ());
+  constexpr size_t MAXLEN   = 79;
+  size_t           input_len= strlen (symbol);
+  for (const auto& info : cached_symbols) {
+    if (strncmp (info.name.c_str (), symbol, input_len) == 0) {
+      const char* doc= nullptr;
+      std::string short_doc;
+      if (!info.doc.empty ()) {
+        if (info.doc.length () > MAXLEN) {
+          short_doc= info.doc.substr (0, MAXLEN) + "...";
+          doc      = short_doc.c_str ();
+        }
+        else {
+          doc= info.doc.c_str ();
+        }
+      }
+      ic_add_completion_ex (cenv, info.name.c_str (), info.name.c_str (), doc);
     }
   }
 }
@@ -1267,7 +1286,8 @@ goldfish_highlighter (ic_highlight_env_t* henv, const char* input, void* arg) {
       // 已定义符号
 
       std::string token (input + i, tlen);
-      if (std::find (cached_symbols.begin (), cached_symbols.end (), token) != cached_symbols.end ()) {
+      if (std::any_of (cached_symbols.begin (), cached_symbols.end (),
+                       [&] (const SymbolInfo& info) { return info.name == token; })) {
         ic_highlight (henv, i, tlen, "symbol");
       }
       else {
@@ -1367,24 +1387,16 @@ meta_import (const char*, s7_scheme* sc, const char* arg) {
 }
 
 inline bool
-meta_apropos (const char*, s7_scheme* sc, const char* arg) {
+meta_apropos (const char*, s7_scheme*, const char* arg) {
   if (!arg || !*arg) {
     ic_printf ("[b]Usage:[/] ,apropos <substring>\n");
     return false;
   }
-  s7_pointer cur_env = s7_curlet (sc);
-  s7_pointer sym_list= s7_let_to_list (sc, cur_env);
-  int        n       = s7_list_length (sc, sym_list);
-
   int found= false;
-  for (int i= 0; i < n; ++i) {
-    s7_pointer  pair= s7_list_ref (sc, sym_list, i);
-    s7_pointer  sym = s7_car (pair);
-    s7_pointer  val = s7_cdr (pair);
-    const char* name= s7_symbol_name (sym);
-    if (strstr (name, arg)) {
-      const char* doc= s7_documentation (sc, val);
-      ic_printf ("[b cyan]%s[/] [dim](procedure)[/] %s\n", name, doc);
+  for (const auto& info : cached_symbols) {
+    if (strstr (info.name.c_str (), arg)) {
+      ic_printf ("[b cyan]%s[/] [dim](procedure)[/] %s\n", info.name.c_str (),
+                 info.doc.empty () ? "" : info.doc.c_str ());
       found= true;
     }
   }
