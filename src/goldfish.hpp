@@ -274,7 +274,7 @@ f_os_call (s7_scheme* sc, s7_pointer args) {
   attr.flags             = TB_PROCESS_FLAG_NO_WINDOW;
   int ret;
 
-#if _MSC_VER
+#if (defined(_MSC_VER) || defined(__MINGW32__))
   ret= (int) std::system (cmd_c);
 #elif defined(__EMSCRIPTEN__)
   tb_char_t* argv[]= {(tb_char_t*) cmd_c, tb_null};

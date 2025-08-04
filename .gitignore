@@ -22,3 +22,6 @@ compile_commands.json
 .scala-build
 
 node_modules/
+
+result*
+.direnv/

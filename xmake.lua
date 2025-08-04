@@ -25,25 +25,55 @@ option("repl")
     set_values(false, true)
 option_end()
 
+option("system-deps")
+    set_description("Use system dependences")
+    set_default(false)
+    set_values(false, true)
+option_end()
+local system = has_config("system-deps")
+
+option("pin-deps")
+    set_description("Pin dependences version")
+    set_default(true)
+    set_values(false, true)
+option_end()
+
 local S7_VERSION = "20250721"
-add_requires("s7 "..S7_VERSION, {system=false})
+if has_config("pin-deps") then
+    add_requires("s7 "..S7_VERSION, {system=system})
+else
+    add_requires("s7", {system=system})
+end
 
 local TBOX_VERSION = "1.7.6"
 if has_config("tbox") then
     add_requires("apt::libtbox-dev", {alias="tbox"})
 else
     tbox_configs = {hash=true, ["force-utf8"]=true}
-    add_requires("tbox " .. TBOX_VERSION, {system=false, configs=tbox_configs})
+    if has_config("pin-deps") then
+        add_requires("tbox " .. TBOX_VERSION, {system=system, configs=tbox_configs})
+    else
+        add_requires("tbox", {system=system, configs=tbox_configs})
+    end
 end
 
 if is_plat("wasm") then
+if has_config("pin-deps") then
     add_requires("emscripten 3.1.55")
+else
+    add_requires("emscripten")
+end
     set_toolchains("emcc@emscripten")
 end
 
 local IC_VERSION = "v1.0.9"
-add_requires("isocline " .. IC_VERSION, {system=false})
+if has_config("pin-deps") then
+    add_requires("isocline " .. IC_VERSION, {system=system})
+else
+    add_requires("isocline", {system=system})
+end
 
+-- local header only dependency, no need to (un)pin version
 add_requires("argh v1.3.2")
 
 target ("goldfish") do
