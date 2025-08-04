@@ -1219,6 +1219,12 @@ get_history_path () {
   return path;
 }
 
+inline bool
+is_symbol_char (const char* s, long len) {
+  int c= (unsigned char) *s;
+  return isalnum (c) || strchr ("!$%&*/:<=>?^_~+-.", c);
+}
+
 inline void
 symbol_completer (ic_completion_env_t* cenv, const char* symbol) {
   constexpr size_t MAXLEN   = 79;
@@ -1243,13 +1249,7 @@ symbol_completer (ic_completion_env_t* cenv, const char* symbol) {
 
 inline void
 goldfish_completer (ic_completion_env_t* cenv, const char* input) {
-  ic_complete_word (cenv, input, &symbol_completer, NULL);
-}
-
-inline bool
-is_symbol_char (const char* s, long len) {
-  int c= (unsigned char) *s;
-  return isalnum (c) || strchr ("!$%&*/:<=>?^_~+-.", c);
+  ic_complete_word (cenv, input, &symbol_completer, is_symbol_char);
 }
 
 inline void
