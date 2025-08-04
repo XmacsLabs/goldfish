@@ -2,7 +2,12 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Goldfish Scheme REPL</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Noto+Sans+SC"
+      rel="stylesheet"
+    />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css"
@@ -12,6 +17,9 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css"
     />
     <style>
+      html {
+        font-family: "Open Sans", sans-serif;
+      }
       body {
         background: #f8f9fa;
       }
@@ -116,30 +124,49 @@
       .history-panel {
         position: fixed;
         right: 20px;
-        top: 80px;
+        top: 20px;
         width: 250px;
-        max-height: 600px;
+        height: calc(50vh - 100px);
         background: #f7f7fa;
         border-left: 1px solid #e0e0e0;
-        border-radius: 8px;
+        border-radius: 8px 8px 0 0;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         padding: 16px 16px 16px 16px;
         overflow-y: auto;
         font-size: 14px;
         z-index: 1000;
       }
-      .history-panel h2 {
+      
+      .favorites-panel {
+        position: fixed;
+        right: 20px;
+        top: calc(50vh + 20px);
+        width: 250px;
+        height: calc(50vh - 100px);
+        background: #f7f7fa;
+        border-left: 1px solid #e0e0e0;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 16px 16px 16px 16px;
+        overflow-y: auto;
+        font-size: 14px;
+        z-index: 1000;
+      }
+      .history-panel h2,
+      .favorites-panel h2 {
         font-size: 16px;
         color: #44475a;
         margin: 0 0 10px 0;
         text-align: left;
       }
-      .history-list {
+      .history-list,
+      .favorites-list {
         list-style: none;
         padding: 0;
         margin: 0;
       }
-      .history-item {
+      .history-item,
+      .favorites-item {
         background: #fff;
         border: 1px solid #e0e0e0;
         border-radius: 4px;
@@ -150,7 +177,8 @@
         white-space: pre-wrap;
         word-break: break-all;
       }
-      .history-item:hover {
+      .history-item:hover,
+      .favorites-item:hover {
         background: #e9e9f7;
       }
       .cm-error-highlight {
@@ -185,6 +213,68 @@
         font-size: 13px;
         padding: 4px 8px;
       }
+
+      /* 移动端适配样式 */
+      @media (max-width: 768px) {
+        .shortcuts-hint {
+          display: none;
+        }
+
+        .repl-container {
+          margin: 10px;
+          padding: 15px;
+          border-radius: 6px;
+        }
+        
+        h1 {
+          font-size: 20px;
+          margin-bottom: 10px;
+        }
+        
+        .repl-entry {
+          margin-bottom: 20px;
+          padding: 12px;
+        }
+        
+        .entry-number {
+          position: static;
+          display: inline-block;
+          margin-bottom: 8px;
+          font-size: 12px;
+          padding: 1px 6px;
+        }
+        
+        .input-area {
+          margin-bottom: 12px;
+        }
+        
+        .CodeMirror {
+          font-size: 14px;
+          line-height: 1.4;
+        }
+        
+        .output-area {
+          padding: 12px;
+          font-size: 13px;
+          line-height: 1.3;
+        }
+
+        #clear-history,
+        #export-history,
+        #import-history,
+        #share-history {
+          display: none;
+        }
+        
+        .history-panel,
+        .favorites-panel {
+          display: none;
+        }
+
+        .shortcut-hint {
+          display: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -211,8 +301,12 @@
         <input type="file" id="import-file" style="display:none" accept=".json"/>
       </div>
       <div class="history-panel" id="history-panel">
-        <h2>历史输入</h2>
+        <h2>历史记录</h2>
         <ul class="history-list" id="history-list"></ul>
+      </div>
+      <div class="favorites-panel" id="favorites-panel">
+        <h2>收藏夹</h2>
+        <ul class="favorites-list" id="favorites-list"></ul>
       </div>
     </div>
 
@@ -265,12 +359,170 @@
               .forEach((item) => {
                 const li = document.createElement("li");
                 li.className = "history-item";
-                li.textContent = item;
-                li.title = "点击回填到输入区";
-                li.addEventListener("click", () => onSelect(item));
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
+                
+                const content = document.createElement("div");
+                content.textContent = item;
+                content.title = "点击回填到输入区";
+                content.style.flex = "1";
+                content.style.cursor = "pointer";
+                content.addEventListener("click", () => onSelect(item));
+                
+                const favoriteBtn = document.createElement("button");
+                favoriteBtn.style.cssText = `
+                  background: #6272a4;
+                  color: white;
+                  border: none;
+                  border-radius: 3px;
+                  padding: 2px 6px;
+                  font-size: 11px;
+                  cursor: pointer;
+                  margin-left: 8px;
+                  min-width: 32px;
+                  opacity: 0;
+                  transition: all 0.2s;
+                `;
+                favoriteBtn.textContent = Favorites.has(item) ? "★" : "☆";
+                favoriteBtn.title = Favorites.has(item) ? "取消收藏" : "添加到收藏";
+                favoriteBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  if (Favorites.has(item)) {
+                    Favorites.remove(item);
+                    favoriteBtn.textContent = "☆";
+                    favoriteBtn.title = "添加到收藏";
+                  } else {
+                    Favorites.add(item);
+                    favoriteBtn.textContent = "★";
+                    favoriteBtn.title = "取消收藏";
+                  }
+                  REPL.updateFavoritesPanel();
+                });
+                
+                li.appendChild(content);
+                li.appendChild(favoriteBtn);
+                
+                li.addEventListener('mouseenter', () => {
+                  favoriteBtn.style.opacity = '1';
+                });
+                li.addEventListener('mouseleave', () => {
+                  favoriteBtn.style.opacity = '0';
+                });
+                
                 panel.appendChild(li);
               });
           },
+        };
+
+        // 收藏管理
+        const Favorites = {
+          data: [],
+          
+          add(item) {
+            if (item && !this.data.includes(item)) {
+              this.data.push(item);
+              this.saveToLocal();
+              return true;
+            }
+            return false;
+          },
+          
+          remove(item) {
+            const index = this.data.indexOf(item);
+            if (index > -1) {
+              this.data.splice(index, 1);
+              this.saveToLocal();
+              return true;
+            }
+            return false;
+          },
+          
+          has(item) {
+            return this.data.includes(item);
+          },
+          
+          saveToLocal() {
+            try {
+              localStorage.setItem('goldfish_repl_favorites', JSON.stringify(this.data));
+              return true;
+            } catch (e) {
+              console.error('保存收藏失败:', e);
+              return false;
+            }
+          },
+          
+          loadFromLocal() {
+            try {
+              const saved = localStorage.getItem('goldfish_repl_favorites');
+              if (saved) {
+                const arr = JSON.parse(saved);
+                if (Array.isArray(arr)) {
+                  this.data = arr;
+                  return true;
+                }
+              }
+            } catch (e) {
+              console.error('加载收藏失败:', e);
+            }
+            return false;
+          },
+          
+          render(panel, onSelect) {
+            panel.innerHTML = "";
+            this.data
+              .slice()
+              .reverse()
+              .forEach((item) => {
+                const li = document.createElement("li");
+                li.className = "favorites-item";
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
+                
+                const content = document.createElement("div");
+                content.textContent = item;
+                content.title = "点击回填到输入区";
+                content.style.flex = "1";
+                content.style.cursor = "pointer";
+                content.addEventListener("click", () => onSelect(item));
+                
+                const removeBtn = document.createElement("button");
+                removeBtn.style.cssText = `
+                  background: #6272a4;
+                  color: white;
+                  border: none;
+                  border-radius: 3px;
+                  padding: 2px 6px;
+                  font-size: 11px;
+                  cursor: pointer;
+                  margin-left: 8px;
+                  min-width: 32px;
+                  opacity: 0;
+                  transition: all 0.2s;
+                `;
+                removeBtn.textContent = "删除";
+                removeBtn.title = "从收藏中删除";
+                removeBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  Favorites.remove(item);
+                  REPL.updateFavoritesPanel();
+                  REPL.updateHistoryPanel();
+                });
+                
+                li.appendChild(content);
+                li.appendChild(removeBtn);
+                
+                li.addEventListener('mouseenter', () => {
+                  removeBtn.style.opacity = '1';
+                });
+                li.addEventListener('mouseleave', () => {
+                  removeBtn.style.opacity = '0';
+                });
+                
+                panel.appendChild(li);
+              });
+          }
         };
 
         // 清空历史
@@ -767,7 +1019,7 @@
           <div class="entry-number">#${number}</div>
           <div class="input-area">
             <textarea placeholder="输入Scheme代码..."></textarea>
-            <button class="eval-button">求值 (Ctrl+Enter)</button>
+            <button class="eval-button">求值 <span class="shortcut-hint">(Ctrl+Enter)</span></button>
           </div>
           <div class="output-area"></div>
         </div>
@@ -888,6 +1140,16 @@
               }
             });
           },
+          
+          updateFavoritesPanel() {
+            const list = document.getElementById("favorites-list");
+            Favorites.render(list, (item) => {
+              if (this.activeEditor) {
+                this.activeEditor.setValue(item);
+                this.activeEditor.focus();
+              }
+            });
+          },
         };
 
         // ---- 页面初始化 ----
@@ -899,6 +1161,7 @@
           if (!History.loadFromURL()) {
             History.loadFromLocal();
           }
+          Favorites.loadFromLocal();
         });
         Module.onRuntimeInitialized = () => {
           console.log("goldfish 已加载");
@@ -907,6 +1170,7 @@
             .forEach((btn) => (btn.disabled = false));
           REPL.init();
           REPL.updateHistoryPanel();
+          REPL.updateFavoritesPanel();
         };
 
         document.getElementById('clear-history').onclick = function() {
