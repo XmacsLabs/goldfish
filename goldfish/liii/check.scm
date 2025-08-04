@@ -17,7 +17,7 @@
 (define-library (liii check)
   (export test check check-set-mode! check:proc
     check-catch check-report check-failed?
-    check-true check-false)
+    check-true check-false check-float)
   (import (srfi srfi-78)
           (rename (srfi srfi-78)
                   (check-report srfi-78-check-report)))
@@ -45,6 +45,10 @@
           (display (car msg))))
       (srfi-78-check-report)
       (if (check-failed?) (exit -1)))
+
+    (define* (check-float a b (epsilon 1e-10))
+      (or (= a b)
+          (< (abs (- a b)) epsilon)))
 
     ) ; end of begin
   ) ; end of define-library

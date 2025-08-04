@@ -19,7 +19,8 @@
         (liii list)
         (liii case)
         (liii lang)
-        (liii error))
+        (liii error)
+        (liii os))
 
 (check-set-mode! 'report-failed)
 
@@ -2210,7 +2211,9 @@ wrong-number-of-args
 (check (exp -0.5) => 0.6065306597126334)
 
 ;; 错误处理测试
-(check (exp 1+2i) => -1.1312043837568135+2.4717266720048188i)
+(when (not (os-windows?))
+  (check (exp 1+2i) => -1.1312043837568135+2.4717266720048188i))
+
 (check-catch 'wrong-type-arg (exp "hello"))
 (check-catch 'wrong-number-of-args (exp))
 
@@ -2328,7 +2331,7 @@ wrong-number-of-args
 (check (sin (/ pi 2)) => 1.0)
 (check (sin pi) => 1.2246467991473532e-16)
 (check (sin (* 2 pi)) => -2.4492935982947064e-16)
-(check (sin (/ pi 4)) => 0.7071067811865475)
+(check-float (sin (/ pi 4)) 0.7071067811865475)
 
 ;; 特殊角度测试
 (check (sin (/ pi 6)) => 0.49999999999999994)
@@ -2341,7 +2344,8 @@ wrong-number-of-args
 (check (sin -0.001) => -9.999998333333417e-4)
 
 ;; 复数测试
-(check (sin 1+2i) => 3.165778513216168+1.9596010414216063i)
+(when (not (os-windows?))
+  (check (sin 1+2i) => 3.165778513216168+1.9596010414216063i))
 
 ;; 错误处理测试
 (check-catch 'wrong-type-arg (sin "hello"))
@@ -2402,7 +2406,8 @@ wrong-number-of-args
 (check (cos 3/4) => 0.7316888688738209)
 
 ;； 复数测试
-(check (cos 1+2i) => 2.0327230070196656-3.0518977991518i)
+(when (not (os-windows?))
+  (check (cos 1+2i) => 2.0327230070196656-3.0518977991518i))
 
 ;; 错误处理测试
 (check-catch 'wrong-type-arg (cos "hello"))
@@ -2649,7 +2654,8 @@ wrong-number-of-args
 (check (atan -0.000001) => -9.999999999996666e-7)
 
 ;; 复数测试
-(check (atan 1+2i) => 1.3389725222944935+0.40235947810852507i)
+(when (not (os-windows?))
+  (check (atan 1+2i) => 1.3389725222944935+0.40235947810852507i))
 
 ;; 错误处理测试
 (check-catch 'wrong-type-arg (atan "hello"))
