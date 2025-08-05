@@ -3167,11 +3167,63 @@ wrong-number-of-args
 
 (check (make-list 0) => (list ))
 
-(check-true (pair? '(a . b)))
-(check-true (pair? '(a b c)))
+#|
+pair?
+判断一个对象是否为序对（pair）结构。
 
-(check-false (pair? '()))
-(check-false (pair? '#(a b)))
+语法
+----
+(pair? obj)
+
+参数
+----
+obj : any
+任意类型的对象
+
+返回值
+-----
+boolean?
+如果 obj 是序对类型则返回 #t，否则返回 #f。
+
+说明
+----
+判断一个对象是否为序对的基本谓词函数。序对是 Scheme 中最基础的数据结构，
+由两个元素组成，形成一个双向的单元结构。序对可以是显式的点对形式，
+如 (a . b)，也可以是非空列表，因为所有非空列表本质上都是由序对链组成的。
+
+示例
+----
+; 判断是序对
+(pair? '(a b c)) => #t        列表 (a b c) 是由序对组成的
+(pair? (cons 1 2)) => #t      显式创建的点对
+(pair? '(1 . 2)) => #t        点对形式
+
+; 判断不是序对
+(pair? '()) => #f            空列表不是序对
+(pair? 123) => #f            数字不是
+(pair? "hello") => #f        字符串不是
+(pair? #t) => #f            布尔值不是
+(pair? 'a) => #f            符号不是
+
+注意
+----
+- 空列表 '() 不是序对
+- 字符串、数字、布尔值等原子类型都不是序对
+- 所有非空列表都被认为是序对，因为列表本质上是由序对链构成的
+
+|#
+
+;; 测试 pair? 对各种序对结构的判断
+(check-true (pair? '(a . b)))             ; 显式点对形式的序对
+(check-true (pair? '(a b c)))             ; 列表内部由序对构成
+(check-true (pair? (cons 1 2)))           ; 使用 cons 创建的序对
+(check-true (pair? (cons 'a (cons 'b 'c))))  ; 嵌套序对结构
+
+(check-false (pair? 'a))
+(check-false (pair? 123))
+(check-false (pair? "string"))
+(check-false (pair? #t))
+(check-false (pair? #f))
 
 (check-true (list? '()))
 (check-true (list? '(a)))
@@ -3191,6 +3243,10 @@ wrong-number-of-args
 (check-false (list? '#(1 2 3))) 
 (check-false (list? '#()))
 (check-false (list? '12345))
+
+
+
+
 
 (check (null? '()) => #t)
 (check (null? '(1)) => #f)
