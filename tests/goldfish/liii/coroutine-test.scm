@@ -15,7 +15,6 @@
 ;
 
 (import (liii check)
-        (liii sort)
         (liii coroutine))
 
 ;; coroutine-dispatch should execute the passed-in function and all its derived coroutines
@@ -35,6 +34,10 @@
                  (coroutine-create (lambda () (set! v (* v 10))))
                  (set! v (+ v 2))))))
          v) => 30)
+
+;; coroutine-dispatch with pure function
+;; TODO(jinser): dont auto-start when create
+; (check (procedure? (coroutine-create (lambda () 42)) => '()))
 
 ;; coroutine-dispatch with pure function
 (check (coroutine-dispatch (lambda () 42)) => '())
