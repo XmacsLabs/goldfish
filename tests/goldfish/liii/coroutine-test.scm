@@ -15,6 +15,7 @@
 ;
 
 (import (liii check)
+        (liii sort)
         (liii coroutine))
 
 ;; coroutine-dispatch should execute the passed-in function and all its derived coroutines
@@ -24,3 +25,26 @@
              (lambda ()
                (map (lambda (x) (coroutine-create (lambda () (set! sum (+ sum x))))) xs)))
            sum) => (apply + xs)))
+
+;; coroutine-dispatch with nested coroutine-create
+(check (let ((v 1))
+         (coroutine-dispatch
+           (lambda ()
+             (coroutine-create
+               (lambda ()
+                 (coroutine-create (lambda () (set! v (* v 10))))
+                 (set! v (+ v 2))))))
+         v) => 30)
+
+;; coroutine-dispatch with pure function
+(check (coroutine-dispatch (lambda () 42)) => '())
+
+;; coroutine-dispatch with side effects from multiple coroutines
+(check (let ((s '()))
+         (coroutine-dispatch
+           (lambda ()
+             (coroutine-create (lambda () (set! s (cons #\a s))))
+             (coroutine-create (lambda () (set! s (cons #\b s))))
+             (coroutine-create (lambda () (set! s (cons #\c s))))))
+        s) => '(#\c #\b #\a))
+
