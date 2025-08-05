@@ -89,7 +89,8 @@ path : 文件路径（string类型）
 (when (os-windows?)
   ;; 根目录测试
   (check (path-dir? "C:/") => #t)
-  (check (path-dir? "D:/") => #t)
+  (when (path-exists? "D:/")
+    (check (path-dir? "D:/") => #t))
   ;; 常用目录测试
   (check (path-dir? "C:/Windows") => #t)
   (check (path-dir? "C:/Program Files") => #t)
