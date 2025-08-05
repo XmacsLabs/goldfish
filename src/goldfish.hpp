@@ -1159,11 +1159,27 @@ update_symbol_cache (s7_scheme* sc) {
 
 inline void
 ic_goldfish_eval (s7_scheme* sc, const char* code) {
-  int        gc_loc  = -1;
-  s7_pointer old_port= s7_set_current_error_port (sc, s7_open_output_string (sc));
-  if (old_port != s7_nil (sc)) gc_loc= s7_gc_protect (sc, old_port);
+  int        err_gc_loc= -1, out_gc_loc= -1;
+  s7_pointer old_err_port= s7_set_current_error_port (sc, s7_open_output_string (sc));
+  if (old_err_port != s7_nil (sc)) err_gc_loc= s7_gc_protect (sc, old_err_port);
+
+  s7_pointer out_port    = s7_open_output_string (sc);
+  s7_pointer old_out_port= s7_set_current_output_port (sc, out_port);
+  if (old_err_port != s7_nil (sc)) out_gc_loc= s7_gc_protect (sc, old_out_port);
 
   s7_pointer result= s7_eval_c_string (sc, code);
+
+  const char* display_out= s7_get_output_string (sc, out_port);
+  if (display_out && *display_out) {
+    std::string out_str= display_out;
+    if (!out_str.empty () && out_str.back () == '\n') {
+      ic_printf ("%s", display_out);
+    }
+    else {
+      // 用以表示换行符由 REPL 添加
+      ic_printf ("%s↩\n", display_out);
+    }
+  }
 
   const char* errmsg= s7_get_output_string (sc, s7_current_error_port (sc));
 
@@ -1185,8 +1201,10 @@ ic_goldfish_eval (s7_scheme* sc, const char* code) {
   }
 
   s7_close_output_port (sc, s7_current_error_port (sc));
-  s7_set_current_error_port (sc, old_port);
-  if (gc_loc != -1) s7_gc_unprotect_at (sc, gc_loc);
+  s7_set_current_error_port (sc, old_err_port);
+
+  if (err_gc_loc != -1) s7_gc_unprotect_at (sc, err_gc_loc);
+  if (out_gc_loc != -1) s7_gc_unprotect_at (sc, out_gc_loc);
 
   update_symbol_cache (sc);
 }
