@@ -49,7 +49,7 @@ local TBOX_VERSION = "1.7.6"
 if has_config("tbox") then
     add_requires("apt::libtbox-dev", {alias="tbox"})
 else
-    tbox_configs = {hash=true, ["force-utf8"]=true}
+    tbox_configs = {coroutine=true, hash=true, ["force-utf8"]=true}
     if has_config("pin-deps") then
         add_requires("tbox " .. TBOX_VERSION, {system=system, configs=tbox_configs})
     else

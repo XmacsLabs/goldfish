@@ -927,6 +927,75 @@ glue_liii_datetime (s7_scheme* sc) {
   glue_date_now (sc);
 }
 
+static void
+coroutine_run (tb_cpointer_t priv) {
+  std::pair<s7_scheme*, s7_pointer>* ctx= (std::pair<s7_scheme*, s7_pointer>*) priv;
+  s7_apply_function (ctx->first, ctx->second, s7_nil (ctx->first));
+  delete ctx;
+}
+
+static s7_pointer
+coroutine_dispatch (s7_scheme* sc, s7_pointer args) {
+  s7_pointer                         f        = s7_car (args);
+  std::pair<s7_scheme*, s7_pointer>* ctx      = new std::pair<s7_scheme*, s7_pointer> (sc, f);
+  tb_co_scheduler_ref_t              scheduler= tb_co_scheduler_init ();
+  if (scheduler == nullptr) {
+    const char* err_type= "coroutine";
+    const char* err_desc= "failed to init coroutine scheduler";
+    return s7_error (sc, s7_make_symbol (sc, err_type), s7_list (sc, 2, s7_make_string (sc, err_desc), f));
+  }
+
+  // start coroutine
+  if (!tb_coroutine_start (scheduler, coroutine_run, ctx, 0)) {
+    const char* err_type= "coroutine";
+    const char* err_desc= "failed to start coroutine";
+    return s7_error (sc, s7_make_symbol (sc, err_type), s7_list (sc, 2, s7_make_string (sc, err_desc), f));
+  }
+
+  // run scheduler in non-exclusive mode
+  tb_co_scheduler_loop (scheduler, false);
+
+  // exit scheduler
+  tb_co_scheduler_exit (scheduler);
+
+  return s7_nil (sc);
+}
+
+inline void
+glue_coroutine_dispatch (s7_scheme* sc) {
+  const char* name= "g_coroutine-dispatch";
+  const char* desc= "(g_coroutine-dispatch function) => nil, dispatch the passed-in funtion and all its derived "
+                    "coroutines until all are completed";
+  s7_define_function (sc, name, coroutine_dispatch, 1, 0, false, desc);
+}
+
+static s7_pointer
+coroutine_create (s7_scheme* sc, s7_pointer args) {
+  const tb_size_t stacksize= 32 * 1024; // 32KB
+
+  s7_pointer                         f  = s7_car (args);
+  std::pair<s7_scheme*, s7_pointer>* ctx= new std::pair<s7_scheme*, s7_pointer> (sc, f);
+  if (!tb_coroutine_start (tb_null, coroutine_run, ctx, stacksize)) {
+    const char* err_type= "coroutine";
+    const char* err_desc= "failed to start coroutine";
+    return s7_error (sc, s7_make_symbol (sc, err_type), s7_list (sc, 2, s7_make_string (sc, err_desc), f));
+  }
+  return s7_nil (sc);
+}
+
+inline void
+glue_coroutine_create (s7_scheme* sc) {
+  const char* name= "g_coroutine-create";
+  const char* desc= "(g_coroutine-create function) => nil, create coroutine";
+  s7_define_function (sc, name, coroutine_create, 1, 0, false, desc);
+}
+
+inline void
+glue_liii_coroutine (s7_scheme* sc) {
+  glue_coroutine_dispatch (sc);
+  glue_coroutine_create (sc);
+}
+
 // -------------------------------- iota --------------------------------
 static inline s7_pointer
 iota_list (s7_scheme* sc, s7_int count, s7_pointer start, s7_int step) {
@@ -997,6 +1066,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_list (sc);
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
+  glue_liii_coroutine (sc);
 }
 
 static void
