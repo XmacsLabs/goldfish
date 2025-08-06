@@ -159,29 +159,115 @@ wrong-number-of-args 如果没有提供任何参数
 (check-catch 'value-error (iota -1))
 (check-catch 'type-error (iota 'a))
 
-;; list-copy tests
+#|
+list-copy
 
-;; Check that copying an empty list works as expected
+创建一个新列表，它是输入列表的浅拷贝。
+
+语法
+----
+(list-copy list)
+
+参数
+----
+list - 要复制的列表
+
+返回值
+------
+返回一个新的列表，具有与输入列表相同的元素，但这是一个不同的对象。
+
+描述
+----
+list-copy 函数创建输入列表的一个浅拷贝。新列表的顶层节点是新的，
+但列表中的元素本身不会被复制（浅拷贝）。这使得修改原始列表不会影响拷贝的列表，
+但需要注意嵌套列表的深层结构不会被复制。
+
+该函数在 (srfi srfi-1) 模块中实现，并由 (liii list) 重新导出。
+
+示例
+----
+; 基本列表复制
+(list-copy '(1 2 3))      => (1 2 3)
+(list-copy '())           => ()
+(list-copy '((1 2) (3 4))) => ((1 2) (3 4))
+
+; 验证是否为不同对象
+(define lst '(a b c))
+(define copy (list-copy lst))
+(eq? lst copy)        => #f      ; 不是同一个对象
+(equal? lst copy)     => #t      ; 内容相等
+
+边界条件
+--------
+- 空列表参数返回空列表
+- 非列表参数会触发类型错误异常
+- 嵌套列表的子列表为同一引用（浅拷贝特性）
+- 循环列表需要 SRFI-1 正确实现
+
+错误处理
+--------
+当参数不是列表时，会触发 type-error 异常。
+
+时间和空间复杂度
+----------------
+- 时间复杂度：O(n)，其中 n 是列表长度
+- 空间复杂度：O(n)，需要创建新的列表节点
+
+使用场景
+--------
+list-copy 主要用于以下情况：
+1. 函数参数传递：需要修改列表而不影响原列表
+2. 避免副作用：确保操作不会意外修改原列表
+3. 状态保存：创建列表的快照以供后续比较
+
+|#
+
+;; list-copy 基本测试
+
+;; 基本功能测试
 (check (list-copy '()) => '())
-
-;; Check that copying a list of numbers works correctly
 (check (list-copy '(1 2 3 4 5)) => '(1 2 3 4 5))
-
-;; Check that copying a list of symbols works correctly
 (check (list-copy '(a b c d)) => '(a b c d))
-
-;; Check that copying nested lists works correctly
 (check (list-copy '((1 2) (3 4) (5 6))) => '((1 2) (3 4) (5 6)))
 
-;; Check that copying the list does not result in the same object
+;; 空列表处理
+(check (list-copy '()) => '())
+
+;; 各种数据类型测试
+(check (list-copy '(1 "hello" #t 'symbol)) => '(1 "hello" #t 'symbol))
+
+;; 嵌套结构测试
+(check (list-copy '((a . b) (c d) e)) => '((a . b) (c d) e))
+
+;; 对象独立性验证 - 浅拷贝特性
 (check-false (eq? (list-copy '(1 2 3)) '(1 2 3)))
 
-;; Check if list-copy is a deep copy or not 
-(let ((obj1 '(1 2 3 4))
-      (obj2 (list-copy '(1 2 3 4))))
-  (check obj1 => obj2)
-  (set-car! obj1 3)
-  (check-false (eq? obj1 obj2)))
+;; 验证浅拷贝和对象独立性
+(let ((original '(1 2 3 4))
+      (copy (list-copy '(1 2 3 4))))
+  (check original => copy)
+  (check-false (eq? original copy)))
+
+;; 验证突变隔离 - 测试顶层独立性
+(let ((list-a '(a b c))
+      (copy-a (list-copy '(a b c))))
+  (set-car! list-a 'new)
+  (check copy-a => '(a b c))      ; 拷贝不受影响
+  (check list-a => '(new b c)))  ; 原列表已改变
+
+;; 验证嵌套结构的浅拷贝特性
+(let ((nested-list '((1 2) (3 4)))
+      (nested-copy (list-copy '((1 2) (3 4)))))
+  (check nested-list => nested-copy)
+  (check-false (eq? nested-list nested-copy))
+  ;; 子对象是同一引用
+  (check (car nested-list) => (car nested-copy)))
+
+;; 测试大型列表性能（大数据集测试）
+(let ((large-list (make-list 1000 42))
+      (large-copy (list-copy (make-list 1000 42))))
+  (check large-copy => large-list)
+  (check-false (eq? large-list large-copy)))
 
 (check-true (proper-list? (list 1 2)))
 (check-true (proper-list? '()))
