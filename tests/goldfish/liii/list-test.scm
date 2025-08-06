@@ -576,6 +576,149 @@ out-of-range 当k超过列表长度或k为负数时
 (check-catch 'out-of-range (drop '(1 2 3 4) 5))
 (check-catch 'out-of-range (drop '(1 2 3 . 4) 4))
 
+#| drop
+从列表开头移除指定数量的元素，返回剩余部分。
+
+语法
+----
+(drop list k)
+
+参数
+----
+list : list?
+源列表，从中移除元素。
+
+k : integer?
+要移除的元素数量，必须是非负整数且不超过列表长度。
+
+返回值
+------
+list | any
+- 如果k小于列表长度，返回移除前k个元素后的剩余列表
+- 如果k等于列表长度，返回空列表'()
+- 对于dotted list，如果k等于列表长度，返回末尾的非列表元素
+
+注意
+----
+drop函数不会修改原列表，而是创建新的列表结构（如果剩余部分是列表）。与take函数互为补充，常用于列表的切片操作和迭代处理。当处理dotted list时，若k等于列表节点数，将返回最后的非列表元素。
+
+示例
+-----
+(drop '(1 2 3 4) 2) => '(3 4)
+(drop '(a b c) 0) => '(a b c)
+(drop '(1 (2 3) 4) 2) => '(4)
+(drop '(1 2 3 . 4) 3) => 4
+(drop '((a b) (c d)) 1) => '((c d))
+
+边界条件
+-----
+- 空列表返回空列表 (drop '() 0) => '()
+- 移除全部元素返回空列表 (drop '(a b) 2) => '()
+- 单元素列表特殊情况 (drop '(a) 1) => '()
+
+链式操作
+------
+常与take函数组合使用进行切片操作：
+(drop (take '(1 2 3 4 5) 4) 1) => '(2 3 4)
+(take (drop '(1 2 3 4 5) 1) 3) => '(2 3 4)
+
+错误处理
+------
+wrong-type-arg 当list不是列表或k不是整数类型时
+out-of-range 当k超过列表长度或k为负数时
+|#
+
+;; 基本功能测试
+(check (drop '(1 2 3 4) 0) => '(1 2 3 4))
+(check (drop '(1 2 3 4) 1) => '(2 3 4))
+(check (drop '(1 2 3 4) 2) => '(3 4))
+(check (drop '(1 2 3 4) 3) => '(4))
+(check (drop '(1 2 3 4) 4) => '())
+
+;; 与take的互补性测试
+(check (let ((lst '(1 2 3 4 5))) (equal? lst (append (take lst 2) (drop lst 2)))) => #t)
+(check (let ((lst '(a b c d))) (equal? lst (append (take lst 0) (drop lst 0)))) => #t)
+(check (let ((lst '(x y z))) (equal? lst (append (take lst 3) (drop lst 3)))) => #t)
+
+;; 各种列表结构测试
+(check (drop '(a b c d e f) 3) => '(d e f))
+(check (drop '((a b) (c d) (e f)) 1) => '((c d) (e f)))
+(check (drop '(1 (2 3) (4 (5 6))) 2) => '((4 (5 6))))
+(check (drop '(() a b c) 1) => '(a b c))
+(check (drop '(a () b () c) 2) => '(b () c))
+
+;; 边界条件测试
+(check (drop '() 0) => '())
+(check (drop '(a) 0) => '(a))
+(check (drop '(a) 1) => '())
+(check (drop '(a b) 2) => '())
+(check (drop '(a b c) 3) => '())
+
+;; Dotted list处理测试
+(check (drop '(a . b) 0) => '(a . b))
+(check (drop '(a . b) 1) => 'b)
+(check (drop '(a b . c) 1) => '(b . c))
+(check (drop '(a b . c) 2) => 'c)
+(check (drop '(a b c . d) 3) => 'd)
+(check (drop '((a b) (c d) . e) 1) => '((c d) . e))
+(check (drop '((a b) c (d e) . f) 2) => '((d e) . f))
+
+;; 负数错误测试
+(check-catch 'out-of-range (drop '(1 2 3) -1))
+(check-catch 'out-of-range (drop '(a b) -5))
+(check-catch 'out-of-range (drop '(1 2 3) -1)) ; 负数边界情况
+
+;; 超出范围错误测试
+(check-catch 'out-of-range (drop '(1 2 3) 4))
+(check-catch 'out-of-range (drop '(1 2) 3))
+(check-catch 'out-of-range (drop '(a) 2))
+(check-catch 'out-of-range (drop '() 1))
+
+;; Dotted list超出范围测试
+(check-catch 'out-of-range (drop '(a . b) 2))
+(check-catch 'out-of-range (drop '(a b . c) 3))
+(check-catch 'out-of-range (drop '(a b c . d) 4))
+
+;; 类型错误测试
+(check-catch 'wrong-type-arg (drop "not a list" 2))
+(check-catch 'wrong-type-arg (drop '(1 2 3) "not a number"))
+(check-catch 'wrong-type-arg (drop 123 1))
+(check-catch 'wrong-type-arg (drop '(a b c) 2.5))
+(check-catch 'wrong-type-arg (drop '(a b c) #t))
+
+;; 链式操作测试  
+(check (drop (drop '(1 2 3 4 5 6) 1) 2) => '(4 5 6))
+(check (drop (take '(1 2 3 4 5) 4) 1) => '(2 3 4))
+(check (take (drop '(1 2 3 4 5) 2) 2) => '(3 4))
+(check (drop (take-right '(1 2 3 4 5 6) 4) 1) => '(4 5 6))
+
+;; 与take-right的组合测试  
+(check (let ((lst '(1 2 3 4 5 6 7)))
+         (equal? lst (append (take lst 2) (drop lst 2)))) => #t)
+
+;; 嵌套列表结构测试
+(check (drop '((1 2) (3 4) (5 6) (7 8)) 2) => '((5 6) (7 8)))
+(check (drop '((a) (b) (c) . d) 2) => '((c) . d))
+(check (drop '((a) (b) (c) . d) 3) => 'd)
+
+;; 大列表测试
+(check (drop (iota 10) 5) => '(5 6 7 8 9))
+(check (drop (iota 0) 0) => '())
+(check (drop (iota 1) 0) => '(0))
+(check (drop (iota 1) 1) => '())
+
+;; 包含特殊元素的列表测试
+(check (drop '(#t #f "hello" 42 'symbol) 2) => '("hello" 42 'symbol))
+(check (drop '(() (()) (())) 1) => '((()) (())))
+
+;; 与flat-map等组合测试
+(check (flat-map (lambda (x) (list x x)) (drop '(1 2 3) 1)) => '(2 2 3 3))
+(check (filter odd? (drop '(1 2 3 4 5 6) 2)) => '(3 5))
+
+;; 性能测试 - 大列表
+(check (length (drop (iota 1000) 500)) => 500)
+(check (drop (iota 1000) 1000) => '())
+
 (check (take-right '(1 2 3 4) 3) => '(2 3 4))
 (check (take-right '(1 2 3 4) 4) => '(1 2 3 4))
 (check (take-right '(1 2 3 . 4) 3) => '(1 2 3 . 4))
