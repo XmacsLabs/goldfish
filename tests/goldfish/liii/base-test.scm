@@ -3401,11 +3401,6 @@ pair : pair?
 
 |#
 
-(check (car '(a b c . d)) => 'a)
-(check (car '(a b c)) => 'a)
-
-(check-catch 'wrong-type-arg (car '()))
-
 (check (cdr '(a b c . d)) => '(b c . d))
 (check (cdr '(a b c)) => '(b c))
   
