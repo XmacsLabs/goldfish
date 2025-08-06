@@ -10,7 +10,8 @@ if (eq (count $args) 0) {
 
 # 提取分支名最后一部分，例如 da/201_6/string-any -> string-any
 var branch_name = (path:base $args[0])
-var workspace_dir = /tmp/$branch_name
+var timestamp = (date +%Y%m%d_%H%M%S_%N)
+var workspace_dir = /tmp/$branch_name@$timestamp
 
 # 检查是否有旧的工作空间，先清理
 if (path:is-dir $workspace_dir) {
