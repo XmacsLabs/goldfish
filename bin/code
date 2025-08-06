@@ -11,7 +11,7 @@ if (eq (count $args) 0) {
 # 提取分支名最后一部分，例如 da/201_6/string-any -> string-any
 var branch_name = (path:base $args[0])
 var timestamp = (date +%Y%m%d_%H%M%S_%N)
-var workspace_dir = /tmp/goldfish/$branch_name@$timestamp
+var workspace_dir = /tmp/goldfish/$branch_name/$timestamp
 
 # 确保cd到goldfish项目根目录
 cd /home/da/code/goldfish
