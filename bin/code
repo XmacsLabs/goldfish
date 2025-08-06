@@ -24,7 +24,6 @@ if (not $has_origin) {
     echo "Pulling latest code from main branch..."
     git pull origin main
     echo "Removing temporary origin...\n"
-    git remote remove origin
 } else {
     # 如果origin存在，直接拉取
     echo "Pulling latest code from main branch..."
