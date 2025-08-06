@@ -5848,7 +5848,7 @@ wrong-number-of-args
 (check-false (string=? "测试文本" "测试"))
 
 ;; string=? 空字符串测试
-(check-true (string=? "" "" "") => #t)
+(check-true (string=? "" "" ""))
 (check-true (string=? "a" "a" "a"))
 
 ;; string=? 多参数测试
