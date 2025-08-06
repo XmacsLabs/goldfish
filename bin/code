@@ -16,10 +16,29 @@ var workspace_dir = /tmp/goldfish/$branch_name/$timestamp
 # 确保cd到goldfish项目根目录
 cd /home/da/code/goldfish
 
+# 先拉取最新代码更新分支引用
+echo "Updating branch references..."
+git fetch origin
+
+# 检查分支是否已存在
+var branch_exists = ?(git rev-parse --verify $branch_name)
+
+# 如果分支不存在则创建新分支，否则检出已有分支
+if (not $branch_exists) {
+    echo "Creating new branch: $branch_name"
+    git switch -c $branch_name origin/main
+} else {
+    echo "Branch $branch_name already exists, checking out..."
+    git switch $branch_name
+}
+
+# 推送分支到远程（如果这是新分支或者远程有更新）
+echo "Pushing branch to remote..."
+git push -u origin $branch_name
 
 # 使用git worktree创建新的工作空间
 echo "Creating workspace with git worktree: $workspace_dir"
-git worktree add $workspace_dir main
+git worktree add -b $branch_name $workspace_dir origin/$branch_name
 
 # 切换到工作空间
 cd $workspace_dir
@@ -31,5 +50,5 @@ if (not ?(which ccr)) {
 }
 
 # 启动ccr code
-echo "Starting ccr code in workspace: $workspace_dir"
+echo "Working on branch: $branch_name in workspace: $workspace_dir"
 ccr code
