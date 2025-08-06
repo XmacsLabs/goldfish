@@ -3,6 +3,34 @@
 use path
 use str
 
+# 取当前分支名
+var current-branch = (git rev-parse --abbrev-ref HEAD)
+
+if (not-eq $current-branch main) {
+    echo (styled "Error: You are not on the main branch. Current branch: "$current-branch red)
+    echo (styled "Please switch to main branch first: git checkout main" yellow)
+    exit 1
+}
+
+echo "Already on main branch."
+
+# 检查是否存在origin远程仓库
+var has_origin = ?(git remote get-url origin > /dev/null 2>&1)
+
+# 如果origin不存在，添加origin并拉取，然后移除origin
+if (not $has_origin) {
+    echo "Adding origin git@gitee.com:XmacsLabs/goldfish.git..."
+    git remote add origin git@gitee.com:XmacsLabs/goldfish.git
+    echo "Pulling latest code from main branch..."
+    git pull origin main
+    echo "Removing temporary origin...\n"
+    git remote remove origin
+} else {
+    # 如果origin存在，直接拉取
+    echo "Pulling latest code from main branch..."
+    git pull origin main
+}
+
 if (== (count $args) 0) {
     echo "Usage: bin/code branch_name"
     exit 1
