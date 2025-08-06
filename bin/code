@@ -3,16 +3,21 @@
 use path
 use str
 
-# 取当前分支名
-var current-branch = (git rev-parse --abbrev-ref HEAD)
-
-if (not-eq $current-branch main) {
-    echo (styled "Error: You are not on the main branch. Current branch: "$current-branch red)
-    echo (styled "Please switch to main branch first: git checkout main" yellow)
-    exit 1
+# 只有在有参数的情况下才检查main分支
+if (== (count $args) 0) {
+    echo "No branch argument provided, skipping main branch check..."
+} else {
+    # 取当前分支名
+    var current-branch = (git rev-parse --abbrev-ref HEAD)
+    
+    if (not-eq $current-branch main) {
+        echo (styled "Error: You are not on the main branch. Current branch: "$current-branch red)
+        echo (styled "Please switch to main branch first: git checkout main" yellow)
+        exit 1
+    }
+    
+    echo "Already on main branch."
 }
-
-echo "Already on main branch."
 
 # 检查是否存在origin远程仓库
 var has_origin = ?(git remote get-url origin > /dev/null 2>&1)
