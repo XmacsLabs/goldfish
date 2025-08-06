@@ -3,16 +3,21 @@
 use path
 use str
 
-# 取当前分支名
-var current-branch = (git rev-parse --abbrev-ref HEAD)
-
-if (not-eq $current-branch main) {
-    echo (styled "Error: You are not on the main branch. Current branch: "$current-branch red)
-    echo (styled "Please switch to main branch first: git checkout main" yellow)
-    exit 1
+# 只有在有参数的情况下才检查main分支
+if (== (count $args) 0) {
+    echo "No branch argument provided, skipping main branch check..."
+} else {
+    # 取当前分支名
+    var current-branch = (git rev-parse --abbrev-ref HEAD)
+    
+    if (not-eq $current-branch main) {
+        echo (styled "Error: You are not on the main branch. Current branch: "$current-branch red)
+        echo (styled "Please switch to main branch first: git checkout main" yellow)
+        exit 1
+    }
+    
+    echo "Already on main branch."
 }
-
-echo "Already on main branch."
 
 # 检查是否存在origin远程仓库
 var has_origin = ?(git remote get-url origin > /dev/null 2>&1)
@@ -30,22 +35,30 @@ if (not $has_origin) {
     git pull origin main
 }
 
+# 检查是否有参数
 if (== (count $args) 0) {
-    echo "Usage: bin/code branch_name"
-    exit 1
+    # 没有参数，直接进入 ccr code 而不使用 worktree
+    echo "No branch argument provided, using current directory..."
+} else {
+    # 有参数，使用 worktree 创建新工作空间
+    var branch_name = (path:base $args[0])
+    var timestamp = (date +%Y%m%d_%H%M%S_%N)
+    var workspace_dir = /tmp/goldfish/$branch_name/$timestamp
+    
+    # 使用git worktree创建新的工作空间
+    echo "Creating workspace with git worktree: $workspace_dir"
+    git worktree add -b $branch_name $workspace_dir
+    
+    # 切换到工作空间
+    cd $workspace_dir
 }
 
-# 提取分支名最后一部分，例如 da/201_6/string-any -> string-any
-var branch_name = (path:base $args[0])
-var timestamp = (date +%Y%m%d_%H%M%S_%N)
-var workspace_dir = /tmp/goldfish/$branch_name/$timestamp
-
-# 使用git worktree创建新的工作空间
-echo "Creating workspace with git worktree: $workspace_dir"
-git worktree add -b $branch_name $workspace_dir
-
-# 切换到工作空间
-cd $workspace_dir
+claude config add allowedTools "Bash(git:*)"
+claude config add allowedTools "Edit"
+claude config add allowedTools "Bash(xmake:*)"
+claude config add allowedTools "Bash(./bin/goldfish:*)"
+claude config add allowedTools "Bash(bin/goldfish:*)"
+claude config add allowedTools "Bash(grep:*)"
 
 # 检查ccr命令是否存在
 if (not ?(which ccr)) {
@@ -54,5 +67,5 @@ if (not ?(which ccr)) {
 }
 
 # 启动ccr code
-echo "Working on branch: $branch_name in workspace: $workspace_dir"
+echo "Starting ccr code..."
 ccr code
