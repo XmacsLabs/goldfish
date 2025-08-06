@@ -366,13 +366,105 @@ proper list是指一个符合R7RS规范的传统列表结构，满足以下条�
   (set-cdr! (last-pair lst) lst)
   (check-false (proper-list? lst))) ; 手动创建循环列表
 
+#|
+dotted-list?
+判断一个对象是否为dotted list。
+
+语法
+----
+(dotted-list? obj)
+
+参数
+----
+obj : any
+任意对象
+
+返回值
+----
+boolean?
+如果obj是dotted list返回#t，否则返回#f。
+
+说明
+----
+dotted list是指不符合proper list规范但也不是循环列表的列表结构，主要特征包括：
+1. 以非空列表结尾的cons结构，如 (a . b) 或 (a b . c)
+2. 最终cdr部分不是空列表的列表
+3. 单个非pair/非null对象也被视为dotted list
+4. 空列表和proper list不是dotted list
+
+使用场景
+--------
+该函数用于区分proper list与其他非列表结构，特别是在处理列表输入验证时非常有用。
+
+注意
+----
+- 循环列表不被视为dotted list
+- 该函数是proper-list?的补集（对于非循环列表而言）
+- 可以用于检测输入是否应该被当作列表处理
+
+错误处理
+--------
+无特殊错误处理，任何类型的对象都能接受。
+|#
+
+; 基本功能测试
 (check-true (dotted-list? 1))
 (check-true (dotted-list? '(1 . 2)))
 (check-true (dotted-list? '(1 2 . 3)))
 
+; 非dotted list测试
 (check-false (dotted-list? (circular-list 1 2 3)))
 (check-false (dotted-list? '()))
 (check-false (dotted-list? '(a)))
+(check-false (dotted-list? '(a b)))
+(check-false (dotted-list? '(a b (c d))))
+
+; 各种dotted list测试
+(check-true (dotted-list? 'a))
+(check-true (dotted-list? 'symbol))
+(check-true (dotted-list? "string"))
+(check-true (dotted-list? 42))
+(check-true (dotted-list? '(a . b)))
+(check-true (dotted-list? '(a b . c)))
+(check-true (dotted-list? '(a b c . d)))
+(check-true (dotted-list? '(a b c d . e)))
+(check-true (dotted-list? '(() . a)))
+(check-true (dotted-list? '(a () . b)))
+(check-true (dotted-list? '(a b () . c)))
+
+; 嵌套dotted list测试
+(check-true (dotted-list? '((a . b) c . d)))
+(check-true (dotted-list? '(a (b . c) . d)))
+(check-true (dotted-list? '(a . (b . c))))
+
+; 边界条件测试
+(check-false (dotted-list? '(())))
+(check-false (dotted-list? '(a ())))
+(check-false (dotted-list? '(() a b)))
+(check-true (dotted-list? '(a () . b)))
+
+; 复杂结构测试
+(check-true (dotted-list? '(a b c . d)))
+(check-false (dotted-list? '(a b (c . d)))) ; 嵌套的dotted list但整体是proper
+
+; 与proper-list?的互补性测试
+(check-false (dotted-list? '()))
+(check-false (dotted-list? '(a)))
+(check-false (dotted-list? '(a b)))
+(check-false (dotted-list? '(a b c)))
+(check-true (dotted-list? '(a . b)))
+(check-true (dotted-list? '(a b . c)))
+(check-true (dotted-list? 'a))
+
+; 循环列表测试（应返回#f）
+(let ((lst (list 1 2 3)))
+  (set-cdr! (last-pair lst) lst)
+  (check-false (dotted-list? lst))) ; 手动创建循环列表
+
+; 深层嵌套测试
+(check-true (dotted-list? '(a (b . c) . d)))
+(check-false (dotted-list? '((a b) (c d))))
+(check-true (dotted-list? '((a b) . c)))
 
 (check (null-list? '()) => #t)
 
@@ -820,4 +912,3 @@ wrong-type-arg 如果 clist 不是列表类型。
 (check-catch 'type-error (flatten '((a) () (b ()) () (c)) (make-vector 1 1)))
 
 (check-report)
-
