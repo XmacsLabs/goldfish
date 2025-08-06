@@ -134,11 +134,75 @@ type-error 当str不是字符串类型时
 (check-catch 'type-error (string-null? #\a))
 (check-catch 'type-error (string-null? (list "a")))
 
+#|
+string-every
+检查字符串中的每个字符是否都满足给定的条件。
+
+语法
+----
+(string-every char/pred? str)
+(string-every char/pred? str start)
+(string-every char/pred? str start end)
+
+参数
+----
+char/pred? : char 或 procedure?
+- 字符(char)：检查字符串中的每个字符是否等于该字符
+- 谓词(procedure)：接受单个字符作为参数，返回布尔值
+
+str : string?
+要检查的字符串
+
+start : integer? 可选
+检查的起始位置(包含)，默认为0
+
+end : integer? 可选
+检查的结束位置(不包含)，默认为字符串长度
+
+返回值
+----
+boolean
+如果字符串中的每个字符都满足条件则返回#t，否则返回#f。
+对于空字符串或空范围(如start=end)始终返回#t。
+
+注意
+----
+string-every支持多种类型的参数作为char/pred?，包括字符和谓词函数。
+当使用start/end参数时，检查对应子字符串的范围。
+空字符串或空范围会返回#t，因为没有任何字符违反条件。
+
+示例
+----
+(string-every #\x "xxxxxx") => #t
+(string-every #\x "xxx0xx") => #f
+(string-every char-numeric? "012345") => #t
+(string-every char-numeric? "012d45") => #f
+(string-every char-alphabetic? "abc") => #t
+(string-every char-alphabetic? "abc123") => #f
+
+错误处理
+----
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+wrong-type-arg 当str不是字符串时
+|#
+
 (check-true (string-every #\x "xxxxxx"))
 (check-false (string-every #\x "xxx0xx"))
 
 (check-true (string-every char-numeric? "012345"))
 (check-false (string-every char-numeric? "012d45"))
+
+(check-true (string-every char-alphabetic? "abc"))
+(check-false (string-every char-alphabetic? "abc123"))
+(check-true (string-every char-upper-case? "ABC"))
+(check-false (string-every char-upper-case? "AbC"))
+
+(check-true (string-every char-whitespace? "   "))
+(check-false (string-every char-whitespace? "  a "))
+
+(check-true (string-every #\a ""))
+(check-true (string-every char-numeric? ""))
 
 (check-catch 'wrong-type-arg (string-every 1 "012345"))
 (check-catch 'wrong-type-arg (string-every #\012345 "012345"))
@@ -155,6 +219,11 @@ type-error 当str不是字符串类型时
 (check-false (string-every char-numeric? "ab234f" 1 4))
 (check-true (string-every char-numeric? "ab234f" 2 5))
 (check-false (string-every char-numeric? "ab234f" 2 6))
+
+(check-true (string-every #\a "aabbcc" 0 1))
+(check-false (string-every #\a "aabbcc" 1 3))
+(check-true (string-every char-lower-case? "abcABC" 0 3))
+(check-false (string-every char-lower-case? "abcABC" 3 6))
 
 (check-catch 'out-of-range (string-every char-numeric? "ab234f" 2 7))
 (check-catch 'out-of-range (string-every char-numeric? "ab234f" 2 1))
