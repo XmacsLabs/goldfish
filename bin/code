@@ -1,0 +1,36 @@
+#!/usr/bin/env elvish
+
+use path
+use str
+
+if (eq (count $args) 0) {
+    echo "Usage: $0 branch_name"
+    exit 1
+}
+
+# 提取分支名最后一部分，例如 da/201_6/string-any -> string-any
+var branch_name = (path:base $args[0])
+var workspace_dir = /tmp/$branch_name
+
+# 检查是否有旧的工作空间，先清理
+if (path:is-dir $workspace_dir) {
+    echo "Removing old workspace: $workspace_dir"
+    rm -rf $workspace_dir
+}
+
+# 创建新的工作空间目录
+echo "Creating workspace: $workspace_dir"
+mkdir -p $workspace_dir
+
+# 切换到工作空间
+cd $workspace_dir
+
+# 检查ccr命令是否存在
+if (not ?(which ccr)) {
+    echo "Error: ccr command not found. Please install ccr."
+    exit 1
+}
+
+# 启动ccr code
+echo "Starting ccr code in workspace: $workspace_dir"
+ccr code
