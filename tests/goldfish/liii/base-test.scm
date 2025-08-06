@@ -3401,14 +3401,36 @@ pair : pair?
 
 |#
 
-(check (car '(a b c . d)) => 'a)
-(check (car '(a b c)) => 'a)
+#|
+cdr
+一个序对由两部分组成：
+car （第一个元素）
+cdr （第二个元素）
+结构表示为： (car . cdr)
+cdr 是 Scheme 内置函数，用于获取序对的第二个元素。
 
-(check-catch 'wrong-type-arg (car '()))
+语法
+----
+(cdr pair)
+
+参数
+----
+pair : pair?
+必须是一个序对（非空列表或显式点对）。
+
+返回值
+-----
+序对的 cdr 部分（即第二个元素）。
+
+错误
+----
+如果参数不是序对（如空列表 '() ），抛出 wrong-type-arg 错误。
+
+|#
 
 (check (cdr '(a b c . d)) => '(b c . d))
 (check (cdr '(a b c)) => '(b c))
-  
+
 (check-catch 'wrong-type-arg (cdr '()))
 
 (check (caar '((a . b) . c)) => 'a)
