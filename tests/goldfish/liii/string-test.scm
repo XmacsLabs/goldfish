@@ -228,21 +228,130 @@ wrong-type-arg 当str不是字符串时
 (check-catch 'out-of-range (string-every char-numeric? "ab234f" 2 7))
 (check-catch 'out-of-range (string-every char-numeric? "ab234f" 2 1))
 
+#|
+string-any
+检查字符串中的任意字符是否满足给定的条件。
+
+语法
+----
+(string-any char/pred? str)
+(string-any char/pred? str start)
+(string-any char/pred? str start end)
+
+参数
+----
+char/pred? : char 或 procedure?
+- 字符(char)：检查字符串中是否存在与该字符相等的字符
+- 谓词(procedure)：接受单个字符作为参数，返回布尔值
+
+str : string?
+要检查的字符串
+
+start : integer? 可选
+检查的起始位置(包含)，默认为0
+
+end : integer? 可选
+检查的结束位置(不包含)，默认为字符串长度
+
+返回值
+----
+boolean
+- 如果字符串中至少有一个字符满足条件则返回#t，否则返回#f
+- 对于空字符串或空范围始终返回#f
+
+注意
+----
+string-any是string-every的对偶函数。与检查每个字符是否满足条件的string-every不同，string-any只需要找到至少一个满足条件的字符即可返回真值。
+该函数也支持start和end参数来限定检查范围。
+空字符串或空范围会返回#f，因为没有任何字符满足条件。
+
+示例
+----
+(string-any char-numeric? "abc123") => #t
+(string-any char-numeric? "hello") => #f
+(string-any char-alphabetic? "12345a") => #t
+(string-any char-alphabetic? "12345") => #f
+(string-any char-upper-case? "abC12") => #t
+(string-any char-whitespace? "hello") => #f
+(string-any #\a "zebra") => #\a
+(string-any #\z "apple") => #f
+
+错误处理
+----
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+wrong-type-arg 当str不是字符串时
+|#
+
+; Basic functionality tests for character parameter
+(check-true (string-any #\a "abcde"))
+(check-false (string-any #\z "abcde"))
+(check-false (string-any #\a "xyz"))
+(check-true (string-any #\x "abcxdef"))
+
+; Basic functionality tests for predicate parameter
+(check-true (string-any char-numeric? "abc123"))
+(check-false (string-any char-numeric? "hello"))
+(check-true (string-any char-alphabetic? "12345a"))
+(check-false (string-any char-alphabetic? "12345"))
+(check-true (string-any char-upper-case? "hello World"))
+(check-false (string-any char-upper-case? "hello world"))
+
+; Empty string handling
+(check-false (string-any #\a ""))
+(check-false (string-any char-numeric? ""))
+
+; Single character strings
+(check-true (string-any #\a "a"))
+(check-false (string-any #\b "a"))
+(check-true (string-any char-numeric? "1"))
+(check-false (string-any char-numeric? "a"))
+
+; Whitespace and special characters
+(check-true (string-any char-whitespace? "hello world"))
+(check-false (string-any char-whitespace? "hello"))
+(check-true (string-any (lambda (c) (char=? c #\h)) "hello"))
+(check-true (string-any (lambda (c) (char=? c #\!)) "hello!"))
+
+; Complex character tests
+(check-true (string-any char-alphabetic? "HELLO"))
+(check-true (string-any char-numeric? "123abc"))
+
+; Original legacy tests
 (check-true (string-any #\0 "xxx0xx"))
 (check-false (string-any #\0 "xxxxxx"))
 (check-true (string-any char-numeric? "xxx0xx"))
 (check-false (string-any char-numeric? "xxxxxx"))
 
-(check-catch 'wrong-type-arg (string-every 0 "xxx0xx"))
-(check-catch 'wrong-type-arg (string-any (lambda (n) (= n 0)) "xxx0xx"))
-(check-catch 'wrong-type-arg (string-every "0" "xxx0xx"))
-
+; Start/end parameter tests
 (check-true (string-any char-alphabetic? "01c345" 2))
 (check-false (string-any char-alphabetic? "01c345" 3))
 (check-true (string-any char-alphabetic? "01c345" 2 4))
 (check-false (string-any char-alphabetic? "01c345" 2 2))
 (check-false (string-any char-alphabetic? "01c345" 3 4))
 (check-true (string-any char-alphabetic? "01c345" 2 6))
+
+; Additional comprehensive tests for start/end parameters
+(check-true (string-any #\a "012a34" 0))
+(check-false (string-any #\a "012345" 0 2))
+(check-true (string-any #\0 "012345" 0 1))
+(check-false (string-any #\a "bbbccc" 1 3))
+(check-true (string-any char-alphabetic? "1a23bc" 1 4))
+(check-false (string-any char-alphabetic? "123456" 0 3))
+
+; Edge cases
+(check-true (string-any char-alphabetic? "abc" 0 3))
+(check-false (string-any char-alphabetic? "123" 0 3))
+(check-true (string-any #\a "aab" 1 2))
+(check-false (string-any #\a "bbc" 1 2))
+(check-true (string-any char-alphabetic? "a" 0 1))
+(check-false (string-any char-alphabetic? "" 0 0))
+
+; Custom predicate tests
+(check-true (string-any (lambda (c) (char=? c #\x)) "hello x there"))
+(check-false (string-any (lambda (c) (char=? c #\z)) "hello w there"))
+(check-true (string-any char-alphabetic? "HELLO"))
+(check-true (string-any char-alphabetic? "123a"))
 
 (check
   (catch 'out-of-range
@@ -267,6 +376,22 @@ wrong-type-arg 当str不是字符串时
     (lambda args #t))
   =>
   #t)
+
+; Error handling tests for string-any
+(check-catch 'wrong-type-arg (string-any 123 "hello"))
+(check-catch 'wrong-type-arg (string-any "a" "hello"))
+(check-catch 'wrong-type-arg (string-any '(a b) "hello"))
+(check-catch 'wrong-type-arg (string-any (lambda (n) (= n 0)) "hello"))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? 123))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? "hello" "0"))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? "hello" 1.5))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? "hello" 'a))
+
+; Out of range tests
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" -1))
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" 0 6))
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" 5 1))
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" 10))
 
 (define original-string "MathAgape")
 (define copied-string (string-copy original-string))
