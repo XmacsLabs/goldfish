@@ -3,8 +3,8 @@
 use path
 use str
 
-if (eq (count $args) 0) {
-    echo "Usage: $0 branch_name"
+if (== (count $args) 0) {
+    echo "Usage: bin/code branch_name"
     exit 1
 }
 
