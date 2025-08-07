@@ -35,6 +35,7 @@
     ; Liii extras
     string-starts? string-ends?
     string-remove-prefix string-remove-suffix
+    string-prefix string-suffix
     )
   (import (srfi srfi-13)
           (liii base)
@@ -63,6 +64,26 @@
             (substring str 0 (- (string-length str) (string-length suffix)))
             (string-copy str))))
 
+        (define (string-prefix str len)
+      (if (and (string? str) (integer? len))
+          (let ((str-len (string-length str)))
+            (if (< len 0)
+                (error 'out-of-range "Negative length")
+                (if (< str-len len)
+                    (error 'out-of-range "Length exceeds string size")
+                    (substring str 0 len))))
+          (type-error "string-prefix parameters are not valid")))
+
+    (define (string-suffix str len)
+      (if (and (string? str) (integer? len))
+          (let ((str-len (string-length str)))
+            (if (< len 0)
+                (error 'string-suffix "index cannot be negative" len)
+                (if (< str-len len)
+                    (error 'string-suffix "index out of bounds" len)
+                    (substring str (- str-len len) str-len))))
+          (type-error "string-suffix parameters are not valid")))
+
     ) ; end of begin
-  ) ; end of define-library
+    ) ; end of define-library
 

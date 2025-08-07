@@ -2126,5 +2126,76 @@ out-of-range 当start > end时
 (check-catch 'wrong-type-arg (string-copy "hello" 1.5))
 (check-catch 'wrong-type-arg (string-copy "hello" 1 4.5))
 
+#|
+string-prefix
+从字符串开头提取指定长度的前缀。
+
+语法
+----
+(string-prefix str len)
+
+参数
+----
+str : string?
+要从中提取前缀的源字符串。
+
+len : integer?
+要提取的前缀长度（字符数）。
+
+返回值
+----
+string : 包含前len个字符的新字符串。
+
+注意
+----
+如果len为0，返回空字符串。
+如果len等于字符串长度，返回原字符串的完整拷贝。
+如果len大于字符串长度，将抛出错误。
+
+错误处理
+----
+当len超出字符串长度或len为负数时抛出错误。
+当参数类型不匹配时抛出wrong-type-arg错误。
+|#
+
+; 基本功能测试 - string-prefix
+(check-true (equal? (string-prefix "hello" 0) ""))
+(check-true (equal? (string-prefix "hello" 1) "h"))
+(check-true (equal? (string-prefix "hello" 2) "he"))
+(check-true (equal? (string-prefix "hello" 3) "hel"))
+(check-true (equal? (string-prefix "hello" 4) "hell"))
+(check-true (equal? (string-prefix "hello" 5) "hello"))
+(check-true (equal? (string-prefix "test123" 4) "test"))
+(check-true (equal? (string-prefix "123456789" 0) ""))
+(check-true (equal? (string-prefix "abc" 0) ""))
+
+; ASCII字符串测试
+(check-true (equal? (string-prefix "hello" 4) "hell"))
+(check-true (equal? (string-prefix "world" 2) "wo"))
+
+; 单字符字符串测试
+(check-true (equal? (string-prefix "a" 1) "a"))
+(check-true (equal? (string-prefix "x" 1) "x"))
+
+; 边界情况测试
+(check-true (equal? (string-prefix "" 0) ""))
+(check-true (equal? (string-prefix "abcde" 5) "abcde"))
+
+; 大字符串测试
+(check-true (equal? (string-prefix "abcdefghijklmnopqrstuvwxyz" 5) "abcde"))
+
+; 错误处理测试
+(check-catch 'out-of-range (string-prefix "hello" 6))
+(check-catch 'out-of-range (string-prefix "hello" 10))
+(check-catch 'out-of-range (string-prefix "" 1))
+(check-catch 'out-of-range (string-prefix "abc" 4))
+(check-catch 'out-of-range (string-prefix "hello" -1))
+
+; 类型错误测试
+(check-catch 'wrong-type-arg (string-prefix 123 5))
+(check-catch 'wrong-type-arg (string-prefix "hello" "5"))
+(check-catch 'wrong-type-arg (string-prefix "hello" 3.5))
+(check-catch 'wrong-type-arg (string-prefix 'hello 2))
+
 (check-report)
 

@@ -1,0 +1,8 @@
+
+;type-error ("string-prefix parameters are not valid")
+;    'wrong-type-arg
+;    tests/goldfish/liii/string-test.scm, line 2195, position: 73624
+type-error: 'wrong-type-arg
+check:proc: ((if (equal actual-result exp... ; expected-result: wrong-type-arg
+                                              ; expression: (catch 'wrong-type-arg (lambda ...
+
