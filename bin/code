@@ -59,6 +59,8 @@ claude config add allowedTools "Bash(xmake:*)"
 claude config add allowedTools "Bash(./bin/goldfish:*)"
 claude config add allowedTools "Bash(bin/goldfish:*)"
 claude config add allowedTools "Bash(grep:*)"
+claude config add allowedTools "Bash(find:*)"
+claude config add allowedTools "Bash(echo:*)"
 
 # 检查ccr命令是否存在
 if (not ?(which ccr)) {
