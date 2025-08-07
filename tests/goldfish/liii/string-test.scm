@@ -1391,7 +1391,7 @@ out-of-range 当start/end超出字符串索引范围时
 (check (string-count "xyz" (lambda (x) (char=? x #\x))) => 1)
 
 ;; 错误处理测试
-(check-catch 'wrong-type-arg (string-count 123 #\a))
+(check-catch 'type-error (string-count 123 #\a))
 (check-catch 'wrong-type-arg (string-count "hello" 123))
 (check-catch 'wrong-type-arg (string-count "hello" "a"))
 (check-catch 'wrong-type-arg (string-count "hello" '(a b c)))
