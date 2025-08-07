@@ -3585,7 +3585,6 @@ wrong-number-of-args
   (set-car! complex-pair 'simplified)
   (check complex-pair => '(simplified . remaining-cdr)))
 
-<<<<<<< HEAD
 #|
 set-cdr!
 替换序对（pair）的第二个元素（cdr部分）为新值，该操作会直接修改原始序对对象。
@@ -3720,7 +3719,6 @@ wrong-number-of-args
   (set-cdr! complex-pair 'simple-tail)
   (check complex-pair => '((head-structure) . simple-tail)))
 
-=======
 (check (caar '((a . b) . c)) => 'a)
 
 #|
