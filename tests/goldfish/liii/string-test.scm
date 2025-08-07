@@ -1275,24 +1275,121 @@ out-of-range 当start/end超出字符串索引范围时
 
 (check-catch 'out-of-range (string-downcase "ABC" 0 4))
 
+#|
+string-reverse
+反转字符串中的字符顺序，支持可选的开始和结束位置参数。
+
+语法
+----
+(string-reverse str)
+(string-reverse str start)
+(string-reverse str start end)
+
+参数
+----
+str : string?
+要反转的源字符串。
+
+start : integer? 可选
+反转开始的起始位置索引(包含)，默认为0。
+
+end : integer? 可选
+反转结束的结束位置索引(不包含)，默认为字符串长度。
+
+返回值
+----
+string
+一个新的字符串，其中指定范围内的字符顺序被反转。
+- 如果没有提供start和end参数，则整个字符串被反转
+- 如果范围被指定，则只有该范围内的字符被反转
+
+注意
+----
+string-reverse返回新的字符串对象，不会改变原始字符串。
+该函数支持SRFI-13标准的语法，提供了完整的边界检查。
+对于空字符串始终返回空字符串。
+start和end参数必须符合以下要求：
+- 0 <= start <= end <= (string-length str)
+- 当end < start时应该触发错误处理机制
+
+示例
+----
+(string-reverse "hello") => "olleh"
+(string-reverse "abc123") => "321cba"
+(string-reverse "") => ""
+(string-reverse "a") => "a"
+(string-reverse "hello" 1) => "h" + "olle" 实际效果的"holle"
+(string-reverse "hello" 1 4) => "h" + "lle" + "o" 实际效果的"hlleo"
+(string-reverse "01234" 1 3) => "0" + "21" + "34" 实际效果的"02134"
+
+错误处理
+----
+wrong-type-arg 当str不是字符串类型时
+out-of-range 当start或end超出字符串索引范围时
+out-of-range 当start > end时
+wrong-type-arg 当start或end不是整数类型时
+|#
+
+; 基本功能测试
 (check (string-reverse "01234") => "43210")
+(check (string-reverse "hello") => "olleh")
+(check (string-reverse "abc123") => "321cba")
+(check (string-reverse "a") => "a")
+(check (string-reverse "") => "")
 
-(check-catch 'out-of-range (string-reverse "01234" -1))
+; 单字符和多字节字符测试
+(check (string-reverse "中文") => "文中")
+(check (string-reverse "🌟🎉") => "🎉🌟")
+(check (string-reverse "Test123!@#") => "#@!321tseT")
 
+; 边界情况测试
 (check (string-reverse "01234" 0) => "43210")
 (check (string-reverse "01234" 1) => "04321")
+(check (string-reverse "01234" 4) => "4321")
 (check (string-reverse "01234" 5) => "01234")
-
-(check-catch 'out-of-range (string-reverse "01234" 6))
-
-(check (string-reverse "01234" 0 2) => "10234")
-(check (string-reverse "01234" 1 3) => "02134")
-(check (string-reverse "01234" 1 5) => "04321")
 (check (string-reverse "01234" 0 5) => "43210")
+(check (string-reverse "01234" 0 1) => "01234")
+(check (string-reverse "01234" 4 5) => "01234")
+(check (string-reverse "01234" 0 0) => "01234")
+(check (string-reverse "01234" 3 3) => "01234")
 
-(check-catch 'out-of-range (string-reverse "01234" 1 6))
+; 范围内的字符串反转测试
+(check (string-reverse "01234" 1 3) => "02134")
+(check (string-reverse "01234" 1 4) => "04321")
+(check (string-reverse "01234" 2 4) => "01432")
+(check (string-reverse "01234" 0 4) => "43210")
 
-(check-catch 'out-of-range (string-reverse "01234" -1 3))
+; 空字符串和特殊字符测试
+(check (string-reverse "" 0) => "")
+(check (string-reverse "" 0 0) => "")
+(check (string-reverse "!@#$%^&*()" 2 7) => "!@^%$#*()")
+(check (string-reverse "测试用例123abc" 6 12) => "测试cba3216例")
+
+; 长字符串测试
+(check (string-reverse "The quick brown fox jumps over the lazy dog") => "god yzal eht revo spmuj xof nworb kciuq ehT")
+
+; 错误处理测试
+(check-catch 'wrong-type-arg (string-reverse 123))
+(check-catch 'wrong-type-arg (string-reverse 'hello))
+(check-catch 'wrong-type-arg (string-reverse "hello" #\a))
+(check-catch 'wrong-type-arg (string-reverse "hello" "a"))
+(check-catch 'wrong-type-arg (string-reverse "hello" 1.5))
+(check-catch 'wrong-type-arg (string-reverse "hello" 1 2.5))
+(check-catch 'wrong-type-arg (string-reverse "hello" 1 'a))
+
+(check-catch 'out-of-range (string-reverse "hello" -1))
+(check-catch 'out-of-range (string-reverse "hello" 6))
+(check-catch 'out-of-range (string-reverse "hello" -1 3))
+(check-catch 'out-of-range (string-reverse "hello" 2 6))
+(check-catch 'out-of-range (string-reverse "hello" 3 2))
+(check-catch 'out-of-range (string-reverse "" 1))
+(check-catch 'out-of-range (string-reverse "hello" 0 6))
+
+; 重叠和极端范围测试
+(check-catch 'out-of-range (string-reverse "12345" -1 3))
+(check-catch 'out-of-range (string-reverse "12345" 5 6))
+(check-catch 'out-of-range (string-reverse "12345" 3 1))
+(check-catch 'out-of-range (string-reverse "12345" 6 6))
 
 (check
   (string-map
