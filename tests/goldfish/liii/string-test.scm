@@ -1514,14 +1514,6 @@ string
 string-reverse会将字符串中的字符顺序完全颠倒过来。
 当指定start和end参数时，仅反转指定范围内的字符，范围外的字符保持不变。
 
-对于多字节Unicode字符（如中文、emoji），操作基于**字节位置**而非字符位置：
-- 中文字符：UTF-8中每个字符通常占用3字节
-- emoji字符：UTF-8中每个字符通常占用4字节
-- 因此参数start和end应该以字节位置计算，而不是字符位置
-
-对于中文字符串，实际字节长度为重多字符数量的3倍；
-对于emoji字符串，实际字节长度为重多字符数量的4倍。
-
 错误处理
 ----
 out-of-range 当start/end超出字符串索引范围时
@@ -1601,7 +1593,6 @@ wrong-type-arg 当str不是字符串类型时
 (check (string-reverse "programming" 0 11) => "gnimmargorp")
 
 ; UTF-8 multi-byte character support
-; 中文字符在UTF-8中占用3-4字节，操作基于字节位置计算
 
 ; Error handling tests
 (check-catch 'out-of-range (string-reverse "01234" -1))
