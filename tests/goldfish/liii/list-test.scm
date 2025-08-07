@@ -152,52 +152,319 @@ wrong-number-of-args 如果没有提供任何参数
 
 (check-catch 'wrong-number-of-args (cons*))
 
+#|
+iota
+生成一个等差数列列表。
+
+语法
+----
+(iota count)
+(iota count start)
+(iota count start step)
+
+参数
+----
+count : exact-nonnegative-integer?
+需要生成的元素个数，必须是非负整数。
+start : integer?
+数列的起始值，默认为0。
+step : integer?
+数列的步长，默认为1。
+
+返回值
+----
+list?
+返回一个由连续整数组成的列表。
+
+说明
+----
+iota函数按照SRFI-1规范实现，用于生成等差数列。
+- 当只提供一个参数count时，生成从0开始的连续整数序列。
+- 当提供count和start参数时，生成从start开始的连续整数序列。
+- 当提供count、start和step参数时，生成从start开始，步长为step的整数序列。
+
+错误处理
+----
+value-error 当count为负数时抛出。
+type-error 当任何参数不是整数时抛出。
+|#
+
+; Basic iota tests
 (check (iota 3) => (list 0 1 2))
 (check (iota 3 7) => (list 7 8 9))
 (check (iota 2 7 2) => (list 7 9))
 
+; Additional iota edge case tests
+(check (iota 0) => '())
+(check (iota 1) => '(0))
+(check (iota 1 5) => '(5))
+(check (iota 1 5 2) => '(5))
+
+; Large count tests
+(check (iota 5) => (list 0 1 2 3 4))
+(check (iota 5 1 2) => (list 1 3 5 7 9))
+(check (iota 3 0 -1) => (list 0 -1 -2))
+(check (iota 4 10 -2) => (list 10 8 6 4))
+
+; Zero step (edge case)
+(check (iota 3 7 0) => (list 7 7 7))
+
+; Negative start tests
+(check (iota 3 -5) => (list -5 -4 -3))
+(check (iota 4 -10 2) => (list -10 -8 -6 -4))
+
+; Error handling tests
 (check-catch 'value-error (iota -1))
+(check-catch 'value-error (iota -5))
 (check-catch 'type-error (iota 'a))
+(check-catch 'type-error (iota 3 'a))
+(check-catch 'type-error (iota 3 5 'a))
+(check-catch 'type-error (iota 3.5))
+(check-catch 'type-error (iota 3 5.5))
+(check-catch 'type-error (iota 3 2 0.5))
+
+#|
+list-copy
+
+创建一个新列表，它是输入列表的浅拷贝。
+
+语法
+----
+(list-copy list)
+
+参数
+----
+list - 要复制的列表
+
+返回值
+------
+返回一个新的列表，具有与输入列表相同的元素，但这是一个不同的对象。
+
+描述
+----
+list-copy 函数创建输入列表的一个浅拷贝。新列表的顶层节点是新的，
+但列表中的元素本身不会被复制（浅拷贝）。这使得修改原始列表不会影响拷贝的列表，
+但需要注意嵌套列表的深层结构不会被复制。
+
+该函数在 (srfi srfi-1) 模块中实现，并由 (liii list) 重新导出。
+
+示例
+----
+; 基本列表复制
+(list-copy '(1 2 3))      => (1 2 3)
+(list-copy '())           => ()
+
+边界条件
+--------
+- 空列表参数返回空列表
+- 非列表参数会触发类型错误异常
+- 嵌套列表的子列表为同一引用（浅拷贝特性）
+
+时间和空间复杂度
+----------------
+- 时间复杂度：O(n)，其中 n 是列表长度
+- 空间复杂度：O(n)，需要创建新的列表节点
+
+|#
 
 ;; list-copy tests
 
-;; Check that copying an empty list works as expected
+;; 基本功能测试
 (check (list-copy '()) => '())
-
-;; Check that copying a list of numbers works correctly
 (check (list-copy '(1 2 3 4 5)) => '(1 2 3 4 5))
-
-;; Check that copying a list of symbols works correctly
 (check (list-copy '(a b c d)) => '(a b c d))
-
-;; Check that copying nested lists works correctly
 (check (list-copy '((1 2) (3 4) (5 6))) => '((1 2) (3 4) (5 6)))
 
-;; Check that copying the list does not result in the same object
+;; 空列表边界条件
+(check (list-copy '()) => '())
+
+;; 对象独立性验证 - 确保是浅拷贝
 (check-false (eq? (list-copy '(1 2 3)) '(1 2 3)))
 
-;; Check if list-copy is a deep copy or not 
-(let ((obj1 '(1 2 3 4))
-      (obj2 (list-copy '(1 2 3 4))))
-  (check obj1 => obj2)
-  (set-car! obj1 3)
-  (check-false (eq? obj1 obj2)))
+;; 突变隔离测试 - 验证列表节点独立性
+(let ((orig '(a b c))
+      (copy (list-copy '(a b c))))
+  (check orig => copy)
+  (check-false (eq? orig copy))
+  ;; 验证浅拷贝特性
+  (let ((mut-copy (list-copy orig)))
+    (set-car! mut-copy 'x)
+    (check orig => '(a b c))      ; 原始列表不受影响
+    (check mut-copy => '(x b c)))) ; 拷贝列表已改变
 
+#|
+proper-list?
+判断一个对象是否为proper list。
+
+语法
+----
+(proper-list? obj)
+
+参数
+----
+obj : any
+任意对象
+
+返回值
+----
+boolean?
+如果obj是proper list返回#t，否则返回#f。
+
+说明
+----
+proper list是指一个符合R7RS规范的传统列表结构，满足以下条件：
+1. 空列表'()是proper list
+2. 通过cons操作递归构建的以空列表结尾的列表是proper list
+3. 不包含循环引用的列表
+
+非proper list的情况包括：
+- 点对 (a . b)
+- dotted list (a b . c)
+- 循环列表
+- 非pair和null的对象
+
+使用场景
+--------
+该函数常用于类型检查，确保输入参数符合列表操作的要求，避免在列表操作函数中发生类型错误。
+
+
+错误处理
+--------
+无特殊错误处理，任何类型的对象都能接受。
+|#
+
+; 基本功能测试
 (check-true (proper-list? (list 1 2)))
 (check-true (proper-list? '()))
 (check-true (proper-list? '(1 2 3)))
 
+; 非proper list测试
 (check-false (proper-list? '(a . b)))
 (check-false (proper-list? '(a b . c)))
 (check-false (proper-list? (circular-list 1 2 3)))
 
+; 边界条件测试
+(check-true (proper-list? '(() ()) )) ; 嵌套列表
+(check-true (proper-list? '(a))) ; 单元素列表
+(check-false (proper-list? 1)) ; 非列表对象
+(check-false (proper-list? 'hello)) ; 符号
+(check-false (proper-list? "hello")) ; 字符串
+
+; 复杂结构测试
+(check-false (proper-list? '(a b . c))) ; dotted list
+(check-true (proper-list? '(a b (c d)))) ; 嵌套proper list
+(check-true (proper-list? '(() a b))) ; 前导空列表
+(check-true (proper-list? '(a b ()))) ; 尾随空列表元素
+
+; 点和dotted list测试
+(check-false (proper-list? '(a . b)))
+(check-false (proper-list? '(a b . c)))
+(check-false (proper-list? '(a b c . d)))
+
+; 循环列表测试
+(let ((lst (list 1 2 3)))
+  (set-cdr! (last-pair lst) lst)
+  (check-false (proper-list? lst))) ; 手动创建循环列表
+
+#|
+dotted-list?
+判断一个对象是否为dotted list。
+
+语法
+----
+(dotted-list? obj)
+
+参数
+----
+obj : any
+任意对象
+
+返回值
+----
+boolean?
+如果obj是dotted list返回#t，否则返回#f。
+
+说明
+----
+dotted list是指不符合proper list规范但也不是循环列表的列表结构，主要特征包括：
+1. 以非空列表结尾的cons结构，如 (a . b) 或 (a b . c)
+2. 最终cdr部分不是空列表的列表
+3. 单个非pair/非null对象也被视为dotted list
+4. 空列表和proper list不是dotted list
+
+使用场景
+--------
+该函数用于区分proper list与其他非列表结构，特别是在处理列表输入验证时非常有用。
+
+注意
+----
+- 循环列表不被视为dotted list
+- 该函数是proper-list?的补集（对于非循环列表而言）
+- 可以用于检测输入是否应该被当作列表处理
+
+错误处理
+--------
+无特殊错误处理，任何类型的对象都能接受。
+|#
+
+; 基本功能测试
 (check-true (dotted-list? 1))
 (check-true (dotted-list? '(1 . 2)))
 (check-true (dotted-list? '(1 2 . 3)))
 
+; 非dotted list测试
 (check-false (dotted-list? (circular-list 1 2 3)))
 (check-false (dotted-list? '()))
 (check-false (dotted-list? '(a)))
+(check-false (dotted-list? '(a b)))
+(check-false (dotted-list? '(a b (c d))))
+
+; 各种dotted list测试
+(check-true (dotted-list? 'a))
+(check-true (dotted-list? 'symbol))
+(check-true (dotted-list? "string"))
+(check-true (dotted-list? 42))
+(check-true (dotted-list? '(a . b)))
+(check-true (dotted-list? '(a b . c)))
+(check-true (dotted-list? '(a b c . d)))
+(check-true (dotted-list? '(a b c d . e)))
+(check-true (dotted-list? '(() . a)))
+(check-true (dotted-list? '(a () . b)))
+(check-true (dotted-list? '(a b () . c)))
+
+; 嵌套dotted list测试
+(check-true (dotted-list? '((a . b) c . d)))
+(check-true (dotted-list? '(a (b . c) . d)))
+(check-true (dotted-list? '(a . (b . c))))
+
+; 边界条件测试
+(check-false (dotted-list? '(())))
+(check-false (dotted-list? '(a ())))
+(check-false (dotted-list? '(() a b)))
+(check-true (dotted-list? '(a () . b)))
+
+; 复杂结构测试
+(check-true (dotted-list? '(a b c . d)))
+(check-false (dotted-list? '(a b (c . d)))) ; 嵌套的dotted list但整体是proper
+
+; 与proper-list?的互补性测试
+(check-false (dotted-list? '()))
+(check-false (dotted-list? '(a)))
+(check-false (dotted-list? '(a b)))
+(check-false (dotted-list? '(a b c)))
+(check-true (dotted-list? '(a . b)))
+(check-true (dotted-list? '(a b . c)))
+(check-true (dotted-list? 'a))
+
+; 循环列表测试（应返回#f）
+(let ((lst (list 1 2 3)))
+  (set-cdr! (last-pair lst) lst)
+  (check-false (dotted-list? lst))) ; 手动创建循环列表
+
+; 深层嵌套测试
+(check-true (dotted-list? '(a (b . c) . d)))
+(check-false (dotted-list? '((a b) (c d))))
+(check-true (dotted-list? '((a b) . c)))
 
 (check (null-list? '()) => #t)
 
@@ -235,6 +502,47 @@ wrong-number-of-args 如果没有提供任何参数
 
 (check (tenth '(1 2 3 4 5 6 7 8 9 10)) => 10)
 
+#| take
+从列表开头提取指定数量的元素。
+
+语法
+-----
+(take list k)
+
+参数
+-----
+list : list?
+源列表，从中提取元素。
+
+k : integer?
+要提取的元素数量，必须是非负整数且不超过列表长度。
+
+返回值
+------
+list
+包含指定数量元素的新列表，从原列表的开头开始计数。
+
+注意
+-----
+take函数会创建新的列表结构，原列表不会被修改。当k等于列表长度时，返回完整列表的拷贝。对于点结尾的列表，行为与proper列表相同，直到遇到dot才停止。
+
+示例
+-----
+(take '(1 2 3 4) 2) => '(1 2)
+(take '(a b c) 0) => '()
+(take '(1 (2 3) 4) 2) => '(1 (2 3))
+(take '((a b) (c d)) 1) => '((a b))
+
+边界条件
+-----
+空列表返回空列表
+(take '() 0) => '()
+
+错误处理
+-----
+wrong-type-arg 当list不是列表或k不是整数类型时
+out-of-range 当k超过列表长度或k为负数时
+|#
 (check (take '(1 2 3 4) 3) => '(1 2 3))
 (check (take '(1 2 3 4) 4) => '(1 2 3 4))
 (check (take '(1 2 3 . 4) 3) => '(1 2 3))
@@ -242,19 +550,204 @@ wrong-number-of-args 如果没有提供任何参数
 (check-catch 'wrong-type-arg (take '(1 2 3 4) 5))
 (check-catch 'wrong-type-arg (take '(1 2 3 . 4) 4))
 
+; 更多边界条件测试
+(check (take '() 0) => '())
+(check (take '(a) 1) => '(a))
+(check (take '(a) 0) => '())
+(check (take '((a) (b c) d) 2) => '((a) (b c)))
+(check (take '(1 2 3 4 5 6) 3) => '(1 2 3))
+
+; 链式操作测试
+(check (take (drop '(1 2 3 4 5) 1) 3) => '(2 3 4))
+(check (take (take '(1 2 3 4 5) 4) 2) => '(1 2))
+
+; 大列表测试
+(check (take (iota 10) 5) => '(0 1 2 3 4))
+
+; 错误条件测试
+(check-catch 'wrong-type-arg (take '(1 2 3) -1))
+(check-catch 'wrong-type-arg (take "not a list" 2))
+(check-catch 'wrong-type-arg (take '(1 2 3) "not a number"))
+
+#| drop
+从列表开头删除指定数量的元素。
+
+语法
+----
+(drop list k)
+
+参数
+----
+list : list?
+源列表，从中删除元素。
+
+k : integer?
+要从开头删除的元素数量，必须是非负整数且不超过列表长度。
+
+返回值
+------
+list
+删除k个元素后的新列表。当k等于列表长度时，返回空列表。
+
+说明
+----
+drop函数与take函数功能相反，从列表前端删除元素而不是提取。
+对于proper list，返回的是剩余部分的列表；
+对于dotted list，如果k等于列表长度减一，返回的是最后的非列表元素。
+
+drop和take互为补操作：(take lst k) + (drop lst k) = lst
+
+示例
+----
+(drop '(1 2 3 4) 2) => '(3 4)
+(drop '(a b c) 1) => '(b c)
+(drop '(1 (2 3) 4) 2) => '(4)
+(drop '() 0) => '()
+(drop '(a) 0) => '(a)
+
+与dotted list交互:
+(drop '(1 2 . 3) 1) => '(2 . 3)
+(drop '(1 2 . 3) 2) => 3
+
+边界条件
+--------
+- 空列表：返回空列表
+- 零个元素删除：返回原列表
+- 删除所有元素：返回空列表
+
+错误处理
+--------
+- out-of-range：当k超过列表长度时
+- wrong-type-arg：当list不是列表或k不是整数类型时
+|#
 (check (drop '(1 2 3 4) 2) => '(3 4))
 (check (drop '(1 2 3 4) 4) => '())
 (check (drop '(1 2 3 . 4) 3) => 4)
 
+; 基本功能测试
+(check (drop '(1 2 3 4 5) 0) => '(1 2 3 4 5))
+(check (drop '(1 2 3 4 5) 1) => '(2 3 4 5))
+(check (drop '(1 2 3 4 5) 3) => '(4 5))
+(check (drop '(1 2 3 4 5) 5) => '())
+
+; 空列表边界条件
+(check (drop '() 0) => '())
+
+; 单个元素列表测试
+(check (drop '(a) 0) => '(a))
+(check (drop '(a) 1) => '())
+
+; 嵌套列表测试
+(check (drop '((a b) (c d) (e f)) 1) => '((c d) (e f)))
+(check (drop '((a b) (c d) (e f)) 2) => '((e f)))
+(check (drop '((a b) (c d) (e f)) 3) => '())
+
+; dotted list边界条件测试
+(check (drop '(1 2 . 3) 0) => '(1 2 . 3))
+(check (drop '(1 2 . 3) 1) => '(2 . 3))
+(check (drop '(1 2 . 3) 2) => 3)
+(check (drop '(a b c . d) 1) => '(b c . d))
+(check (drop '(a b c . d) 2) => '(c . d))
+(check (drop '(a b c . d) 3) => 'd)
+
+; 链式操作测试
+(check (drop (drop '(1 2 3 4 5) 1) 2) => '(4 5))
+(check (drop (take '(1 2 3 4 5) 4) 2) => '(3 4))
+(check (take (drop '(1 2 3 4 5) 2) 2) => '(3 4))
+
+; 大列表测试
+(let ((lst (iota 10)))
+  (check (drop lst 0) => '(0 1 2 3 4 5 6 7 8 9))
+  (check (drop lst 5) => '(5 6 7 8 9))
+  (check (drop lst 10) => '()))
+
+; 与take的对称性测试
+(let ((lst '(1 2 3 4 5 6 7 8 9 10)))
+  (define (symmetry-test lst k)
+    (let ((take-part (take lst k))
+          (drop-part (drop lst k)))
+      (append take-part drop-part)))
+  
+  (check (symmetry-test lst 0) => lst)
+  (check (symmetry-test lst 3) => lst)
+  (check (symmetry-test lst 10) => lst)
+  (check (symmetry-test lst 5) => lst))
+
+; 错误条件测试  
 (check-catch 'out-of-range (drop '(1 2 3 4) 5))
 (check-catch 'out-of-range (drop '(1 2 3 . 4) 4))
+(check-catch 'out-of-range (drop '(1 2 3 4) -1))
+(check-catch 'wrong-type-arg (drop "not a list" 2))
+(check-catch 'wrong-type-arg (drop '(1 2 3) "not a number"))
 
+#|
+take-right
+从列表尾部提取指定数量的元素。
+
+语法
+-----
+(take-right list k)
+
+参数
+-----
+list : list?
+源列表，从中从尾部提取元素。
+
+k : integer?
+要从尾部提取的元素数量，必须是非负整数且不超过列表长度。
+
+返回值
+------
+list
+包含从尾部开始指定数量元素的新列表。
+
+注意
+-----
+take-right函数与take功能相反，从列表右侧（尾部）提取元素。
+
+示例
+-----
+(take-right '(1 2 3 4) 2) => '(3 4)
+(take-right '(a b c) 1) => '(c)
+(take-right '((a b) (c d) (e f)) 2) => '((c d) (e f))
+
+边界条件
+-----
+空列表返回空列表
+(take-right '() 0) => '()
+
+错误处理
+-----
+out-of-range 当k超过列表长度或k为负数时
+|#
 (check (take-right '(1 2 3 4) 3) => '(2 3 4))
 (check (take-right '(1 2 3 4) 4) => '(1 2 3 4))
 (check (take-right '(1 2 3 . 4) 3) => '(1 2 3 . 4))
 
+; 更多边界条件测试
+(check (take-right '() 0) => '())
+(check (take-right '(a) 1) => '(a))
+(check (take-right '(a) 0) => '())
+(check (take-right '((a) (b c) d) 2) => '((b c) d))
+(check (take-right '(1 2 3 4 5 6) 3) => '(4 5 6))
+
+; 链式操作测试
+(check (take-right (drop '(1 2 3 4 5) 1) 3) => '(3 4 5))
+(check (take-right (take '(1 2 3 4 5) 4) 2) => '(3 4))
+
+; 大列表测试
+(check (take-right (iota 10) 5) => '(5 6 7 8 9))
+
+; 边缘情况测试
+(check (take-right '(1) 1) => '(1))
+(check (take-right '(1 2) 1) => '(2))
+
+; 错误条件测试
 (check-catch 'out-of-range (take-right '(1 2 3 4) 5))
 (check-catch 'out-of-range (take-right '(1 2 3 . 4) 4))
+(check-catch 'out-of-range (take-right '(1 2 3) -1))
+(check-catch 'wrong-type-arg (take-right "not a list" 2))
+(check-catch 'wrong-type-arg (take-right '(1 2 3) "not a number"))
 
 (check (drop-right '(1 2 3 4) 2) => '(1 2))
 (check (drop-right '(1 2 3 4) 4) => '())
@@ -645,4 +1138,3 @@ wrong-type-arg 如果 clist 不是列表类型。
 (check-catch 'type-error (flatten '((a) () (b ()) () (c)) (make-vector 1 1)))
 
 (check-report)
-

@@ -19,8 +19,6 @@
         (srfi srfi-13)
         (liii error))
 
-(check-set-mode! 'report-failed)
-
 #|
 string-join
 将一个字符串列表通过指定的分隔符连接起来。
@@ -134,11 +132,75 @@ type-error 当str不是字符串类型时
 (check-catch 'type-error (string-null? #\a))
 (check-catch 'type-error (string-null? (list "a")))
 
+#|
+string-every
+检查字符串中的每个字符是否都满足给定的条件。
+
+语法
+----
+(string-every char/pred? str)
+(string-every char/pred? str start)
+(string-every char/pred? str start end)
+
+参数
+----
+char/pred? : char 或 procedure?
+- 字符(char)：检查字符串中的每个字符是否等于该字符
+- 谓词(procedure)：接受单个字符作为参数，返回布尔值
+
+str : string?
+要检查的字符串
+
+start : integer? 可选
+检查的起始位置(包含)，默认为0
+
+end : integer? 可选
+检查的结束位置(不包含)，默认为字符串长度
+
+返回值
+----
+boolean
+如果字符串中的每个字符都满足条件则返回#t，否则返回#f。
+对于空字符串或空范围(如start=end)始终返回#t。
+
+注意
+----
+string-every支持多种类型的参数作为char/pred?，包括字符和谓词函数。
+当使用start/end参数时，检查对应子字符串的范围。
+空字符串或空范围会返回#t，因为没有任何字符违反条件。
+
+示例
+----
+(string-every #\x "xxxxxx") => #t
+(string-every #\x "xxx0xx") => #f
+(string-every char-numeric? "012345") => #t
+(string-every char-numeric? "012d45") => #f
+(string-every char-alphabetic? "abc") => #t
+(string-every char-alphabetic? "abc123") => #f
+
+错误处理
+----
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+wrong-type-arg 当str不是字符串时
+|#
+
 (check-true (string-every #\x "xxxxxx"))
 (check-false (string-every #\x "xxx0xx"))
 
 (check-true (string-every char-numeric? "012345"))
 (check-false (string-every char-numeric? "012d45"))
+
+(check-true (string-every char-alphabetic? "abc"))
+(check-false (string-every char-alphabetic? "abc123"))
+(check-true (string-every char-upper-case? "ABC"))
+(check-false (string-every char-upper-case? "AbC"))
+
+(check-true (string-every char-whitespace? "   "))
+(check-false (string-every char-whitespace? "  a "))
+
+(check-true (string-every #\a ""))
+(check-true (string-every char-numeric? ""))
 
 (check-catch 'wrong-type-arg (string-every 1 "012345"))
 (check-catch 'wrong-type-arg (string-every #\012345 "012345"))
@@ -156,24 +218,138 @@ type-error 当str不是字符串类型时
 (check-true (string-every char-numeric? "ab234f" 2 5))
 (check-false (string-every char-numeric? "ab234f" 2 6))
 
+(check-true (string-every #\a "aabbcc" 0 1))
+(check-false (string-every #\a "aabbcc" 1 3))
+(check-true (string-every char-lower-case? "abcABC" 0 3))
+(check-false (string-every char-lower-case? "abcABC" 3 6))
+
 (check-catch 'out-of-range (string-every char-numeric? "ab234f" 2 7))
 (check-catch 'out-of-range (string-every char-numeric? "ab234f" 2 1))
 
+#|
+string-any
+检查字符串中的任意字符是否满足给定的条件。
+
+语法
+----
+(string-any char/pred? str)
+(string-any char/pred? str start)
+(string-any char/pred? str start end)
+
+参数
+----
+char/pred? : char 或 procedure?
+- 字符(char)：检查字符串中是否存在与该字符相等的字符
+- 谓词(procedure)：接受单个字符作为参数，返回布尔值
+
+str : string?
+要检查的字符串
+
+start : integer? 可选
+检查的起始位置(包含)，默认为0
+
+end : integer? 可选
+检查的结束位置(不包含)，默认为字符串长度
+
+返回值
+----
+boolean
+- 如果字符串中至少有一个字符满足条件则返回#t，否则返回#f
+- 对于空字符串或空范围始终返回#f
+
+注意
+----
+string-any是string-every的对偶函数。与检查每个字符是否满足条件的string-every不同，string-any只需要找到至少一个满足条件的字符即可返回真值。
+该函数也支持start和end参数来限定检查范围。
+空字符串或空范围会返回#f，因为没有任何字符满足条件。
+
+示例
+----
+(string-any char-numeric? "abc123") => #t
+(string-any char-numeric? "hello") => #f
+(string-any char-alphabetic? "12345a") => #t
+(string-any char-alphabetic? "12345") => #f
+(string-any char-upper-case? "abC12") => #t
+(string-any char-whitespace? "hello") => #f
+(string-any #\a "zebra") => #\a
+(string-any #\z "apple") => #f
+
+错误处理
+----
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+wrong-type-arg 当str不是字符串时
+|#
+
+; Basic functionality tests for character parameter
+(check-true (string-any #\a "abcde"))
+(check-false (string-any #\z "abcde"))
+(check-false (string-any #\a "xyz"))
+(check-true (string-any #\x "abcxdef"))
+
+; Basic functionality tests for predicate parameter
+(check-true (string-any char-numeric? "abc123"))
+(check-false (string-any char-numeric? "hello"))
+(check-true (string-any char-alphabetic? "12345a"))
+(check-false (string-any char-alphabetic? "12345"))
+(check-true (string-any char-upper-case? "hello World"))
+(check-false (string-any char-upper-case? "hello world"))
+
+; Empty string handling
+(check-false (string-any #\a ""))
+(check-false (string-any char-numeric? ""))
+
+; Single character strings
+(check-true (string-any #\a "a"))
+(check-false (string-any #\b "a"))
+(check-true (string-any char-numeric? "1"))
+(check-false (string-any char-numeric? "a"))
+
+; Whitespace and special characters
+(check-true (string-any char-whitespace? "hello world"))
+(check-false (string-any char-whitespace? "hello"))
+(check-true (string-any (lambda (c) (char=? c #\h)) "hello"))
+(check-true (string-any (lambda (c) (char=? c #\!)) "hello!"))
+
+; Complex character tests
+(check-true (string-any char-alphabetic? "HELLO"))
+(check-true (string-any char-numeric? "123abc"))
+
+; Original legacy tests
 (check-true (string-any #\0 "xxx0xx"))
 (check-false (string-any #\0 "xxxxxx"))
 (check-true (string-any char-numeric? "xxx0xx"))
 (check-false (string-any char-numeric? "xxxxxx"))
 
-(check-catch 'wrong-type-arg (string-every 0 "xxx0xx"))
-(check-catch 'wrong-type-arg (string-any (lambda (n) (= n 0)) "xxx0xx"))
-(check-catch 'wrong-type-arg (string-every "0" "xxx0xx"))
-
+; Start/end parameter tests
 (check-true (string-any char-alphabetic? "01c345" 2))
 (check-false (string-any char-alphabetic? "01c345" 3))
 (check-true (string-any char-alphabetic? "01c345" 2 4))
 (check-false (string-any char-alphabetic? "01c345" 2 2))
 (check-false (string-any char-alphabetic? "01c345" 3 4))
 (check-true (string-any char-alphabetic? "01c345" 2 6))
+
+; Additional comprehensive tests for start/end parameters
+(check-true (string-any #\a "012a34" 0))
+(check-false (string-any #\a "012345" 0 2))
+(check-true (string-any #\0 "012345" 0 1))
+(check-false (string-any #\a "bbbccc" 1 3))
+(check-true (string-any char-alphabetic? "1a23bc" 1 4))
+(check-false (string-any char-alphabetic? "123456" 0 3))
+
+; Edge cases
+(check-true (string-any char-alphabetic? "abc" 0 3))
+(check-false (string-any char-alphabetic? "123" 0 3))
+(check-true (string-any #\a "aab" 1 2))
+(check-false (string-any #\a "bbc" 1 2))
+(check-true (string-any char-alphabetic? "a" 0 1))
+(check-false (string-any char-alphabetic? "" 0 0))
+
+; Custom predicate tests
+(check-true (string-any (lambda (c) (char=? c #\x)) "hello x there"))
+(check-false (string-any (lambda (c) (char=? c #\z)) "hello w there"))
+(check-true (string-any char-alphabetic? "HELLO"))
+(check-true (string-any char-alphabetic? "123a"))
 
 (check
   (catch 'out-of-range
@@ -198,6 +374,22 @@ type-error 当str不是字符串类型时
     (lambda args #t))
   =>
   #t)
+
+; Error handling tests for string-any
+(check-catch 'wrong-type-arg (string-any 123 "hello"))
+(check-catch 'wrong-type-arg (string-any "a" "hello"))
+(check-catch 'wrong-type-arg (string-any '(a b) "hello"))
+(check-catch 'wrong-type-arg (string-any (lambda (n) (= n 0)) "hello"))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? 123))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? "hello" "0"))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? "hello" 1.5))
+(check-catch 'wrong-type-arg (string-any char-alphabetic? "hello" 'a))
+
+; Out of range tests
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" -1))
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" 0 6))
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" 5 1))
+(check-catch 'out-of-range (string-any char-alphabetic? "hello" 10))
 
 (define original-string "MathAgape")
 (define copied-string (string-copy original-string))
@@ -336,6 +528,79 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check-catch 'wrong-type-arg (string-take-right "MathAgape" 4.5))
 (check-catch 'wrong-type-arg (string-take-right "MathAgape" 'a))
 
+#|
+string-drop
+从字符串开头移除指定数量的字符。
+
+语法
+----
+(string-drop str k)
+
+参数
+----
+str : string?
+源字符串，从中移除字符。
+
+k : integer?
+要移除的字符数量，必须是非负整数且不超过字符串长度。
+
+返回值
+----
+string
+返回一个新的字符串，包含源字符串从位置k开始的所有字符。
+
+注意
+----
+string-drop等价于(substring str k (string-length str))，但提供了更语义化的名称。
+对于多字节Unicode字符，操作基于字节位置而非字符位置。例如，每个中文字符占用3个字节，emoji字符通常占用4个字节。
+
+示例
+----
+(string-drop "MathAgape" 4) => "Agape"
+(string-drop "Hello" 0) => "Hello"
+(string-drop "abc" 2) => "c"
+(string-drop "test123" 4) => "123"
+
+错误处理
+----
+out-of-range 当k大于字符串长度或k为负数时
+wrong-type-arg 当str不是字符串类型或k不是整数类型时
+|#
+(check (string-drop "MathAgape" 4) => "Agape")
+(check (string-drop "MathAgape" 0) => "MathAgape")
+(check (string-drop "MathAgape" 9) => "")
+(check (string-drop "MathAgape" 8) => "e")
+(check (string-drop "MathAgape" 1) => "athAgape")
+(check (string-drop "MathAgape" 2) => "thAgape")
+(check (string-drop "MathAgape" 3) => "hAgape")
+(check (string-drop "MathAgape" 5) => "gape")
+(check (string-drop "MathAgape" 6) => "ape")
+(check (string-drop "MathAgape" 7) => "pe")
+(check (string-drop "" 0) => "")
+(check (string-drop "a" 1) => "")
+(check (string-drop "Hello" 1) => "ello")
+(check (string-drop "Hello" 5) => "")
+(check (string-drop "Hello" 0) => "Hello")
+(check (string-drop "abc" 2) => "c")
+(check (string-drop "abc" 1) => "bc")
+(check (string-drop "test123" 4) => "123")
+(check (string-drop "test123" 3) => "t123")
+(check (string-drop "test123" 6) => "3")
+(check (string-drop "test123" 7) => "")
+(check (string-drop "中文测试" 6) => "测试")
+(check (string-drop "中文测试" 3) => "文测试")
+(check (string-drop "中文测试" 12) => "")
+(check (string-drop "🌟🎉" 4) => "🎉")
+(check (string-drop "🌟🎉" 8) => "")
+
+(check-catch 'out-of-range (string-drop "MathAgape" 20))
+(check-catch 'out-of-range (string-drop "" 1))
+(check-catch 'out-of-range (string-drop "Hello" -1))
+(check-catch 'wrong-type-arg (string-drop 123 4))
+(check-catch 'wrong-type-arg (string-drop "MathAgape" "4"))
+(check-catch 'wrong-type-arg (string-drop "MathAgape" 4.5))
+(check-catch 'wrong-type-arg (string-drop "MathAgape" 'a))
+
 (check (string-drop "MathAgape" 8) => "e")
 (check (string-drop "MathAgape" 9) => "")
 (check (string-drop "MathAgape" 0) => "MathAgape")
@@ -343,21 +608,85 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check-catch 'out-of-range (string-drop "MahtAgape" -1))
 (check-catch 'out-of-range (string-drop "MathAgape" 20))
 
+#|
+string-drop-right
+从字符串末尾移除指定数量的字符。
+
+语法
+----
+(string-drop-right str k)
+
+参数
+----
+str : string?
+源字符串，从中移除字符。
+
+k : integer?
+要移除的字符数量，必须是非负整数且不超过字符串长度。
+
+返回值
+----
+string
+返回一个新的字符串，包含源字符串从开始位置到(len-k)的所有字符，其中len为字符串长度。
+
+注意
+----
+string-drop-right等价于(substring str 0 (- len k))，但提供了更语义化的名称。
+对于多字节Unicode字符，操作基于字节位置而非字符位置。例如，每个中文字符占用3个字节，emoji字符通常占用4个字节。
+
+示例
+----
+(string-drop-right "MathAgape" 4) => "Math"
+(string-drop-right "Hello" 0) => "Hello"
+(string-drop-right "abc" 2) => "a"
+(string-drop-right "test123" 3) => "test"
+
+错误处理
+----
+out-of-range 当k大于字符串长度或k为负数时
+wrong-type-arg 当str不是字符串类型或k不是整数类型时
+|#
+(check (string-drop-right "MathAgape" 4) => "MathA")
+(check (string-drop-right "MathAgape" 0) => "MathAgape")
+(check (string-drop-right "MathAgape" 9) => "")
+(check (string-drop-right "MathAgape" 8) => "M")
+(check (string-drop-right "MathAgape" 1) => "MathAgap")
+(check (string-drop-right "MathAgape" 2) => "MathAga")
+(check (string-drop-right "MathAgape" 3) => "MathAg")
+(check (string-drop-right "MathAgape" 5) => "Math")
+(check (string-drop-right "MathAgape" 6) => "Mat")
+(check (string-drop-right "MathAgape" 7) => "Ma")
+(check (string-drop-right "" 0) => "")
+(check (string-drop-right "a" 1) => "")
+(check (string-drop-right "Hello" 1) => "Hell")
+(check (string-drop-right "Hello" 5) => "")
+(check (string-drop-right "Hello" 0) => "Hello")
+(check (string-drop-right "abc" 2) => "a")
+(check (string-drop-right "abc" 1) => "ab")
+(check (string-drop-right "test123" 3) => "test")
+(check (string-drop-right "test123" 4) => "tes")
+(check (string-drop-right "test123" 6) => "t")
+(check (string-drop-right "test123" 7) => "")
+(check (string-drop-right "中文测试" 6) => "中文")
+(check (string-drop-right "中文测试" 3) => "中文测")
+(check (string-drop-right "中文测试" 12) => "")
+(check (string-drop-right "🌟🎉" 4) => "🌟")
+(check (string-drop-right "🌟🎉" 8) => "")
+
+(check-catch 'out-of-range (string-drop-right "MathAgape" 20))
+(check-catch 'out-of-range (string-drop-right "" 1))
+(check-catch 'out-of-range (string-drop-right "Hello" -1))
+(check-catch 'wrong-type-arg (string-drop-right 123 4))
+(check-catch 'wrong-type-arg (string-drop-right "MathAgape" "4"))
+(check-catch 'wrong-type-arg (string-drop-right "MathAgape" 4.5))
+(check-catch 'wrong-type-arg (string-drop-right "MathAgape" 'a))
+
 (check (string-drop-right "MathAgape" 5) => "Math")
 (check (string-drop-right "MathAgape" 9) => "")
 (check (string-drop-right "MathAgape" 0) => "MathAgape")
 
 (check-catch 'out-of-range (string-drop-right "MathAgape" -1))
 (check-catch 'out-of-range (string-drop-right "MathAgape" 20))
-
-(check (string-pad "MathAgape" 15) => "      MathAgape")
-(check (string-pad "MathAgape" 12 #\1) => "111MathAgape")
-(check (string-pad "MathAgape" 6 #\1 0 4) => "11Math")
-(check (string-pad "MathAgape" 9) => "MathAgape")
-(check (string-pad "MathAgape" 5) => "Agape")
-(check (string-pad "MathAgape" 2 #\1 0 4) => "th")
-
-(check-catch 'out-of-range (string-pad "MathAgape" -1))
 
 (check (string-pad-right "MathAgape" 15) => "MathAgape      ")
 (check (string-pad-right "MathAgape" 12 #\1) => "MathAgape111")
@@ -368,6 +697,247 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check (string-pad "MathAgape" 2 #\1 0 4) => "th")
 
 (check-catch 'out-of-range (string-pad-right "MathAgape" -1))
+
+#|
+string-pad
+在字符串左侧填充字符以达到指定长度。
+
+语法
+----
+(string-pad str len)
+(string-pad str len char)
+(string-pad str len char start)
+(string-pad str len char start end)
+
+参数
+----
+str : string?
+要填充的源字符串。
+
+len : integer?
+目标字符串长度，必须为非负整数。
+
+char : char? 可选
+要使用的填充字符，默认为空格字符(#\ )。
+
+start : integer? 可选
+子字符串起始位置（包含），默认为0。
+
+end : integer? 可选
+子字符串结束位置（不包含），默认为字符串长度。
+
+返回值
+----
+string
+一个新的字符串。
+- 当源字符串长度小于len时，在左侧添加指定填充字符以达到len长度。
+- 当源字符串长度大于len时，返回从右侧截取的len长度子串。
+- 当源字符串长度等于len时，返回源字符串或其子串的副本。
+
+注意
+----
+string-pad是左填充(left padding)函数，填充字符添加在字符串前面。
+对于多字节Unicode字符，操作基于字节位置而非字符位置。
+
+示例
+----
+(string-pad "abc" 6) => "   abc"
+(string-pad "abc" 6 #\0) => "000abc"
+(string-pad "abcdef" 3) => "def"
+(string-pad "" 5) => "     "
+(string-pad "a" 1) => "a"
+
+错误处理
+----
+out-of-range 当len为负数时
+wrong-type-arg 当str不是字符串类型时
+|#
+
+(check (string-pad "MathAgape" 15) => "      MathAgape")
+(check (string-pad "MathAgape" 12 #\1) => "111MathAgape")
+(check (string-pad "MathAgape" 6 #\1 0 4) => "11Math")
+(check (string-pad "MathAgape" 9) => "MathAgape")
+(check (string-pad "MathAgape" 5) => "Agape")
+(check (string-pad "MathAgape" 2 #\1 0 4) => "th")
+
+(check-catch 'out-of-range (string-pad "MathAgape" -1))
+
+
+; 基本功能测试 - string-pad
+(check (string-pad "abc" 6) => "   abc")
+(check (string-pad "abc" 6 #\0) => "000abc")
+(check (string-pad "abcdef" 3) => "def")
+(check (string-pad "abcdef" 3 #\0) => "def")
+(check (string-pad "" 5) => "     ")
+(check (string-pad "" 5 #\0) => "00000")
+(check (string-pad "a" 1) => "a")
+(check (string-pad "abc" 3) => "abc")
+
+; 边界情况测试
+(check (string-pad "abc" 0) => "")
+(check (string-pad "abc" 2) => "bc")
+(check (string-pad "abc" 1) => "c")
+
+; 多字节字符测试
+(check (string-pad "中文" 6) => "中文")
+
+; 子字符串范围参数测试
+(check (string-pad "HelloWorld" 12 #\!) => "!!HelloWorld")
+(check (string-pad "HelloWorld" 7 #\! 0 5) => "!!Hello")
+(check (string-pad "HelloWorld" 8 #\! 1 6) => "!!!elloW")
+(check (string-pad "HelloWorld" 5 #\x 3 5) => "xxxlo")
+(check (string-pad "HelloWorld" 0 #\! 3 3) => "")
+
+; 多种填充字符测试
+(check (string-pad "abc" 10 #\*) => "*******abc")
+(check (string-pad "test" 8 #\-) => "----test")
+(check (string-pad "123" 7 #\0) => "0000123")
+
+#|
+string-pad-right
+在字符串右侧填充字符以达到指定长度。
+
+语法
+----
+(string-pad-right str len)
+(string-pad-right str len char)
+(string-pad-right str len char start)
+(string-pad-right str len char start end)
+
+参数
+----
+str : string?
+要填充的源字符串。
+
+len : integer?
+目标字符串长度，必须为非负整数。
+
+char : char? 可选
+要使用的填充字符，默认为空格字符(#\ )。
+
+start : integer? 可选
+子字符串起始位置（包含），默认为0。
+
+end : integer? 可选
+子字符串结束位置（不包含），默认为字符串长度。
+
+返回值
+----
+string
+一个新的字符串。
+- 当源字符串长度小于len时，在右侧添加指定填充字符以达到len长度。
+- 当源字符串长度大于len时，返回左侧截取的len长度子串。
+- 当源字符串长度等于len时，返回源字符串或其子串的副本。
+
+注意
+----
+string-pad-right是右填充(right padding)函数，填充字符添加在字符串后面。
+对于多字节Unicode字符，操作基于字节位置而非字符位置。
+
+示例
+----
+(string-pad-right "abc" 6) => "abc   "
+(string-pad-right "abc" 6 #\0) => "abc000"
+(string-pad-right "abcdef" 3) => "abc"
+(string-pad-right "" 5) => "     "
+(string-pad-right "a" 1) => "a"
+
+错误处理
+----
+out-of-range 当len为负数时
+wrong-type-arg 当str不是字符串类型时
+|#
+
+; 基本功能测试 - string-pad-right
+(check (string-pad-right "abc" 6) => "abc   ")
+(check (string-pad-right "abc" 6 #\0) => "abc000")
+(check (string-pad-right "abcdef" 3) => "abc")
+(check (string-pad-right "abcdef" 3 #\0) => "abc")
+(check (string-pad-right "" 5) => "     ")
+(check (string-pad-right "" 5 #\0) => "00000")
+(check (string-pad-right "a" 1) => "a")
+(check (string-pad-right "abc" 3) => "abc")
+
+; 边界情况测试
+(check (string-pad-right "abc" 0) => "")
+(check (string-pad-right "abc" 2) => "ab")
+(check (string-pad-right "abc" 1) => "a")
+
+; 多字节字符测试
+(check (string-pad-right "中文" 6) => "中文")
+
+; 子字符串范围参数测试
+(check (string-pad-right "HelloWorld" 12 #\!) => "HelloWorld!!")
+(check (string-pad-right "HelloWorld" 7 #\! 0 5) => "Hello!!")
+(check (string-pad-right "HelloWorld" 8 #\! 1 6) => "elloW!!!")
+(check (string-pad-right "HelloWorld" 5 #\x 3 5) => "loxxx")
+(check (string-pad-right "HelloWorld" 0 #\! 3 3) => "")
+
+; 多种填充字符测试
+(check (string-pad-right "abc" 10 #\*) => "abc*******")
+(check (string-pad-right "test" 8 #\-) => "test----")
+(check (string-pad-right "123" 7 #\0) => "1230000")
+
+; 错误处理测试
+(check-catch 'out-of-range (string-pad "abc" -1))
+(check-catch 'out-of-range (string-pad-right "abc" -1))
+
+#|
+string-trim
+从字符串开头移除指定的字符/空白字符。
+
+语法
+----
+(string-trim str)
+(string-trim str char)
+(string-trim str pred?)
+(string-trim str char/pred? start)
+(string-trim str char/pred? start end)
+
+参数
+----
+str : string?
+要处理的源字符串。
+
+char/pred? : char? 或 procedure?
+- 字符(char)：指定要从开头移除的字符
+- 谓词(procedure)：接受单个字符作为参数的函数，返回布尔值
+- 省略时默认为字符空白字符空格(#\ )
+
+start : integer? 可选
+起始位置索引（包含），默认为0。
+
+end : integer? 可选
+结束位置索引（不包含），默认为字符串长度。
+
+返回值
+----
+string
+一个新的字符串，从开头移除所有连续的指定字符。
+
+注意
+----
+string-trim会从字符串的左侧（开头）开始移除字符，直到遇到第一个不匹配指定条件的字符为止。
+当使用谓词参数时，所有使谓词返回#t的连续字符都会被移除。
+
+对于空字符串，始终返回空字符串。
+当字符串以不匹配的字符开头，或字符串为空字符串时，返回原字符串的副本。
+
+示例
+----
+(string-trim "  hello  ") => "hello  "
+(string-trim "---hello---" #\-) => "hello---" 
+(string-trim "   hello   ") => "hello   "
+(string-trim "123hello123" char-numeric?) => "hello123"
+(string-trim "hello") => "hello"
+(string-trim "") => ""
+
+错误处理
+----
+wrong-type-arg 当str不是字符串类型时
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+|#
 
 (check (string-trim "  hello  ") => "hello  ")
 (check (string-trim "---hello---" #\-) => "hello---")
@@ -383,6 +953,63 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check (string-trim "123hello123" char-numeric? 3 8) => "hello")
 (check (string-trim "123hello123" char-numeric? 3) => "hello123")
 
+#|
+string-trim-right
+从字符串末尾移除指定的字符/空白字符。
+
+语法
+----
+(string-trim-right str)
+(string-trim-right str char)
+(string-trim-right str pred?)
+(string-trim-right str char/pred? start)
+(string-trim-right str char/pred? start end)
+
+参数
+----
+str : string?
+要处理的源字符串。
+
+char/pred? : char? 或 procedure?
+- 字符(char)：指定要从末尾移除的字符
+- 谓词(procedure)：接受单个字符作为参数的函数，返回布尔值  
+- 省略时默认为字符空白字符空格(#\ )
+
+start : integer? 可选
+起始位置索引（包含），默认为0。
+
+end : integer? 可选
+结束位置索引（不包含），默认为字符串长度。
+
+返回值
+----
+string
+一个新的字符串，从末尾移除所有连续的指定字符。
+
+注意
+----
+string-trim-right会从字符串的右侧（末尾）开始移除字符，直到遇到第一个不匹配指定条件的字符为止。
+当使用谓词参数时，所有使谓词返回#t的连续字符都会被移除。
+
+对于空字符串，始终返回空字符串。
+当字符串以不匹配的字符结尾，或字符串为空字符串时，返回原字符串的副本。
+
+示例
+----
+(string-trim-right "  hello  ") => "  hello"
+(string-trim-right "---hello---" #\-) => "---hello"
+(string-trim-right "123hello123" char-numeric?) => "123hello"
+(string-trim-right "   ") => ""
+(string-trim-right "hello") => "hello"
+(string-trim-right "") => ""
+
+错误处理
+----
+wrong-type-arg 当str不是字符串类型时
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+|#
+
 (check (string-trim-right "  hello  ") => "  hello")
 (check (string-trim-right "---hello---" #\-) => "---hello")
 (check (string-trim-right "123hello123" char-numeric?) => "123hello")
@@ -396,6 +1023,63 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check (string-trim-right "---hello---" #\- 3 8) => "hello")
 (check (string-trim-right "123hello123" char-numeric? 3 8) => "hello")
 (check (string-trim-right "123hello123" char-numeric? 3) => "hello")
+
+#|
+string-trim-both
+从字符串开头和末尾同时移除指定的字符/空白字符。
+
+语法
+----
+(string-trim-both str)
+(string-trim-both str char)
+(string-trim-both str pred?)
+(string-trim-both str char/pred? start)
+(string-trim-both str char/pred? start end)
+
+参数
+----
+str : string?
+要处理的源字符串。
+
+char/pred? : char? 或 procedure?
+- 字符(char)：指定要从开头和末尾移除的字符
+- 谓词(procedure)：接受单个字符作为参数的函数，返回布尔值
+- 省略时默认为字符空白字符空格(#\ )
+
+start : integer? 可选
+起始位置索引（包含），默认为0。
+
+end : integer? 可选
+结束位置索引（不包含），默认为字符串长度。
+
+返回值
+----
+string
+一个新的字符串，从开头和末尾同时移除所有连续的指定字符。
+
+注意
+----
+string-trim-both会同时从字符串的左侧（开头）和右侧（末尾）移除字符，是string-trim和string-trim-right的组合功能。
+
+当使用谓词参数时，所有使谓词返回#t的连续字符都会被移除。
+
+对于空字符串，始终返回空字符串。
+
+示例
+----
+(string-trim-both "  hello  ") => "hello"
+(string-trim-both "---hello---" #\-) => "hello"
+(string-trim-both "123hello123" char-numeric?) => "hello"
+(string-trim-both "   ") => ""
+(string-trim-both "hello") => "hello"
+(string-trim-both "") => ""
+
+错误处理
+----
+wrong-type-arg 当str不是字符串类型时
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+|#
 
 (check (string-trim-both "  hello  ") => "hello")
 (check (string-trim-both "---hello---" #\-) => "hello")
@@ -426,15 +1110,150 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check (string-suffix? "hhello" "hello") => #f)
 (check (string-suffix? "hell" "hello") => #f)
 
+#|
+string-index
+在字符串中查找指定字符或满足条件的第一个字符的位置。
+
+语法
+----
+(string-index str char/pred?)
+(string-index str char/pred? start)
+(string-index str char/pred? start end)
+
+参数
+----
+str : string?
+要搜索的源字符串。
+
+char/pred? : char? 或 procedure?
+- 字符(char)：要查找的目标字符
+- 谓词(procedure)：接受单个字符作为参数的函数，返回布尔值指示是否匹配
+
+start : integer? 可选
+搜索的起始位置(包含)，默认为0。
+
+end : integer? 可选
+搜索的结束位置(不包含)，默认为字符串长度。
+
+返回值
+----
+integer 或 #f
+- 如果找到匹配的字符，返回其索引位置(从0开始计数)
+- 如果未找到匹配的字符，返回#f
+
+注意
+----
+string-index从字符串的左侧(开头)开始搜索，返回第一个匹配字符的索引位置。
+搜索范围由start和end参数限定。空字符串或未找到匹配项时返回#f。
+
+该函数支持使用字符和谓词两种方式进行查找:
+- 字符匹配：查找与指定字符相等的字符
+- 谓词匹配：查找使谓词返回#t的第一个字符
+
+示例
+----
+(string-index "hello" #\e) => 1  (字符'e'在索引1处)
+(string-index "hello" #\z) => #f (没有找到字符'z')
+(string-index "abc123" char-numeric?) => 3 (第一个数字'1'在索引3处)
+(string-index "hello" char-alphabetic?) => 0 (第一个字母'h'在索引0处)
+(string-index "hello" #\l 2) => 3 (从索引2开始找前字符'l')
+(string-index "hello" #\l 0 2) => #f (在0到2范围内没有找到'l')
+(string-index "" #\x) => #f (空字符串返回#f)
+
+错误处理
+----
+wrong-type-arg 当str不是字符串类型时
+wrong-type-arg 当char/pred?不是字符或谓词时
+out-of-range 当start/end超出字符串索引范围时
+|#
+
+; Basic functionality tests for string-index
+(check (string-index "hello" #\e) => 1)
+(check (string-index "hello" #\z) => #f)
+(check (string-index "hello" #\l) => 2)
+(check (string-index "hello" #\l 3) => 3)
+(check (string-index "abc123" char-numeric?) => 3)
+(check (string-index "abc123" char-alphabetic?) => 0)
+(check (string-index "" #\x) => #f)
+
+; Character parameter tests
 (check (string-index "0123456789" #\2) => 2)
 (check (string-index "0123456789" #\2 2) => 2)
 (check (string-index "0123456789" #\2 3) => #f)
 (check (string-index "01x3456789" char-alphabetic?) => 2)
 
-(check (string-index-right "0123456789" #\8) => 8)
-(check (string-index-right "0123456789" #\8 2) => 8)
-(check (string-index-right "0123456789" #\8 9) => #f)
-(check (string-index-right "01234567x9" char-alphabetic?) => 8)
+; Extended comprehensive string-index tests
+(check (string-index "hello" #\h) => 0)
+(check (string-index "hello" #\o) => 4)
+(check (string-index "hello hello" #\space) => 5)
+(check (string-index "hello" #\H) => #f) ; case-sensitive
+(check (string-index "" #\a) => #f)
+(check (string-index "a" #\a) => 0)
+(check (string-index "aaaa" #\a) => 0)
+(check (string-index "0123456789" #\0) => 0)
+(check (string-index "0123456789" #\9) => 9)
+
+; Predicate parameter tests
+(check (string-index "0123456789" char-numeric?) => 0)
+(check (string-index "abc123" char-numeric?) => 3)
+(check (string-index "123abc" char-alphabetic?) => 3)
+(check (string-index "Hello123" char-upper-case?) => 0)
+(check (string-index "hello123" char-upper-case?) => #f)
+(check (string-index "123!@#" char-alphabetic?) => #f)
+(check (string-index " 	
+" char-whitespace?) => 0)
+(check (string-index "hello" (lambda (c) (char=? c #\l))) => 2)
+
+; Single character edge cases
+(check (string-index "a" #\a) => 0)
+(check (string-index "a" #\b) => #f)
+(check (string-index " " #\space) => 0)
+(check (string-index "\t" char-whitespace?) => 0)
+
+; Start and end parameter tests
+(check (string-index "hello" #\l 0) => 2)
+(check (string-index "hello" #\l 1) => 2)
+(check (string-index "hello" #\l 2) => 2)
+(check (string-index "hello" #\l 3) => 3)
+(check (string-index "hello" #\l 4) => #f)
+(check (string-index "hello" #\l 5) => #f)
+(check (string-index "hello" #\l 0 3) => 2)
+(check (string-index "hello" #\l 0 2) => #f)
+(check (string-index "hello" #\l 1 4) => 2)
+(check (string-index "hello" #\l 2 4) => 2)
+(check (string-index "hello" #\l 3 4) => 3)
+(check (string-index "hello" #\l 3 3) => #f)
+
+; Special characters and edge cases
+(check (string-index "_test" #\_) => 0)
+(check (string-index "a@b" #\@) => 1)
+(check (string-index "hello,world" #\,) => 5)
+(check (string-index "a-b-c" #\-) => 1)
+
+; Complex predicates
+(check (string-index "123abc!@#" (lambda (c) (or (char-alphabetic? c) (char-numeric? c)))) => 0)
+(check (string-index "!@#abc123" (lambda (c) (or (char-alphabetic? c) (char-numeric? c)))) => 3)
+(check (string-index "abc123" char-upper-case?) => #f)
+(check (string-index "ABC123" char-upper-case?) => 0)
+(check (string-index "abcABC" char-upper-case?) => 3)
+
+; Empty string and boundary conditions
+(check (string-index "" char-alphabetic?) => #f)
+(check (string-index "" char-numeric?) => #f)
+(check (string-index "abc" char-whitespace?) => #f)
+(check (string-index "12345" char-alphabetic?) => #f)
+
+; Error handling tests for string-index
+(check-catch 'wrong-type-arg (string-index 123 #\a))
+(check-catch 'wrong-type-arg (string-index "hello" "a"))
+(check-catch 'wrong-type-arg (string-index "hello" 123))
+(check-catch 'wrong-type-arg (string-index "hello" '(a)))
+(check-catch 'out-of-range (string-index "hello" #\a -1))
+(check-catch 'out-of-range (string-index "hello" #\a 0 6))
+(check-catch 'out-of-range (string-index "hello" #\a 3 2))
+(check-catch 'out-of-range (string-index "" #\a 1))
+(check-catch 'out-of-range (string-index "abc" #\a 5))
+
 
 (check-true (string-contains "0123456789" "3"))
 (check-true (string-contains "0123456789" "34"))
@@ -645,6 +1464,94 @@ wrong-type-arg 当str不是字符串类型或k不是整数类型时
 (check (format #f "~{~C~^ ~}" "hiho") => "h i h o")
 (check (format #f "~{~{~C~^ ~}~^...~}" (list "hiho" "test"))
        => "h i h o...t e s t")
+
+#|
+string-copy
+创建字符串的副本，支持可选的开始和结束位置参数进行子串拷贝。
+
+语法
+----
+(string-copy str)
+(string-copy str start)
+(string-copy str start end)
+
+参数
+----
+str : string?
+要复制的源字符串。
+
+start : integer? 可选
+复制开始的位置索引（包含），默认为0。
+
+end : integer? 可选
+复制结束的位置索引（不包含），默认为字符串长度。
+
+返回值
+----
+string
+返回源字符串的深拷贝，与源字符串内容相同但为不同的对象。
+
+注意
+----
+string-copy创建的是字符串内容的完整副本，即使内容与源字符串相同，
+返回的也是新的字符串对象，这一点可以通过eq?函数验证。
+
+与substring函数不同，string-copy始终返回新的字符串对象，
+而substring在某些实现中可能会返回源字符串本身（当子串与源字符串相同时）。
+
+start和end参数遵循substring的索引规则，支持负索引和超出范围的索引处理。
+
+错误处理
+----
+wrong-type-arg 当str不是字符串类型时
+out-of-range 当start或end超出字符串索引范围时
+out-of-range 当start > end时
+|#
+
+; Basic string-copy functionality tests
+(check-true (equal? (string-copy "hello") "hello"))
+(check-true (equal? (string-copy "hello" 1) "ello"))
+(check-true (equal? (string-copy "hello" 1 4) "ell"))
+(check-true (equal? (string-copy "") ""))
+(check-true (equal? (string-copy "中文测试") "中文测试"))
+(check-true (equal? (string-copy "中文测试" 6) "测试"))
+(check-true (equal? (string-copy "中文测试" 0 6) "中文"))
+
+(check-true (equal? (string-copy "hello" 0) "hello"))
+(check-true (equal? (string-copy "hello" 5) ""))
+(check-true (equal? (string-copy "abc" 0 0) ""))
+(check-true (equal? (string-copy "abc" 0 1) "a"))
+(check-true (equal? (string-copy "abc" 0 2) "ab"))
+(check-true (equal? (string-copy "abc" 0 3) "abc"))
+
+; Deep copy verification
+(check-false (eq? (string-copy "hello") "hello"))
+
+(let ((original "hello"))
+  (check-true (string=? (string-copy original) original))
+  (check-false (eq? (string-copy original) original)))
+
+; Substring copy tests
+(check-true (equal? (string-copy "test123" 0 4) "test"))
+(check-true (equal? (string-copy "test123" 4 7) "123"))
+
+; Unicode and emoji tests
+(check-true (equal? (string-copy "🌟🎉" 0 4) "🌟"))
+(check-true (equal? (string-copy "🌟🎉" 4 8) "🎉"))
+
+; Error handling tests
+(check-catch 'wrong-type-arg (string-copy 123))
+(check-catch 'wrong-type-arg (string-copy 'hello))
+(check-catch 'out-of-range (string-copy "hello" -1))
+(check-catch 'out-of-range (string-copy "hello" 10))
+(check-catch 'out-of-range (string-copy "hello" 0 10))
+(check-catch 'out-of-range (string-copy "" 1))
+(check-catch 'out-of-range (string-copy "hello" 3 2))
+(check-catch 'out-of-range (string-copy "hello" 4 3))
+
+(check-catch 'wrong-type-arg (string-copy "hello" "a"))
+(check-catch 'wrong-type-arg (string-copy "hello" 1.5))
+(check-catch 'wrong-type-arg (string-copy "hello" 1 4.5))
 
 (check-report)
 

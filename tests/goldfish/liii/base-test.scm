@@ -3585,6 +3585,7 @@ wrong-number-of-args
   (set-car! complex-pair 'simplified)
   (check complex-pair => '(simplified . remaining-cdr)))
 
+<<<<<<< HEAD
 #|
 set-cdr!
 替换序对（pair）的第二个元素（cdr部分）为新值，该操作会直接修改原始序对对象。
@@ -3719,26 +3720,326 @@ wrong-number-of-args
   (set-cdr! complex-pair 'simple-tail)
   (check complex-pair => '((head-structure) . simple-tail)))
 
+=======
 (check (caar '((a . b) . c)) => 'a)
 
-(check-catch 'wrong-type-arg (caar '(a b . c)))
-(check-catch 'wrong-type-arg (caar '()))
+#|
+caar
+caar 是 Scheme 内置函数，用于获取嵌套序对的第一个元素的第一个分量。该函数是 R7RS 标准的基本列表操作函数之一。此函数等价于 (car (car pair))。
 
+语法
+----
+(caar pair)
+
+参数
+----
+pair : pair?
+必须是序对或列表。一般为一个包含点对或列表的列表，如 ((a . b) . c) 或 ((a b c) ...)。
+
+返回值
+------
+任意类型
+返回嵌套序对的第一个元素的第一个分量。根据不同序对和嵌套结构的性质，返回类型可以是符号、数字、列表、点对、布尔值等任何对象。
+
+说明
+----
+1. caar 是 pair? 谓词的重要操作之一，常与 cdr、cdar、cadr 等配合使用处理嵌套序对数据
+2. 当应用于列表时，相当于 (car (car list))，需要保证嵌套结构有效且非空
+3. 适用于所有嵌套序对数据：包括点对结构 ((a . b) . c) 和嵌套列表 ((a b c) d e f)
+4. 当嵌套结构为列表时，caar 返回第一个列表的第一个元素
+
+错误处理
+--------
+wrong-type-arg
+出现以下情况时抛出错误：
+1. 参数不是序对或列表类型（如空列表 '()、数字、字符串等）
+2. 序对结构的第一个元素本身不是序对或列表（如原子或空列表）
+|#
+
+;; 基础测试：显式点对结构
+(check (caar '((a . b) . c)) => 'a)
+(check (caar '((1 . 2) . 3)) => 1)
+(check (caar '((#t . #f) . nil)) => #t)
+
+;; 基础测试：列表结构
+(check (caar '((a b c) d e)) => 'a)
+(check (caar '((1 2 3) 4 5)) => 1)
+(check (caar '((#t #f) x y z)) => #t)
+
+;; 嵌套列表结构
+(check (caar '(((a b) c) d e)) => '(a b))
+(check (caar '(((() a) b) c)) => '(() a))
+(check (caar '(((1 2) 3) 4)) => '(1 2))
+
+;; 混合结构测试
+(check (caar '(("hello" . 123) . "world")) => "hello")
+(check (caar '((42 . "forty-two") . 99)) => 42)
+(check (caar '((#\a . #\b) . nil)) => #\a)
+
+;; 构造器创建的结构
+(check (caar (cons (cons 1 2) (cons 3 4))) => 1)
+(check (caar (cons (cons 'x 'y) (cons 'z 'w))) => 'x)
+(check (caar (cons (list 1 2 3) (list 4 5 6))) => 1)
+
+;; 复杂嵌套构造
+(let ((nested (cons (cons (cons 1 2) (cons 3 4)) (cons 5 6))))
+  (check (caar nested) => (cons 1 2)))
+
+;; 涉及空列表的测试
+(check-catch 'wrong-type-arg (caar '(() . c)))
+(check-catch 'wrong-type-arg (caar '((). ())))
+
+;; 非法参数类型错误
+(check-catch 'wrong-type-arg (caar 'a))
+(check-catch 'wrong-type-arg (caar 123))
+(check-catch 'wrong-type-arg (caar "hello"))
+(check-catch 'wrong-type-arg (caar #f))
+(check-catch 'wrong-type-arg (caar '()))
+(check-catch 'wrong-type-arg (caar '(a b . c)))
+
+;; 返回不同类型测试
+(check (caar '(("string" "another") 42)) => "string")
+(check (caar '((123 456) 789)) => 123)
+(check (caar '(((1 2 3)) 4 5 6)) => (list 1 2 3))
+(check (caar '((#f nil "test") x y z)) => #f)
+
+;; edge cases for nested structure
+(check (caar '((((a))))) => '((a)))
+(check (caar '((((1 2))) 3 4 5)) => '((1 2)))
+
+#|
+list-ref
+获取列表中指定位置的元素。该函数是R7RS标准的基本列表操作函数之一。
+
+语法
+----
+(list-ref list k)
+
+参数
+----
+list : pair?
+    非空的列表或点对结构。空列表 '() 不被接受。
+
+k : exact?
+    非负的精确整数，表示要获取的元素的索引位置。索引从0开始。
+    必须满足 0 <= k < (length list)。
+
+返回值
+------
+任意类型
+    返回列表中位置k处的元素。类型取决于列表中实际存储的对象，
+    可以是符号、数字、字符串、列表、点对或任何其他Scheme对象。
+
+说明
+----
+1. 索引从0开始，即(list-ref '(a b c) 0)返回'a
+2. 适用于所有非空列表：包括普通列表、improper列表和嵌套结构
+3. 当用于点对结构时，只能访问0和1位置（car和cdr部分）
+4. 用于嵌套结构时，可以访问复杂列表的任意分层结构
+
+示例
+----
+(list-ref '(a b c d e) 0) => 'a
+(list-ref '(a b c d e) 4) => 'e
+(list-ref '(1 2 3 4) 2) => 3
+
+错误处理
+--------
+wrong-type-arg
+    当list参数不是pair?类型（如空列表'()、数字、字符串等）时抛出错误。
+
+out-of-range
+    当索引k为负数或超出列表有效范围（k >= 长度）时抛出错误。
+|#
+
+;; 基础测试：普通列表索引访问
+(check (list-ref '(a b c d e) 0) => 'a)
+(check (list-ref '(a b c d e) 1) => 'b)
+(check (list-ref '(a b c d e) 4) => 'e)
+(check (list-ref '(1 2 3 4 5) 0) => 1)
+(check (list-ref '(1 2 3 4 5) 2) => 3)
+(check (list-ref '(1 2 3 4 5) 4) => 5)
+
+;; 边界值测试：索引0、中间值、最大值
+(check (list-ref '(single) 0) => 'single)
+(check (list-ref '(x y z) 1) => 'y)
+(check (list-ref '(first last) 1) => 'last)
+
+;; 复杂数据类型测试：包含各种类型元素
+(check (list-ref '("string" 42 #t symbol) 0) => "string")
+(check (list-ref '("string" 42 #t symbol) 1) => 42)
+(check (list-ref '("string" 42 #t symbol) 2) => #t)
+(check (list-ref '("string" 42 #t symbol) 3) => 'symbol)
+
+;; 嵌套列表测试：访问嵌套结构
+(check (list-ref '((1 2 3) (4 5 6) (7 8 9)) 0) => '(1 2 3))
+(check (list-ref '("hel" "lo" "wo" "rld") 2) => "wo")
+(check (list-ref '(((a b) c d) e f) 0) => '((a b) c d))
+
+;; 测试点对结构：简单点对
+(check (list-ref '(a . b) 0) => 'a)
+(check (list-ref (cons 'a 'b) 0) => 'a)
+
+;; improper列表测试：包含点对结构的列表
+(check (list-ref '(a b c . d) 0) => 'a)
+(check (list-ref '(a b c . d) 1) => 'b)
+(check (list-ref '(a b c . d) 2) => 'c)
+
+;; 复杂嵌套结构测试：深层嵌套
+(check (list-ref '((a b) (c d) (e f)) 1) => '(c d))
+(check (list-ref '((1 2) 3 4 5) 0) => '(1 2))
+(check (list-ref '((1 2) 3 4 5) 3) => 5)
+
+;; 简单点对重新测试
 (check (list-ref (cons '(1 2) '(3 4)) 1) => 3)
 
+;; 基础三元列表
+(check (list-ref '(a b c) 0) => 'a)
+(check (list-ref '(a b c) 1) => 'b)
 (check (list-ref '(a b c) 2) => 'c)
 
+;; 错误情况测试
 (check-catch 'wrong-type-arg (list-ref '() 0))
+(check-catch 'wrong-type-arg (list-ref 123 0))
+(check-catch 'wrong-type-arg (list-ref "string" 1))
+(check-catch 'wrong-type-arg (list-ref #t 1))
 
+;; 索引越界测试
 (check-catch 'out-of-range (list-ref '(a b c) -1))
 (check-catch 'out-of-range (list-ref '(a b c) 3))
+(check-catch 'out-of-range (list-ref '(x) 1))
+(check-catch 'out-of-range (list-ref '(a b c d e) 5))
+(check-catch 'out-of-range (list-ref '(single) 2))
 
-(check (length ()) => 0)
+;; 构造器函数创建的列表测试
+(check (list-ref (list 1 2 3 4) 2) => 3)
+(check (list-ref (cons 1 (cons 2 (cons 3 '()))) 1) => 2)
+(check (list-ref (append '(1 2) '(3 4 5)) 3) => 4)
+
+;; 附加的列表操作场景测试
+(check (list-ref '(apple banana cherry date elderberry) 2) => 'cherry)
+(check (list-ref (list 'symbol 42 #t "string" 3.14) 3) => "string")
+
+#|
+length
+返回列表的元素个数。
+
+语法
+----
+(length list)
+
+参数
+----
+list : any
+任意类型的对象。
+
+返回值
+------
+integer?
+如果list是列表，返回该列表的元素个数。
+如果参数不是列表，返回#f。
+
+说明
+----
+1. 用于计算列表的长度，即列表中包含的元素个数
+2. 空列表'()的长度为0
+3. 对于点对结构（非正规列表），根据实现行为返回结果
+4. 列表可以是普通列表、嵌套列表或包含任意类型元素的列表
+
+错误处理
+--------
+wrong-type-arg
+当参数不是列表时，根据实现返回特定值或抛出错误。
+
+示例
+----
+(length '()) => 0
+(length '(1 2 3)) => 3
+(length '((a b) c d)) => 3
+|#
+
+;; length 基本测试：空列表和非空列表
+(check (length '()) => 0)
+(check (length '(a)) => 1)
+(check (length '(a b)) => 2)
 (check (length '(a b c)) => 3)
-(check (length '(a (b) (c d e))) => 3)
+(check (length '(1 2 3 4 5)) => 5)
 
-(check (length 2) => #f)
+;; length 嵌套列表测试
+(check (length '((a) b c)) => 3)
+(check (length '((a b) (c d) e)) => 3)
+(check (length '((a) (b) (c))) => 3)
+(check (length '(((a b) c) d e)) => 3)
+(check (length '((1 2 3 4) (5 6 7 8))) => 2)
+
+;; length 复杂数据结构测试
+(check (length '((first 1) (second 2) (third 3))) => 3)
+(check (length '("hello" "world" "test")) => 3)
+(check (length '(#t #f 'symbol)) => 3)
+(check (length '(42 3.14 "string" #t)) => 4)
+
+;; length 边界测试：各种规模列表
+(check (length '(a)) => 1)
+(check (length '(a b)) => 2)
+(check (length '(a b c d e f g h i j)) => 10)
+(check (length '(long list with many elements potentially spanning multiple lines)) => 9)
+
+;; length 空列表和单元素列表测试
+(check (length '()) => 0)
+(check (length (list)) => 0)
+(check (length (cons 'a '())) => 1)
+(check (length '(single)) => 1)
+
+;; length 字符和数字列表测试
+(check (length '(#\a #\b #\c #\d)) => 4)
+(check (length '(0 1 2 3 4 5 6 7 8 9)) => 10)
+(check (length '("zero" "one" "two" "three" "four")) => 5)
+
+;; length 列表构造函数测试
+(check (length (make-list 3 #\a)) => 3)
+(check (length (make-list 0)) => 0)
+(check (length (make-list 5 'value)) => 5)
+
+;; length 列表操作函数结果测试
+(check (length (append '(1 2) '(3 4 5))) => 5)
+(check (length (append '() '(a b c))) => 3)
+(check (length (append '(x y) '())) => 2)
+(check (length (reverse '(a b c d))) => 4)
+(check (length (reverse '())) => 0)
+
+;; length 特殊测试：字符串和向量等
+(check (length "string") => 6)
+(check (length '#(1 2 3)) => 3)
+(check (length 123) => #f)
+(check (length 3.14) => #f)
+(check (length #\a) => #f)
+(check (length 'symbol) => #f)
+
+;; length 点对结构（improper lists）
 (check (length '(a . b)) => -1)
+(check (length (cons 1 2)) => -1)
+(check (length (cons 'a 'b)) => -1)
+(check (length '(a b . c)) => -2)
+(check (length '(x (a) . y)) => -2)
+(check (length '(a b c . d)) => -3)
+
+;; length 特殊边界测试
+(check (length '(())) => 1)  ; 空列表作为元素
+(check (length '(() () ())) => 3)  ; 多个空列表作为元素
+(check (length '(() a b 3 c)) => 5)  ; 混合空结构
+
+;; length Unicode字符串列表测试
+(check (length '("中国" "美国" "日本")) => 3)
+(check (length '("hello" "世界" "123")) => 3)
+
+;; length 程序构造测试
+(check (length (let ((lst '(a b c))) lst)) => 3)
+(check (length (map square '(1 2 3 4))) => 4)
+(check (length (filter symbol? '(a 1 b 2 c 3))) => 3)
+
+;; length URL列表测试
+(check (length '("http://example.com" "https://test.org")) => 2)
+(check (length '(user admin guest moderator)) => 4)
 
 (check (append '(a) '(b c d)) => '(a b c d))
 (check (append '(a b) 'c) => '(a b . c))
