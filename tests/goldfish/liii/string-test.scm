@@ -1099,21 +1099,6 @@ out-of-range 当start/end超出字符串索引范围时
 (check (string-trim-both "123hello123" char-numeric? 3 8) => "hello")
 (check (string-trim-both "123hello123" char-numeric? 3) => "hello")
 
-(check (string-prefix? "he" "hello") => #t)
-(check (string-prefix? "hello" "hello") => #t)
-(check (string-prefix? "" "hello") => #t)
-(check (string-prefix? "" "") => #t)
-(check (string-prefix? "helloo" "hello") => #f)
-(check (string-prefix? "ello" "hello") => #f)
-
-(check (string-suffix? "ello" "hello") => #t)
-(check (string-suffix? "hello" "hello") => #t)
-(check (string-suffix? "" "hello") => #t)
-(check (string-suffix? "" "") => #t)
-(check (string-suffix? "helloo" "hello") => #f)
-(check (string-suffix? "hhello" "hello") => #f)
-(check (string-suffix? "hell" "hello") => #f)
-
 #|
 string-index
 在字符串中查找指定字符或满足条件的第一个字符的位置。
@@ -2343,6 +2328,73 @@ out-of-range 当start/end超出字符串索引范围时
          (string-tokenize data #\- 0 10)) => '("2024" "08" "07"))
 
 #|
+string-prefix?
+
+语法
+----
+(string-prefix? prefix str)
+
+参数
+----
+prefix : string?
+要检查的前缀字符串。
+
+str : string?
+要检查的源字符串。
+
+返回值
+----
+boolean : 如果str以prefix开头返回#t，否则返回#f。
+
+注意
+----
+空字符串作为prefix时总是返回#t。
+当prefix长度大于str长度时，string-prefix?返回#f。
+
+错误处理
+----
+type-error 当参数不是字符串类型时。
+|#
+
+; string-prefix? 作为前缀检查函数的验证测试
+(check-true (string-prefix? "" "hello"))
+(check-true (string-prefix? "h" "hello"))
+(check-true (string-prefix? "he" "hello"))
+(check-true (string-prefix? "hel" "hello"))
+(check-true (string-prefix? "hell" "hello"))
+(check-true (string-prefix? "hello" "hello"))
+(check-true (string-prefix? "test" "test123"))
+(check-true (string-prefix? "" ""))
+(check-true (string-prefix? "a" "a"))
+(check-true (string-prefix? "abc" "abc"))
+
+; string-prefix? 边界测试
+(check-true (string-prefix? "hello" "hello world"))
+(check-true (string-prefix? "hi" "hi there"))
+
+; string-prefix? 返回false的情况
+(check-false (string-prefix? "ello" "hello"))
+(check-false (string-prefix? "world" "hello"))
+(check-false (string-prefix? "x" "hello"))
+(check-false (string-prefix? "hello" "hi"))
+
+(check (string-prefix? "he" "hello") => #t)
+(check (string-prefix? "hello" "hello") => #t)
+(check (string-prefix? "" "hello") => #t)
+(check (string-prefix? "" "") => #t)
+(check (string-prefix? "helloo" "hello") => #f)
+(check (string-prefix? "ello" "hello") => #f)
+
+(check (string-suffix? "ello" "hello") => #t)
+(check (string-suffix? "hello" "hello") => #t)
+(check (string-suffix? "" "hello") => #t)
+(check (string-suffix? "" "") => #t)
+(check (string-suffix? "helloo" "hello") => #f)
+(check (string-suffix? "hhello" "hello") => #f)
+(check (string-suffix? "hell" "hello") => #f)
+
+
+#|
 string-starts?
 检查字符串是否以指定前缀开始。
 
@@ -2963,56 +3015,5 @@ out-of-range 当start/end超出字符串索引范围或start > end时
 (check-catch 'out-of-range (string-fold (lambda (c acc) (+ acc 1)) 0 "hello" 3 2))
 (check-catch 'out-of-range (string-fold-right (lambda (c acc) (+ acc 1)) 0 "hello" 3 2))
 (check-catch 'out-of-range (string-fold (lambda (c acc) (+ acc 1)) 0 "" 1 2))
-
-#|
-string-prefix?
-
-语法
-----
-(string-prefix? prefix str)
-
-参数
-----
-prefix : string?
-要检查的前缀字符串。
-
-str : string?
-要检查的源字符串。
-
-返回值
-----
-boolean : 如果str以prefix开头返回#t，否则返回#f。
-
-注意
-----
-空字符串作为prefix时总是返回#t。
-当prefix长度大于str长度时，string-prefix?返回#f。
-
-错误处理
-----
-type-error 当参数不是字符串类型时。
-|#
-
-; string-prefix? 作为前缀检查函数的验证测试
-(check-true (string-prefix? "" "hello"))
-(check-true (string-prefix? "h" "hello"))
-(check-true (string-prefix? "he" "hello"))
-(check-true (string-prefix? "hel" "hello"))
-(check-true (string-prefix? "hell" "hello"))
-(check-true (string-prefix? "hello" "hello"))
-(check-true (string-prefix? "test" "test123"))
-(check-true (string-prefix? "" ""))
-(check-true (string-prefix? "a" "a"))
-(check-true (string-prefix? "abc" "abc"))
-
-; string-prefix? 边界测试
-(check-true (string-prefix? "hello" "hello world"))
-(check-true (string-prefix? "hi" "hi there"))
-
-; string-prefix? 返回false的情况
-(check-false (string-prefix? "ello" "hello"))
-(check-false (string-prefix? "world" "hello"))
-(check-false (string-prefix? "x" "hello"))
-(check-false (string-prefix? "hello" "hi"))
 
 (check-report)
