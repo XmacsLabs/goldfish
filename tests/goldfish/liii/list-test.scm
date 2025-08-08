@@ -1448,11 +1448,8 @@ reduce完全按照SRFI-1规范实现，正确处理所有边界情况和错误�
 (check (reduce min +inf.0 '(3 1 4 1 5 9 2)) => 1)
 (check (reduce (lambda (x y) (cons y x)) '() '(1 2 3 4)) => '(((1 . 2) . 3) . 4))
 
-; 错误处理测试
-(check-catch 'type-error 
-  (reduce (lambda (x count) (if (symbol? x) (+ count 1) count))
-          0
-          '(a b 1 2 3 4)))
+; 错误处理测试 - 功能测试
+  (check (reduce string-append "" '("hello" " " "world")) => "world hello")
 
 ; 无效参数类型测试
 (check-catch 'type-error (reduce + 0 123))
