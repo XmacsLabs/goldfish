@@ -15,7 +15,8 @@
 ;
 
 (import (liii check)
-        (scheme base))
+        (scheme base)
+	(liii list))
 
 (check-set-mode! 'report-failed)
       
@@ -59,6 +60,7 @@ wrong-type-arg
 (check (car '(#t)) => #t)                      ; 单元素布尔值测试  
 (check (car '("hello")) => "hello")            ; 单元素字符串测试
 (check (car '(42)) => 42)                      ; 单元素整数测试
+(check (car '(() b c)) => '())                  ; 空列表作为首元素边界
 
 ;; 各种数据类型作为car值测试
 (check (car '(123 "text" symbol)) => 123)                     ; 多类型混合，car是整数
