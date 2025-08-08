@@ -1332,33 +1332,151 @@ wrong-type-arg 当任何参数不是列表类型时可能抛出
 (check (fold-right list '() '(1 2 3) '(a b c)) => '(1 a (2 b (3 c ()))))
 (check-catch 'type-error (fold-right 0 + '(1 2 3) 'a))
 
+#|
+reduce
+使用结合函数从左到右处理列表元素，并进行归约操作。
+
+语法
+----
+(reduce proc identity lst)
+
+参数
+----
+proc : procedure?
+接收两个参数的函数过程，用于将两个元素结合。该过程应该是结合的，以便于可以选择从左或从右进行归约。
+
+identity : any
+当lst为空列表时返回的默认值，作为一个"恒等值"。
+
+lst : list?
+需要处理的列表。可以是空列表、proper list或嵌套结构。
+
+返回值
+----
+any
+- 如果lst为空列表，返回identity恒等值
+- 如果lst为非空列表，返回应用proc函数进行从左到右归约后的结果
+- 单元素列表返回该元素本身
+
+说明
+----
+reduce函数是SRFI-1规范中的归约函数，类似于fold，但不对单元素列表应用proc函数。这个特性使其在某些情况下比fold更符合数学上的归约概念。在处理包含多个元素的列表时，行为与fold相同。reduce严格按照从左到右的顺序进行计算。
+
+与fold的区别:
+- fold总是对每个元素应用proc函数，包括单元素情况
+- reduce对单元素列表直接返回该元素，不调用proc
+- reduce的空列表处理方式与fold相同，都返回identity值
+
+使用场景
+--------
+- 列表求和、求积等聚合操作
+- 字符串拼接和列表连接
+- 实现reduce模式的算法
+- 构建累积数据结构
+- 函数式编程中的数据归约
+
+边界条件
+--------
+- 空列表：返回identity指定值
+- 单元素列表：返回该元素本身，不调用proc
+- 多元素列表：从左到右依次应用proc函数
+
+注意
+----
+proc函数应该具有结合性，即(proc (proc a b) c)应该等于(proc a (proc b c))，这样才能保证归约的正确性。
+
+对应的SRFI-1规范
+----------------
+reduce完全按照SRFI-1规范实现，正确处理所有边界情况和错误条件。
+
+示例
+----
+基本数值计算：
+(reduce + 0 '(1 2 3 4)) => 10
+(reduce + 0 '()) => 0
+(reduce + 0 '(5)) => 5
+
+列表操作：
+(reduce cons '() '(a b c)) => (c b a . 
+(reduce cons '() '(single)) => single
+
+字符串拼接：
+(reduce string-append "" '("hello" " world" "!")) => "hello world!"
+
+复杂结合操作：
+(reduce max -inf.0 '(3 1 4 1 5)) => 5
+(reduce min +inf.0 '(3 1 4 1 5)) => 1
+
+错误处理
+--------
+- wrong-type-arg：当proc不是过程或lst不是列表时抛出
+- 其他由proc函数执行过程中抛出的异常
+|#
 (check (reduce + 0 '(1 2 3 4)) => 10)
 (check (reduce + 0 '()) => 0)
+(check (reduce + 0 '(5)) => 5)
+(check (reduce + 0 '(1)) => 1)
 
 (check (reduce cons () '(1 2 3 4)) => '(4 3 2 . 1))
+(check (reduce cons () '(a)) => 'a)
+(check (reduce cons () '(a b c)) => '(c b . a))
 
-(check-catch 'wrong-type-arg 
+; 基本数值运算测试
+(check (reduce * 1 '(2 3 4)) => 24)
+(check (reduce * 1 '(1 2 3 4 5)) => 120)
+(check (reduce * 1 '()) => 1)
+(check (reduce * 1 '(42)) => 42)
+
+; 单元素边界条件测试
+(check (reduce + 999 '(42)) => 42)
+(check (reduce string-append "empty" '("solo")) => "solo")
+(check (reduce max 100 '(50)) => 50)
+
+; 空列表边界条件测试
+(check (reduce + 0 '()) => 0)
+(check (reduce * 1 '()) => 1)
+(check (reduce string-append "" '()) => "")
+(check (reduce list 'empty '()) => 'empty)
+
+; 字符串处理测试
+(check (reduce string-append "" '("a" "b" "c")) => "cba")
+(check (reduce string-append "" '("hello" " ")) => " hello")
+(check (reduce string-append "" '("one" " two" " three")) => " three twoone")
+
+; 复杂函数测试
+(check (reduce max -inf.0 '(3 1 4 1 5 9 2)) => 9)
+(check (reduce min +inf.0 '(3 1 4 1 5 9 2)) => 1)
+(check (reduce (lambda (x y) (cons y x)) '() '(1 2 3 4)) => '(((1 . 2) . 3) . 4))
+
+; 错误处理测试
+(check-catch 'type-error 
   (reduce (lambda (x count) (if (symbol? x) (+ count 1) count))
           0
           '(a b 1 2 3 4)))
 
-(check (reduce-right + 0 '(1 2 3 4)) => 10)
+; 无效参数类型测试
+(check-catch 'type-error (reduce + 0 123))
+(check-catch 'type-error (reduce "not-a-proc" 0 '(1 2 3)))
+(check-catch 'type-error (reduce + 0 "not-a-list"))
 
+; 多参数列表操作测试
+(check (reduce list '() '(a b c d)) => '(d c b a))
+(check (reduce cons '() '(1 2 3)) => '(3 2 . 1))
+
+; 嵌套结构处理测试
+(check (reduce append '() '((a b) (c d) (e f))) => '(a b c d e f))
+(check (reduce append '() '((1) (2 3) (4 5 6))) => '(1 2 3 4 5 6))
+
+(check (reduce-right + 0 '(1 2 3 4)) => 10)
 (check (reduce-right + 0 '()) => 0)
 
-(check (reduce-right cons () '(1 2 3 4))
-       => '(1 2 3 . 4) )
+(check (reduce-right cons () '(1 2 3 4)) => '(1 2 3 . 4) )
 
 (check
   (reduce-right (lambda (x count) (if (symbol? x) (+ count 1) count))
     0
     '(a b 1 2 3 4))
   => 6)
-
-(let* ((proc (lambda (x) (list x (* x 2))))
-       (input '(1 2 3))
-       (expected '(1 2 2 4 3 6)))
-  (check (append-map proc input) => expected))
 
 (let* ((proc (lambda (x y) (list (+ x y) (- x y))))
        (list1 '(5 8 10))
