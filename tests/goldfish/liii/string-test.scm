@@ -1592,10 +1592,8 @@ wrong-type-arg 当str不是字符串类型时
 (check (string-reverse "abcdef" 0 (string-length "abcdef")) => "fedcba")
 (check (string-reverse "programming" 0 11) => "gnimmargorp")
 
-; UTF-8 multi-byte character support. Note: Limited support for these characters
-; as string-reverse is based on byte-level operations rather than Unicode code points
-
 ; UTF-8 multi-byte character support - byte-level operation demonstration
+; Note: Limited support as string-reverse is based on byte operations rather than Unicode code points
 ; Chinese characters: typically 3 bytes (U+4E00-U+9FFF), 4 bytes for extended range
 ; Emoji: typically 4 bytes per character in modern Unicode
 
