@@ -1,0 +1,8 @@
+
+;unbound variable null
+;    'type-error
+;    tests/goldfish/liii/string-test.scm, line 2828, position: 96019
+'type-error
+check:proc: ((if (equal actual-result exp... ; expected-result: type-error
+                                              ; expression: (catch 'type-error (lambda () (...
+
