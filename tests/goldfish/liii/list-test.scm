@@ -1475,6 +1475,11 @@ reduce完全按照SRFI-1规范实现，正确处理所有边界情况和错误�
     '(a b 1 2 3 4))
   => 6)
 
+(let* ((proc (lambda (x) (list x (* x 2))))
+       (input '(1 2 3))
+       (expected '(1 2 2 4 3 6)))
+  (check (append-map proc input) => expected))
+  
 (let* ((proc (lambda (x y) (list (+ x y) (- x y))))
        (list1 '(5 8 10))
        (list2 '(3 2 7))
