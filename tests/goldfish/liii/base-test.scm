@@ -742,6 +742,48 @@ boolean?
 (check-false (integer? '(1 2 3)))   ; 列表
 
 #|
+exact-integer?
+判断一个数值是否为精确整数。
+
+语法
+----
+(exact-integer? obj)
+
+参数
+----
+obj : any
+任意类型的对象。
+
+返回值
+-----
+boolean?
+如果 obj 是精确数值且为整数返回 #t，否则返回 #f。
+
+示例
+----
+(exact-integer? 42)        => #t
+(exact-integer? -42)       => #t
+(exact-integer? #e42.0)    => #t
+(exact-integer? 42.0)      => #f
+(exact-integer? 1/2)       => #f
+(exact-integer? 1+2i)      => #f
+(exact-integer? "42")      => #f
+(exact-integer? #t)        => #f
+(exact-integer? 'symbol)   => #f
+|#
+
+(check-true (exact-integer? 42))        ; 精确整数
+(check-true (exact-integer? -42))       ; 精确负数
+(check-true (exact-integer? 0))         ; 零
+(check-true (exact-integer? #e42.0))    ; 精确浮点数转换为整数
+(check-false (exact-integer? 42.0))     ; 不精确整数
+(check-false (exact-integer? 1/2))      ; 有理数
+(check-false (exact-integer? 3.14))     ; 不精确浮点数
+(check-false (exact-integer? 1+2i))     ; 复数
+(check-false (exact-integer? "42"))     ; 字符串
+(check-false (exact-integer? #t))       ; 布尔值
+(check-false (exact-integer? 'symbol))  ; 符号
+#|
 exact?
 判断一个数是否是精确数。
 
