@@ -2748,28 +2748,6 @@ string-fold是一种累加器函数，用于从左到右处理字符串字符。
 空字符串直接返回初始累加器值knil。
 支持可选的start/end参数限定处理范围。
 
-示例
-----
-统计字符：
-(string-fold (lambda (c count) (+ count 1)) 0 "hello") => 5
-
-构建字符列表：
-(string-fold cons '() "abc") => '(#\c #\b #\a)
-
-过滤特定字符：
-(string-fold 
-  (lambda (c acc) (if (char=? c #\l) (+ acc 1) acc))
-  0 "hello") => 2
-
-反向累加：
-(string-fold (lambda (c str) (string-append str (string c))) "" "abc") => "abc"
-
-范围限定：
-(string-fold (lambda (c acc) (+ acc 1)) 0 "hello" 1 4) => 3
-
-累加求和：
-(string-fold (lambda (c total) (+ total (char->integer c))) 0 "AB") => 131
-
 错误处理
 ----
 type-error 当proc不是procedure?类型时
@@ -2816,24 +2794,6 @@ string-fold-right与string-fold的主要区别在于遍历顺序：
 - string-fold-right: 从右到左（high indices to low）
 与常规fold类似，fold-right有时可以提供更自然的右结合构建方式。
 常用于需要逆序处理字符串的场景。
-
-示例
-----
-正向字符收集：
-(string-fold-right cons '() "abc") => '(#\a #\b #\c)
-
-反向字符串：
-(string-fold-right (lambda (c acc) (string-append (string c) acc)) "" "abc") => "cba"
-
-数学累加：
-(string-fold-right (lambda (c acc) (+ acc 1)) 0 "xyz") => 3
-
-范围处理：
-(string-fold-right cons '() "abcdef" 2 5) => '(#\c #\d #\e)
-
-与string-fold对比：
-(string-fold (lambda (c acc) (cons c acc)) '() "abc") => '(#\c #\b #\a)
-(string-fold-right (lambda (c acc) (cons c acc)) '() "abc") => '(#\a #\b #\c)
 
 错误处理
 ----
