@@ -70,14 +70,8 @@ if (== (count $args) 0) {
     cd $workspace_dir
 }
 
-claude config add allowedTools "Bash(git:*)"
-claude config add allowedTools "Edit"
-claude config add allowedTools "Bash(xmake:*)"
-claude config add allowedTools "Bash(./bin/goldfish:*)"
-claude config add allowedTools "Bash(bin/goldfish:*)"
-claude config add allowedTools "Bash(grep:*)"
-claude config add allowedTools "Bash(find:*)"
-claude config add allowedTools "Bash(echo:*)"
+# 权限配置已迁移到.claude/settings.json文件中
+# 无需在此处配置allowedTools
 
 # 检查ccr命令是否存在
 if $platform:is-windows {
