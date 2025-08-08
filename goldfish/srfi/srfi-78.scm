@@ -111,6 +111,19 @@
       (check:write expected-result)
       (newline))
 
+    (define (report-location-and-stacktrace location-info call-stack)
+      (unless (and (string=? "unknown" (car location-info))
+                   (zero? (cadr location-info)))
+        (display "; position: ")
+        (display (car location-info))
+        (display ":")
+        (display (cadr location-info))
+        (newline))
+      (display "; stacktrace:")
+      (newline)
+      (display call-stack)
+      (newline))
+
     (define (check-passed? expected-total-count)
       (and (= (length check:failed) 0)
            (= check:correct expected-total-count)))
@@ -138,17 +151,7 @@
                      (check:report-expression expression)
                      (check:report-actual-result actual-result)
                      (check:report-failed expected-result)
-                     (unless (and (string=? "unknown" (car location-info))
-                                  (zero? (cadr location-info)))
-                       (display "; position: ")
-                       (display (car location-info))
-                       (display ":")
-                       (display (cadr location-info))
-                       (newline))
-                     (display "; stacktrace: ")
-                     (newline)
-                     (display call-stack)
-                     (newline)
+                     (report-location-and-stacktrace location-info call-stack)
                      (check:add-failed! expression actual-result expected-result
                                        (car location-info) (cadr location-info) call-stack))))))
           ((100)
@@ -159,22 +162,13 @@
                  (begin (check:report-correct 1)
                         (check:add-correct!))
                  (let ((call-stack (check:get-stacktrace-safely)))
-                   (begin (check:report-failed expected-result)
-                          (unless (and (string=? "unknown" (car location-info))
-                                       (zero? (cadr location-info)))
-                            (display "; 位置: ")
-                            (display (car location-info))
-                            (display ":")
-                            (display (cadr location-info))
-                            (newline))
-                          (display "; 调用栈:")
-                          (newline)
-                          (display call-stack)
-                          (newline)
-                          (check:add-failed! expression 
-                                             actual-result 
-                                             expected-result
-                                             (car location-info) (cadr location-info) call-stack))))))
+                   (begin
+                     (check:report-failed expected-result)
+                     (report-location-and-stacktrace location-info call-stack)
+                     (check:add-failed! expression 
+                                        actual-result 
+                                        expected-result
+                                        (car location-info) (cadr location-info) call-stack))))))
           (else (error "unrecognized check:mode" check:mode)))))
 
     (define-macro (check expr => expected)
