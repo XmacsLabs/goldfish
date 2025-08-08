@@ -22,7 +22,7 @@
     ; R7RS 6.2: Numbers
     square exact inexact max min floor s7-floor ceiling s7-ceiling truncate s7-truncate
     round s7-round floor-quotient gcd lcm s7-lcm modulo boolean=? exact-integer-sqrt
-    numerator denominator
+    numerator denominator exact-integer?
     ; R7RS 6.4: list
     pair? cons car cdr set-car! set-cdr! caar cadr cdar cddr
     null? list? make-list list length append reverse list-tail
@@ -229,6 +229,9 @@
         (if (= square-b n)
             (values b 0)
             (values b (- n square-b)))))
+
+    (define (exact-integer? n)
+      (and (number? n) (exact? n) (integer? n)))
 
     (define (boolean=? obj1 obj2 . rest)
       (define (same-boolean obj rest)
