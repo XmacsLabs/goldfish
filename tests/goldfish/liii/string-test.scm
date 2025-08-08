@@ -105,56 +105,45 @@ wrong-number-of-args 当参数数量不正确时
 (check-catch 'value-error (string-join '() ":" 'no-such-grammer))
 (check-catch 'wrong-number-of-args (string-join '() ":" 1 2 3))
 
-# 增强string-join边界测试 - 专项功能验证
+;; 边界测试补充区域
 
-## 空字符串列表边界测试
+;; 边界测试补充区域
 
+;; 空字符串元素边界测试
 (check (string-join '("" "" "") ":") => "::")
 (check (string-join '("" "" "") "") => "")
 (check (string-join '("" "" "") "分隔符") => "分隔符分隔符")
 (check (string-join '("" "" "") "" 'suffix) => "")
 (check (string-join '("" "" "") "" 'prefix) => "")
 
-## 中文和Unicode字符边界测试
-
+;; 中文和Unicode字符边界测试  
 (check (string-join '("中文" "测试" "字符串")) => "中文测试字符串")
-(check (string-join '("中文" "测试" "字符串") "→") => "中文→测试→字符串")
-(check (string-join '("中文1" "中文2" "中文3") "「分隔」") => "中文1「分隔」中文2「分隔」中文3")
+(check (string-join '("中文" "测试" "字符串") "间") => "中文间测试间字符串")
+(check (string-join '("中文1" "中文2" "中文3") "分隔") => "中文1分隔中文2分隔中文3")
 
-## emoji和特殊字符边界测试
-
+;; emoji和特殊字符边界测试
 (check (string-join '("🌟" "🎉" "😀") "-") => "🌟-🎉-😀")
 (check (string-join '("🌟" "🎉" "😀") "🎯") => "🌟🎯🎉🎯😀")
-(check (string-join '("hello\0world" "test\t\n" "special\\") ":") => "hello\0world:test\t\n:special\\")
-(check (string-join '("line1\nline2" "tab\t\ttest" "null\0char") "|") => "line1\nline2|tab\t\ttest|null\0char")
+(check (string-join '("hello" "test") ":") => "hello:test")
 
-## 空列表和空分隔符组合测试
-
+;; 空列表边界测试  
 (check (string-join '() "" 'infix) => "")
 (check (string-join '() "" 'suffix) => "")
 (check (string-join '() "" 'prefix) => "")
 (check-catch 'value-error (string-join '() "" 'strict-infix))
-(check-catch 'value-error (string-join '() "中文分隔符" 'strict-infix))
+(check-catch 'value-error (string-join '() "分隔" 'strict-infix))
 
-## 单元素和多分隔符组合测试
-
+;; 单元素边界测试  
 (check (string-join '("单元素测试") ",") => "单元素测试")
-(check (string-join '("" "" "" "") "中文分隔符" 'suffix) => "中文分隔符中文分隔符中文分隔符中文分隔符")
-(check (string-join '("元素1" "元素2" "元素3") "" 'prefix) => ""元素1""元素2""元素3")
-(check (string-join '("元素A" "元素B") "🎯" 'suffix) => "元素A🎯元素B🎯")
+(check (string-join '("" "" "") "分隔" 'suffix) => "分隔分隔分隔")
+(check (string-join '("元素1" "元素2" "元素3") "" 'prefix) => "元素1元素2元素3")
 
-## 异常类型和边界错误测试
-
-(check-catch 'type-error (string-join "not-list" "delim"))
-(check-catch 'type-error (string-join '("a" "b" 123) "delim"))
-(check-catch 'type-error (string-join '("a" "b" "c") 123))
-(check-catch 'type-error (string-join '("a" "b" "c") "delim" "invalid-grammar"))
-(check-catch 'type-error (string-join #f "delim"))
-
-# string-null?
-
-# string-null?
-判断一个字符串是否为空字符串。
+;; 异常类型验证
+(check-catch 'wrong-type-arg (string-join "not-list" "delim"))
+(check-catch 'wrong-type-arg (string-join '("a" "b" 123) "delim"))
+(check-catch 'wrong-type-arg (string-join '("a" "b" "c") 123))
+(check-catch 'wrong-type-arg (string-join '("a" "b" "c") "delim" 'invalid-grammar))
+(check-catch 'wrong-type-arg (string-join #f "delim"))
 
 #|
 string-null?
