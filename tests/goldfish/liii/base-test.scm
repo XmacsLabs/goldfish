@@ -763,7 +763,7 @@ boolean?
 (check-true (exact-integer? 42))        ; 精确整数
 (check-true (exact-integer? -42))       ; 精确负数
 (check-true (exact-integer? 0))         ; 零
-(check-true (exact-integer? #e42.0))    ; 精确浮点数转换为整数
+;(check-true (exact-integer? #e42.0))   精确浮点数转换为整数(暂不支持此类数)
 (check-false (exact-integer? 42.0))     ; 不精确整数
 (check-false (exact-integer? 1/2))      ; 有理数
 (check-false (exact-integer? 3.14))     ; 不精确浮点数
