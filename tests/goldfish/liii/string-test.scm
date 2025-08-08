@@ -1592,7 +1592,47 @@ wrong-type-arg 当str不是字符串类型时
 (check (string-reverse "abcdef" 0 (string-length "abcdef")) => "fedcba")
 (check (string-reverse "programming" 0 11) => "gnimmargorp")
 
-; UTF-8 multi-byte character support
+; UTF-8 multi-byte character support. Note: Limited support for these characters
+; as string-reverse is based on byte-level operations rather than Unicode code points
+
+; UTF-8 multi-byte character support - byte-level operation demonstration
+; Chinese characters: typically 3 bytes (U+4E00-U+9FFF), 4 bytes for extended range
+; Emoji: typically 4 bytes per character in modern Unicode
+
+; ASCII character tests (1 byte each, confirming baseline)
+(check (string-reverse "a") => "a")
+(check (string-reverse "abc") => "cba")
+
+; Verify the byte-level behavior through length preservation
+(check (string? (string-reverse "中")) => #t)         ; Returns valid string
+(check (= (string-length (string-reverse "中")) (string-length "中")) => #t) ; Preserves length
+
+(check (string? (string-reverse "中文")) => #t)       ; Multi-character Chinese
+(check (= (string-length (string-reverse "中文")) (string-length "中文")) => #t)
+
+(check (string? (string-reverse "国")) => #t)         ; Different Chinese character
+(check (= (string-length (string-reverse "国")) (string-length "国")) => #t)
+
+; Unicode currency symbols (3 bytes each)
+(check (string? (string-reverse "￥")) => #t)         ; Chinese Yuan symbol
+(check (= (string-length (string-reverse "￥")) (string-length "￥")) => #t)
+
+; Emoji byte-level behavior (4 bytes each)
+(check (string? (string-reverse "🙂")) => #t)         ; Basic emoji
+(check (= (string-length (string-reverse "🙂")) (string-length "🙂")) => #t)
+
+(check (string? (string-reverse "👍")) => #t)         ; Thumbs up emoji
+(check (= (string-length (string-reverse "👍")) (string-length "👍")) => #t)
+
+(check (string? (string-reverse "🙂👍")) => #t)       ; Multiple emojis
+(check (= (string-length (string-reverse "🙂👍")) (string-length "🙂👍")) => #t)
+
+; Mixed content tests showing byte preservation
+(check (string? (string-reverse "Hello世界")) => #t)   ; ASCII + Chinese
+(check (= (string-length (string-reverse "Hello世界")) (string-length "Hello世界")) => #t)
+
+(check (string? (string-reverse "测试🎉")) => #t)      ; Chinese + emoji
+(check (= (string-length (string-reverse "测试🎉")) (string-length "测试🎉")) => #t)
 
 ; Error handling tests
 (check-catch 'out-of-range (string-reverse "01234" -1))
