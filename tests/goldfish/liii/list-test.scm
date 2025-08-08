@@ -1452,17 +1452,17 @@ reduce完全按照SRFI-1规范实现，正确处理所有边界情况和错误�
   (check (reduce string-append "" '("hello" " " "world")) => "world hello")
 
 ; 无效参数类型测试
-(check-catch 'type-error (reduce + 0 123))
+(check-catch 'wrong-type-arg (reduce + 0 123))
 (check-catch 'type-error (reduce "not-a-proc" 0 '(1 2 3)))
-(check-catch 'type-error (reduce + 0 "not-a-list"))
+(check-catch 'wrong-type-arg (reduce + 0 "not-a-list"))
 
 ; 多参数列表操作测试
-(check (reduce list '() '(a b c d)) => '(d c b a))
+(check (reduce list '() '(a b c d)) => '(d (c (b a))))
 (check (reduce cons '() '(1 2 3)) => '(3 2 . 1))
 
 ; 嵌套结构处理测试
-(check (reduce append '() '((a b) (c d) (e f))) => '(a b c d e f))
-(check (reduce append '() '((1) (2 3) (4 5 6))) => '(1 2 3 4 5 6))
+(check (reduce append '() '((a b) (c d) (e f))) => '(e f c d a b))
+(check (reduce append '() '((1) (2 3) (4 5 6))) => '(4 5 6 2 3 1))
 
 (check (reduce-right + 0 '(1 2 3 4)) => 10)
 (check (reduce-right + 0 '()) => 0)
