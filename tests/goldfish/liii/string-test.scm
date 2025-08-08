@@ -195,6 +195,48 @@ type-error 当str不是字符串类型时
 (check-catch 'type-error (string-null? #\a))
 (check-catch 'type-error (string-null? (list "a")))
 
+;; === 任务2：类型检查验证增强测试 ===
+;; 中文文档补充：
+;; string-null? 函数对非字符串输入的处理明确如下：
+;; - 严格检查输入是否为字符串类型，任何非字符串都会引发'type-error异常
+;; - 错误消息格式为"string-null?: expected string"并显示实际输入值
+;; - 空字符串定义：仅当字符串长度为0时返回#t，不受字符内容影响
+;; - Unicode兼容性：正确处理各种Unicode字符的空值检查
+;; - 极端边界：极大空字符串正确行为，特殊值nil和#f严格引发类型错误
+
+;; 测试空字符串的边界情况
+(check-true (string-null? ""))
+(check-true (string-null? (make-string 0)))
+
+;; 测试各种字符类型的空值检查（字符边界验证）
+(check-false (string-null? "a"))
+(check-false (string-null? "中"))          ;; 中文字符单字符非空验证
+(check-false (string-null? "文"))          ;; 中文字符非空验证  
+(check-false (string-null? "☀"))        ;; emoji字符非空验证
+(check-false (string-null? "❤"))        ;; emoji字符非空验证
+(check-false (string-null? "\t"))        ;; 特殊转义字符非空验证
+(check-false (string-null? "\n"))        ;; 回车字符非空验证
+(check-false (string-null? "\x00;"))       ;; null字符非空验证
+(check-false (string-null? (string #\null)))
+
+;; 测试不同类型输入的异常处理增强
+(check-catch 'type-error (string-null? #f))      ;; 布尔假值
+(check-catch 'type-error (string-null? '()))    ;; 空列表
+(check-catch 'type-error (string-null? (vector)))   ;; 空向量
+(check-catch 'type-error (string-null? (make-vector 0)))   ;; 空向量多种形式
+(check-catch 'type-error (string-null? 0))      ;; 数字零
+(check-catch 'type-error (string-null? 42))     ;; 正整数
+(check-catch 'type-error (string-null? 3.14))   ;; 浮点数
+
+;; 测试大性能字符串的空值验证（性能边界测试）
+(let ((large-str (make-string 1000000 #\A)))
+  (check-false (string-null? large-str)))
+
+;; 测试各种边界空字符串
+(check-true (string-null? ""))
+(check-true (string-null? (string)))
+(check-true (string-null? (string-copy "")))
+
 #|
 string-every
 检查字符串中的每个字符是否都满足给定的条件。
