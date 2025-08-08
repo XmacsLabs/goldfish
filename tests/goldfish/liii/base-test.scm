@@ -24,7 +24,6 @@
 
 (check-set-mode! 'report-failed)
 
-
 #|
 eqv?
 判断两个对象是否值相等，根据R7RS规范，eqv?在不同类型的数据上表现不同。
@@ -759,17 +758,6 @@ obj : any
 boolean?
 如果 obj 是精确数值且为整数返回 #t，否则返回 #f。
 
-示例
-----
-(exact-integer? 42)        => #t
-(exact-integer? -42)       => #t
-(exact-integer? #e42.0)    => #t
-(exact-integer? 42.0)      => #f
-(exact-integer? 1/2)       => #f
-(exact-integer? 1+2i)      => #f
-(exact-integer? "42")      => #f
-(exact-integer? #t)        => #f
-(exact-integer? 'symbol)   => #f
 |#
 
 (check-true (exact-integer? 42))        ; 精确整数
@@ -783,6 +771,7 @@ boolean?
 (check-false (exact-integer? "42"))     ; 字符串
 (check-false (exact-integer? #t))       ; 布尔值
 (check-false (exact-integer? 'symbol))  ; 符号
+
 #|
 exact?
 判断一个数是否是精确数。

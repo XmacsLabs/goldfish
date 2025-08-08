@@ -230,8 +230,7 @@
             (values b 0)
             (values b (- n square-b)))))
 
-    (define (exact-integer? n)
-      (and (number? n) (exact? n) (integer? n)))
+    (define exact-integer? integer?)
 
     (define (boolean=? obj1 obj2 . rest)
       (define (same-boolean obj rest)
