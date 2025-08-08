@@ -91,6 +91,7 @@ boolean?
 (check (nan? '()) => #f)
 (check (nan? '(1 2 3)) => #f)
 (check (nan? #\a) => #f)
+
 #|
 sqrt
 计算给定数值的平方根。
