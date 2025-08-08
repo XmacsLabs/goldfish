@@ -4,6 +4,7 @@
 # Ignore the .gitignore file itself
 /.gitignore
 .xmake/
+.claude/
 build/
 bin/goldfish
 bin/goldfish_repl

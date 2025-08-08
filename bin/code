@@ -2,6 +2,7 @@
 
 use path
 use str
+use platform
 
 # 只有在有参数的情况下才检查main分支
 if (== (count $args) 0) {
@@ -23,7 +24,12 @@ if (== (count $args) 0) {
 # 检查是否真的在main分支上，才进行拉取
 if (eq (git rev-parse --abbrev-ref HEAD) main) {
     # 检查是否存在origin远程仓库
-    var has_origin = ?(git remote get-url origin > /dev/null 2>&1)
+    var has_origin
+    if (not $platform:is-windows) {
+        set has_origin = ?(git remote get-url origin)
+    } else {
+        set has_origin = ?(git remote get-url origin > /dev/null 2>&1)
+    }
     
     # 如果origin不存在，添加origin并拉取，然后移除origin
     if (not $has_origin) {
@@ -49,7 +55,12 @@ if (== (count $args) 0) {
     # 有参数，使用 worktree 创建新工作空间
     var branch_name = (path:base $args[0])
     var timestamp = (date +%Y%m%d_%H%M%S_%N)
-    var workspace_dir = /tmp/goldfish/$branch_name/$timestamp
+    var workspace_dir
+    if (not $platform:is-windows) {
+        set workspace_dir = (get-env TEMP)/goldfish/$branch_name/$timestamp
+    } else {
+        set workspace_dir = /tmp/goldfish/$branch_name/$timestamp
+    }
     
     # 使用git worktree创建新的工作空间
     echo "Creating workspace with git worktree: $workspace_dir"
@@ -69,9 +80,18 @@ claude config add allowedTools "Bash(find:*)"
 claude config add allowedTools "Bash(echo:*)"
 
 # 检查ccr命令是否存在
-if (not ?(which ccr)) {
-    echo "Error: ccr command not found. Please install ccr."
-    exit 1
+if (not $platform:is-windows) {
+    # Unix/Linux系统使用which命令
+    if (not ?(which ccr)) {
+        echo "Error: ccr command not found. Please install ccr."
+        exit 1
+    }
+} else {
+    # Windows系统使用where命令
+    if (not ?(where ccr)) {
+        echo "Error: ccr command not found. Please install ccr."
+        exit 1
+    }
 }
 
 # 启动ccr code
