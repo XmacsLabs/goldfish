@@ -3033,3 +3033,23 @@ boolean : 如果str以prefix开头返回#t，否则返回#f。
 type-error 当参数不是字符串类型时。
 |#
 
+; string-prefix? 作为前缀检查函数的验证测试-(check-true (string-prefix? "" "hello"))
+(check-true (string-prefix? "h" "hello"))
+(check-true (string-prefix? "he" "hello"))
+(check-true (string-prefix? "hel" "hello"))
+(check-true (string-prefix? "hell" "hello"))
+(check-true (string-prefix? "hello" "hello"))
+(check-true (string-prefix? "test" "test123"))
+(check-true (string-prefix? "" ""))
+(check-true (string-prefix? "a" "a"))
+(check-true (string-prefix? "abc" "abc"))
+
+; string-prefix? 边界测试-(check-true (string-prefix? "hello" "hello world"))
+(check-true (string-prefix? "hi" "hi there"))
+
+; string-prefix? 返回false的情况-(check-false (string-prefix? "ello" "hello"))
+(check-false (string-prefix? "world" "hello"))
+(check-false (string-prefix? "x" "hello"))
+(check-false (string-prefix? "hello" "hi"))
+
+(check-report)
