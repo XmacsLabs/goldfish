@@ -19,7 +19,132 @@
         (liii list))
 
 (check-set-mode! 'report-failed)
-      
+
+#|
+pair?
+判断一个对象是否为序对（pair）结构。
+
+语法
+----
+(pair? obj)
+
+参数
+----
+obj : any
+任意类型的对象，包括原子、序对、列表、向量、字节向量、字符、字符串、符号、过程等。
+
+返回值
+-----
+boolean?
+如果 obj 是序对类型则返回 #t，否则返回 #f。
+
+说明
+----
+判断一个对象是否为序对的基本谓词函数。序对是 Scheme 中最基础的数据结构，
+由两个元素组成，形成一个双向的单元结构。序对可以是显式的点对形式，
+如 (a . b)，也可以是非空列表，因为所有非空列表本质上都是由序对链组成的。
+
+边界条件
+--------
+- 空列表 '() 返回 #f
+- 单元素列表 '(a) 返回 #t（列表由一个序对构成）
+- 显式点对 (a . b) 返回 #t
+- 嵌套深度不影响结果：深度嵌套列表都返回 #t
+- 任意类型的 car/cdr 值不影响返回值判断
+
+性能特征
+--------
+- 时间复杂度：O(1) 恒定时间完成类型检查
+- 空间复杂度：O(1) 不消耗额外栈空间
+- 递归深度：0，这是一个基本谓词不会触发递归
+
+数据类型兼容性
+-------------
+- 数值类型：整数、实数、复数都返回 #f
+- 符号类型：普通符号和关键字符号都返回 #f  
+- 字符串：所有字符串类型返回 #f
+- 字符：所有字符类型返回 #f
+- 布尔值：#t 和 #f 都返回 #f
+- 过程：所有过程对象返回 #f
+- 向量和字节向量：返回 #f
+- 空列表：返回 #f
+- 非空列表：返回 #t
+- 点对结构：返回 #t
+
+注意
+----
+- 空列表 '() 不是序对
+- 字符串、数字、布尔值等原子类型都不是序对
+- 所有非空列表都被认为是序对，因为列表本质上是由序对链构成的
+- 这一过程对存储的 car/cdr 值内容不做任何验证
+
+|#
+
+;; 测试 pair? 对各种序对结构的判断
+(check-true (pair? '(a . b)))             ; 显式点对形式的序对
+(check-true (pair? '(a b c)))             ; 列表内部由序对构成
+(check-true (pair? (cons 1 2)))           ; 使用 cons 创建的序对
+(check-true (pair? (cons 'a (cons 'b 'c))))  ; 嵌套序对结构
+
+(check-false (pair? 'a))
+(check-false (pair? 123))
+(check-false (pair? "string"))
+(check-false (pair? #t))
+(check-false (pair? #f))
+
+;; pair? 边界条件测试补充
+;; 基本边界值验证
+(check-false (pair? '()))                                ; 空列表边界
+(check-true (pair? '(single)))                           ; 单元素列表边界
+(check-true (pair? (cons 1 '())))                        ; 单元素cons构建
+(check-true (pair? '(())))                               ; 空列表作为唯一元素
+
+;; 嵌套深度边界测试
+(check-true (pair? '((((a))))) )                         ; 深度嵌套列表
+(check-true (pair? (cons 'a (cons 'b (cons 'c '())))))   ; 深层cons链
+(check-true (pair? '(a b (c d (e)))))                    ; 中度嵌套绑定
+
+;; 数据类型兼容性边界测试
+(check-false (pair? 42))                                ; 整数类型
+(check-false (pair? 3.14))                              ; 实数类型
+(check-false (pair? 1+2i))                              ; 复数类型
+(check-false (pair? #t))                                ; 布尔真
+(check-false (pair? #f))                                ; 布尔假  
+(check-false (pair? "hello"))                           ; 字符串
+(check-false (pair? #\a))                               ; 字符
+(check-false (pair? 'symbol))                           ; 符号
+(check-false (pair? 'quote))                            ; 特殊符号
+(check-false (pair? +))                                 ; 过程对象
+(check-false (pair? length))                            ; 过程对象
+
+;; 复杂对象边界测试
+(check-false (pair? #(1 2 3)))                          ; 向量对象
+(check-false (pair? #u8(1 2 3)))                        ; 字节向量
+(check-false (pair? (lambda (x) x)))                    ; lambda过程
+(check-false (pair? #<eof>))                            ; 特殊对象
+
+;; 极端边界测试
+(check-true (pair? (cons '() '())))                      ; 空列表组成的序对
+(check-true (pair? (cons #t #f)))                        ; 布尔值组成序对
+(check-true (pair? (cons 42 "string")))                  ; 混合类型序对
+(check-true (pair? (cons (cons 1 2) (cons 3 4))))        ; 嵌套序对组合
+
+;; 构造器多样化测试
+(check-true (pair? (list 1 2)))                          ; list构造器
+(check-true (pair? (append '(1) '(2))))                  ; append结果
+(check-true (pair? (cons 'a (list 'b 'c))))               ; 混合构造器
+
+;; 结构性边界验证
+(check-false (pair? 'a))                                 ; 原子符号
+(check-false (pair? 1000000))                            ; 极大整数边界
+(check-false (pair? "中文测试"))                            ; 多字节字符串
+(check-false (pair? #\newline))                          ; 特殊字符
+
+;; Improper list 边界验证
+(check-true (pair? '(a . b)))                            ; 基础点对形式
+(check-true (pair? '(a b . c)))                          ; 扩展点对形式
+(check-true (pair? '(a b c . d)))                        ; 多点结构
+
 #|
 car
 car 是 Scheme 内置函数，用于获取序对的第一个元素（第一个分量）。该函数是 R7RS 标准的基本列表操作函数之一。
@@ -553,6 +678,210 @@ wrong-type-arg
 ;; edge cases for nested structure
 (check (caar '((((a))))) => '((a)))
 (check (caar '((((1 2))) 3 4 5)) => '((1 2)))
+
+#|
+list?
+判断给定的对象是否为列表类型。
+
+语法
+----
+(list? obj)
+
+参数
+----
+obj : any
+任意类型的对象
+
+返回值
+------
+boolean?
+如果obj是列表类型则返回#t，否则返回#f
+
+说明
+----
+1. 用于检查对象是否为列表类型
+2. 能够正确识别空列表 '() 和非空列表
+3. 能够处理嵌套列表和点对结构
+4. 能够处理循环列表等特殊结构
+
+特殊规则
+---------
+- 空列表 '() 被认为是列表
+- 点对结构如果形成完整列表则也认为是列表
+- 其他类型如数字、字符串、向量、布尔值等都返回#f
+  
+
+错误处理
+---------
+wrong-number-of-args
+当参数数量不为1时抛出错误。
+|#
+
+;; list? 基本测试：空列表和各种简单列表
+(check-true (list? '()))                        ; 空列表
+(check-true (list? '(a)))                       ; 单元素
+(check-true (list? '(a b c)))                   ; 多元素普通列表
+(check-true (list? '(1 2 3 4 5)))               ; 数字长列表
+
+;; list? 嵌套和复杂结构测试
+(check-true (list? '(a (b) c)))                 ; 嵌套列表  
+(check-true (list? '((a) (b) (c))))             ; 多层嵌套
+(check-true (list? '((a b) (c d))))             ; 深度嵌套
+(check-true (list? '(1 (2 (3 (4))))))           ; 多级嵌套
+
+;; list? 混合类型元素测试
+(check-true (list? '(a 1 "string" #t)))         ; 混合类型
+(check-true (list? '((list 1 2) (vector 3 4)))) ; 包含复杂对象
+
+;; list? 点和边界情况
+(check-true (list? '(1 . 2)))                   ; 点对结构
+(check-true (list? '(a b . c)))                 ; 非完整列表边缘情况
+
+;; list? 特殊结构测试
+(check-true (list? (let ((x '(1 2 3)))          ; 循环列表
+                    (set-cdr! (cddr x) x) x)))
+
+;; list? 非列表类型测试 - 全面覆盖
+(check-false (list? #t))                        ; 布尔值
+(check-false (list? #f))                        ; 布尔值
+(check-false (list? 123))                       ; 整数
+(check-false (list? -456))                      ; 负整数
+(check-false (list? 0))                         ; 零
+(check-false (list? 3.14))                      ; 浮点数
+(check-false (list? "Hello"))                   ; 字符串
+(check-false (list? ""))                        ; 空字符串
+(check-false (list? '#()))                       ; 空向量
+(check-false (list? '#(1 2 3)))                  ; 向量
+(check-false (list? '12345))                    ; 数字符号
+(check-false (list? 'symbol))                   ; 符号
+(check-false (list? #\a))                       ; 字符
+
+;; list? 错误处理测试
+(check-catch 'wrong-number-of-args (list?))
+(check-catch 'wrong-number-of-args (list? #t #f))
+
+#|
+make-list
+创建一个包含指定数量指定元素的列表。
+
+语法
+----
+(make-list n fill)
+(make-list n)
+
+参数
+----
+n : exact?
+    精确的非负整数，表示要创建的列表长度。
+    必须满足 0 <= n < (expt 2 32) 或实现定义的最大允许列表长度。
+
+fill : any (可选)
+    填充到列表中的元素值。如果不指定，默认为 #f。
+    可以是任何类型的 Scheme 对象。
+
+返回值
+------
+list?
+    一个长度为 n 的列表，所有元素都为 fill 值。
+    当 n 为 0 时返回空列表 '()。
+
+说明
+----
+1. 这是一个特殊形式的列表构造器，用于快速创建包含重复元素的列表
+2. 可为任何非负整数长度创建列表，包括空列表
+3. 填充元素可以是任意类型，包括复杂对象
+4. 使用 make-list 构造的列表是全新的单个对象，不会与其他对象共享结构
+5. 主要用于初始化数据结构、生成测试数据等场景
+
+边界条件
+--------
+- n = 0 返回空列表 '()
+- n = 1 返回单元素列表 '(fill)
+- 支持极大 n 值（受实现最大允许列表长度限制）
+- fill 值可以是各种数据类型和复杂对象
+- 允许列表内容为嵌套结构或函数对象
+
+性能特征
+--------
+- 时间复杂度：O(n)，线性时间构建列表
+- 空间复杂度：O(n)，需要为n个新序对分配内存
+- 递归深度：无递归，使用循环构造
+- 内存分配：创建n个新的序对对象
+
+数据类型兼容性
+-------------
+- fill值支持：数值、布尔、字符、字符串、符号、过程、列表、向量、字节向量等所有类型
+- n值约束：整数类型，建议为正整数和0
+- 返回值：统一的列表类型
+
+限制说明
+--------
+- fill参数是值传递，复杂对象会复制引用，不会创建新对象
+- 极大n值可能导致内存不足
+- 不适合动态增长的列表构建
+
+示例
+----
+(make-list 3 'x) => '(x x x)
+(make-list 0 'x) => '()
+(make-list 2 42) => '(42 42)
+(make-list 4 #\a) => '(#\a #\a #\a #\a)
+|#
+
+;; make-list 基本功能测试
+(check (make-list 0) => '())                                   ; 空列表边界
+(check (make-list 0 'x) => '())                               ; 指定填充值的空列表
+(check (make-list 1) => '(#f))                                ; 默认填充值单元素
+(check (make-list 1 'singleton) => '(singleton))             ; 自定义填充值单元素
+(check (make-list 3) => '(#f #f #f))                          ; 默认填充值多元素
+(check (make-list 3 'repeat) => '(repeat repeat repeat))      ; 自定义填充值多元素
+
+;; make-list 边界值测试
+(check (make-list 10 'a) => '(a a a a a a a a a a))           ; 到长度边界
+(check (make-list 100 'X) => (make-list 100 'X))             ; 大长度验证一致性
+
+;; make-list 数据类型兼容性测试
+(check (make-list 4 42) => '(42 42 42 42))                    ; 整数类型
+(check (make-list 3 3.14) => '(3.14 3.14 3.14))               ; 实数类型
+(check (make-list 2 #t) => '(#t #t))                          ; 布尔值
+(check (make-list 2 #\a) => '(#\a #\a))                      ; 字符类型
+(check (make-list 2 "hello") => '("hello" "hello"))           ; 字符串类型
+(check (make-list 3 'symbol) => '(symbol symbol symbol))      ; 符号类型
+(check (make-list 2 #(1 2 3)) => `(#(1 2 3) #(1 2 3)))      ; 向量对象
+(check (make-list 2 #u8(255 128)) => `(#u8(255 128) #u8(255 128))) ; 字节向量
+
+;; make-list 复杂数据类型测试
+(check (make-list 3 '()) => '(() () ()))                      ; 空列表作为填充值
+(check (make-list 2 '(a b c)) => '((a b c) (a b c)))          ; 列表作为填充值
+(check (make-list 2 (list 1 2 3)) => '((1 2 3) (1 2 3)))      ; 列表作为填充值
+
+;; make-list 极端边界测试
+(check (make-list 2 (cons 'a 'b)) => '((a . b) (a . b)))      ; 点对结构作为填充值
+(check (make-list 1 (make-list 3 'x)) => '((x x x)))          ; 嵌套make-list调用
+(check (make-list 3 (make-list 0)) => '(() () ()))            ; 空列表嵌套
+
+;; make-list 函数和过程对象的基本验证
+(check (length (make-list 3 car)) => 3)                      ; 验证长度
+(check (list? (make-list 2 car)) => #t)                      ; 验证类型
+(check (procedure? (car (make-list 2 car))) => #t)           ; 验证过程对象正确性
+
+;; make-list 动态边界验证
+(let ((n 5))
+  (let ((result (make-list n 'test)))
+    (check (length result) => n)
+    (check (list? result) => #t)
+    (check (car result) => 'test))) ; 简单的元素验证
+
+;; make-list 内存结构验证  
+(let ((lst1 (make-list 3 'same))
+      (lst2 (make-list 3 'same)))
+  (check (equal? lst1 lst2) => #t)                          ; 内容相同
+  (check (eq? lst1 lst2) => #f))                             ; 不是同一对象
+
+;; 错误参数类型测试
+(check-catch 'wrong-number-of-args (make-list))               ; 参数不足
+(check-catch 'wrong-number-of-args (make-list 3 'x 'extra))   ; 参数过多
+(check-catch 'out-of-range (make-list -1 'x))                ; 负数长度错误
 
 #|
 list-ref
@@ -1167,6 +1496,5 @@ wrong-type-arg
 (check (member "1" '(0 "1" 2 3)) => '("1" 2 3))
 (check (member '(1 . 2) '(0 (1 . 2) 3)) => '((1 . 2) 3))
 (check (member '(1 2) '(0 (1 2) 3)) => '((1 2) 3))
-
 
 (check-report)
