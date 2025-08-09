@@ -1648,4 +1648,161 @@ wrong-type-arg
 (check (member '(1 . 2) '(0 (1 . 2) 3)) => '((1 . 2) 3))
 (check (member '(1 2) '(0 (1 2) 3)) => '((1 2) 3))
 
+#|
+list-tail
+返回列表从指定索引位置开始的子列表。该函数是R7RS标准的基本列表操作函数之一。
+
+语法
+----
+(list-tail list k)
+
+参数
+----
+list : pair?
+    非空列表或点结构。可以是普通列表、嵌套列表、点对结构或包含任意类型元素的列表。
+    空列表 '() 作为参数将根据索引值产生不同的异常。
+
+k : exact?
+    非负的精确整数，表示开始截取子列表的起始索引位置。
+    必须满足 0 <= k <= (length list)。
+
+返回值
+------
+list?
+    从列表第k个元素（索引从0开始）开始直到列表末尾的子列表。
+    当 k = 0 时返回整个原列表。
+    当 k = length(list) 时返回空列表 '()。
+
+说明
+----
+1. list-tail返回从列表index位置开始的尾部子列表
+2. 适用于所有类型的列表结构：普通列表、嵌套列表、点对结构
+3. 索引从0开始计数，与list-ref等其他列表函数保持一致
+4. 不会修改原始列表，始终返回新的列表结构
+5. 可以正确处理嵌套结构和复杂数据结构
+
+边界条件
+--------
+- k = 0: 返回原列表本身
+- k = length(list): 返回空列表 '()
+- k > length(list): 抛出out-of-range异常
+- k < 0: 抛出out-of-range异常
+- 空列表参数：除k=0外都需抛出异常
+- 点对结构：正确处理非正规列表
+
+性能特征
+--------
+- 时间复杂度：O(k)，需要遍历前k个元素
+- 空间复杂度：O(1)，结果与原始列表共享尾部结构
+- 内存分配：不创建新对象，直接共享原始结构
+- 对于长列表，性能与索引位置成正比
+
+数据类型兼容性
+---------------
+- 支持任意类型的列表元素：数字、字符串、字符、符号、布尔值、过程等
+- 支持嵌套列表和多层次结构
+- 支持点对结构和非正规列表(dotted lists)
+- 支持空列表、单元素列表、长列表
+
+错误处理
+--------
+out-of-range
+    当索引k为负数或超出列表长度时抛出错误。
+wrong-type-arg
+    当list参数不是列表类型时抛出错误。
+
+示例
+----
+(list-tail '(a b c d) 0) => '(a b c d)
+(list-tail '(a b c d) 2) => '(c d)
+(list-tail '(a b c d) 4) => '()
+(list-tail '((a b) (c d) (e f)) 1) => '((c d) (e f))
+|#
+
+;; list-tail 基本功能测试
+(check (list-tail '(a b c d) 0) => '(a b c d))
+(check (list-tail '(a b c d) 1) => '(b c d))
+(check (list-tail '(a b c d) 2) => '(c d))
+(check (list-tail '(a b c d) 3) => '(d))
+(check (list-tail '(a b c d) 4) => '())
+
+;; 边界值测试
+(check (list-tail '(single) 0) => '(single))
+(check (list-tail '(single) 1) => '())
+(check (list-tail '() 0) => '())
+
+;; 各种数据类型边界测试
+(check (list-tail '(42 "text" #t 'symbol) 1) => '("text" #t 'symbol))
+(check (list-tail '(#	 #
+ #) 0) => '(#	 #
+ #))
+(check (list-tail '(#	 #
+ #) 2) => '(#))
+(check (list-tail '(#	 #
+ #) 3) => '())
+
+;; 子列表包含嵌套结构测试
+(check (list-tail '((a b) (c d) (e f)) 0) => '((a b) (c d) (e f)))
+(check (list-tail '((a b) (c d) (e f)) 1) => '((c d) (e f)))
+(check (list-tail '((a b) (c d) (e f)) 2) => '((e f)))
+(check (list-tail '((a b) (c d) (e f)) 3) => '())
+
+;; 复杂数据结构测试
+(check (list-tail '(() a b 3 c) 1) => '(a b 3 c))
+(check (list-tail '(#(1 2) 'symbol "string" 3.14) 1) => '('symbol "string" 3.14))
+(check (list-tail '(1 "hello" (nested list) #t 3.14) 2) => '((nested list) #t 3.14))
+
+;; 长列表性能测试
+(check (list-tail '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20) 15) => '(16 17 18 19 20))
+(check (list-tail '(1 2 3 4 5 6 7 8 9 10) 10) => '())
+(check (list-tail '(1 2 3 4 5 6 7 8 9 10) 0) => '(1 2 3 4 5 6 7 8 9 10))
+(check (list-tail '(a b c d e f g h i j k l m n o p q r s t) 0) => '(a b c d e f g h i j k l m n o p q r s t))
+
+;; 列表与点对结构测试
+(check (list-tail '(a . (b . (c . ()))) 0) => '(a b c))
+(check (list-tail '(a . (b . (c . ()))) 1) => '(b c))
+(check (list-tail '(a . (b . (c . ()))) 2) => '(c))
+(check (list-tail '(a . (b . (c . ()))) 3) => '())
+
+;; 字符串列表测试
+(check (list-tail '("hello" "world" "test") 1) => '("world" "test"))
+(check (list-tail '("first" "second" "third" "fourth") 3) => '("fourth"))
+
+;; 符号列表测试
+(check (list-tail '(define lambda if cond else) 2) => '(if cond else))
+(check (list-tail '(car cdr cons list) 4) => '())
+
+;; 数值列表测试
+(check (list-tail '(1 2 3 4 5) 1) => '(2 3 4 5))
+(check (list-tail '(1 2 3 4 5) 3) => '(4 5))
+(check (list-tail '(1 2 3 4 5) 5) => '())
+(check (list-tail '(1.5 2.5 3.5 4.5) 2) => '(3.5 4.5))
+
+;; Unicode字符串列表测试
+(check (list-tail '("中文" "美国" "日本" "韩国") 2) => '("日本" "韩国"))
+(check (list-tail '("测试" "验证" "调试") 0) => '("测试" "验证" "调试"))
+
+;; 构造器函数结果测试
+(check (list-tail (list 1 2 3 4 5) 2) => '(3 4 5))
+(check (list-tail (append '(1 2) '(3 4 5)) 3) => '(4 5))
+(check (list-tail (reverse '(5 4 3 2 1)) 2) => '(3 4 5))
+
+;; 错误参数测试
+(check-catch 'wrong-type-arg (list-tail 123 0))
+(check-catch 'wrong-type-arg (list-tail "string" 1))
+(check-catch 'wrong-type-arg (list-tail #t 0))
+
+;; 索引越界测试
+(check-catch 'out-of-range (list-tail '(a b c) -1))
+(check-catch 'out-of-range (list-tail '(a b c) 4))
+(check-catch 'out-of-range (list-tail '(a) 2))
+(check-catch 'out-of-range (list-tail '() 1))
+(check-catch 'out-of-range (list-tail '(single) 2))
+
+;; 参数错误测试
+(check-catch 'wrong-number-of-args (list-tail))
+(check-catch 'wrong-number-of-args (list-tail '(a b c)))
+(check-catch 'wrong-number-of-args (list-tail '(a b c) 1 2))
+(check-catch 'wrong-number-of-args (list-tail '(a b c) 1 2 3))
+
 (check-report)
