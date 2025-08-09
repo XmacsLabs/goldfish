@@ -63,6 +63,32 @@ type-error
       )
 
 #|
+datetime%weekday
+计算当前日期是星期几。
+
+语法
+----
+(datetime-object :weekday)
+
+参数
+----
+无参数
+
+返回值
+------
+整数 (0-6)
+0 表示星期一 (Monday)，1 表示星期二 (Tuesday)，...，6 表示星期日 (Sunday)。
+
+使用示例
+--------
+((datetime :year 2024 :month 1 :day 1) :weekday) => 0  ; 2024年1月1日是星期一
+
+额外信息
+------
+这是基于 Zeller 公式的变体的计算结果，已调整为周一为起始日。
+|#
+
+#|
 datetime@is-type-of
 判断给定对象是否为 datetime 类型的实例。
 通过 define-case-class 实现的类型检查方法，无需额外实现。
@@ -85,6 +111,21 @@ boolean
 ----
 这是通过 define-case-class 宏自动生成的方法，所有案例类都具备类似功能。
 |#
+
+    (define (weekday-for-date year month day)
+      (let* ((m (if (> month 2) month (+ month 12)))
+             (y (if (> month 2) year (- year 1)))
+             (century (quotient y 100))
+             (year-of-century (remainder y 100)))
+        (modulo
+         (- (+ day
+               (quotient (+ (* 13 (- m 2)) 13) 5)
+               year-of-century
+               (quotient year-of-century 4)
+               (quotient century 4)
+               (* 5 century) 6)
+            3)
+         7)))
 
     (define-case-class datetime
       ((year integer?)
@@ -378,6 +419,9 @@ years=0 时返回原日期副本。
                     :second second
                     :micro-second micro-second)))
 
+      (define (%weekday)
+        (weekday-for-date year month day))
+
       )
 
     (define-case-class date
@@ -458,6 +502,36 @@ string
                                         (pad2 month) "-"
                                         (pad2 day))))
              date-part))
+
+#|
+date%weekday
+计算当前日期是星期几。
+
+语法
+----
+(date-object :weekday)
+
+参数
+----
+无参数
+
+返回值
+------
+整数 (0-6)
+0 表示星期一 (Monday)，1 表示星期二 (Tuesday)，...，6 表示星期日 (Sunday)。
+
+使用示例
+--------
+((date :year 2024 :month 1 :day 1) :weekday) => 0  ; 2024年1月1日是星期一
+((date :year 2024 :month 2 :day 29) :weekday) => 2 ; 2024年2月29日是星期四
+
+额外信息
+------
+这是基于 Zeller 公式的变体的计算结果，已调整为周一为起始日。
+|#
+
+      (define (%weekday)
+        (weekday-for-date year month day))
 
       )
 

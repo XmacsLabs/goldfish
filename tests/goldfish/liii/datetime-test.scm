@@ -17,6 +17,8 @@
 (import (liii check)
         (liii datetime))
 
+(check-set-mode! 'report-failed)
+
 ;; Example for type-error
 (check-catch 'type-error (years :leap? 2024.1))
 
@@ -233,6 +235,16 @@
 
 (check ((date :year 2025 :month 4 :day 12) :to-string)
   => "2025-04-12")
+
+;; Test weekday functionality
+(check ((datetime :year 2024 :month 1 :day 1) :weekday)  => 0)  ; Monday
+(check ((datetime :year 2024 :month 1 :day 2) :weekday)  => 1)  ; Tuesday
+(check ((datetime :year 2024 :month 1 :day 7) :weekday)  => 6)  ; Sunday
+(check ((datetime :year 2024 :month 1 :day 8) :weekday)  => 0)  ; Monday
+
+(check ((date :year 2024 :month 1 :day 1) :weekday)  => 0)  ; Monday
+(check ((date :year 2024 :month 1 :day 7) :weekday)  => 6)  ; Sunday
+(check ((date :year 2024 :month 2 :day 29) :weekday)  => 2)  ; Thursday (2024 is leap year)
 
 (check-report)
 
