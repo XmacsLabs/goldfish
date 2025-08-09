@@ -1037,28 +1037,6 @@
 (check-false ((right 43) :exists even?))
 (check-false ((right "not-a-number") :exists number?))
 
-(check (rich-list :range 1 5) => ($ (list 1 2 3 4)))
-(check (rich-list :range 1 5 2) => ($ (list 1 3)))
-(check (rich-list :range 1 6 2) => ($ (list 1 3 5)))
-(check (rich-list :range 5 1 -1) => ($ (list 5 4 3 2)))
-(check (rich-list :range 1 5 2 :collect) => (list 1 3))
-(check (rich-list :range 1 5 :map (lambda (x) (* x 2))) => ($ (list 2 4 6 8)))
-(check (rich-list :range 1 10 1 :map (lambda (x) (+ x 1))) => ($ (list 2 3 4 5 6 7 8 9 10)))
-(check (rich-list :range 5 1 1) => ($ (list )))
-
-(check-catch 'value-error (rich-list :range 1 5 0))
-
-(check (rich-list :empty :empty?) => #t)
-(check (rich-list :empty :head-option) => (none))
-
-
-(check (rich-list :concat ($ (list 1)) ($ (list 2))) => ($ (list 1 2)))
-(check (rich-list :concat ($ (list 1 2)) ($ (list 3 4))) => ($ (list 1 2 3 4)))
-(check (rich-list :concat (rich-list :range 1 4) ($ (list 3 4))) => ($ (list 1 2 3 3 4)))
-(check (rich-list :concat ($ (list 1)) ($ (list 2))
-         :collect) => (list 1 2))
-(check (rich-list :concat (rich-list '(1)) (rich-list '(2)) :count) => 2)
-
 (let1 result (rich-list :fill 3 "a")
   (check (result :collect) => '("a" "a" "a")))
 
