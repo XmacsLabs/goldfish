@@ -17,53 +17,10 @@
 (import (liii check)
         (scheme base)
         (liii rich-list)
-        (liii lang))
+        (liii lang)
+        (liii error))
 
 (check-set-mode! 'report-failed)
-
-#|
-rich-list@range  
-生成一个从起始值到结束值（不包含结束值）的数字序列。
-
-语法
-----
-(rich-list :range start end . step-and-args)
-
-参数
-----
-start : integer
-序列的起始值（包含）。
-
-end : integer  
-序列的结束边界值（不包含）。
-
-step-and-args : list
-可选参数，可包含步进值和链式方法参数。
-
-返回值
------
-以rich-list形式返回生成的整数序列。
-
-功能
-----
-根据起始值、结束值和步进值生成连续整数序列。步进可以是正数或负数，但不能为0。
-
-边界条件
---------
-- 步进为0时抛出 value-error 异常
-- 步进为正且 start ≥ end：返回空列表
-- 步进为负且 start ≤ end：返回空列表
-
-性能特征
---------
-- 时间复杂度：O(n)，n为序列长度
-- 空间复杂度：O(n)，存储生成的完整序列
-
-兼容性
-------
-- 支持链式调用
-- 所有参数必须为整数
-|#
 
 ;; 基本测试
 (check ((rich-list :range 1 5) :collect) => (list 1 2 3 4))
@@ -84,44 +41,6 @@ step-and-args : list
 (check ((rich-list :range 1 1) :length) => 0)
 
 
-#|
-rich-list@empty
-创建一个空的rich-list对象。
-
-语法
-----
-(rich-list :empty . args)
-
-参数
-----
-args : list
-可选参数，用于链式调用其他方法。
-
-返回值
------
-以rich-list形式返回空的列表对象。
-
-说明
-----
-创建一个不包含任何元素的rich-list。通常用于初始化数据结构或作为
-链式操作的起点。
-
-边界条件
---------
-- 无参数调用：返回空列表
-- 支持链式调用：可与其他rich-list方法组合使用
-
-性能特征
---------
-- 时间复杂度：O(1)，固定时间创建
-- 空间复杂度：O(1)，创建空对象所需最小内存
-
-兼容性
-------
-- 与所有rich-list实例方法兼容
-- 支持链式调用模式
-|#
-
 ;; 基本测试
 (check ((rich-list :empty) :collect) => ())
 (check ((rich-list :empty) :length) => 0)
@@ -135,49 +54,6 @@ args : list
 (check ((rich-list :empty :reverse) :collect) => ())
 (check ((rich-list :fill 0 'x) :collect) => ())
 
-#|
-rich-list@concat
-连接两个rich-list为一个新的rich-list。
-
-语法
-----
-(rich-list :concat lst1 lst2 . args)
-
-参数
-----
-lst1 : rich-list
-第一个待连接的rich-list。
-
-lst2 : rich-list
-第二个待连接的rich-list。
-
-args : list
-可选参数，用于链式调用其他方法。
-
-返回值
------
-以rich-list形式返回连接后的列表对象。
-
-功能
-----
-将两个rich-list的内容合并为一个新的rich-list，保持原有顺序。
-第一个列表的元素在前，第二个列表的元素在后。
-
-边界条件
---------
-- 任一为空列表时仍正常连接
-- 支持链式调用模式
-
-性能特征
---------
-- 时间复杂度：O(n)，n为两个列表长度之和
-- 空间复杂度：O(n)，创建新的合并列表
-
-兼容性
-------
-- 与所有rich-list方法兼容
-- 支持链式调用模式
-|#
 
 ;; 基本测试 - 两个非空列表连接
 (check ((rich-list :concat (rich-list '(1 2 3)) (rich-list '(4 5 6))) :collect) => '(1 2 3 4 5 6))
@@ -205,5 +81,36 @@ args : list
   (rich-list :concat lst1 lst2)
   (check (lst1 :collect) => '(1 2 3))
   (check (lst2 :collect) => '(4 5 6)))
+
+;; 基本测试
+(check ((rich-list :fill 5 'x) :collect) => '(x x x x x))
+(check ((rich-list :fill 3 10) :collect) => '(10 10 10))
+(check ((rich-list :fill 1 "hello") :collect) => '("hello"))
+(check ((rich-list :fill 0 'a) :collect) => ())
+
+;; 边界测试 - n为0
+(check ((rich-list :fill 0 1) :collect) => ())
+(check ((rich-list :fill 0 "test") :collect) => ())
+
+;; 边界测试 - 不同类型的elem
+(check ((rich-list :fill 3 #t) :collect) => '(#t #t #t))
+(check ((rich-list :fill 2 '(1 2 3)) :collect) => '((1 2 3) (1 2 3)))
+(check ((rich-list :fill 4 #f) :collect) => '(#f #f #f #f))
+
+;; 边界测试 - 基础边界
+(check ((rich-list :fill 0 'test) :collect) => ())
+(check ((rich-list :fill 1 42) :collect) => '(42))
+(check ((rich-list :fill 100 0) :length) => 100)
+(check ((rich-list :fill 2 '(nested list)) :collect) => '((nested list) (nested list)))
+
+;; 边界测试 - 异常处理
+(check-catch 'value-error (rich-list :fill -1 'x))
+(check-catch 'value-error (rich-list :fill -3 42))
+
+;; 链式调用测试
+(check ((rich-list :fill 4 2) :map (lambda (x) (* x 3)) :collect) => '(6 6 6 6))
+(check ((rich-list :fill 3 'a) :length) => 3)
+(check ((rich-list :fill 5 1) :filter (lambda (x) (= x 1)) :collect) => '(1 1 1 1 1))
+(check ((rich-list :fill 3 100) :take 2 :collect) => '(100 100))
 
 (check-report)

@@ -12,6 +12,50 @@
 
     (define-case-class rich-list ((data list?))
 
+#|
+rich-list@range  
+生成一个从起始值到结束值（不包含结束值）的数字序列。
+
+语法
+----
+(rich-list :range start end . step-and-args)
+
+参数
+----
+start : integer
+序列的起始值（包含）。
+
+end : integer  
+序列的结束边界值（不包含）。
+
+step-and-args : list
+可选参数，可包含步进值和链式方法参数。
+
+返回值
+-----
+以rich-list形式返回生成的整数序列。
+
+功能
+----
+根据起始值、结束值和步进值生成连续整数序列。步进可以是正数或负数，但不能为0。
+
+边界条件
+--------
+- 步进为0时抛出 value-error 异常
+- 步进为正且 start ≥ end：返回空列表
+- 步进为负且 start ≤ end：返回空列表
+
+性能特征
+--------
+- 时间复杂度：O(n)，n为序列长度
+- 空间复杂度：O(n)，存储生成的完整序列
+
+兼容性
+------
+- 支持链式调用
+- 所有参数必须为整数
+|#
+
       (define (@range start end . step-and-args)
         (chain-apply (if (null? step-and-args) 
                          step-and-args 
@@ -35,14 +79,143 @@
                (let ((cnt (ceiling (/ (- end start) step-size))))
                  (rich-list (iota cnt start step-size))))))))
 
+#|
+rich-list@empty
+创建一个空的rich-list对象。
+
+语法
+----
+(rich-list :empty . args)
+
+参数
+----
+args : list
+可选参数，用于链式调用其他方法。
+
+返回值
+-----
+以rich-list形式返回空的列表对象。
+
+说明
+----
+创建一个不包含任何元素的rich-list。通常用于初始化数据结构或作为
+链式操作的起点。
+
+边界条件
+--------
+- 无参数调用：返回空列表
+- 支持链式调用：可与其他rich-list方法组合使用
+
+性能特征
+--------
+- 时间复杂度：O(1)，固定时间创建
+- 空间复杂度：O(1)，创建空对象所需最小内存
+
+兼容性
+------
+- 与所有rich-list实例方法兼容
+- 支持链式调用模式
+|#
+
       (define (@empty . args)
         (chain-apply args
           (rich-list (list ))))
+
+#|
+rich-list@concat
+连接两个rich-list为一个新的rich-list。
+
+语法
+----
+(rich-list :concat lst1 lst2 . args)
+
+参数
+----
+lst1 : rich-list
+第一个待连接的rich-list。
+
+lst2 : rich-list
+第二个待连接的rich-list。
+
+args : list
+可选参数，用于链式调用其他方法。
+
+返回值
+-----
+以rich-list形式返回连接后的列表对象。
+
+功能
+----
+将两个rich-list的内容合并为一个新的rich-list，保持原有顺序。
+第一个列表的元素在前，第二个列表的元素在后。
+
+边界条件
+--------
+- 任一为空列表时仍正常连接
+- 支持链式调用模式
+
+性能特征
+--------
+- 时间复杂度：O(n)，n为两个列表长度之和
+- 空间复杂度：O(n)，创建新的合并列表
+
+兼容性
+------
+- 与所有rich-list方法兼容
+- 支持链式调用模式
+|#
 
       (define (@concat lst1 lst2 . args)
         (chain-apply args
           (rich-list (append (lst1 :collect) (lst2 :collect)))))
 
+#|
+rich-list@fill
+创建一个指定长度、所有元素都为指定值的rich-list。
+
+语法
+----
+(rich-list :fill n elem)
+
+参数
+----
+n : integer
+要创建的列表长度，必须为非负整数。
+
+elem : any
+列表中要填充的元素值，可以是任意类型的对象。
+
+返回值
+-----
+以rich-list形式返回包含n个相同元素的新列表。
+
+功能
+----
+创建一个长度为n的rich-list，其中所有元素的值都设置为elem。
+当n为0时返回空列表，当n为负数时抛出value-error异常。
+
+边界条件
+--------
+- n为负数时：抛出value-error异常，错误信息为"n cannot be negative"
+- n为0时：返回空rich-list
+- n为整数且n≥0时：正常创建指定长度的rich-list
+- elem可以是任意类型的Scheme对象，包括函数、列表、数字等
+
+异常处理
+--------
+当参数n不是非负整数时，函数会抛出value-error类型异常。
+此异常属于(liii error)模块，可在测试环境通过check-catch捕获验证。
+
+性能特征
+--------
+- 时间复杂度：O(n)，需要逐个创建n个元素
+- 空间复杂度：O(n)，需要为n个元素分配内存存储新列表
+
+兼容性
+------
+- 支持与rich-list所有实例方法链式调用
+- 返回的rich-list对象可与现有的实例方法无缝组合
+|#
       (define (@fill n elem)
         (cond
           ((< n 0)
