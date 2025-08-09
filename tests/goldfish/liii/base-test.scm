@@ -2748,50 +2748,6 @@ wrong-number-of-args
 (check (make-list 0) => (list ))
 
 #|
-pair?
-判断一个对象是否为序对（pair）结构。
-
-语法
-----
-(pair? obj)
-
-参数
-----
-obj : any
-任意类型的对象
-
-返回值
------
-boolean?
-如果 obj 是序对类型则返回 #t，否则返回 #f。
-
-说明
-----
-判断一个对象是否为序对的基本谓词函数。序对是 Scheme 中最基础的数据结构，
-由两个元素组成，形成一个双向的单元结构。序对可以是显式的点对形式，
-如 (a . b)，也可以是非空列表，因为所有非空列表本质上都是由序对链组成的。
-
-注意
-----
-- 空列表 '() 不是序对
-- 字符串、数字、布尔值等原子类型都不是序对
-- 所有非空列表都被认为是序对，因为列表本质上是由序对链构成的
-
-|#
-
-;; 测试 pair? 对各种序对结构的判断
-(check-true (pair? '(a . b)))             ; 显式点对形式的序对
-(check-true (pair? '(a b c)))             ; 列表内部由序对构成
-(check-true (pair? (cons 1 2)))           ; 使用 cons 创建的序对
-(check-true (pair? (cons 'a (cons 'b 'c))))  ; 嵌套序对结构
-
-(check-false (pair? 'a))
-(check-false (pair? 123))
-(check-false (pair? "string"))
-(check-false (pair? #t))
-(check-false (pair? #f))
-
-#|
 list?
 判断给定的对象是否为列表类型。
 
