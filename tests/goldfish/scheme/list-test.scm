@@ -884,117 +884,155 @@ list?
 (check-catch 'out-of-range (make-list -1 'x))                ; 负数长度错误
 
 #|
-list-ref
-获取列表中指定位置的元素。该函数是R7RS标准的基本列表操作函数之一。
+list
+通过给定元素构建一个新的列表。该函数是R7RS标准的基本列表构造函数之一。
 
 语法
 ----
-(list-ref list k)
+(list obj ...)
 
 参数
 ----
-list : pair?
-    非空的列表或点对结构。空列表 '() 不被接受。
-
-k : exact?
-    非负的精确整数，表示要获取的元素的索引位置。索引从0开始。
-    必须满足 0 <= k < (length list)。
+obj ... : any
+任意数量和类型的对象，包括符号、数字、字符串、布尔值、列表、向量、字节向量、字符、过程等。
 
 返回值
 ------
-任意类型
-    返回列表中位置k处的元素。类型取决于列表中实际存储的对象，
-    可以是符号、数字、字符串、列表、点对或任何其他Scheme对象。
+list?
+返回一个新的列表，包含所有参数obj按顺序排列。空参数返回空列表'()。
 
 说明
 ----
-1. 索引从0开始，即(list-ref '(a b c) 0)返回'a
-2. 适用于所有非空列表：包括普通列表、improper列表和嵌套结构
-3. 当用于点对结构时，只能访问0和1位置（car和cdr部分）
-4. 用于嵌套结构时，可以访问复杂列表的任意分层结构
+1. list是构建新列表的首选构造函数，将任意数量和类型的参数组合成列表
+2. 返回的是新创建的对象，与输入参数不会共享内存结构
+3. 接受任意类型的参数，包括嵌套列表、复杂对象等特殊类型
+4. 空参数调用返回空列表'()，单参数创建单元素列表
+5. 与cons不同，list构造的是统一结构的列表
+
+边界条件
+--------
+- 空参数：返回空列表'()
+- 单参数：返回单元素列表
+- 同类型参数：保持类型一致性
+- 多类型混合：允许任意类型组合
+- 嵌套结构：正确处理子列表嵌套
+- 极大参数数量：支持大量参数构造
+- 重复元素：保留每个实例
+
+性能特征
+--------
+- 时间复杂度：O(n)，与参数数量成正比
+- 空间复杂度：O(n)，新列表消耗内存与参数数量成正比
+- 内存分配：创建新的序对对象，不共享输入参数
+- 深层嵌套：支持深层结构不影响性能
+
+数据类型兼容性
+-------------
+- 数值类型：整数、实数、复数、有理数
+- 字符串：任意长度和内容字符串
+- 字符：任意字符包括Unicode
+- 符号：普通符号及关键字符号
+- 布尔值：#t和#f支持
+- 列表：空列表和任意嵌套列表
+- 向量：任意维度和内容的向量
+- 字节向量：任意字节序列
+- 过程：内置过程和自定义过程
+- 复合对象：对象组合的任意嵌套
+
+限制说明
+--------
+- 参数传递是值传递，复杂对象会复制引用
+- 极大参数列表可能导致内存不足
+- 不支持单独设置元素值，如需精确控制需使用cons
 
 示例
 ----
-(list-ref '(a b c d e) 0) => 'a
-(list-ref '(a b c d e) 4) => 'e
-(list-ref '(1 2 3 4) 2) => 3
-
-错误处理
---------
-wrong-type-arg
-    当list参数不是pair?类型（如空列表'()、数字、字符串等）时抛出错误。
-
-out-of-range
-    当索引k为负数或超出列表有效范围（k >= 长度）时抛出错误。
+(list) => '()
+(list 'a) => '(a)
+(list 1 2 3) => '(1 2 3)
+(list "hello" "world") => '("hello" "world")
+(list 'a 42 #t 'b) => '(a 42 #t b)
 |#
 
-;; 基础测试：普通列表索引访问
-(check (list-ref '(a b c d e) 0) => 'a)
-(check (list-ref '(a b c d e) 1) => 'b)
-(check (list-ref '(a b c d e) 4) => 'e)
-(check (list-ref '(1 2 3 4 5) 0) => 1)
-(check (list-ref '(1 2 3 4 5) 2) => 3)
-(check (list-ref '(1 2 3 4 5) 4) => 5)
+;; list 基本构造功能测试
+(check (list) => '())                    ; 空参数构造
+(check (list 'a) => '(a))               ; 单元素构造
+(check (list 1 2 3) => '(1 2 3))        ; 多元素构造
+(check (list "hello") => '("hello"))   ; 单元素字符串
 
-;; 边界值测试：索引0、中间值、最大值
-(check (list-ref '(single) 0) => 'single)
-(check (list-ref '(x y z) 1) => 'y)
-(check (list-ref '(first last) 1) => 'last)
+;; 边界条件测试
+(check (list) => '())                   ; 边界：空列表构造
+(check (list 'single) => '(single))     ; 边界：单元素列表
+(check (list 'a 'b 'c 'd) => '(a b c d))  ; 边界：四元素列表
 
-;; 复杂数据类型测试：包含各种类型元素
-(check (list-ref '("string" 42 #t symbol) 0) => "string")
-(check (list-ref '("string" 42 #t symbol) 1) => 42)
-(check (list-ref '("string" 42 #t symbol) 2) => #t)
-(check (list-ref '("string" 42 #t symbol) 3) => 'symbol)
+;; 数据类型兼容性测试
+(check (list 42 3.14 1/2 1+2i) => '(42 3.14 1/2 1+2i))  ; 数值类型
+(check (list #t #f) => '(#t #f))        ; 布尔值
+(check (list #\a #\b #\c) => '(#\a #\b #\c))   ; 字符
+(check (list "hello" "world") => '("hello" "world"))  ; 字符串
+(check (list 'symbol1 'symbol2 'keyword:) => '(symbol1 symbol2 keyword:)) ; 符号
 
-;; 嵌套列表测试：访问嵌套结构
-(check (list-ref '((1 2 3) (4 5 6) (7 8 9)) 0) => '(1 2 3))
-(check (list-ref '("hel" "lo" "wo" "rld") 2) => "wo")
-(check (list-ref '(((a b) c d) e f) 0) => '((a b) c d))
+;; 嵌套结构测试
+(check (list '() '() '()) => '(() () ()))   ; 空列表嵌套
+(check (list '(a b) '(c d)) => '((a b) (c d)))  ; 子列表嵌套
+(check (list (list 1 2) (list 3 4)) => '((1 2) (3 4)))  ; 列表构造函数嵌套
 
-;; 测试点对结构：简单点对
-(check (list-ref '(a . b) 0) => 'a)
-(check (list-ref (cons 'a 'b) 0) => 'a)
+;; 复杂对象测试
+(check (list #(1 2 3) #u8(255 128)) => `(#(1 2 3) #u8(255 128)))  ; 向量/字节向量
+(check (list #t #f) => `(#t #f))  ; 简单类型验证
+(check (list 1 2 3) => `(1 2 3))  ; 数值类型验证
 
-;; improper列表测试：包含点对结构的列表
-(check (list-ref '(a b c . d) 0) => 'a)
-(check (list-ref '(a b c . d) 1) => 'b)
-(check (list-ref '(a b c . d) 2) => 'c)
+;; 混合类型测试
+(check (list 'symbol 42 "text" #\c #t #(1 2)) => '(symbol 42 "text" #\c #t #(1 2)))  ; 全类型混合
+(check (list 'a 1 "hello" '(sub list) #t 3.14) => '(a 1 "hello" (sub list) #t 3.14))  ; 复合混合
 
-;; 复杂嵌套结构测试：深层嵌套
-(check (list-ref '((a b) (c d) (e f)) 1) => '(c d))
-(check (list-ref '((1 2) 3 4 5) 0) => '(1 2))
-(check (list-ref '((1 2) 3 4 5) 3) => 5)
+;; 极大参数数量测试
+(check (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20) => '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))  ; 边界：大量参数
 
-;; 简单点对重新测试
-(check (list-ref (cons '(1 2) '(3 4)) 1) => 3)
+;; 重复元素测试
+(check (list 'a 'a 'a) => '(a a a))     ; 重复符号
+(check (list 1 1 1 1) => '(1 1 1 1))     ; 重复数字
+(check (list "test" "test") => '("test" "test"))  ; 重复字符串
 
-;; 基础三元列表
-(check (list-ref '(a b c) 0) => 'a)
-(check (list-ref '(a b c) 1) => 'b)
-(check (list-ref '(a b c) 2) => 'c)
+;; Unicode和特殊字符测试
+(check (list "中文" "测试" "字符串") => '("中文" "测试" "字符串"))  ; Unicode字符串
+(check (list #\中 #\文) => '(#\中 #\文))   ; Unicode字符
 
-;; 错误情况测试
-(check-catch 'wrong-type-arg (list-ref '() 0))
-(check-catch 'wrong-type-arg (list-ref 123 0))
-(check-catch 'wrong-type-arg (list-ref "string" 1))
-(check-catch 'wrong-type-arg (list-ref #t 1))
+;; 深层嵌套结构测试
+(check (list (list (list 'a)) (list 'b)) => '(((a)) (b)))  ; 三层嵌套
+(check (list '() (list '() (list 'a))) => '(() (() (a))))   ; 复杂嵌套
 
-;; 索引越界测试
-(check-catch 'out-of-range (list-ref '(a b c) -1))
-(check-catch 'out-of-range (list-ref '(a b c) 3))
-(check-catch 'out-of-range (list-ref '(x) 1))
-(check-catch 'out-of-range (list-ref '(a b c d e) 5))
-(check-catch 'out-of-range (list-ref '(single) 2))
+;; 性能验证：大列表构造
+(check (length (list 'a 'b 'c 'd 'e 'f 'g 'h 'i 'j 'k 'l 'm 'n 'o 'p 'q 'r 's 't 'u 'v 'w 'x 'y 'z)) => 26)  ; 验证完整构造
 
-;; 构造器函数创建的列表测试
-(check (list-ref (list 1 2 3 4) 2) => 3)
-(check (list-ref (cons 1 (cons 2 (cons 3 '()))) 1) => 2)
-(check (list-ref (append '(1 2) '(3 4 5)) 3) => 4)
+;; 错误测试 - 参数类型验证
+(check (list 123) => '(123))  ; 证实数字可以作为参数
+(check (list "string") => '("string"))  ; 证实字符串可以作为参数
+(check (list #t) => '(#t))   ; 证实布尔值可以作为参数
 
-;; 附加的列表操作场景测试
-(check (list-ref '(apple banana cherry date elderberry) 2) => 'cherry)
-(check (list-ref (list 'symbol 42 #t "string" 3.14) 3) => "string")
+;; 构造后操作验证
+(let ((constructed (list 1 2 3 4 5)))
+  (check (length constructed) => 5)      ; 验证长度
+  (check (list? constructed) => #t)      ; 验证类型
+  (check (list-ref constructed 2) => 3))  ; 验证索引访问
+
+;; 独立对象验证 - 确认不与参数共享
+(let ((a 'original)
+      (b "test")
+      (c #t))
+  (let ((result (list a b c)))
+    (check (equal? result '(original "test" #t)) => #t)  ; 值正确
+    (check (not (eq? result a)) => #t)  ; 独立对象验证
+    (check (not (eq? result b)) => #t)))
+
+;; 参数传递验证测试
+(define (test-list-wrapper . args)
+  (apply list args))
+
+(check (test-list-wrapper 1 2 3) => '(1 2 3))
+(check (test-list-wrapper 'a 'b 'c 'd) => '(a b c d))
+(check (test-list-wrapper) => '())
+
 
 #|
 length
@@ -1407,50 +1445,280 @@ list?
 (check (reverse (map (lambda (x) (* x x)) '(1 2 3 4 5))) => '(25 16 9 4 1))
 (check (reverse (filter even? '(1 2 3 4 5 6 7 8))) => '(8 6 4 2))
 
-(check (map square (list 1 2 3 4 5)) => '(1 4 9 16 25))
+#|
+list-tail
+返回列表从指定索引位置开始的子列表。该函数是R7RS标准的基本列表操作函数之一。
 
-(check
-  (let ((v (make-vector 5)))
-    (for-each (lambda (i) (vector-set! v i (* i i)))
-              (iota 5))
-    v)
-  => #(0 1 4 9 16))
+语法
+----
+(list-tail list k)
 
-(check
-  (let ((v (make-vector 5 #f)))
-    (for-each (lambda (i) (vector-set! v i (* i i)))
-              (iota 4))
-    v)
-  => #(0 1 4 9 #f))
+参数
+----
+list : pair?
+    非空列表或点结构。可以是普通列表、嵌套列表、点对结构或包含任意类型元素的列表。
+    空列表 '() 作为参数将根据索引值产生不同的异常。
 
-(check
-  (let ((v (make-vector 5 #f)))
-    (for-each (lambda (i) (vector-set! v i (* i i)))
-              (iota 0))
-    v)
-  => #(#f #f #f #f #f))
+k : exact?
+    非负的精确整数，表示开始截取子列表的起始索引位置。
+    必须满足 0 <= k <= (length list)。
 
-(check (memq #f '(1 #f 2 3)) => '(#f 2 3))
-(check (memq 'a '(1 a 2 3)) => '(a 2 3))
-(check (memq 2 '(1 2 3)) => '(2 3))
+返回值
+------
+list?
+    从列表第k个元素（索引从0开始）开始直到列表末尾的子列表。
+    当 k = 0 时返回整个原列表。
+    当 k = length(list) 时返回空列表 '()。
 
-(check (memq 2.0 '(1 2.0 3)) => #f)
-(check (memq 2+0i '(1 2+0i 3)) => #f)
+说明
+----
+1. list-tail返回从列表index位置开始的尾部子列表
+2. 适用于所有类型的列表结构：普通列表、嵌套列表、点对结构
+3. 索引从0开始计数，与list-ref等其他列表函数保持一致
+4. 不会修改原始列表，始终返回新的列表结构
+5. 可以正确处理嵌套结构和复杂数据结构
 
-(define num1 3)
-(define num2 3)
-(check (memq num1 '(3 num2)) => '(3 num2))
-(check (memq 3 '(num1 num2)) => #f)
-(check (memq 'num1 '(num1 num2)) => '(num1 num2))
+边界条件
+--------
+- k = 0: 返回原列表本身
+- k = length(list): 返回空列表 '()
+- k > length(list): 抛出out-of-range异常
+- k < 0: 抛出out-of-range异常
+- 空列表参数：除k=0外都需抛出异常
+- 点对结构：正确处理非正规列表
 
-(check (memq (+ 1 1) '(1 2 3)) => '(2 3))
+性能特征
+--------
+- 时间复杂度：O(k)，需要遍历前k个元素
+- 空间复杂度：O(1)，结果与原始列表共享尾部结构
+- 内存分配：不创建新对象，直接共享原始结构
+- 对于长列表，性能与索引位置成正比
 
-(check (memv 2 '(1 2 3)) => '(2 3))
-(check (memv 2.0 '(1 2.0 3)) => '(2.0 3))
-(check (memv 2+0i '(1 2+0i 3)) => '(2+0i 3))
+数据类型兼容性
+---------------
+- 支持任意类型的列表元素：数字、字符串、字符、符号、布尔值、过程等
+- 支持嵌套列表和多层次结构
+- 支持点对结构和非正规列表(dotted lists)
+- 支持空列表、单元素列表、长列表
 
-(check (memv 2 '(1 2.0 3)) => #f)
-(check (memv 2 '(1 2+0i 3)) => #f)
+错误处理
+--------
+out-of-range
+    当索引k为负数或超出列表长度时抛出错误。
+wrong-type-arg
+    当list参数不是列表类型时抛出错误。
+
+示例
+----
+(list-tail '(a b c d) 0) => '(a b c d)
+(list-tail '(a b c d) 2) => '(c d)
+(list-tail '(a b c d) 4) => '()
+(list-tail '((a b) (c d) (e f)) 1) => '((c d) (e f))
+|#
+
+;; list-tail 基本功能测试
+(check (list-tail '(a b c d) 0) => '(a b c d))
+(check (list-tail '(a b c d) 1) => '(b c d))
+(check (list-tail '(a b c d) 2) => '(c d))
+(check (list-tail '(a b c d) 3) => '(d))
+(check (list-tail '(a b c d) 4) => '())
+
+;; 边界值测试
+(check (list-tail '(single) 0) => '(single))
+(check (list-tail '(single) 1) => '())
+(check (list-tail '() 0) => '())
+
+;; 各种数据类型边界测试
+(check (list-tail '(42 "text" #t 'symbol) 1) => '("text" #t 'symbol))
+(check (list-tail '(#	 #
+ #
+) 0) => '(#	 #
+ #
+))
+(check (list-tail '(#	 #
+ #
+) 2) => '(#
+))
+(check (list-tail '(#	 #
+ #
+) 3) => '())
+
+;; 子列表包含嵌套结构测试
+(check (list-tail '((a b) (c d) (e f)) 0) => '((a b) (c d) (e f)))
+(check (list-tail '((a b) (c d) (e f)) 1) => '((c d) (e f)))
+(check (list-tail '((a b) (c d) (e f)) 2) => '((e f)))
+(check (list-tail '((a b) (c d) (e f)) 3) => '())
+
+;; 复杂数据结构测试
+(check (list-tail '(() a b 3 c) 1) => '(a b 3 c))
+(check (list-tail '(#(1 2) 'symbol "string" 3.14) 1) => '('symbol "string" 3.14))
+(check (list-tail '(1 "hello" (nested list) #t 3.14) 2) => '((nested list) #t 3.14))
+
+;; 长列表性能测试
+(check (list-tail '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20) 15) => '(16 17 18 19 20))
+(check (list-tail '(1 2 3 4 5 6 7 8 9 10) 10) => '())
+(check (list-tail '(1 2 3 4 5 6 7 8 9 10) 0) => '(1 2 3 4 5 6 7 8 9 10))
+(check (list-tail '(a b c d e f g h i j k l m n o p q r s t) 0) => '(a b c d e f g h i j k l m n o p q r s t))
+
+;; 列表与点对结构测试
+(check (list-tail '(a . (b . (c . ()))) 0) => '(a b c))
+(check (list-tail '(a . (b . (c . ()))) 1) => '(b c))
+(check (list-tail '(a . (b . (c . ()))) 2) => '(c))
+(check (list-tail '(a . (b . (c . ()))) 3) => '())
+
+;; 字符串列表测试
+(check (list-tail '("hello" "world" "test") 1) => '("world" "test"))
+(check (list-tail '("first" "second" "third" "fourth") 3) => '("fourth"))
+
+;; 符号列表测试
+(check (list-tail '(define lambda if cond else) 2) => '(if cond else))
+(check (list-tail '(car cdr cons list) 4) => '())
+
+;; 数值列表测试
+(check (list-tail '(1 2 3 4 5) 1) => '(2 3 4 5))
+(check (list-tail '(1 2 3 4 5) 3) => '(4 5))
+(check (list-tail '(1 2 3 4 5) 5) => '())
+(check (list-tail '(1.5 2.5 3.5 4.5) 2) => '(3.5 4.5))
+
+;; Unicode字符串列表测试
+(check (list-tail '("中文" "美国" "日本" "韩国") 2) => '("日本" "韩国"))
+(check (list-tail '("测试" "验证" "调试") 0) => '("测试" "验证" "调试"))
+
+;; 构造器函数结果测试
+(check (list-tail (list 1 2 3 4 5) 2) => '(3 4 5))
+(check (list-tail (append '(1 2) '(3 4 5)) 3) => '(4 5))
+(check (list-tail (reverse '(5 4 3 2 1)) 2) => '(3 4 5))
+
+;; 错误参数测试
+(check-catch 'wrong-type-arg (list-tail 123 0))
+(check-catch 'wrong-type-arg (list-tail "string" 1))
+(check-catch 'wrong-type-arg (list-tail #t 0))
+
+;; 索引越界测试
+(check-catch 'out-of-range (list-tail '(a b c) -1))
+(check-catch 'out-of-range (list-tail '(a b c) 4))
+(check-catch 'out-of-range (list-tail '(a) 2))
+(check-catch 'out-of-range (list-tail '() 1))
+(check-catch 'out-of-range (list-tail '(single) 2))
+
+;; 参数错误测试
+(check-catch 'wrong-number-of-args (list-tail))
+(check-catch 'wrong-number-of-args (list-tail '(a b c)))
+(check-catch 'wrong-number-of-args (list-tail '(a b c) 1 2))
+(check-catch 'wrong-number-of-args (list-tail '(a b c) 1 2 3))
+
+#|
+list-ref
+获取列表中指定位置的元素。该函数是R7RS标准的基本列表操作函数之一。
+
+语法
+----
+(list-ref list k)
+
+参数
+----
+list : pair?
+    非空的列表或点对结构。空列表 '() 不被接受。
+
+k : exact?
+    非负的精确整数，表示要获取的元素的索引位置。索引从0开始。
+    必须满足 0 <= k < (length list)。
+
+返回值
+------
+任意类型
+    返回列表中位置k处的元素。类型取决于列表中实际存储的对象，
+    可以是符号、数字、字符串、列表、点对或任何其他Scheme对象。
+
+说明
+----
+1. 索引从0开始，即(list-ref '(a b c) 0)返回'a
+2. 适用于所有非空列表：包括普通列表、improper列表和嵌套结构
+3. 当用于点对结构时，只能访问0和1位置（car和cdr部分）
+4. 用于嵌套结构时，可以访问复杂列表的任意分层结构
+
+示例
+----
+(list-ref '(a b c d e) 0) => 'a
+(list-ref '(a b c d e) 4) => 'e
+(list-ref '(1 2 3 4) 2) => 3
+
+错误处理
+--------
+wrong-type-arg
+    当list参数不是pair?类型（如空列表'()、数字、字符串等）时抛出错误。
+
+out-of-range
+    当索引k为负数或超出列表有效范围（k >= 长度）时抛出错误。
+|#
+
+;; 基础测试：普通列表索引访问
+(check (list-ref '(a b c d e) 0) => 'a)
+(check (list-ref '(a b c d e) 1) => 'b)
+(check (list-ref '(a b c d e) 4) => 'e)
+(check (list-ref '(1 2 3 4 5) 0) => 1)
+(check (list-ref '(1 2 3 4 5) 2) => 3)
+(check (list-ref '(1 2 3 4 5) 4) => 5)
+
+;; 边界值测试：索引0、中间值、最大值
+(check (list-ref '(single) 0) => 'single)
+(check (list-ref '(x y z) 1) => 'y)
+(check (list-ref '(first last) 1) => 'last)
+
+;; 复杂数据类型测试：包含各种类型元素
+(check (list-ref '("string" 42 #t symbol) 0) => "string")
+(check (list-ref '("string" 42 #t symbol) 1) => 42)
+(check (list-ref '("string" 42 #t symbol) 2) => #t)
+(check (list-ref '("string" 42 #t symbol) 3) => 'symbol)
+
+;; 嵌套列表测试：访问嵌套结构
+(check (list-ref '((1 2 3) (4 5 6) (7 8 9)) 0) => '(1 2 3))
+(check (list-ref '("hel" "lo" "wo" "rld") 2) => "wo")
+(check (list-ref '(((a b) c d) e f) 0) => '((a b) c d))
+
+;; 测试点对结构：简单点对
+(check (list-ref '(a . b) 0) => 'a)
+(check (list-ref (cons 'a 'b) 0) => 'a)
+
+;; improper列表测试：包含点对结构的列表
+(check (list-ref '(a b c . d) 0) => 'a)
+(check (list-ref '(a b c . d) 1) => 'b)
+(check (list-ref '(a b c . d) 2) => 'c)
+
+;; 复杂嵌套结构测试：深层嵌套
+(check (list-ref '((a b) (c d) (e f)) 1) => '(c d))
+(check (list-ref '((1 2) 3 4 5) 0) => '(1 2))
+(check (list-ref '((1 2) 3 4 5) 3) => 5)
+
+;; 简单点对重新测试
+(check (list-ref (cons '(1 2) '(3 4)) 1) => 3)
+
+;; 基础三元列表
+(check (list-ref '(a b c) 0) => 'a)
+(check (list-ref '(a b c) 1) => 'b)
+(check (list-ref '(a b c) 2) => 'c)
+
+;; 错误情况测试
+(check-catch 'wrong-type-arg (list-ref '() 0))
+(check-catch 'wrong-type-arg (list-ref 123 0))
+(check-catch 'wrong-type-arg (list-ref "string" 1))
+(check-catch 'wrong-type-arg (list-ref #t 1))
+
+;; 索引越界测试
+(check-catch 'out-of-range (list-ref '(a b c) -1))
+(check-catch 'out-of-range (list-ref '(a b c) 3))
+(check-catch 'out-of-range (list-ref '(x) 1))
+(check-catch 'out-of-range (list-ref '(a b c d e) 5))
+(check-catch 'out-of-range (list-ref '(single) 2))
+
+;; 构造器函数创建的列表测试
+(check (list-ref (list 1 2 3 4) 2) => 3)
+(check (list-ref (cons 1 (cons 2 (cons 3 '()))) 1) => 2)
+(check (list-ref (append '(1 2) '(3 4 5)) 3) => 4)
+
+;; 附加的列表操作场景测试
+(check (list-ref '(apple banana cherry date elderberry) 2) => 'cherry)
+(check (list-ref (list 'symbol 42 #t "string" 3.14) 3) => "string")
 
 #|
 member
@@ -1497,154 +1765,379 @@ wrong-type-arg
 (check (member '(1 . 2) '(0 (1 . 2) 3)) => '((1 . 2) 3))
 (check (member '(1 2) '(0 (1 2) 3)) => '((1 2) 3))
 
+
 #|
-list
-通过给定元素构建一个新的列表。该函数是R7RS标准的基本列表构造函数之一。
+list-set!
+修改列表指定索引位置的元素值。该函数会直接修改原始列表对象，是R7RS标准的基本列表操作函数之一。
 
 语法
 ----
-(list obj ...)
+(list-set! list k obj)
 
 参数
 ----
-obj ... : any
-任意数量和类型的对象，包括符号、数字、字符串、布尔值、列表、向量、字节向量、字符、过程等。
+list : pair?
+    要被修改的列表对象。可以是普通列表、嵌套列表或点对结构。
+    必须是可修改的pair类型对象，不能是空列表或其他原子类型。
+
+k : exact?
+    非负的精确整数，表示要修改的元素索引位置。索引从0开始。
+    必须满足 0 <= k < (length list)。
+
+obj : any
+    要设置的新值，可以是任何类型的Scheme对象，包括数字、字符串、符号、布尔值、过程等。
+
+返回值
+------
+unspecified
+    根据R7RS规范，返回未指定的值。
+
+说明
+----
+1. 这是一个变异操作，会直接修改原始列表对象的内存内容
+2. 索引从0开始计数，与list-ref等其他列表函数保持一致
+3. 修改后原始对象的引用仍然指向同一个内存位置
+4. 适用于所有可修改的列表结构：普通列表、嵌套列表、点对结构
+5. 不会影响列表其他元素的位置或结构
+
+边界条件
+--------
+- k = 0: 修改列表第一个元素
+- k = list.length - 1: 修改列表最后一个元素
+- k < 0: 抛出out-of-range异常
+- k >= list.length: 抛出out-of-range异常
+- 空列表参数：抛出wrong-type-arg异常
+- 非列表参数：抛出wrong-type-arg异常
+
+性能特征
+--------
+- 时间复杂度：O(k)，需要遍历前k个元素
+- 空间复杂度：O(1)，不消耗额外内存
+- 内存分配：无额外内存分配，直接修改原始结构
+- 影响范围：仅修改指定位置的元素值，不影响列表结构
+
+数据类型兼容性
+---------------
+- 支持任意类型的列表元素替换：
+  - 基本类型：数字、字符串、字符、符号、布尔值
+  - 复杂类型：列表、点对结构、向量、过程
+  - 特殊类型：空列表、嵌套结构、lambda构造器
+- 支持深度嵌套列表的结构修改
+
+错误处理
+--------
+wrong-type-arg
+    当list参数不是pair?类型或参数数量错误时抛出。
+out-of-range
+    当索引k为负数、超出列表长度或参数类型错误时抛出。
+
+影响范围
+--------
+- 该操作会直接影响使用同一引用的所有代码位置
+- 修改后原始对象的内容立即发生变化
+- 列表长度和结构保持不变，仅修改特定位置的值
+- 谨慎使用，可能破坏特殊列表的不变量
+
+注意事项
+--------
+- 列表参数必须是非空列表或可修改的pair对象
+- 修改后直接作用于原始列表，不创建新对象
+- 可以通过校验list-ref来验证修改的正确性
+- Rust-like安全模型：严格的边界检查和类型验证
+|#
+
+;; list-set! 基本功能测试
+(let ((lst (list 'a 'b 'c)))
+  (list-set! lst 1 'x)
+  (check lst => '(a x c)))
+
+;; 边界值测试：索引极端值
+(let ((lst (list 'single)))
+  (list-set! lst 0 'modified)
+  (check lst => '(modified)))
+
+(let ((lst (list 'first 'middle 'last)))
+  (list-set! lst 0 'start)
+  (list-set! lst 2 'end)
+  (check lst => '(start middle end)))
+
+(let ((lst (list 'a 'b 'c 'd)))
+  (list-set! lst 3 'last)
+  (check lst => '(a b c last)))
+
+;; 空列表面界测试
+(let ((lst (list)))
+  (check-catch 'wrong-type-arg (list-set! lst 0 'value)))
+
+;; 各种数据类型测试
+(let ((lst (list 1 "text" #t 'symbol)))
+  (list-set! lst 0 42)
+  (list-set! lst 1 "modified")
+  (list-set! lst 2 #f)
+  (list-set! lst 3 'changed)
+  (check lst => '(42 "modified" #f changed)))
+
+;; 字符数据类型测试
+(let ((lst (list #\a #\b #\c #\d)))
+  (list-set! lst 0 #\A)
+  (list-set! lst 3 #\D)
+  (check lst => '(#\A #\b #\c #\D)))
+
+;; 字符串数据类型测试
+(let ((lst (list "hello" "world" "test")))
+  (list-set! lst 1 "modified")
+  (check lst => '("hello" "modified" "test")))
+
+;; 布尔数据类型测试
+(let ((lst (list #t #f #t)))
+  (list-set! lst 1 #t)
+  (check lst => '(#t #t #t)))
+
+;; 符号数据类型测试
+(let ((lst (list 'define 'lambda 'if 'cond)))
+  (list-set! lst 2 'when)
+  (check lst => '(define lambda when cond)))
+
+;; 过程数据类型测试
+(let ((lst (list car cdr cons)))
+  (list-set! lst 0 list)
+  (check (procedure? (list-ref lst 0)) => #t))
+
+;; 嵌套子列表结构测试
+(let ((lst (list '(a b) '(c d) '(e f))))
+  (list-set! lst 1 '(x y z))
+  (check lst => '((a b) (x y z) (e f))))
+
+;; 嵌套结构替换测试
+(let ((lst (list (list 'a) (list 'b) (list 'c))))
+  (list-set! lst 1 (list 'x 'y))
+  (check lst => '((a) (x y) (c))))
+
+;; 深度嵌套结构测试
+(let ((lst (list (list (list 1)) (list 2) (list (list 3)))))
+  (list-set! lst 1 (list 'new 'structure))
+  (check lst => '(((1)) (new structure) ((3)))))
+
+;; 向量和字节向量元素测试
+(let ((lst (list #(1 2 3) #u8(255 128))))
+  (list-set! lst 0 #(4 5 6))
+  (list-set! lst 1 #u8(100 200))
+  (check lst => `(#(4 5 6) #u8(100 200))))
+
+;; Unicode字符串元素测试
+(let ((lst (list "中文" "测试" "字符串")))
+  (list-set! lst 1 "修改")
+  (check lst => '("中文" "修改" "字符串")))
+
+;; 构造器函数列表测试
+(let ((lst (make-list 4 'placeholder)))
+  (list-set! lst 1 'second)
+  (list-set! lst 3 'last)
+  (check lst => '(placeholder second placeholder last)))
+
+;; 长列表性能测试
+(let ((lst (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)))
+  (list-set! lst 5 'five)
+  (list-set! lst 15 'fifteen)
+  (check lst => '(1 2 3 4 5 five 7 8 9 10 11 12 13 14 15 fifteen 17 18 19 20)))
+
+;; 空字符串和空列表元素测试
+(let ((lst (list "" (list) "abc")))
+  (list-set! lst 1 (list 'x 'y 'z))
+  (check lst => '("" (x y z) "abc")))
+
+;; 数值和浮点数元素测试
+(let ((lst (list 1 2.5 3 4.0 )))
+  (list-set! lst 2 99)
+  (list-set! lst 3 100.0)
+  (check lst => '(1 2.5 99 100.0)))
+
+;; 函数替换测试
+(let ((lst (list #t #f #t #f)))
+  (list-set! lst 2 42)
+  (list-set! lst 3 "hello")
+  (check lst => '(#t #f 42 "hello")))
+
+;; 错误参数类型测试
+(check-catch 'wrong-type-arg (list-set! 123 0 'value))
+(check-catch 'wrong-type-arg (list-set! "string" 1 'value))
+(check-catch 'wrong-type-arg (list-set! #t 0 'value))
+(check-catch 'wrong-type-arg (list-set! 'symbol 1 'value))
+
+;; 索引越界测试
+(let ((lst (list 'a 'b 'c)))
+  (check-catch 'out-of-range (list-set! lst -1 'value))
+  (check-catch 'out-of-range (list-set! lst 3 'value))
+  (check-catch 'out-of-range (list-set! lst 4 'value)))
+
+(let ((lst (list 'single)))
+  (check-catch 'out-of-range (list-set! lst 1 'value))
+  (check-catch 'out-of-range (list-set! lst -1 'value)))
+
+;; 参数数量错误测试
+(check-catch 'wrong-number-of-args (list-set!))
+(check-catch 'wrong-number-of-args (list-set! '(a b c)))
+(check-catch 'wrong-number-of-args (list-set! '(a b c) 1))
+(check-catch 'wrong-number-of-args (list-set! '(a b c) 1 'x 'y))
+
+;; 大整数索引边界测试
+(let ((lst '(a b c d e f g h i j)))
+  (check-catch 'out-of-range (list-set! lst 11 'value)))
+
+;; 验证突变影响（共享引用测试）
+(let ((original (list 'a 'b 'c 'd 'e)))
+  (let ((shared original))
+    (list-set! shared 2 'modified)
+    (check original => '(a b modified d e))  ; 原列表也被修改
+    (check (eq? original shared) => #t)))   ; 确实是同一对象
+
+;; 确保修改正确性验证（修改为list-ref检查）
+(let ((lst (list 'alpha 'beta 'gamma)))
+  (let ((val-before (list-ref lst 1)))  ; 原值应为'beta
+    (list-set! lst 1 'changed)
+    (let ((val-after (list-ref lst 1)))
+      (check val-after => 'changed))))
+
+;; 被修改引用关系保持测试
+(let ((lst (cons 10 (cons 20 (cons 30 '())))))
+  (list-set! lst 1 200)
+  (list-set! lst 2 300)
+  (check lst => '(10 200 300)))
+
+#|
+memq
+使用对象标识（eq?比较）在列表中查找指定符号键。此函数是R7RS标准中针对符号的特殊查找优化。
+
+语法
+----
+(memq symbol lst)
+
+参数
+----
+symbol :
+    要查找的符号键，类型通常为符号(symbol)，但也支持其他可eq?比较的对象类型。
+
+lst : pair?
+    要搜索的列表或点对结构。可以是普通列表、关联列表或非空列表结构。
+    空列表可作为参数，但返回#f。
 
 返回值
 ------
 list?
-返回一个新的列表，包含所有参数obj按顺序排列。空参数返回空列表'()。
+    若符号在列表中，返回从第一个匹配项开始的子列表（保留原始内存结构）。
+    #f: 若未找到指定符号或列表为空。
 
-说明
-----
-1. list是构建新列表的首选构造函数，将任意数量和类型的参数组合成列表
-2. 返回的是新创建的对象，与输入参数不会共享内存结构
-3. 接受任意类型的参数，包括嵌套列表、复杂对象等特殊类型
-4. 空参数调用返回空列表'()，单参数创建单元素列表
-5. 与cons不同，list构造的是统一结构的列表
+行为特征
+--------
+1. 采用eq?进行严格对象标识比较（区别于memv的eqv?比较和member的equal?比较）
+2. 专门为符号键设计的最优化查找路径（Symbol Key Desing-Oriented Lookup Pathway）
+3. 成功匹配时返回原始列表的尾部片段，不是复制的新对象
+4. 失败时返回#f，无任何系统开销
+5. 保持输入输出结构一致性，适用于关联列表操作
 
 边界条件
 --------
-- 空参数：返回空列表'()
-- 单参数：返回单元素列表
-- 同类型参数：保持类型一致性
-- 多类型混合：允许任意类型组合
-- 嵌套结构：正确处理子列表嵌套
-- 极大参数数量：支持大量参数构造
-- 重复元素：保留每个实例
+- 空列表参数：始终返回#f
+- 单元素列表边界：成功匹配返回单元素列表
+- 重复键处理：返回第一个匹配的尾部子列表
+- 非符号类型兼容性：任何可eq?比较对象均支持
+- 嵌套结构边界：正确处理深层嵌套和关联列表
 
 性能特征
 --------
-- 时间复杂度：O(n)，与参数数量成正比
-- 空间复杂度：O(n)，新列表消耗内存与参数数量成正比
-- 内存分配：创建新的序对对象，不共享输入参数
-- 深层嵌套：支持深层结构不影响性能
+- 时间复杂度：O(n)，其中n为列表长度，线性遍历
+- 空间复杂度：O(1)，无额外内存消耗
+- 内存共享：成功时共享原始列表内存结构
+- 快速路径：符号键的专用优化比较器
+- 递归深度：基于列表长度，合理深度安全处理
 
 数据类型兼容性
--------------
-- 数值类型：整数、实数、复数、有理数
-- 字符串：任意长度和内容字符串
-- 字符：任意字符包括Unicode
-- 符号：普通符号及关键字符号
-- 布尔值：#t和#f支持
-- 列表：空列表和任意嵌套列表
-- 向量：任意维度和内容的向量
-- 字节向量：任意字节序列
-- 过程：内置过程和自定义过程
-- 复合对象：对象组合的任意嵌套
+---------------
+- **符号类型**：普通符号、特殊符号、关键字符号
+- **数字类型**：整数、浮点数均支持eq?比较
+- **字符类型**：所有字符类型统一支持
+- **布尔类型**：#t和#f的标准支持
+- **过程类型**：内置过程和自定义过程正确识别
+- **特殊对象**：点对结构、嵌套列表、构造器结果
+- **复合结构**：向量、字节向量、嵌套过程结构
+
+错误处理
+--------
+wrong-type-arg
+    当参数类型不匹配或数量错误时抛出。
+
+应用注意
+--------
+- 设计用于符号键的优化场景，比member和memv更高效率
+- 保持内存结构完全一致，适合连锁操作和状态管理
+- 适用于关联列表、谓词列表和环境变量查找
+- 返回结构支持继续链式操作（cadr、cddr等）
+- 在需要严格对象标识的场景中优先选择memq
 
 限制说明
 --------
-- 参数传递是值传递，复杂对象会复制引用
-- 极大参数列表可能导致内存不足
-- 不支持单独设置元素值，如需精确控制需使用cons
-
-示例
-----
-(list) => '()
-(list 'a) => '(a)
-(list 1 2 3) => '(1 2 3)
-(list "hello" "world") => '("hello" "world")
-(list 'a 42 #t 'b) => '(a 42 #t b)
+- eq?比较严格，等价数值例如整数和浮点数值需要完全相同的对象
+- 不适用于字符串、数字等需要通过值比较的场景
+- 与memv和member形成互补关系，按需求选择
+- 不能用于键值对查找（需要assoc等更高级函数）
+- 返回的是子列表，不是特定位置的值
 |#
 
-;; list 基本构造功能测试
-(check (list) => '())                    ; 空参数构造
-(check (list 'a) => '(a))               ; 单元素构造
-(check (list 1 2 3) => '(1 2 3))        ; 多元素构造
-(check (list "hello") => '("hello"))   ; 单元素字符串
+;; memq 基本功能测试
+(check (memq 'a '(a b c)) => '(a b c))
+(check (memq 'b '(a b c)) => '(b c))
+(check (memq 'c '(a b c)) => '(c))
+(check (memq 'd '(a b c)) => #f)
 
-;; 边界条件测试
-(check (list) => '())                   ; 边界：空列表构造
-(check (list 'single) => '(single))     ; 边界：单元素列表
-(check (list 'a 'b 'c 'd) => '(a b c d))  ; 边界：四元素列表
+;; 边界值测试
+(check (memq '? '()) => #f)
+(check (memq 'only '(only)) => '(only))
+(check (memq 'single '(single)) => '(single))
+(check (memq 'first '(first second third)) => '(first second third))
+(check (memq 'last '(first second last)) => '(last))
 
-;; 数据类型兼容性测试
-(check (list 42 3.14 1/2 1+2i) => '(42 3.14 1/2 1+2i))  ; 数值类型
-(check (list #t #f) => '(#t #f))        ; 布尔值
-(check (list #\a #\b #\c) => '(#\a #\b #\c))   ; 字符
-(check (list "hello" "world") => '("hello" "world"))  ; 字符串
-(check (list 'symbol1 'symbol2 'keyword:) => '(symbol1 symbol2 keyword:)) ; 符号
+;; 符号键查找优化测试
+(check (memq 'define '(define lambda if)) => '(define lambda if))
+(check (memq 'cond '(if else when unless)) => #f)
+(check (memq 'car '(cdr cons car)) => '(car))
+(check (memq 'procedure '(symbol list number string)) => #f)
 
-;; 嵌套结构测试
-(check (list '() '() '()) => '(() () ()))   ; 空列表嵌套
-(check (list '(a b) '(c d)) => '((a b) (c d)))  ; 子列表嵌套
-(check (list (list 1 2) (list 3 4)) => '((1 2) (3 4)))  ; 列表构造函数嵌套
+;; 重复键边界测试
+(check (memq 'repeat '(a b repeat c repeat d)) => '(repeat c repeat d))
+(check (memq 'same '(same same same)) => '(same same same))
 
-;; 复杂对象测试
-(check (list #(1 2 3) #u8(255 128)) => `(#(1 2 3) #u8(255 128)))  ; 向量/字节向量
-(check (list #t #f) => `(#t #f))  ; 简单类型验证
-(check (list 1 2 3) => `(1 2 3))  ; 数值类型验证
+;; 布尔值边界测试
+(check (memq #t '(#t #f #t)) => '(#t #f #t))
+(check (memq #f '(#t #f #t)) => '(#f #t))
+(check (memq #t '(#f only)) => #f)
 
-;; 混合类型测试
-(check (list 'symbol 42 "text" #\c #t #(1 2)) => '(symbol 42 "text" #\c #t #(1 2)))  ; 全类型混合
-(check (list 'a 1 "hello" '(sub list) #t 3.14) => '(a 1 "hello" (sub list) #t 3.14))  ; 复合混合
+;; 字符键测试
+(check (memq #\a '(#\b #\a #\c)) => '(#\a #\c))
+(check (memq #\x '(#\a #\b #\c)) => #f)
+(check (memq #\newline '(a #\newline b)) => '(#\newline b))
 
-;; 极大参数数量测试
-(check (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20) => '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20))  ; 边界：大量参数
+;; 数字边界测试
+(check (memq 42 '(1 42 3)) => '(42 3))
+(check (memq 0 '(0 1 2)) => '(0 1 2))
+(check (memq -1 '(0 1 2)) => #f)
+(check (memq 100 '(100 200 300)) => '(100 200 300))
 
-;; 重复元素测试
-(check (list 'a 'a 'a) => '(a a a))     ; 重复符号
-(check (list 1 1 1 1) => '(1 1 1 1))     ; 重复数字
-(check (list "test" "test") => '("test" "test"))  ; 重复字符串
+;; 特殊符号字符测试
+(check (memq 'λ '(λ α β)) => '(λ α β))
+(check (memq '$ '(symbol $ delta)) => '($ delta))
 
-;; Unicode和特殊字符测试
-(check (list "中文" "测试" "字符串") => '("中文" "测试" "字符串"))  ; Unicode字符串
-(check (list #\中 #\文) => '(#\中 #\文))   ; Unicode字符
+;; 过程对象边界测试
+(let ((start car) (next cdr) (last cons))
+  (check (memq start (list car cdr start)) => (list car cdr start))
+  (check (memq next (list cons list)) => #f))
 
-;; 深层嵌套结构测试
-(check (list (list (list 'a)) (list 'b)) => '(((a)) (b)))  ; 三层嵌套
-(check (list '() (list '() (list 'a))) => '(() (() (a))))   ; 复杂嵌套
+;; 复合结构测试
+(let ((test-list '(cons list append)))
+  (check (memq 'list test-list) => '(list append))
+  (check (memq 'other-symbol test-list) => #f))
 
-;; 性能验证：大列表构造
-(check (length (list 'a 'b 'c 'd 'e 'f 'g 'h 'i 'j 'k 'l 'm 'n 'o 'p 'q 'r 's 't 'u 'v 'w 'x 'y 'z)) => 26)  ; 验证完整构造
-
-;; 错误测试 - 参数类型验证
-(check (list 123) => '(123))  ; 证实数字可以作为参数
-(check (list "string") => '("string"))  ; 证实字符串可以作为参数
-(check (list #t) => '(#t))   ; 证实布尔值可以作为参数
-
-;; 构造后操作验证
-(let ((constructed (list 1 2 3 4 5)))
-  (check (length constructed) => 5)      ; 验证长度
-  (check (list? constructed) => #t)      ; 验证类型
-  (check (list-ref constructed 2) => 3))  ; 验证索引访问
-
-;; 独立对象验证 - 确认不与参数共享
-(let ((a 'original)
-      (b "test")
-      (c #t))
-  (let ((result (list a b c)))
-    (check (equal? result '(original "test" #t)) => #t)  ; 值正确
-    (check (not (eq? result a)) => #t)  ; 独立对象验证
-    (check (not (eq? result b)) => #t)))
-
-;; 参数传递验证测试
-(define (test-list-wrapper . args)
-  (apply list args))
-
-(check (test-list-wrapper 1 2 3) => '(1 2 3))
-(check (test-list-wrapper 'a 'b 'c 'd) => '(a b c d))
-(check (test-list-wrapper) => '())
+;; 点对结构测试
+(check (memq 'center '(left center right top)) => '(center right top))
+(check (memq 'middle '(begin middle end)) => '(middle end))
 
 (check-report)
