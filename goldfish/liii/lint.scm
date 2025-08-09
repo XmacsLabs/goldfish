@@ -2,7 +2,8 @@
   (export lint-check-brackets)
   (import (liii base)
           (liii list)
-          (liii string))
+          (liii string)
+          (liii stack))
 
   (begin
 
@@ -25,7 +26,7 @@ content : string
 返回值
 ------
 列表: 返回值是一个列表，其中car表示匹配状态
-- '(matched) - 所有括号正确匹配
+- '(matched) - 所有括号正确匹配  
 - '(unmatched (error-type location)) - 存在不匹配的括号
 
 不良反应
@@ -43,50 +44,78 @@ content : string
     (define (lint-check-brackets content)
       (let ((chars (string->list content))
             (line 1)
-            (col 1))
+            (col 1)
+            (stack (stack '())))
         (let loop ((pos 0)
                    (line line)
-                   (col col) 
+                   (col col)
                    (chars chars)
-                   (stack (list))
+                   (st stack)
                    (in-string? #f)
                    (escaped? #f))
           (cond
             ((null? chars)
-             (if (null? stack)
+             (if (= (st :size) 0)
                  (cons 'matched '())
-                 (cons 'unmatched (list (list 'unclosed (car stack))))))
+                 (let ((last-open (st :top)))
+                   (cons 'unmatched (list (list 'unclosed last-open))))))
             
             ((char=? (car chars) #\newline)
-             (loop (+ pos 1) (+ line 1) 1 (cdr chars) stack in-string? #f))
+             (loop (+ pos 1) (+ line 1) 1 (cdr chars) st in-string? #f))
             
             ((and (not in-string?) (char=? (car chars) #\;))
-             (loop (+ pos 1) line (+ col 1) (cdr chars) stack in-string? #f))
+             ; 注释到行尾，找第一个换行符
+             (let ((new-chars chars)
+                   (new-pos pos)
+                   (new-col col)
+                   (new-line line))
+               (let skip-comment ((chars new-chars)
+                                  (pos new-pos)
+                                  (col new-col)
+                                  (line new-line))
+                 (if (or (null? chars) (char=? (car chars) #\newline))
+                     (if (null? chars)
+                         (loop pos line col chars st in-string? #f)
+                         (loop (+ pos 1) (+ line 1) 1 (cdr chars) st in-string? #f))
+                     (skip-comment (cdr chars) (+ pos 1) (+ col 1) line)))))
             
             ((and (not in-string?) (char=? (car chars) #\#))
-             (loop (+ pos 1) line (+ col 1) (cdr chars) stack in-string? #f))
+             ; 需要正确处理多种#开头的常量，包括#	、#\等
+             (cond
+               ((null? (cdr chars)) ; 如果是最后一个字符，跳过
+                (loop (+ pos 1) line (+ col 1) (cdr chars) st in-string? #f))
+               ((char=? (cadr chars) #\\) ; #\ 是字符转义
+                (cond
+                  ((null? (cddr chars)) ; 只有#\，没有后续字符
+                   (loop (+ pos 2) line (+ col 2) (cddr chars) st in-string? #f))
+                  (else ; 跳过#\和后面的字符
+                   (loop (+ pos 3) line (+ col 3) (cdddr chars) st in-string? #f))))
+               (else ; 其他情况，跳过单个字符
+                (loop (+ pos 1) line (+ col 1) (cdr chars) st in-string? #f))))
             
             ((char=? (car chars) #\")
              (cond
-               (escaped? (loop (+ pos 1) line (+ col 1) (cdr chars) stack in-string? #f))
-               (else (loop (+ pos 1) line (+ col 1) (cdr chars) stack (not in-string?) #f))))
+               (escaped? (loop (+ pos 1) line (+ col 1) (cdr chars) st in-string? #f))
+               (else (loop (+ pos 1) line (+ col 1) (cdr chars) st (not in-string?) #f))))
             
-            ((and in-string? (char=? (car chars) #\/))
-             (loop (+ pos 1) line (+ col 1) (cdr chars) stack in-string? (not escaped?)))
+            ((and in-string? (char=? (car chars) #\\))
+             (loop (+ pos 1) line (+ col 1) (cdr chars) st in-string? (not escaped?)))
             
             (in-string?
-             (loop (+ pos 1) line (+ col 1) (cdr chars) stack in-string? #f))
+             (loop (+ pos 1) line (+ col 1) (cdr chars) st in-string? #f))
             
             ((char=? (car chars) *open-paren*)
-             (loop (+ pos 1) line (+ col 1) (cdr chars) (cons (list line col) stack) in-string? #f))
+             (let ((new-st (st :push (list line col))))
+               (loop (+ pos 1) line (+ col 1) (cdr chars) new-st in-string? #f)))
             
             ((char=? (car chars) *close-paren*)
-             (if (null? stack)
+             (if (= (st :size) 0)
                  (cons 'unmatched (list (list 'unmatched-close (list line col))))
-                 (loop (+ pos 1) line (+ col 1) (cdr chars) (cdr stack) in-string? #f)))
+                 (let ((new-st (st :pop)))
+                   (loop (+ pos 1) line (+ col 1) (cdr chars) new-st in-string? #f))))
             
             (else
-             (loop (+ pos 1) line (+ col 1) (cdr chars) stack in-string? #f))))))
+             (loop (+ pos 1) line (+ col 1) (cdr chars) st in-string? #f))))))
 
   ) ; end of begin
 ) ; end of define-library
