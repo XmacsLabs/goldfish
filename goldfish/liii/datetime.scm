@@ -21,6 +21,38 @@
 
     (define-object years
 
+#|
+datetime@leap?
+判断指定年份是否为闰年。
+
+语法
+----
+(years :leap? year)
+
+参数
+----
+year:integer
+待判断的年份。
+
+返回值
+-----
+boolean
+若指定年份为闰年则返回#t，否则返回#f。
+
+错误
+----
+type-error
+若 year 不是整数，则引发类型错误。
+
+额外信息
+----
+闰年判定规则
+能被 4 整除但不能被 100 整除 → 闰年（如 2024）
+能被 400 整除 → 闰年（如 2000）
+其他情况 → 非闰年（如 2025, 1000）
+
+|#
+
       (define (@leap? year)
         (when (not (integer? year))
           (type-error "years@leap? must accept integer"))
@@ -30,6 +62,30 @@
 
       )
 
+#|
+datetime@is-type-of
+判断给定对象是否为 datetime 类型的实例。
+通过 define-case-class 实现的类型检查方法，无需额外实现。
+
+语法
+----
+(datetime :is-type-of obj)
+
+参数
+----
+obj:any
+待检查的对象，可以是任何Goldfish Scheme值。
+
+返回值
+-----
+boolean
+若对象obj为datetime类型实例则返回#t，否则返回#f。
+
+额外信息
+----
+这是通过 define-case-class 宏自动生成的方法，所有案例类都具备类似功能。
+|#
+
     (define-case-class datetime
       ((year integer?)
        (month integer?)
@@ -38,6 +94,36 @@
        (minute integer? 0)
        (second integer? 0)
        (micro-second integer? 0))
+
+#|
+datetime@now
+创建一个表示当前系统时间的日期时间对象。
+该对象精确到微秒级别，可用于获取当前时间的各个时间分量。
+
+语法
+----
+(datetime :now)
+
+参数
+----
+无参数（使用 :now 关键字创建当前时间对象）
+
+返回值
+-----
+返回一个表示当前日期时间的对象，该对象支持以下字段查询：
+'year         : 年份 (>= 2023)
+'month        : 月份 (1-12)
+'day          : 日期 (1-31)
+'hour         : 小时 (0-23)
+'minute       : 分钟 (0-59)
+'second       : 秒   (0-59)
+'micro-second : 微秒 (0-999999)
+
+错误
+----
+无特定错误（始终返回有效时间对象）
+
+|#
 
       (chained-define (@now)
         (let ((time-vec (g_datetime-now)))
@@ -49,6 +135,42 @@
             :minute (vector-ref time-vec 4)
             :second (vector-ref time-vec 5)
             :micro-second (vector-ref time-vec 6))))
+
+#|
+datetime%to-string
+将 datetime 对象格式化为标准字符串表示。
+当微秒为0时，返回 "YYYY-MM-DD HH:MM:SS"，
+当微秒非0时，返回 "YYYY-MM-DD HH:MM:SS.MMMMMM" （6位微秒）。
+
+语法
+----
+(datetime-object :to-string)
+
+参数
+----
+无参数（直接调用对象方法）。
+
+返回值
+-----
+返回日期时间字符串：
+日期部分：年-月-日
+时间部分：时:分:秒
+微秒部分：.6位微秒数（不足6位补零）
+
+错误
+----
+如果调用对象不是有效的 datetime 类型，抛出类型错误。
+
+格式规则
+------
+|  字段  |   格式化规则   |  示例  |
+|--------|----------------|--------|
+|   年   |    4位数字     |  2025  |
+|  月/日 | 2位数字（补零）|  01,09 |
+|时/分/秒| 2位数字（补零）|  00,05 |
+|  微秒  | 6位数字（补零）| 000001 |
+
+|#
 
       (define (%to-string)
         (define (pad2 n)  ; 补零到 2 位
@@ -68,6 +190,38 @@
           (if (zero? micro-second)
               (string-append date-part " " time-part)
               (string-append date-part " " time-part "." (pad6 micro-second)))))
+
+#|
+datetime%plus-days
+计算当前日期增加/减少指定天数后的新日期对象。
+
+语法
+----
+(datetime-object :plus-days days)
+
+参数
+----
+days:integer
+整数，表示要增加的天数（正数）或减少的天数（负数）。
+
+返回值
+-----
+datetime
+新的日期时间对象。
+
+错误
+----
+type-error
+若 days 不是整数，则引发类型错误。
+
+额外信息
+----
+能自动识别闰年（如 2024）与非闰年（如 2023）
+跨月时自动调整月份/年份
+跨年时自动递增/递减年份
+days=0 时返回原日期副本
+
+|#
 
       (define (%plus-days days-to-add)
   
@@ -119,6 +273,38 @@
                          days-in-prev-month 
                          (+ remaining-days d))))))))
 
+#|
+datetime%plus-months
+计算当前日期增加/减少指定月数后的新日期对象，自动处理月末日期调整。
+
+语法
+----
+(datetime-object :plus-months months)
+
+参数
+----
+months:integer
+整数，表示要增加的月数（正数）或减少的月数（负数）。
+
+返回值
+-----
+datetime
+新的日期时间对象。
+
+错误
+----
+type-error
+若 months 不是整数，则引发类型错误。
+
+额外信息
+----
+当原始日期是月末时，结果自动调整为目标月份的最后一天
+跨年时自动调整年份
+二月天数根据目标年份的闰年状态自动确定
+months=0 时返回原日期副本
+
+|#
+
       (define (%plus-months months-to-add)
         (define (days-in-month m y)
           (cond ((member m '(4 6 9 11)) 30)
@@ -140,6 +326,37 @@
                     :minute minute
                     :second second
                     :micro-second micro-second)))
+
+#|
+datetime%plus-years
+计算当前日期增加/减少指定年数后的新日期对象。
+
+语法
+----
+(datetime-object :plus-years years)
+
+参数
+----
+years:integer
+整数，表示要增加的年（正数）或减少的年（负数）。
+
+返回值
+-----
+datetime
+新的日期时间对象。
+
+错误
+----
+type-error
+若 years 不是整数，则引发类型错误。
+
+额外信息
+----
+能自动识别闰年（如 2024）与非闰年（如 2023）；
+当原始日期为闰年2月29日且目标年份非闰年时，日期将调整为2月28日；
+years=0 时返回原日期副本。
+
+|#
 
       (define (%plus-years years-to-add)
         (define (days-in-month m y)
@@ -168,12 +385,68 @@
        (month integer?)
        (day integer?))
 
+#|
+date@now
+创建一个表示当前系统日期的日期对象。
+可用于获取当前日期的年份、月份、日期等字段。
+
+语法
+----
+(date :now)
+
+参数
+----
+无参数（使用 :now 关键字创建当前日期对象）
+
+返回值
+-----
+返回一个表示当前日期的对象，该对象支持以下字段查询：
+'year  : 年份 (>= 2023)
+'month : 月份 (1-12)
+'day   : 日期 (1-31)
+
+错误
+----
+无特定错误（始终返回有效日期对象）
+
+|#
+
       (chained-define (@now)
         (let ((time-vec (g_date-now)))
           (date 
             :year (vector-ref time-vec 0)
             :month (vector-ref time-vec 1)
             :day (vector-ref time-vec 2))))
+
+#|
+date%to-string
+将日期转换为格式化的日期字符串，格式为"YYYY-MM-DD"。
+
+语法
+----
+(date-object :to-string)
+
+参数
+----
+无参数
+
+返回值
+-----
+string
+格式化的日期字符串。
+
+格式说明
+----
+- 年份：4位数字
+- 月份：2位数字，01-12
+- 日期：2位数字，01-31
+
+当数值小于10时，前导补零确保固定长度格式。
+
+错误
+----
+无特定错误（始终返回格式化的日期字符串）
+|#
 
       (define (%to-string)
         (define (pad2 n)  ; 补零到 2 位
