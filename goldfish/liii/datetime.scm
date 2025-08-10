@@ -15,7 +15,7 @@
 ;
 
 (define-library (liii datetime)
-  (import (liii oop) (liii error))
+  (import (liii oop) (liii error) (liii string))
   (export datetime date years days)
   (begin
 
@@ -214,23 +214,12 @@ datetime%to-string
 |#
 
       (define (%to-string)
-        (define (pad2 n)  ; 补零到 2 位
-          (if (< n 10)
-              (string-append "0" (number->string n))
-              (number->string n)))
         (define (pad6 n)  ; 补零到 6 位（微秒）
           (let ((s (number->string n)))
             (string-append (make-string (- 6 (string-length s)) #\0) s)))
-  
-        (let ((date-part (string-append (number->string year) "-"
-                           (pad2 month) "-"
-                           (pad2 day)))
-              (time-part (string-append (pad2 hour) ":"
-                           (pad2 minute) ":"
-                           (pad2 second))))
-          (if (zero? micro-second)
-              (string-append date-part " " time-part)
-              (string-append date-part " " time-part "." (pad6 micro-second)))))
+        (if (zero? micro-second)
+            (%format "yyyy-MM-dd HH:mm:ss")
+            (string-append (%format "yyyy-MM-dd HH:mm:ss") "." (pad6 micro-second))))
 
 #|
 datetime%plus-days
@@ -449,6 +438,103 @@ date
 与Java 8 DateTime API中的 LocalDateTime.toLocalDate() 类似，是datetime的重要转换方法
 |#
 
+#|
+datetime%format
+按照指定的格式字符串格式化日期时间。
+
+语法
+----
+(datetime-object :format format-string)
+
+参数
+----
+format-string:string
+  格式字符串，支持以下格式符：
+  - yyyy: 4位年份
+  - MM: 2位月份（01-12）
+  - dd: 2位日期（01-31）
+  - HH: 2位小时（00-23）
+  - mm: 2位分钟（00-59）
+  - ss: 2位秒（00-59）
+  - SSS: 3位毫秒（000-999）
+
+返回值
+-----
+string
+格式化后的日期时间字符串。
+
+错误
+----
+value-error
+如果格式字符串无效则抛出该异常。
+
+使用示例
+--------
+((datetime :year 2024 :month 1 :day 15 :hour 14 :minute 30 :second 45 :micro-second 123456) :format "yyyy-MM-dd HH:mm:ss.SSS")
+=> "2024-01-15 14:30:45.123"
+
+((datetime :year 2024 :month 1 :day 15) :format "yyyy-MM-dd")
+=> "2024-01-15"
+
+只要格式字符串中使用到年月日时分秒毫秒其中一个字段，就算格式正确。
+|#
+
+      (define (%format format-str)
+        (define (pad2 n)
+          (if (< n 10)
+              (string-append "0" (number->string n))
+              (number->string n)))
+        
+        (define (pad3 n)
+          (let ((s (number->string (quotient n 1000)))) ; Convert micro-second to milli-second
+            (let ((len (string-length s)))
+              (cond ((>= len 3) (substring s 0 3))
+                    ((= len 2) (string-append "0" s))
+                    ((= len 1) (string-append "00" s))
+                    (else "000")))))
+        
+        (define (format-is-valid? format-str)
+          (or (string-contains format-str "yyyy")
+              (string-contains format-str "MM")
+              (string-contains format-str "dd")
+              (string-contains format-str "HH")
+              (string-contains format-str "mm")
+              (string-contains format-str "ss")
+              (string-contains format-str "SSS")))
+        
+        (unless (format-is-valid? format-str)
+          (value-error "datetime%format: invalid format string"))
+        
+        (let loop ((result "")
+                   (remaining format-str))
+          (if (string-null? remaining)
+              result
+              (cond
+                ((string-starts? remaining "yyyy")
+                 (loop (string-append result (number->string year))
+                       (substring remaining 4 (string-length remaining))))
+                ((string-starts? remaining "MM")
+                 (loop (string-append result (pad2 month))
+                       (substring remaining 2 (string-length remaining))))
+                ((string-starts? remaining "dd")
+                 (loop (string-append result (pad2 day))
+                       (substring remaining 2 (string-length remaining))))
+                ((string-starts? remaining "HH")
+                 (loop (string-append result (pad2 hour))
+                       (substring remaining 2 (string-length remaining))))
+                ((string-starts? remaining "mm")
+                 (loop (string-append result (pad2 minute))
+                       (substring remaining 2 (string-length remaining))))
+                ((string-starts? remaining "ss")
+                 (loop (string-append result (pad2 second))
+                       (substring remaining 2 (string-length remaining))))
+                ((string-starts? remaining "SSS")
+                 (loop (string-append result (pad3 micro-second))
+                       (substring remaining 3 (string-length remaining))))
+                (else
+                 (loop (string-append result (substring remaining 0 1))
+                       (substring remaining 1 (string-length remaining))))))))
+
       (define (%to-date)
         (date :year year :month month :day day))
 
@@ -523,15 +609,7 @@ string
 |#
 
       (define (%to-string)
-        (define (pad2 n)  ; 补零到 2 位
-          (if (< n 10)
-              (string-append "0" (number->string n))
-              (number->string n)))
-  
-        (let ((date-part (string-append (number->string year) "-"
-                                        (pad2 month) "-"
-                                        (pad2 day))))
-             date-part))
+        (%format "yyyy-MM-dd"))
 
 #|
 date%weekday
@@ -559,6 +637,101 @@ date%weekday
 ------
 这是基于 Zeller 公式的变体的计算结果，已调整为周一为起始日。
 |#
+
+#|
+date%to-datetime
+将 date 对象转换为 datetime 对象，时间是 (00:00:00.000000)。
+
+语法
+----
+(date-object :to-datetime)
+
+参数
+----
+无参数
+
+返回值
+-----
+datetime
+一个新的 datetime 对象，包含原 date 的年月日信息，时分为 0:0:0。
+
+使用示例
+--------
+((date :year 2024 :month 1 :day 15) :to-datetime) 
+=> (datetime :year 2024 :month 1 :day 15 :hour 0 :minute 0 :second 0 :micro-second 0)
+
+额外信息
+------
+与Java 8 DateTime API中的 LocalDate.atStartOfDay() 类似，是date的重要转换方法
+|#
+
+#|
+date%format
+按照指定的格式字符串格式化日期。
+
+语法
+----
+(date-object :format format-string)
+
+参数
+----
+format-string:string
+  格式字符串，支持以下格式符：
+  - yyyy: 4位年份
+  - MM: 2位月份（01-12）
+  - dd: 2位日期（01-31）
+
+返回值
+-----
+string
+格式化后的日期字符串。
+
+错误
+----
+value-error
+如果格式字符串无效则抛出该异常。
+
+使用示例
+--------
+((date :year 2024 :month 1 :day 15) :format "yyyy-MM-dd") 
+=> "2024-01-15"
+
+((date :year 2024 :month 1 :day 15) :format "dd/MM/yyyy") 
+=> "15/01/2024"
+|#
+
+      (define (%format format-str)
+        (let ((pad2 (lambda (n)
+                      (if (< n 10)
+                          (string-append "0" (number->string n))
+                          (number->string n)))))
+          
+          (unless (or (string-contains format-str "yyyy")
+                      (string-contains format-str "MM")
+                      (string-contains format-str "dd"))
+            (value-error "date%format: invalid format string"))
+          
+          (let loop ((result "")
+                     (remaining format-str))
+            (if (string-null? remaining)
+                result
+                (cond
+                  ((string-starts? remaining "yyyy")
+                   (loop (string-append result (number->string year))
+                         (substring remaining 4 (string-length remaining))))
+                  ((string-starts? remaining "MM")
+                   (loop (string-append result (pad2 month))
+                         (substring remaining 2 (string-length remaining))))
+                  ((string-starts? remaining "dd")
+                   (loop (string-append result (pad2 day))
+                         (substring remaining 2 (string-length remaining))))
+                  (else
+                   (loop (string-append result (substring remaining 0 1))
+                         (substring remaining 1 (string-length remaining)))))))))
+
+      (define (%to-datetime)
+        (datetime :year year :month month :day day 
+                  :hour 0 :minute 0 :second 0 :micro-second 0))
 
       (define (%weekday)
         (weekday-for-date year month day))

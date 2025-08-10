@@ -299,5 +299,66 @@
 (let ((dt-max (datetime :year 9999 :month 12 :day 31)))
   (check ((dt-max :to-date) :to-string) => "9999-12-31"))
 
+;; Test datetime%format functionality
+(let ((dt (datetime :year 2024 :month 1 :day 15 
+                    :hour 14 :minute 30 :second 45 :micro-second 123456)))
+  (check (dt :format "yyyy-MM-dd HH:mm:ss.SSS") 
+    => "2024-01-15 14:30:45.123")
+  
+  (check (dt :format "yyyy-MM-dd") 
+    => "2024-01-15")
+    
+  (check (dt :format "HH:mm:ss") 
+    => "14:30:45")
+    
+  (check (dt :format "yyyy年MM月dd日 HH时mm分ss秒") 
+    => "2024年01月15日 14时30分45秒")
+    
+  (check ((datetime :year 2024 :month 3 :day 4 :hour 2 :minute 5 :second 6) :format "dd/MM/yyyy HH:mm")
+    => "04/03/2024 02:05"))
+
+;; Test format validation - should throw value-error for invalid formats
+(let ((dt (datetime :year 2024 :month 1 :day 15)))
+  (check-catch 'value-error (dt :format "invalid"))
+  (check-catch 'value-error (dt :format "xyz"))
+  (check-catch 'value-error (dt :format "abc123"))
+  
+  ;; Valid formats should not throw error
+  (check (dt :format "yyyy") => "2024")
+  (check (dt :format "MM") => "01")
+  (check (dt :format "dd") => "15")
+  (check (dt :format "SSS") => "000"))
+
+;; Test date%to-datetime functionality
+(let ((test-date (date :year 2024 :month 1 :day 15))
+      (expected-datetime (datetime :year 2024 :month 1 :day 15 
+                                   :hour 0 :minute 0 :second 0 :micro-second 0)))
+  (check (test-date :to-datetime) => expected-datetime)
+  
+  (let ((result (test-date :to-datetime)))
+    (check (result 'year) => 2024)
+    (check (result 'month) => 1)
+    (check (result 'day) => 15)
+    (check (result 'hour) => 0)
+    (check (result 'minute) => 0)
+    (check (result 'second) => 0)
+    (check (result 'micro-second) => 0))
+  
+  ;; Test with different dates
+  (check ((date :year 2000 :month 2 :day 29) :to-datetime) 
+    => (datetime :year 2000 :month 2 :day 29 :hour 0 :minute 0 :second 0 :micro-second 0))
+    
+  (check ((date :year 2025 :month 12 :day 31) :to-datetime) 
+    => (datetime :year 2025 :month 12 :day 31 :hour 0 :minute 0 :second 0 :micro-second 0)))
+
+;; Test date%format functionality
+(let ((test-date (date :year 2024 :month 1 :day 15)))
+  (check (test-date :format "yyyy-MM-dd") => "2024-01-15")
+  (check (test-date :format "MM/dd/yyyy") => "01/15/2024")
+  (check (test-date :format "dd-MM-yyyy") => "15-01-2024")
+  (check (test-date :format "yyyyMMdd") => "20240115")
+  (check-catch 'value-error (test-date :format "invalid"))
+  (check-catch 'value-error (test-date :format "HH:mm:ss"))) ; time formats not supported in date
+
 (check-report)
 
