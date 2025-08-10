@@ -16,7 +16,7 @@
 
 (define-library (liii datetime)
   (import (liii oop) (liii error))
-  (export datetime date years)
+  (export datetime date years days)
   (begin
 
     (define-object years
@@ -422,6 +422,36 @@ years=0 时返回原日期副本。
       (define (%weekday)
         (weekday-for-date year month day))
 
+#|
+datetime%to-date
+将 datetime 对象转换为 date 对象，保留年月日信息，丢弃时间信息。
+
+语法
+----
+(datetime-object :to-date)
+
+参数
+----
+无参数
+
+返回值
+-----
+date
+一个新的 date 对象，包含原 datetime 的年、月、日信息
+
+使用示例
+--------
+(let ((dt (datetime :year 2024 :month 1 :day 15 :hour 12 :minute 30 :second 45)))
+  (dt :to-date)) => (date :year 2024 :month 1 :day 15)
+
+额外信息
+----
+与Java 8 DateTime API中的 LocalDateTime.toLocalDate() 类似，是datetime的重要转换方法
+|#
+
+      (define (%to-date)
+        (date :year year :month month :day day))
+
       )
 
     (define-case-class date
@@ -535,6 +565,85 @@ date%weekday
 
       )
 
-    ) ; end of begin
+    
+    (define-object days
+
+#|
+days@between
+计算两个日期之间的天数差异。
+
+语法
+----
+(days :between start end)
+
+参数
+----
+start:datetime 或 date
+  起始日期，可以是 datetime 对象或 date 对象。
+end:datetime 或 date
+  结束日期，可以是 datetime 对象或 date 对象。
+
+返回值
+-----
+long
+返回两个日期之间的天数差异，结果为正值或负值。
+- 如果 end 在 start 之后，返回正数(表示从开始到结束经过了多少天)
+- 如果 end 在 start 之前，返回负数(表示从开始到结束需要倒退多少天)
+- 如果两个日期相同，返回 0
+
+错误
+----
+type-error
+如果 start 或 end 不是 datetime 或 date 对象，则抛出类型异常。
+
+使用示例
+--------
+(days :between (date :year 2024 :month 1 :day 1) (date :year 2024 :month 1 :day 15))
+  => 14  相隔14天
+
+(days :between (datetime :year 2024 :month 1 :day 15) (datetime :year 2024 :month 1 :day 1))
+  => -14 相隔负14天，即需要往前推14天
+
+(days :between (date :year 2024 :month 1 :month 15) (date :year 2024 :month 1 :day 15))
+  => 0  同一天
+
+额外信息
+----
+与Java 8 Date Time API中的 DAYS.between(start, end) 类似，计算方法基于日期与1970年1月1日之间的相对天数。
+|#
+
+      (define (julian-day-number year month day)
+        (let* ((a (quotient (- 14 month) 12))
+               (y (+ year 4800 (- a)))
+               (m (+ month (* 12 a) (- 3)))
+               (jdn (+ day
+                       (quotient (+ (* 153 m) 2) 5)
+                       (* 365 y)
+                       (quotient y 4)
+                       (- (quotient y 100))
+                       (quotient y 400)
+                       (- 32045))))
+          jdn))
+
+      (define (@between start end)
+        (define (extract-date-fields obj)
+          (cond 
+            ((datetime :is-type-of obj)
+             (list (obj 'year) (obj 'month) (obj 'day)))
+            ((date :is-type-of obj)
+             (list (obj 'year) (obj 'month) (obj 'day)))
+            (else
+             (type-error "days@between expects datetime or date objects"))))
+        
+        (let* ((start-fields (extract-date-fields start))
+               (end-fields (extract-date-fields end))
+               (start-jdn (apply julian-day-number start-fields))
+               (end-jdn (apply julian-day-number end-fields))
+               (days-difference (- end-jdn start-jdn)))
+          days-difference))
+
+    )
+
+  ) ; end of begin
   ) ; end of define-library
 

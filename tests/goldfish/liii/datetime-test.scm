@@ -246,5 +246,58 @@
 (check ((date :year 2024 :month 1 :day 7) :weekday)  => 6)  ; Sunday
 (check ((date :year 2024 :month 2 :day 29) :weekday)  => 2)  ; Thursday (2024 is leap year)
 
+;; Test days between functionality
+;; Example for type-error
+(check-catch 'type-error (days :between "2025-01-01" (date :year 2024 :month 1 :day 1)))
+(check-catch 'type-error (days :between (date :year 2024 :month 1 :day 1) "2025-01-01"))
+
+;; Test with date objects
+(check (days :between (date :year 2024 :month 1 :day 1) (date :year 2024 :month 1 :day 15)) => 14)
+(check (days :between (date :year 2024 :month 1 :day 15) (date :year 2024 :month 1 :day 1)) => -14)
+(check (days :between (date :year 2024 :month 1 :day 15) (date :year 2024 :month 1 :day 15)) => 0)
+
+(check (days :between (date :year 2024 :month 1 :day 31) (date :year 2024 :month 2 :day 1)) => 1)
+(check (days :between (date :year 2024 :month 2 :day 28) (date :year 2024 :month 3 :day 1)) => 2) ; leap year
+(check (days :between (date :year 2023 :month 2 :day 28) (date :year 2023 :month 3 :day 1)) => 1) ; non-leap year
+
+(check (days :between (date :year 2024 :month 12 :day 31) (date :year 2025 :month 1 :day 1)) => 1)
+(check (days :between (date :year 2024 :month 1 :day 1) (date :year 2025 :month 1 :day 1)) => 366) ; leap year
+(check (days :between (date :year 2023 :month 1 :day 1) (date :year 2024 :month 1 :day 1)) => 365)   ; non-leap year
+
+;; Test with datetime objects
+(check (days :between (datetime :year 2024 :month 1 :day 1 :hour 12 :minute 0 :second 0) 
+                      (datetime :year 2024 :month 1 :day 2 :hour 0 :minute 0 :second 0)) => 1)
+(check (days :between (datetime :year 2024 :month 1 :day 1 :hour 0 :minute 0 :second 0) 
+                      (datetime :year 2024 :month 1 :day 1 :hour 23 :minute 59 :second 59)) => 0) ; same day
+(check (days :between (datetime :year 2024 :month 1 :day 15) 
+                      (datetime :year 2024 :month 1 :day 1)) => -14)
+
+;; Test mixed datetime and date objects
+(check (days :between (date :year 2024 :month 1 :day 1) 
+                      (datetime :year 2024 :month 1 :day 15 :hour 12)) => 14)
+(check (days :between (datetime :year 2024 :month 1 :day 15 :hour 12) 
+                      (date :year 2024 :month 1 :day 1)) => -14)
+
+;; Test large date ranges
+(check (days :between (date :year 2000 :month 1 :day 1) (date :year 2100 :month 1 :day 1)) => 36525)
+(check (days :between (date :year 2100 :month 1 :day 1) (date :year 2000 :month 1 :day 1)) => -36525)
+
+;; Test datetime%to-date function
+(let ((dt (datetime :year 2024 :month 1 :day 15 :hour 12 :minute 30 :second 45 :micro-second 123456)))
+  (check ((dt :to-date) 'year) => 2024)
+  (check ((dt :to-date) 'month) => 1)
+  (check ((dt :to-date) 'day) => 15)
+  (check ((dt :to-date) :to-string) => "2024-01-15"))
+
+;; Test edge cases for datetime%to-date
+(let ((dt-edge (datetime :year 2024 :month 2 :day 29 :hour 23 :minute 59 :second 59)))
+  (check ((dt-edge :to-date) :to-string) => "2024-02-29")) ; leap year Feb 29
+
+(let ((dt-min (datetime :year 1 :month 1 :day 1)))
+  (check ((dt-min :to-date) :to-string) => "1-01-01"))
+
+(let ((dt-max (datetime :year 9999 :month 12 :day 31)))
+  (check ((dt-max :to-date) :to-string) => "9999-12-31"))
+
 (check-report)
 
