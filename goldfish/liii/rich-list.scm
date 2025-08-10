@@ -225,6 +225,43 @@ elem : any
           (else
             (rich-list (make-list n elem)))))
 
+#|
+rich-list%collect  
+将rich-list转换为标准的Scheme列表。
+
+语法
+----
+(lst :collect)
+
+参数
+----
+无
+
+返回值
+-----
+与rich-list包含相同元素的标准Scheme列表。
+
+功能
+----
+将rich-list对象中包含的元素数据以标准Scheme列表形式返回。
+该函数提供与现有Scheme系统的互操作性，允许用户在使用rich-list的
+丰富操作方法后，回到传统列表环境继续处理数据。
+
+边界条件
+--------
+- 空rich-list返回空列表'()
+- 保持原始数据的内部结构和引用完整性
+
+性能特征
+--------
+- 时间复杂度：O(1)，直接访问内部引用
+- 空间复杂度：O(1)，仅返回现有对象引用
+
+兼容性
+------
+- 适用于任何rich-list实例
+- 与标准Scheme环境中的list操作无缝兼容
+|#
       (define (%collect) data)
 
       (define (%apply n)

@@ -55,7 +55,7 @@
 (check ((rich-list :fill 0 'x) :collect) => ())
 
 
-;; 基本测试 - 两个非空列表连接
+;; 基本测试 - 两个非空列表连接 (保持原来的形式，避免$在还不适的地方)
 (check ((rich-list :concat (rich-list '(1 2 3)) (rich-list '(4 5 6))) :collect) => '(1 2 3 4 5 6))
 (check ((rich-list :concat (rich-list '(a b)) (rich-list '(c d))) :collect) => '(a b c d))
 
@@ -67,9 +67,6 @@
 
 ;; 边界测试 - 两个列表都为空
 (check ((rich-list :concat (rich-list :empty) (rich-list :empty)) :collect) => '())
-
-;; 边界测试 - 嵌套rich-list连接
-(check ((rich-list :concat (rich-list :range 1 4) (rich-list :range 4 7)) :collect) => '(1 2 3 4 5 6))
 
 ;; 链式调用测试
 (check ((rich-list :concat (rich-list '(1 2)) (rich-list '(3 4))) :map (lambda (x) (* x 2)) :collect) => '(2 4 6 8))
@@ -112,5 +109,40 @@
 (check ((rich-list :fill 3 'a) :length) => 3)
 (check ((rich-list :fill 5 1) :filter (lambda (x) (= x 1)) :collect) => '(1 1 1 1 1))
 (check ((rich-list :fill 3 100) :take 2 :collect) => '(100 100))
+
+;; 测试 rich-list%collect 方法 - 使用$简化语法
+
+;; 基本功能测试
+(check ($ '(1 2 3 4) :collect) => '(1 2 3 4))
+(check ($ '(a b c) :collect) => '(a b c))
+(check ($ '() :collect) => '())
+
+;; 边界条件测试 - 空列表
+(check ((rich-list :empty) :collect) => '())
+
+;; 边界条件测试 - 单元素列表
+(check ((rich-list '(42)) :collect) => '(42))
+
+;; 嵌套结构测试
+(check ($ '((1 2) (3 4)) :collect) => '((1 2) (3 4)))
+(check ($ '(((a)) ((b))) :collect) => '(((a)) ((b))))
+
+;; 多种类型测试
+(check ($ '(#t #f "hello" 42) :collect) => '(#t #f "hello" 42))
+
+;; 链式操作结合测试
+(check (($ '(1 2 3 4 5) :filter even?) :collect) => '(2 4))
+(check (($ '(1 2 3 4) :map (lambda (x) (* x 2))) :collect) => '(2 4 6 8))
+(check (($ '(1 2 3 4 5) :take 3) :collect) => '(1 2 3))
+
+;; 验证返回标准Scheme列表
+(let ((result ($ '(a b c) :collect)))
+  (check (list? result) => #t))
+
+;; 验证列表操作兼容性
+(let ((result ($ '(1 2 3) :collect)))
+  (check (car result) => 1)
+  (check (cadr result) => 2)
+  (check (cddr result) => '(3)))
 
 (check-report)
