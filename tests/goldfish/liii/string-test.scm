@@ -543,6 +543,44 @@ wrong-type-arg 当str不是字符串时
 (check-catch 'out-of-range (string-any char-alphabetic? "hello" 5 1))
 (check-catch 'out-of-range (string-any char-alphabetic? "hello" 10))
 
+;; === string-any多字节字符边界验证增强 ===
+;; 中文和ASCII字符混用验证：确保ASCII和中文混合文本与谓词函数的边界行为一致性
+(check-true (string-any char-alphabetic? "a中文b"))          ; 中英文混合必须匹配英文字母字符
+(check-true (string-any char-alphabetic? "hello中文"))      ; ASCII字母+中文混合中字母存在
+(check-true (string-any char-numeric? "中文123文字"))       ; 中文+数字混合中数字存在
+(check-false (string-any char-numeric? "中文测试"))         ; 中文文本中不含数字，返回#f
+
+;; 中文字符基础行为验证：确保谓词对Unicode中文字符处理无异常
+(check-true (string-any (lambda (c) #t) "中文文档"))        ; 中文字符全匹配任意谓词
+(check-true (string-any (lambda (c) (char=? c #\a)) "中文a文字"))   ; 特定ASCII字符在混合文本中匹配
+(check-false (string-any (lambda (c) (char=? c #\z)) "中文测试"))   ; 不存在的字符匹配验证
+
+;; emoji字符边界验证：确保4字节emoji在UTF-8编码环境中的字节级处理正确性
+(check-true (string-any char-numeric? "123😀456"))         ; emoji混在数字中，确保数字字符被识别
+(check-true (string-any char-alphabetic? "hello😀world"))   ; emoji混在字母中，字母字符存在
+(check-true (string-any (lambda (c) (not (char-whitespace? c))) "hello 😀world"))   ; 空白符+文字+emoji混合
+(check-false (string-any char-alphabetic? "123😀!@#"))      ; 数字+emoji+符号组合无字母字符
+
+;; 扩展Unicode字符验证：涵盖特殊符号、数学符号等扩展应用场景
+(check-true (string-any char-numeric? "￥1000"))           ; ￥货币符号+数字组合的数字存在
+(check-true (string-any char-alphabetic? "数学+a+b=c"))                   ; 数学符号+字母混合字母存在
+(check-true (string-any (lambda (c) (not (char-whitespace? c))) "空格123文字😀test")) ; 空白+文字+数字非空白检测
+
+;; 多字节字符分割边界验证：检查start/end参数在跨越多字节字符时的边界处理完整性
+(check-true (string-any char-alphabetic? "a中文b" 0 6))     ; 跨越ASCII和中文边界检测字母
+(check-true (string-any char-numeric? "文123字" 1 6))       ; 中文字符范围内数字检测
+(check-false (string-any char-numeric? "中文测试" 0 8))     ; 中文字符范围内无数字检测
+(check-true (string-any (lambda (c) (or (char-alphabetic? c) (char-numeric? c))) "混合a123文😀字" 0 15)) ; 综合范围检测
+
+;; 空边界条件验证：空字符串和零长度范围在多字节字符文本中的处理边界
+(check-false (string-any (lambda (c) #t) "中文" 4 4))        ; 中文字符串末尾边界检测
+(check-false (string-any (lambda (c) #t) "" 0 0))           ; 空字符串边界验证
+
+;; 混合场景压力测试：复杂Unicode字符环境下的谓词函数行为一致性验证
+(check-true (string-any (lambda (c) (or (char-alphabetic? c) (char-numeric? c))) "混合text123和中文"))
+(check-true (string-any char-alphabetic? "program中文test"))   ; 混合文本有字母存在
+(check-false (string-any char-numeric? "纯中文text验证"))      ; 中文文本无数字验证"
+
 (define original-string "MathAgape")
 (define copied-string (string-copy original-string))
 
