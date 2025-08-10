@@ -1,1 +1,1 @@
-(display #")
+(display #\()
