@@ -20,8 +20,8 @@
     ; R7RS 5: Program Structure
     define-values define-record-type
     ; R7RS 6.2: Numbers
-    square exact inexact max min floor s7-floor ceiling s7-ceiling truncate s7-truncate
-    round s7-round floor-quotient gcd lcm s7-lcm modulo boolean=? exact-integer-sqrt
+    square exact inexact max min floor floor/ s7-floor ceiling s7-ceiling truncate s7-truncate
+    round s7-round floor-quotient floor-remainder gcd lcm s7-lcm modulo boolean=? exact-integer-sqrt
     numerator denominator exact-integer?
     ; R7RS 6.4: list
     pair? cons car cdr set-car! set-cdr! caar cadr cdar cddr
@@ -184,6 +184,86 @@
           (s7-round x)))
 
     (define (floor-quotient x y) (floor (/ x y)))
+
+    (define (floor/ x y)
+      (when (or (not (real? x)) (not (real? y)))
+        (error 'wrong-type-arg "floor/: parameters must be real numbers"))
+      (when (zero? y)
+        (error 'division-by-zero "floor/: division by zero"))
+      (let ((q (floor (/ x y)))
+            (r (modulo x y)))
+        (values q r)))
+
+#|
+floor/
+执行地板除法（floor division），返回商和余数。
+
+语法
+----
+(floor/ dividend divisor)
+
+参数
+----
+dividend : real? - 被除数
+divisor : real? - 除数，不能为零
+
+返回值
+------
+返回两个值：
+1. quotient : exact-integer? - 向下取整的商
+2. remainder : real? - 相应的余数
+
+说明
+----
+floor/ 执行地板除法，结果满足：
+1. quotient 是向下取整的整数（向负无穷方向）
+2. dividend = quotient * divisor + remainder
+3. 0 ≤ remainder < |divisor|
+
+错误
+----
+division-by-zero
+当 divisor 为零时抛出
+wrong-type-arg
+当参数不是实数时抛出
+|#
+
+    (define (floor-remainder x y)
+      (when (or (not (real? x)) (not (real? y)))
+        (error 'type-error "floor-remainder: parameters must be reals"))
+      (when (zero? y)
+        (error 'division-by-zero "floor-remainder: division by zero"))
+      (modulo x y))
+
+#|
+floor-remainder
+计算实数的取模运算，与 modulo 函数行为相同。
+
+语法
+----
+(floor-remainder dividend divisor)
+
+参数
+----
+dividend : real? - 被除数
+divisor : real? - 除数，不能为零
+
+返回值
+------
+real?
+返回 dividend 除以 divisor 的余数。
+
+错误
+----
+type-error
+当任一参数不是实数类型时抛出错误。包括复数（如 1+2i）、字符串、符号等其他类型。
+
+division-by-zero  
+当除数 divisor 为零时抛出错误。
+
+wrong-number-of-args
+当参数数量不为两个时抛出错误。
+|#
 
     (define s7-modulo modulo)
 

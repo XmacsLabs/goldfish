@@ -1830,6 +1830,43 @@ wrong-type-arg
 (check (floor-quotient 0 2) => 0)
 (check (floor-quotient 0 -2) => 0)
 
+(check (receive (q r) (floor/ 11 3) q) => 3)
+(check (receive (q r) (floor/ 11 3) r) => 2)
+(check (receive (q r) (floor/ 11 -3) q) => -4)
+(check (receive (q r) (floor/ 11 -3) r) => -1)
+(check (receive (q r) (floor/ -11 3) q) => -4)
+(check (receive (q r) (floor/ -11 3) r) => 1)
+(check (receive (q r) (floor/ -11 -3) q) => 3)
+(check (receive (q r) (floor/ -11 -3) r) => -2)
+
+(check (receive (q r) (floor/ 10 2) q) => 5)
+(check (receive (q r) (floor/ 10 2) r) => 0)
+(check (receive (q r) (floor/ 10 -2) q) => -5)
+(check (receive (q r) (floor/ 10 -2) r) => 0)
+(check (receive (q r) (floor/ -10 2) q) => -5)
+(check (receive (q r) (floor/ -10 2) r) => 0)
+(check (receive (q r) (floor/ -10 -2) q) => 5)
+(check (receive (q r) (floor/ -10 -2) r) => 0)
+
+(check (receive (q r) (floor/ 15 4) q) => 3)
+(check (receive (q r) (floor/ 15 4) r) => 3)
+(check (receive (q r) (floor/ 15 -4) q) => -4)
+(check (receive (q r) (floor/ 15 -4) r) => -1)
+(check (receive (q r) (floor/ -15 4) q) => -4)
+(check (receive (q r) (floor/ -15 4) r) => 1)
+(check (receive (q r) (floor/ -15 -4) q) => 3)
+(check (receive (q r) (floor/ -15 -4) r) => -3)
+
+(check (receive (q r) (floor/ 1 3) q) => 0)
+(check (receive (q r) (floor/ 1 3) r) => 1)
+(check (receive (q r) (floor/ 0 5) q) => 0)
+(check (receive (q r) (floor/ 0 5) r) => 0)
+
+(check-catch 'division-by-zero (floor/ 11 0))
+(check-catch 'division-by-zero (floor/ 0 0))
+(check-catch 'wrong-type-arg (floor/ 1+i 2))
+(check-catch 'wrong-type-arg (floor/ 5 #t))
+
 #|
 quotient
 用于计算两个数的精确除法商（向零取整）。
@@ -2002,6 +2039,31 @@ wrong-number-of-args
 (check-catch 'wrong-number-of-args (modulo 5))
 (check-catch 'wrong-number-of-args (modulo 5 3 2))
 (check-catch 'division-by-zero (modulo 1 0))
+
+(check (floor-remainder 13 4) => 1)
+(check (floor-remainder -13 4) => 3)    
+(check (floor-remainder 13 -4) => -3)   
+(check (floor-remainder -13 -4) => -1)  
+(check (floor-remainder 0 5) => 0)    
+(check (floor-remainder 0 -5) => 0)    
+
+(check (floor-remainder 13 4.0) => 1.0)     
+(check (floor-remainder -13.0 4) => 3.0)    
+(check (floor-remainder 13.0 -4.0) => -3.0) 
+(check (floor-remainder 1000000 7) => 1)    
+(check (floor-remainder 1 1) => 0)
+(check (floor-remainder 5 5) => 0)
+(check (floor-remainder -1 5) => 4)
+(check (floor-remainder -5 5) => 0)
+(check (floor-remainder 20 7) => 6)
+(check (floor-remainder -20 7) => 1)
+(check (floor-remainder 20 -7) => -1)
+
+(check-catch 'type-error (floor-remainder 1+i 2))
+(check-catch 'type-error (floor-remainder 'hello 2))
+(check-catch 'wrong-number-of-args (floor-remainder 5))
+(check-catch 'wrong-number-of-args (floor-remainder 5 3 2))
+(check-catch 'division-by-zero (floor-remainder 1 0))
 
 #|
 gcd
@@ -2288,6 +2350,81 @@ wrong-type-arg
 (check (square 1000) => 1000000)
 (check (square 1/100) => 1/10000)
 (check (square 0.001) => 0.000001)
+
+#|
+/
+除法函数，支持整数、浮点数、有理数和复数的除法运算。
+
+语法
+----
+(/ num ...)
+
+参数
+----
+num : number?
+任意个数字作为除数。如果没有参数，抛出错误；如果只有一个参数，则返回其倒数；如果有多个参数，则从第二个参数开始依次除第一个参数。
+
+返回值
+------
+number?
+如果没有参数，抛出错误；如果只有一个参数，返回其倒数；如果有多个参数，返回其左结合的商。
+
+说明
+----
+支持任意精确度和混合类型的除法运算：
+- 整数除法：精确计算，如果没有模除则保持精确
+- 浮点数除法：可能出现精度误差
+- 有理数除法：保持精确分数
+- 复数除法：按复数除法规则计算
+
+错误
+----
+wrong-type-arg
+如果存在任何参数不是数字类型，则抛出此错误
+division-by-zero
+除数为零时抛出此错误
+wrong-number-of-args
+提供的参数个数与函数定义时所需的参数个数不匹配
+|#
+
+(check (/ 5) => 1/5)
+(check (/ 1) => 1)
+(check (/ -1) => -1)
+(check (/ 2.5) => 0.4)
+(check (/ 0.1) => 10.0)
+(check (/ 1/2) => 2)
+(check (/ 4/3) => 3/4)
+(check (/ 10 2) => 5)
+(check (/ 3 4) => 3/4)
+(check (< (abs (- (/ 1.2 0.3) 4.0)) 1e-15) => #t)
+(check (/ 2/3 1/3) => 2)
+(check (/ 6 4 2) => 3/4)
+(check (/ 6 2 3) => 1)
+(check (/ 120 2 3 4 5) => 1)
+
+(check (/ 10 3) => 10/3)
+(check (/ 1/2 1/3) => 3/2)
+(check (/ 4/5 2/3) => 6/5)
+
+(check (/ 1 1) => 1)
+(check (/ 1+0i 1+0i) => 1.0)
+
+(check (/ -10 5) => -2)
+(check (/ 10 -5) => -2)
+(check (/ -10 -5) => 2)
+
+(check (/ 5.0 2.0) => 2.5)
+(check (/ 1.0 3.0) => 0.3333333333333333)
+(check (/ 1/2 0.5) => 1.0)
+(check (/ 4/2 2) => 1)
+
+(check-catch 'division-by-zero (/ 5 0))
+(check-catch 'division-by-zero (/ 1 0 2))
+(check-catch 'division-by-zero (/ 0))
+(check-catch 'wrong-type-arg (/ 'hello 7))
+(check-catch 'wrong-type-arg (/ "world" 7))
+(check-catch 'wrong-type-arg (/ 5 #t))
+(check-catch 'wrong-number-of-args (/))
 
 #|
 exact-integer-sqrt
