@@ -20,7 +20,7 @@
     ; R7RS 5: Program Structure
     define-values define-record-type
     ; R7RS 6.2: Numbers
-    square exact inexact max min floor floor/ s7-floor ceiling s7-ceiling truncate s7-truncate
+    square exact inexact max min floor floor/ s7-floor ceiling s7-ceiling truncate truncate/ s7-truncate
     round s7-round floor-quotient floor-remainder gcd lcm s7-lcm modulo boolean=? exact-integer-sqrt
     numerator denominator exact-integer?
     ; R7RS 6.4: list
@@ -264,6 +264,49 @@ division-by-zero
 wrong-number-of-args
 当参数数量不为两个时抛出错误。
 |#
+
+#|
+truncate/
+执行截断除法（truncate division），返回商和余数。
+
+语法
+----
+(truncate/ dividend divisor)
+
+参数
+----
+dividend : real? - 被除数
+divisor : real? - 除数，不能为零
+
+返回值
+------
+返回两个值：
+1. quotient : exact-integer? - 向零方向截断的商
+2. remainder : real? - 相应的余数
+
+说明
+----
+truncate/ 执行截断除法，结果满足：
+1. quotient 是向零方向截断的整数
+2. dividend = quotient * divisor + remainder
+3. remainder 的符号与 dividend 相同，或为零
+
+错误
+----
+division-by-zero
+当 divisor 为零时抛出
+
+wrong-type-arg
+当参数不是实数时抛出
+|#
+    (define (truncate/ x y)
+      (when (or (not (real? x)) (not (real? y)))
+        (error 'wrong-type-arg "truncate/: parameters must be real numbers"))
+      (when (zero? y)
+        (error 'division-by-zero "truncate/: division by zero"))
+      (let* ((q (truncate (/ x y)))
+             (r (- x (* q y))))
+        (values q r)))
 
     (define s7-modulo modulo)
 
