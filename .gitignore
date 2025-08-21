@@ -24,4 +24,5 @@ compile_commands.json
 node_modules/
 
 result*
+.envrc
 .direnv/
