@@ -1626,7 +1626,6 @@ repl_for_community_edition (s7_scheme* sc, int argc, char** argv) {
   }
   if (load_arg) {
     std::string file= load_arg.str ();
-    cout << " * " << file << " evaluated" << endl;
     goldfish_eval_file (sc, file, true);
   }
 
