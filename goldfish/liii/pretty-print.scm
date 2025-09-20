@@ -105,45 +105,49 @@
 			   (pretty-print-1 (cadr obj) port column))))
 		   (hash-table-set! h 'quote w-quote) ; what about #_quote?
 
-		   ;; -------- define
-		   (define (w-define obj port column)
-		     (if (not (pair? (cdr obj)))
-			 (write obj port)
-			 (begin
-			   (format port "(~A ~A " (car obj) (cadr obj))
-			   (if (pair? (cadr obj))
-			       (begin
-				 (spaces port (+ column *pretty-print-spacing*))
-				 (stacked-list port (cddr obj) (+ column *pretty-print-spacing*)))
-			       (if (pair? (cddr obj))
-				   (let ((str (object->string (caddr obj))))
-				     (if (> (length str) 60)
-					 (begin
-					   (spaces port (+ column *pretty-print-spacing*))
-					   (pretty-print-1 (caddr obj) port (+ column *pretty-print-spacing*)))
-					 (write (caddr obj) port)))
-				   (write (cddr obj) port)))
-			   (write-char #\) port))))
-		   (hash-table-set! h 'define w-define)
+		  ;; -------- define
+      (define (w-define obj port column)
+        (if (not (pair? (cdr obj)))
+            (write obj port)
+            (begin
+              (format port "(~A ~A" (car obj) (cadr obj))
+              (if (pair? (cadr obj))
+                  (begin
+                    (spaces port (+ column *pretty-print-spacing*))
+                    (stacked-list port (cddr obj) (+ column *pretty-print-spacing*)))
+                  (if (pair? (cddr obj))
+                      (let ((str (object->string (caddr obj))))
+                        (if (> (length str) 60)
+                            (begin
+                              (spaces port (+ column *pretty-print-spacing*))
+                              (pretty-print-1 (caddr obj) port (+ column *pretty-print-spacing*)))
+                            (begin
+                              (write-char #\space port)
+                              (write (caddr obj) port))))
+                              (write (cddr obj) port)))
+            (write-char #\) port))))
+      (hash-table-set! h 'define w-define)
 
-		   ;; -------- define-constant
-		   (define (w-define-constant obj port column)
-		     (if (not (and (pair? (cdr obj))
-				   (pair? (cddr obj))))
-			 (write obj port)
-			 (begin
-			   (format port "(~A ~A " (car obj) (cadr obj))
-			   (if (pair? (cddr obj))
-			       (let ((str (object->string (caddr obj))))
-				 (if (> (length str) 60)
-				     (begin
-				       (spaces port (+ column *pretty-print-spacing*))
-				       (pretty-print-1 (caddr obj) port (+ column *pretty-print-spacing*)))
-				     (write (caddr obj) port)))
-			       (write (cddr obj) port))
-			   (write-char #\) port))))
-		   (hash-table-set! h 'define-constant w-define-constant)
-		   (hash-table-set! h #_define-constant w-define-constant)
+		  ;; -------- define-constant
+      (define (w-define-constant obj port column)
+        (if (not (and (pair? (cdr obj))
+                      (pair? (cddr obj))))
+            (write obj port)
+            (begin
+              (format port "(~A ~A" (car obj) (cadr obj))
+              (if (pair? (cddr obj))
+                  (let ((str (object->string (caddr obj))))
+                    (if (> (length str) 60)
+                        (begin
+                          (spaces port (+ column *pretty-print-spacing*))
+                          (pretty-print-1 (caddr obj) port (+ column *pretty-print-spacing*)))
+                        (begin
+                          (write-char #\space port)
+                          (write (caddr obj) port))))
+                  (write (cddr obj) port))
+              (write-char #\) port))))
+      (hash-table-set! h 'define-constant w-define-constant)
+      (hash-table-set! h #_define-constant w-define-constant)
 
 		   ;; -------- if
 		   (define (w-if obj port column if-str)

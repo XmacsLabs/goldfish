@@ -1,8 +1,21 @@
 #!/usr/bin/env elvish
 
 if (== (count $args) 0) {
-  echo "Usage: bin/format <filename>"
+  # Show usage and default behavior
+  echo "Usage: bin/format [path1 path2 ...]"
+  echo ""
+  echo "If no files specified, formats default base64 files:"
+  echo "  goldfish/liii/base64.scm"
+  echo "  tests/goldfish/liii/base64-test.scm"
+  echo ""
+  echo "Formatting default base64 files..."
+  bin/goldfish tools/format.scm -i goldfish/liii/base64.scm
+  bin/goldfish tools/format.scm -i tests/goldfish/liii/base64-test.scm
 } else {
-  bin/goldfish tools/format.scm $args[0]
+  # Format each file (all arguments are file paths)
+  for file $args {
+    echo "Formatting: " $file
+    bin/goldfish tools/format.scm -i $file
+  }
 }
 

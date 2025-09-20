@@ -78,6 +78,7 @@
            (values 'end pos (string-append result (object->string (list '*PP_SINGLE_COMMENT* current)))))
           ((is-newline? str pos)
            ;; Found newline, comment ends, return to start state
+           ;; Let the start state handle the newline to avoid double-processing
            (values 'start pos (string-append result (object->string (list '*PP_SINGLE_COMMENT* current)))))
           ((not started?)
            ;; Skip leading whitespace after semicolon
@@ -188,17 +189,26 @@
                (expr (with-input-from-string full-expr read))  ; 用 read 解析
                (comment-texts (cdr expr))  ; 获取所有注释内容
                (indent-str (make-string indent #\space))  ; 生成缩进字符串
-               (indented-texts (map (lambda (s) 
-                                     (string-append indent-str s))
-                                   comment-texts)))  ; 为每行添加缩进
+               ;; 检查第一行是否以非空白字符开头，如果是，则不添加缩进
+               (should-indent? (and (> (length comment-texts) 0)
+                                    (let ((trimmed (string-trim (car comment-texts))))
+                                      (and (> (string-length trimmed) 0)
+                                           (not (string-every char-whitespace? trimmed))))))
+               (indented-texts (if should-indent?
+                                   (map (lambda (s) 
+                                          (if (string-every char-whitespace? s)
+                                              s  ; 保留空行不变
+                                              (string-append indent-str s)))
+                                        comment-texts)
+                                   comment-texts)))  ; 保持原始格式
           
           (values 'normal 
                   (+ end-pos 1)
                   (string-append result 
                                "#|"
-                               (if (> indent 0) "\n" "")  ; 如果有缩进则先换行
+                               (if (and (> indent 0) should-indent?) "\n" "")  ; 只在需要缩进时添加换行
                                (string-join indented-texts "\n")
-                               "|#\n")))
+                               "|#")))
         (values 'normal (string-length str) result))))
 
 (define (is-pp-newline? str pos)
@@ -226,6 +236,7 @@
         (let* ((full-expr (substring str pos (+ end-pos 1)))  ; 提取完整表达式
                (expr (with-input-from-string full-expr read))  ; 用 read 解析
                (comment-text (cadr expr)))  ; 获取注释内容
+          ;; 注意：换行符已经在解析阶段被保留，这里不需要额外添加
           (values 'normal (+ end-pos 1) (string-append result "; " comment-text)))
         (values 'normal (string-length str) result))))  ; 未找到右括号，直接结束
 

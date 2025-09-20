@@ -1,22 +1,20 @@
-;
+; 
 ; Copyright (C) 2024 The Goldfish Scheme Authors
-;
+; 
 ; Licensed under the Apache License, Version 2.0 (the "License");
 ; you may not use this file except in compliance with the License.
 ; You may obtain a copy of the License at
-;
+; 
 ; http://www.apache.org/licenses/LICENSE-2.0
-;
+; 
 ; Unless required by applicable law or agreed to in writing, software
 ; distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 ; WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 ; License for the specific language governing permissions and limitations
 ; under the License.
-;
+; 
 
-(import (liii check)
-        (liii base64)
-        (liii error))
+(import (liii check) (liii base64) (liii error))
 
 (check-set-mode! 'report-failed)
 
@@ -51,7 +49,6 @@ type-error
 - 空字符串编码为空字符串
 - 编码结果长度总是4的倍数（通过填充实现）
 - 严格遵循Base64标准规范
-
 |#
 
 (check (base64-encode "") => "")
