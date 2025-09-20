@@ -249,10 +249,56 @@
              ;; 正常处理字符，直接按原样输出
              (values 'normal (+ pos 1) (string-append result (string (str pos))))))))
 
+(define (clean-empty-lines str)
+  ;; 清理空行中的空白字符：将只包含空格和制表符的行转换为纯换行
+  (let ((result str)
+        (max-iterations 10000)) ;; 防止无限循环
+    (let loop ((s result) (count 0))
+      (if (>= count max-iterations)
+          s
+          (let ((whitespace-match (find-whitespace-line s 0)))
+            (if whitespace-match
+                (loop (string-replace-one s whitespace-match) (+ count 1))
+                s))))))
+
+(define (find-whitespace-line str start-pos)
+  ;; 查找 \n[空格或制表符]+\n 的模式，返回匹配位置或 #f
+  (let ((len (string-length str)))
+    (let loop ((i start-pos))
+      (cond ((>= i (- len 2)) #f)  ;; 至少需要2个字符：\n和\n
+            ((and (char=? (string-ref str i) #\newline)
+                  (let ((ws-end (skip-whitespace str (+ i 1))))
+                    (and ws-end
+                         (< ws-end len)
+                         (char=? (string-ref str ws-end) #\newline)
+                         (> ws-end (+ i 1)))))  ;; 确保至少有一个空白字符
+             i)
+            (else (loop (+ i 1)))))))
+
+(define (skip-whitespace str pos)
+  ;; 跳过连续的空格和制表符，返回第一个非空白字符位置或字符串末尾
+  (let ((len (string-length str)))
+    (let loop ((i pos))
+      (cond ((>= i len) i)
+            ((or (char=? (string-ref str i) #\space)
+                 (char=? (string-ref str i) #\tab))
+             (loop (+ i 1)))
+            (else i)))))
+
+(define (string-replace-one str match-pos)
+  ;; 替换指定位置的 \n[空白]+\n 为 \n\n
+  (let* ((ws-start (+ match-pos 1))
+         (ws-end (skip-whitespace str ws-start))
+         (end-pos ws-end))
+    (string-append
+     (substring str 0 match-pos)
+     "\n\n"
+     (substring str (+ end-pos 1) (string-length str)))))
+
 (define (pp-post str)
   (let loop ((state 'start) (pos 0) (result ""))
     (if (>= pos (string-length str))
-        result
+        (clean-empty-lines result)  ;; 清理空行中的空白字符
         (case state
           ((start) (receive (next-state next-pos next-result)
                         (next-state-from-start-post str pos result)

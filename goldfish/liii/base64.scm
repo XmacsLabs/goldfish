@@ -22,7 +22,9 @@
     (define-constant BYTE2BASE64_BV
                      (string->utf8
                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"))
+
     (define-constant BASE64_PAD_BYTE (char->integer #\=))
+
     (define bytevector-base64-encode 
       (typed-lambda ((bv bytevector?))
                     (define (encode b1 b2 b3) 
@@ -60,13 +62,16 @@
                                      (bytevector-u8-set! output (+ j 2) r3)
                                      (bytevector-u8-set! output (+ j 3) r4) (loop (+ i 3) (+ j 4))))))
                       output)))
+
     (define string-base64-encode 
       (typed-lambda ((str string?)) (utf8->string (bytevector-base64-encode (string->utf8 str)))))
+
     (define (base64-encode x) 
       (cond ((string? x) (string-base64-encode x))
             ((bytevector? x) (bytevector-base64-encode x))
             (else
              (type-error "input must be string or bytevector"))))
+
     (define-constant BASE64_TO_BYTE_V
                      (let1 byte2base64-N (bytevector-length BYTE2BASE64_BV)
                            (let loop ((i 0)
@@ -76,6 +81,7 @@
                                    (vector-set! v (BYTE2BASE64_BV i) i)
                                    (loop (+ i 1) v))
                                  v))))
+
     (define (bytevector-base64-decode bv) 
       (define (decode c1 c2 c3 c4) 
         (let* ((b1 (BASE64_TO_BYTE_V c1))
@@ -115,11 +121,12 @@
               (let ((final (make-bytevector j)))
                 (vector-copy! final 0 output 0 j)
                 final)))))
+
     (define string-base64-decode 
       (typed-lambda ((str string?)) (utf8->string (bytevector-base64-decode (string->utf8 str)))))
+
     (define (base64-decode x) 
       (cond ((string? x) (string-base64-decode x))
             ((bytevector? x) (bytevector-base64-decode x))
             (else
              (type-error "input must be string or bytevector"))))))
-
