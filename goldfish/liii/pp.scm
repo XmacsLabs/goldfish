@@ -56,6 +56,21 @@
 
 ;; 当前状态： normal
 ;; 含义：位置在代码的行中
+(define (has-non-whitespace-on-line-before-comment str comment-pos)
+  ;; Check if there is non-whitespace content on the same line before the comment
+  (let loop ((i (- comment-pos 1)))
+    (cond ((< i 0) #f)  ; Start of string, no content found
+          ((is-newline? str i) #f)  ; Found start of line, no content found
+          ((not (char-whitespace? (str i))) #t)  ; Found non-whitespace content
+          (else (loop (- i 1))))))
+
+(define (find-newline-after-comment str comment-pos)
+  ;; Find the position of newline after the comment, or end of string
+  (let loop ((i comment-pos))
+    (cond ((>= i (string-length str)) i)
+          ((is-newline? str i) i)
+          (else (loop (+ i 1))))))
+
 (define (next-state-from-normal str pos result)
   ; (display* "normal: " pos result "\n")
   (if (>= pos (string-length str))
@@ -65,8 +80,17 @@
                     (next-pos (+ pos n)))
                (values 'start next-pos (string-append result (encode-newlines n)))))
             ((char=? (str pos) #\;)
-             ;; normal -> comment | ;
-             (values 'comment (+ pos 1) result))
+             ;; Check if this is an end-of-line comment by looking for non-whitespace before it
+             (if (has-non-whitespace-on-line-before-comment str pos)
+                 ;; This is an end-of-line comment, skip it
+                 (let ((newline-pos (find-newline-after-comment str pos)))
+                   (if (and newline-pos (< newline-pos (string-length str)))
+                       (let* ((n (count-newline str newline-pos))
+                              (next-pos (+ newline-pos n)))
+                         (values 'start next-pos (string-append result (encode-newlines n))))
+                       (values 'end (string-length str) result)))
+                 ;; This is a standalone comment, process normally
+                 (values 'comment (+ pos 1) result)))
             ((and (< (+ pos 1) (string-length str))
                   (char=? (str pos) #\#)
                   (char=? (str (+ pos 1)) #\|))
@@ -241,7 +265,10 @@
                (expr (with-input-from-string full-expr read))  ; 用 read 解析
                (comment-text (cadr expr)))  ; 获取注释内容
           ;; 注意：换行符已经在解析阶段被保留，这里不需要额外添加
-          (values 'normal (+ end-pos 1) (string-append result "; " comment-text)))
+          ;; 对于空注释（如版权头的纯;），不添加空格；对于有内容的注释，添加空格
+          (let* ((trimmed-text (string-trim comment-text))
+                 (comment-prefix (if (string-null? trimmed-text) ";" "; ")))
+            (values 'normal (+ end-pos 1) (string-append result comment-prefix trimmed-text))))
         (values 'normal (string-length str) result))))  ; 未找到右括号，直接结束
 
 (define (is-pp-multi-comment? str pos)

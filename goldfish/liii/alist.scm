@@ -1,6 +1,6 @@
-; 
+;
 ; BSD License by Peter Danenberg
-; 
+;
 
 (define-library (liii alist)
   (import (liii base) (liii list) (liii error) (scheme case-lambda))
