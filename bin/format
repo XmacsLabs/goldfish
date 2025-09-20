@@ -1,5 +1,8 @@
-#!/bin/bash
-clang-format-16 -i src/*
+#!/usr/bin/env elvish
 
-node ./node_modules/parindent/cli.js  'tests/**/*.scm' --write
-node ./node_modules/parindent/cli.js  'goldfish/**/*.scm' --write
+if (== (count $args) 0) {
+  echo "Usage: bin/format <filename>"
+} else {
+  bin/goldfish tools/format.scm $args[0]
+}
+
