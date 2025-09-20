@@ -5984,4 +5984,551 @@ wrong-type-arg
 (let1 port (open-input-string "ERROR")
   (check-catch 'wrong-type-arg (get-output-string port)))
 
+#|
+read
+从输入端口读取一个S表达式，根据R7RS规范，read函数用于从给定的输入端口读取Scheme数据。
+
+语法
+----
+(read)
+(read port)
+
+参数
+----
+port : port? (可选)
+输入端口，如果未提供则使用当前输入端口
+
+返回值
+-----
+any?
+返回从端口读取的S表达式，到达文件末尾时返回EOF对象
+
+描述
+----
+read函数从指定的输入端口读取一个完整的S表达式。如果未提供端口参数，
+则从当前输入端口读取。读取过程会正确处理各种Scheme数据类型，包括
+基本类型（数字、字符串、符号、布尔值）和复合类型（列表、向量等）。
+
+行为特征
+------
+- 读取完整的S表达式，包括嵌套结构
+- 正确处理引号、反引号等特殊语法
+- 支持所有Scheme数据类型的读取
+- 到达文件末尾时返回EOF对象
+- 输入格式错误会抛出读取错误
+
+错误处理
+------
+- 输入格式错误：抛出读取错误
+- 端口错误：如果端口无效会抛出相应错误
+- 内存不足：可能抛出内存错误
+
+与write的关系
+------------
+read函数与write函数配合使用可以实现数据的序列化和反序列化：
+(write data port) 写入的数据可以通过 (read port) 重新读取
+
+跨平台行为
+---------
+- 字符编码：支持UTF-8编码的文本输入
+- 数字格式：支持各种数字字面量格式
+- 字符串转义：正确处理转义字符
+|#
+
+;; 基本数据类型读取测试
+(let1 port (open-input-string "123")
+  (check (read port) => 123))
+
+(let1 port (open-input-string "-456")
+  (check (read port) => -456))
+
+(let1 port (open-input-string "3.14")
+  (check (read port) => 3.14))
+
+(let1 port (open-input-string "\"hello world\"")
+  (check (read port) => "hello world"))
+
+(let1 port (open-input-string "hello")
+  (check (read port) => 'hello))
+
+(let1 port (open-input-string "#t")
+  (check (read port) => #t))
+
+(let1 port (open-input-string "#f")
+  (check (read port) => #f))
+
+;; 列表读取测试
+(let1 port (open-input-string "(1 2 3)")
+  (check (read port) => '(1 2 3)))
+
+(let1 port (open-input-string "(a b c)")
+  (check (read port) => '(a b c)))
+
+(let1 port (open-input-string "(1 \"two\" 3)")
+  (check (read port) => '(1 "two" 3)))
+
+;; 嵌套列表读取测试
+(let1 port (open-input-string "(1 (2 3) 4)")
+  (check (read port) => '(1 (2 3) 4)))
+
+(let1 port (open-input-string "((a b) (c d))")
+  (check (read port) => '((a b) (c d))))
+
+;; 向量读取测试
+(let1 port (open-input-string "#(1 2 3)")
+  (check (read port) => #(1 2 3)))
+
+(let1 port (open-input-string "#(a \"b\" c)")
+  (check (read port) => #(a "b" c)))
+
+;; 引号语法测试
+(let1 port (open-input-string "'hello")
+  (check (read port) => ''hello))
+
+(let1 port (open-input-string "'(1 2 3)")
+  (check (read port) => ''(1 2 3)))
+
+(let1 port (open-input-string "`hello")
+  (check (read port) => '`hello))
+
+;; 取消引号语法 - 这些在当前实现中可能不支持
+;; (let1 port (open-input-string ",hello")
+;;   (check (read port) => ',hello))
+
+;; (let1 port (open-input-string ",@hello")
+;;   (check (read port) => ',@hello))
+
+;; 复杂表达式测试
+(let1 port (open-input-string "(+ 1 2 3)")
+  (check (read port) => '(+ 1 2 3)))
+
+(let1 port (open-input-string "(define x 42)")
+  (check (read port) => '(define x 42)))
+
+(let1 port (open-input-string "(if #t yes no)")
+  (check (read port) => '(if #t yes no)))
+
+;; 空列表测试
+(let1 port (open-input-string "()")
+  (check (read port) => '()))
+
+;; 布尔值列表测试
+(let1 port (open-input-string "(#t #f #t)")
+  (check (read port) => '(#t #f #t)))
+
+;; 混合类型列表测试
+(let1 port (open-input-string "(1 \"two\" 'three 4.0)")
+  (check (read port) => '(1 "two" 'three 4.0)))
+
+;; 文件结束测试
+(let1 port (open-input-string "")
+  (check (eof-object? (read port)) => #t))
+
+(let1 port (open-input-string "123")
+  (check (read port) => 123)
+  (check (eof-object? (read port)) => #t))
+
+;; 多个表达式测试
+(let1 port (open-input-string "123 456 \"hello\"")
+  (check (read port) => 123)
+  (check (read port) => 456)
+  (check (read port) => "hello")
+  (check (eof-object? (read port)) => #t))
+
+;; 注释处理测试（如果支持）
+(let1 port (open-input-string "123 ; this is a comment\n456")
+  (check (read port) => 123)
+  (check (read port) => 456))
+
+;; 空白字符处理测试
+(let1 port (open-input-string "   123   456   ")
+  (check (read port) => 123)
+  (check (read port) => 456))
+
+;; 换行符处理测试
+(let1 port (open-input-string "123\n456\n789")
+  (check (read port) => 123)
+  (check (read port) => 456)
+  (check (read port) => 789))
+
+;; 与write联动测试
+(let1 output-port (open-output-string)
+  (write '(1 2 3) output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => '(1 2 3))))
+
+(let1 output-port (open-output-string)
+  (write "hello world" output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => "hello world")))
+
+(let1 output-port (open-output-string)
+  (write 123.456 output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => 123.456)))
+
+;; 错误处理测试 - 不完整的表达式
+;; (let1 port (open-input-string "(1 2")
+;;   (check-catch 'read-error (read port)))
+
+;; 大数字测试
+(let1 port (open-input-string "12345678901234567890")
+  (check-true (number? (read port))))
+
+;; 特殊符号测试
+(let1 port (open-input-string "hello-world hello_world hello.world")
+  (check (read port) => 'hello-world)
+  (check (read port) => 'hello_world)
+  (check (read port) => 'hello.world))
+
+;; 中文符号测试
+(let1 port (open-input-string "'中文测试")
+  (check (read port) => ''中文测试))
+
+;; 嵌套引号测试
+(let1 port (open-input-string "''hello")
+  (check (read port) => '''hello))
+
+;; 复杂嵌套测试
+(let1 port (open-input-string "(a (b (c d)) e)")
+  (check (read port) => '(a (b (c d)) e)))
+
+;; 向量嵌套测试
+(let1 port (open-input-string "#(1 #(2 3) 4)")
+  (check (read port) => #(1 #(2 3) 4)))
+
+;; 当前输入端口测试（需要重定向）
+;; (let1 original-input (current-input-port)
+;;   (let1 string-port (open-input-string "42")
+;;     (set-current-input-port! string-port)
+;;     (check (read) => 42)
+;;     (set-current-input-port! original-input)))
+
+#|
+write
+向输出端口写入一个S表达式，根据R7RS规范，write函数用于将Scheme数据写入给定的输出端口。
+
+语法
+----
+(write obj)
+(write obj port)
+
+参数
+----
+obj : any?
+要写入的Scheme对象
+port : port? (可选)
+输出端口，如果未提供则使用当前输出端口
+
+返回值
+-----
+unspecified
+返回值未指定，主要作用是副作用（向端口写入数据）
+
+描述
+----
+write函数将指定的Scheme对象以可读格式写入输出端口。如果未提供端口参数，
+则写入当前输出端口。输出的格式应该能被read函数正确读取，实现数据的
+序列化和反序列化。
+
+行为特征
+------
+- 输出完整的S表达式，包括嵌套结构
+- 正确处理引号、反引号等特殊语法
+- 支持所有Scheme数据类型的写入
+- 字符串中的特殊字符会被正确转义
+- 输出的格式注重可读性而非美观性
+
+与display的区别
+--------------
+- write: 注重数据的可读性，输出格式能被read重新读取
+- display: 注重人类可读性，输出更简洁的格式
+- 例如：write输出字符串带引号，display可能不带
+
+与read的关系
+------------
+write函数与read函数配合使用可以实现数据的序列化和反序列化：
+(write data port) 写入的数据可以通过 (read port) 重新读取
+
+错误处理
+------
+- 端口错误：如果端口无效会抛出相应错误
+- IO错误：包括磁盘满、权限不足等
+- 循环结构：需要特殊处理以避免无限递归
+
+跨平台行为
+---------
+- 字符编码：支持UTF-8编码的文本输出
+- 数字格式：输出标准的数字字面量格式
+- 字符串转义：正确处理需要转义的字符
+|#
+
+;; 基本数据类型写入测试
+(let1 port (open-output-string)
+  (write 123 port)
+  (check (get-output-string port) => "123"))
+
+(let1 port (open-output-string)
+  (write -456 port)
+  (check (get-output-string port) => "-456"))
+
+(let1 port (open-output-string)
+  (write 3.14 port)
+  (check (get-output-string port) => "3.14"))
+
+(let1 port (open-output-string)
+  (write "hello world" port)
+  (check (get-output-string port) => "\"hello world\""))
+
+(let1 port (open-output-string)
+  (write 'hello port)
+  (check (get-output-string port) => "hello"))
+
+(let1 port (open-output-string)
+  (write #t port)
+  (check (get-output-string port) => "#t"))
+
+(let1 port (open-output-string)
+  (write #f port)
+  (check (get-output-string port) => "#f"))
+
+;; 列表写入测试
+(let1 port (open-output-string)
+  (write '(1 2 3) port)
+  (check (get-output-string port) => "(1 2 3)"))
+
+(let1 port (open-output-string)
+  (write '(a b c) port)
+  (check (get-output-string port) => "(a b c)"))
+
+(let1 port (open-output-string)
+  (write '(1 "two" 3) port)
+  (check (get-output-string port) => "(1 \"two\" 3)"))
+
+;; 嵌套列表写入测试
+(let1 port (open-output-string)
+  (write '(1 (2 3) 4) port)
+  (check (get-output-string port) => "(1 (2 3) 4)"))
+
+(let1 port (open-output-string)
+  (write '((a b) (c d)) port)
+  (check (get-output-string port) => "((a b) (c d))"))
+
+;; 向量写入测试
+(let1 port (open-output-string)
+  (write #(1 2 3) port)
+  (check (get-output-string port) => "#(1 2 3)"))
+
+(let1 port (open-output-string)
+  (write #(a "b" c) port)
+  (check (get-output-string port) => "#(a \"b\" c)"))
+
+;; 引号语法写入测试
+(let1 port (open-output-string)
+  (write ''hello port)
+  (check (get-output-string port) => "'hello"))
+
+(let1 port (open-output-string)
+  (write ''(1 2 3) port)
+  (check (get-output-string port) => "'(1 2 3)"))
+
+(let1 port (open-output-string)
+  (write '`hello port)
+  (check (get-output-string port) => "'hello"))
+
+;; 复杂表达式写入测试
+(let1 port (open-output-string)
+  (write '(+ 1 2 3) port)
+  (check (get-output-string port) => "(+ 1 2 3)"))
+
+(let1 port (open-output-string)
+  (write '(define x 42) port)
+  (check (get-output-string port) => "(define x 42)"))
+
+(let1 port (open-output-string)
+  (write '(if #t yes no) port)
+  (check (get-output-string port) => "(if #t yes no)"))
+
+;; 空列表写入测试
+(let1 port (open-output-string)
+  (write '() port)
+  (check (get-output-string port) => "()"))
+
+;; 布尔值列表写入测试
+(let1 port (open-output-string)
+  (write '(#t #f #t) port)
+  (check (get-output-string port) => "(#t #f #t)"))
+
+;; 混合类型列表写入测试
+(let1 port (open-output-string)
+  (write '(1 "two" 'three 4.0) port)
+  (check (get-output-string port) => "(1 \"two\" 'three 4.0)"))
+
+;; 字符串转义测试
+(let1 port (open-output-string)
+  (write "hello\nworld" port)
+  (check (get-output-string port) => "\"hello\\nworld\""))
+
+(let1 port (open-output-string)
+  (write "hello\tworld" port)
+  (check (get-output-string port) => "\"hello\\tworld\""))
+
+(let1 port (open-output-string)
+  (write "hello\"world" port)
+  (check (get-output-string port) => "\"hello\\\"world\""))
+
+(let1 port (open-output-string)
+  (write "hello\\world" port)
+  (check (get-output-string port) => "\"hello\\\\world\""))
+
+;; 特殊字符测试
+(let1 port (open-output-string)
+  (write "\x00;\x01;\x02;" port)
+  (check (get-output-string port) => "\"\\x00;\\x01;\\x02;\""))
+
+;; 中文字符串写入测试
+(let1 port (open-output-string)
+  (write "你好世界" port)
+  (check (get-output-string port) => "\"你好世界\""))
+
+;; 大数字写入测试
+(let1 port (open-output-string)
+  (write 12345678901234567890 port)
+  (check-true (string? (get-output-string port))))
+
+;; 分数写入测试
+(let1 port (open-output-string)
+  (write 1/2 port)
+  (check (get-output-string port) => "1/2"))
+
+(let1 port (open-output-string)
+  (write -22/7 port)
+  (check (get-output-string port) => "-22/7"))
+
+;; 复数写入测试
+(let1 port (open-output-string)
+  (write 1+2i port)
+  (check (get-output-string port) => "1.0+2.0i"))
+
+(let1 port (open-output-string)
+  (write 3.14-2.71i port)
+  (check (get-output-string port) => "3.14-2.71i"))
+
+;; 嵌套向量测试
+(let1 port (open-output-string)
+  (write #(1 #(2 3) 4) port)
+  (check (get-output-string port) => "#(1 #(2 3) 4)"))
+
+;; 深层嵌套测试
+(let1 port (open-output-string)
+  (write '(a (b (c d)) e) port)
+  (check (get-output-string port) => "(a (b (c d)) e)"))
+
+;; 与read联动测试 - 确保write的输出能被read正确读取
+(let1 output-port (open-output-string)
+  (write '(1 2 3) output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => '(1 2 3))))
+
+(let1 output-port (open-output-string)
+  (write "hello world" output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => "hello world")))
+
+(let1 output-port (open-output-string)
+  (write 123.456 output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => 123.456)))
+
+(let1 output-port (open-output-string)
+  (write #(#t #f "hello") output-port)
+  (let1 input-port (open-input-string (get-output-string output-port))
+    (check (read input-port) => #(#t #f "hello"))))
+
+;; 多个值写入测试
+(let1 port (open-output-string)
+  (write 123 port)
+  (write 456 port)
+  (write "hello" port)
+  (check (get-output-string port) => "123456\"hello\""))
+
+;; 当前输出端口测试（需要重定向）
+;; (let1 original-output (current-output-port)
+;;   (let1 string-port (open-output-string)
+;;     (set-current-output-port! string-port)
+;;     (write 42)
+;;     (check (get-output-string string-port) => "42")
+;;     (set-current-output-port! original-output)))
+
+;; 特殊符号写入测试
+(let1 port (open-output-string)
+  (write 'hello-world port)
+  (check (get-output-string port) => "hello-world"))
+
+(let1 port (open-output-string)
+  (write 'hello_world port)
+  (check (get-output-string port) => "hello_world"))
+
+(let1 port (open-output-string)
+  (write 'hello.world port)
+  (check (get-output-string port) => "hello.world"))
+
+;; 中文符号写入测试
+(let1 port (open-output-string)
+  (write '中文测试 port)
+  (check (get-output-string port) => "中文测试"))
+
+;; 嵌套引号写入测试
+(let1 port (open-output-string)
+  (write '''hello port)
+  (check (get-output-string port) => "''hello"))
+
+;; 空字符串测试
+(let1 port (open-output-string)
+  (write "" port)
+  (check (get-output-string port) => "\"\""))
+
+;; 单字符字符串测试
+(let1 port (open-output-string)
+  (write "a" port)
+  (check (get-output-string port) => "\"a\""))
+
+;; 数值边界测试
+(let1 port (open-output-string)
+  (write 0 port)
+  (check (get-output-string port) => "0"))
+
+(let1 port (open-output-string)
+  (write -0.0 port)
+  (check (get-output-string port) => "-0.0"))
+
+;; 精确与非精确数测试
+(let1 port (open-output-string)
+  (write 42 port)
+  (check (get-output-string port) => "42"))
+
+(let1 port (open-output-string)
+  (write 42.0 port)
+  (check (get-output-string port) => "42.0"))
+
+;; 复杂嵌套结构测试
+(let1 port (open-output-string)
+  (write '((1 2) (3 4) (5 (6 7))) port)
+  (check (get-output-string port) => "((1 2) (3 4) (5 (6 7)))"))
+
+;; 向量和列表混合测试
+(let1 port (open-output-string)
+  (write '(#(1 2) #(3 4) 5) port)
+  (check (get-output-string port) => "(#(1 2) #(3 4) 5)"))
+
+;; 长列表测试
+(let1 port (open-output-string)
+  (write '(1 2 3 4 5 6 7 8 9 10) port)
+  (check (get-output-string port) => "(1 2 3 4 5 6 7 8 9 10)"))
+
+;; 多维向量测试
+(let1 port (open-output-string)
+  (write #(#(1 2) #(3 4)) port)
+  (check (get-output-string port) => "#(#(1 2) #(3 4))"))
+
 (check-report)
