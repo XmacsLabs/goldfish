@@ -1,5 +1,5 @@
 (define-library (liii pp)
-(export pp pp-parse pp-format pp-post)
+(export pp pp-parse pp-format pp-post format-file format-single-file format-file-in-place)
 (import (liii base)
         (liii string)
         (liii sys)
@@ -275,27 +275,65 @@
                                (next-state-from-normal-post str pos result)
                         (loop next-state next-pos next-result)))))))
 
+(define (format-file filename)
+  (let* ((content (path-read-text filename))
+         (preprocessed (pp-parse content))
+         (port (open-input-string preprocessed)))
+    (if (not port)
+        #f
+        (let ((output (open-output-string)))
+          (let loop ()
+            (let ((expr (read port)))
+              (cond 
+               ((eof-object? expr) 
+                (let ((formatted (get-output-string output)))
+                  (pp-post formatted)))
+               (else 
+                (display (pp expr) output)
+                (newline output)
+                (loop)))))))))
+
+(define (format-single-file filename)
+  (let ((formatted (format-file filename)))
+    (if formatted
+        (begin
+          (display formatted)
+          #t)  ; Return success
+        (begin
+          (display (string-append "Error: Failed to format file: " filename "\n"))
+          #f))))  ; Return failure
+
+(define (format-file-in-place filename)
+  (let ((formatted (format-file filename)))
+    (if formatted
+        (begin
+          (path-write-text filename formatted)
+          #t)  ; Return success
+        (begin
+          (display (string-append "Error: Failed to format file: " filename "\n"))
+          #f))))  ; Return failure
+
 (define (pp-format)
   (let* ((args (argv))
-         (filename (and (>= (length args) 2) (third args)))
-         (content (and filename (path-read-text filename)))
-         (preprocessed (and content (pp-parse content)))
-         (port (and preprocessed (open-input-string preprocessed))))
-    (cond
-     ((not filename) (display "Usage: format.scm <file>\n"))
-     ((not port) #t)
+         (argc (length args)))
+    (cond 
+     ((<= argc 2) 
+      (display "Usage: format.scm [-i] <file1> [file2] ...\n")
+      (display "  -i  Format files in-place\n")
+      #t)  ; Return success for usage display
      (else
-      (let ((output (open-output-string)))
-        (let loop ()
-          (let ((expr (read port)))
-            (cond 
-             ((eof-object? expr) 
-              (let ((formatted (get-output-string output)))
-                (display (pp-post formatted))))
-             (else 
-              (display (pp expr) output)
-              (newline output)
-              (loop))))))))))
+      (let ((first-arg (and (> argc 2) (list-ref args 2))))
+        (if (and first-arg (string=? first-arg "-i"))
+            (if (<= argc 3)
+                (begin
+                  (display "Error: -i option requires at least one file\n")
+                  #f)  ; Return failure for error
+                (let ((files (list-tail args 3)))  ; Skip program name and -i option
+                  (let ((results (map format-file-in-place files)))
+                    (if (every (lambda (x) x) results)
+                        #t  ; All succeeded
+                        #f)))) ; At least one failed
+            (format-single-file first-arg)))))))
 
 
 ) ; end of begin

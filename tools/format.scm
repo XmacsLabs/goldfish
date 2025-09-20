@@ -1,3 +1,5 @@
 (import (liii pp))
-        
-(pp-format)
+
+(if (pp-format)
+    (exit 0)
+    (exit 1))
