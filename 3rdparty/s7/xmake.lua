@@ -33,6 +33,7 @@ target("libs7") do
     	add_defines("HAVE_OVERFLOW_CHECKS=0")
     end
     add_defines("WITH_WARNINGS")
+    add_defines("WITH_R7RS=1")
     set_basename("s7")
     add_files("s7.c")
     add_headerfiles("s7.h")

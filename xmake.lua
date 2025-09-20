@@ -38,14 +38,14 @@ option("pin-deps")
     set_values(false, true)
 option_end()
 
-local S7_VERSION = "20250721"
+local S7_VERSION = "20250922"
 if has_config("pin-deps") then
     add_requires("s7 "..S7_VERSION, {system=system})
 else
     add_requires("s7", {system=system})
 end
 
-local TBOX_VERSION = "1.7.6"
+local TBOX_VERSION = "1.7.7"
 if has_config("tbox") then
     add_requires("apt::libtbox-dev", {alias="tbox"})
 else
