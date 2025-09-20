@@ -4,11 +4,7 @@ if (== (count $args) 0) {
   # Show usage and default behavior
   echo "Usage: bin/format [path1 path2 ...]"
   echo ""
-  echo "If no files specified, formats default base64 files:"
-  echo "  goldfish/liii/base64.scm"
-  echo "  tests/goldfish/liii/base64-test.scm"
-  echo ""
-  echo "Formatting default base64 files..."
+  bin/goldfish tools/format.scm -i goldfish/liii/alist.scm
   bin/goldfish tools/format.scm -i goldfish/liii/base64.scm
   bin/goldfish tools/format.scm -i tests/goldfish/liii/base64-test.scm
 } else {

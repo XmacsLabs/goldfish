@@ -64,6 +64,9 @@
              (let* ((n (count-newline str pos))
                     (next-pos (+ pos n)))
                (values 'start next-pos (string-append result (encode-newlines n)))))
+            ((char=? (str pos) #\;)
+             ;; normal -> comment | ;
+             (values 'comment (+ pos 1) result))
             ((and (< (+ pos 1) (string-length str))
                   (char=? (str pos) #\#)
                   (char=? (str (+ pos 1)) #\|))
@@ -72,9 +75,10 @@
             (else (values 'normal (+ pos 1) (string-append result (string (str pos))))))))
 
 (define (next-state-from-comment str pos result)
-  (let loop ((pos pos) (current "") (started? #f))
+  (let loop ((pos pos) (current "") (started? #f) (has-content? #f))
     (cond ((>= pos (string-length str))
            ;; End reached, terminate with comment content
+           ;; 即使是空白注释也应该保留，使用特殊标记
            (values 'end pos (string-append result (object->string (list '*PP_SINGLE_COMMENT* current)))))
           ((is-newline? str pos)
            ;; Found newline, comment ends, return to start state
@@ -83,11 +87,11 @@
           ((not started?)
            ;; Skip leading whitespace after semicolon
            (if (char-whitespace? (str pos))
-               (loop (+ pos 1) current #f)
-               (loop (+ pos 1) (string-append current (string (str pos))) #t)))
+               (loop (+ pos 1) current #f #f)
+               (loop (+ pos 1) (string-append current (string (str pos))) #t #t)))
           (else
            ;; Continue collecting comment content until newline or end
-           (loop (+ pos 1) (string-append current (string (str pos))) #t)))))
+           (loop (+ pos 1) (string-append current (string (str pos))) #t #t)))))
 
 
 (define (next-state-from-multi-comment str pos result)
@@ -226,11 +230,11 @@
           (values 'normal (string-length str) result)))))
 
 (define (is-pp-single-comment? str pos)
-  (and (< (+ pos 21) (string-length str)) ; "(*PP_SINGLE_COMMENT*" 长度
-       (string=? (substring str pos (+ pos 21)) "(*PP_SINGLE_COMMENT* ")))
+  (and (< (+ pos 20) (string-length str)) ; "(*PP_SINGLE_COMMENT*" 长度
+       (string=? (substring str pos (+ pos 20)) "(*PP_SINGLE_COMMENT*")))
 
 (define (next-state-from-single-comment-post str pos result)
-  (let* ((start-pos (+ pos 21))  ; 跳过 "(*PP_SINGLE_COMMENT*"
+  (let* ((start-pos (+ pos 20))  ; 跳过 "(*PP_SINGLE_COMMENT*"
          (end-pos (find-matched-right-paren str pos)))  ; 找到匹配的右括号
     (if (>= end-pos 0)
         (let* ((full-expr (substring str pos (+ end-pos 1)))  ; 提取完整表达式
