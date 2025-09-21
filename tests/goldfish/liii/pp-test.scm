@@ -71,8 +71,9 @@
 ; 测试 newline -> normal 转换：从换行状态回到 normal 状态
 (check (pp-post "hello\n\nworld") => "hello\n\nworld")
 
-; 测试连续空行的转换: newline 状态处理后继续 normal 状态
-(check (pp-post "line1\n(*PP_NEWLINE* 3)\nline2") => "line1\n\n\nline2")
+; 测试连续空行的转换: PP_NEWLINE 现在由 pretty-printer 处理，不再由 pp-post 处理
+; 所以 pp-post 会原样输出 PP_NEWLINE 表达式
+(check (pp-post "line1\n(*PP_NEWLINE* 3)\nline2") => "line1\n(*PP_NEWLINE* 3)\nline2")
 
 (check-report)
 

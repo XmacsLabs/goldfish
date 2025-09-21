@@ -1,5 +1,5 @@
 (define-library (liii pretty-print)
-(export pretty-print pp)
+(export pretty-print pp pp-post)
 (begin
 
 (define pretty-print  ; (lambda* (obj (port (current-output-port)) (column 0))
@@ -500,6 +500,14 @@
 			   (write-char #\) port))))
 		   (hash-table-set! h 'catch (lambda (obj port col) (w-catch obj port col "catch")))
 		   (hash-table-set! h #_catch (lambda (obj port col) (w-catch obj port col "#_catch")))
+
+		   ;; -------- PP_NEWLINE
+		   (define (w-pp-newline obj port column)
+		     (let ((n (cadr obj)))  ; 获取数字参数
+		       (if (>= n 2)
+		           (display (make-string (- n 2) #\newline) port)
+		           (display "" port))))  ; n<2时输出空字符串
+		   (hash-table-set! h '*PP_NEWLINE* w-pp-newline)
 
 		   h)))
 

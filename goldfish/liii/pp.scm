@@ -234,19 +234,6 @@
                                "|#")))
         (values 'normal (string-length str) result))))
 
-(define (is-pp-newline? str pos)
-  (and (< (+ pos 14) (string-length str))  ; "(*PP_NEWLINE*" + " " + 数字 + ")"
-       (string=? (substring str pos (+ pos 14)) "(*PP_NEWLINE* ")))
-
-(define (next-state-from-newline-post str pos result)
-  (let ((start-pos (+ pos 14))) ; 跳过 "(*PP_NEWLINE* "
-    (let ((end-pos (string-index str #\) start-pos)))
-      (if end-pos
-          (let* ((num-str (substring str start-pos end-pos))
-                 (n (string->number num-str)))
-            (values 'normal (+ end-pos 1)
-                    (string-append result (make-string (- n 2) #\newline))))
-          (values 'normal (string-length str) result)))))
 
 (define (is-pp-single-comment? str pos)
   (and (< (+ pos 20) (string-length str)) ; "(*PP_SINGLE_COMMENT*" 长度
@@ -273,10 +260,7 @@
 (define (next-state-from-normal-post str pos result)
   (if (>= pos (string-length str))
       (values 'end pos result)
-      (cond ((is-pp-newline? str pos)
-             ;; normal -> newline 状态转换：检测到 PP_NEWLINE 表达式
-             (values 'newline pos result))
-            ((is-pp-single-comment? str pos)
+      (cond ((is-pp-single-comment? str pos)
              ;; normal -> single-comment 状态转换
              (values 'single-comment pos result))
             ((is-pp-multi-comment? str pos)
@@ -339,9 +323,6 @@
         (case state
           ((start) (receive (next-state next-pos next-result)
                         (next-state-from-start-post str pos result)
-                      (loop next-state next-pos next-result)))
-          ((newline) (receive (next-state next-pos next-result)
-                        (next-state-from-newline-post str pos result)
                       (loop next-state next-pos next-result)))
           ((single-comment) (receive (next-state next-pos next-result)
                         (next-state-from-single-comment-post str pos result)

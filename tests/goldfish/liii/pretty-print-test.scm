@@ -89,4 +89,26 @@
 ; 使用 pp 测试 define-constant
 (check (pp '(define-constant PI 3.14159)) => "(define-constant PI 3.14159)")
 
+; 测试 PP_NEWLINE 功能
+; PP_NEWLINE(n) 生成 n-2 个换行符
+(let ((result (pp '(*PP_NEWLINE* 3))))
+  (check (string-length result) => 1)  ; 3-2=1 个换行符
+  (check (string-ref result 0) => #\newline))
+
+(let ((result (pp '(*PP_NEWLINE* 4))))
+  (check (string-length result) => 2)  ; 4-2=2 个换行符
+  (check (string-ref result 0) => #\newline)
+  (check (string-ref result 1) => #\newline))
+
+(check (pp '(*PP_NEWLINE* 2)) => "")  ; 2-2=0 个换行符，输出空字符串
+(check (pp '(*PP_NEWLINE* 1)) => "")  ; 1-2=-1，但我们的实现中n<2时输出空字符串
+(check (pp '(*PP_NEWLINE* 0)) => "")  ; 0-2=-2，输出空字符串
+
+; 测试 PP_NEWLINE 在复杂表达式中的使用
+(let ((result (pp '(begin 
+                     (display 1) 
+                     (*PP_NEWLINE* 2) 
+                     (display 2)))))
+  (check (string-contains result "\n") => #t))  ; 确保结果中包含换行符
+
 (check-report)
