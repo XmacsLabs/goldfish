@@ -1,5 +1,5 @@
 (define-library (liii pretty-print)
-(export pretty-print)
+(export pretty-print pp)
 (begin
 
 (define pretty-print  ; (lambda* (obj (port (current-output-port)) (column 0))
@@ -729,6 +729,10 @@
 		  (display str))
 	      str))))))
 
+(define (pp obj)
+  (call-with-output-string
+   (lambda (p)
+     ((if (keyword? obj) display pretty-print) obj p))))
 
 ) ; end of begin
 ) ; end of define-library

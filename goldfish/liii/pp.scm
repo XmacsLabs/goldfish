@@ -1,5 +1,5 @@
 (define-library (liii pp)
-(export pp pp-parse pp-format pp-post format-file format-single-file format-file-in-place)
+(export pp-parse pp-format pp-post format-file format-single-file format-file-in-place)
 (import (liii base)
         (liii string)
         (liii sys)
@@ -7,11 +7,6 @@
 				(liii pretty-print)
 				(liii path)) 
 (begin
-
-(define (pp obj)
-  (call-with-output-string
-   (lambda (p)
-     ((if (keyword? obj) display pretty-print) obj p))))
 
 (define (is-newline? str pos)
   (char=? (str pos) #\newline))
