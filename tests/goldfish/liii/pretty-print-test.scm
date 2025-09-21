@@ -167,4 +167,50 @@
                      (display 2)))))
   (check (string-contains result "\n") => #t))  ; 确保结果中包含换行符
 
+; 测试 PP_SINGLE_COMMENT 功能
+(check (pp '(*PP_SINGLE_COMMENT* "test comment")) => "; test comment")
+
+; 测试 PP_SINGLE_COMMENT 空内容
+(check (pp '(*PP_SINGLE_COMMENT* "")) => ";")
+
+; 测试 PP_SINGLE_COMMENT 有内容
+(check (pp '(*PP_SINGLE_COMMENT* "hello world")) => "; hello world")
+
+; 测试 PP_SINGLE_COMMENT 在复杂表达式中的使用
+(let ((result (pp '(begin 
+                    (display 1) 
+                    (*PP_SINGLE_COMMENT* "中间注释") 
+                    (display 2)))))
+  (display "Complex expression result:\n")
+  (display result)
+  (newline))
+
+; 测试 PP_SINGLE_COMMENT 长内容（超过 pretty-print-length）
+(check (pp '(*PP_SINGLE_COMMENT* "This is a very long comment that should be handled properly by the pretty printer without any issues related to length constraints")) => "; This is a very long comment that should be handled properly by the pretty printer without any issues related to length constraints")
+
+; 测试多个 PP_SINGLE_COMMENT 连续出现（模拟多行注释）
+(check (pp '(begin 
+              (*PP_SINGLE_COMMENT* "First comment line")
+              (*PP_SINGLE_COMMENT* "Second comment line")
+              (*PP_SINGLE_COMMENT* "Third comment line")
+              (define test 123))) => "(begin\n  ; First comment line\n  ; Second comment line\n  ; Third comment line\n  (define test 123))")
+
+; 测试 PP_SINGLE_COMMENT 包含特殊字符
+(check (pp '(*PP_SINGLE_COMMENT* "Comment with special chars: ()[]{}!@#$%^&*")) => "; Comment with special chars: ()[]{}!@#$%^&*")
+
+; 测试具体的长内容注释：guenchi (c) 2018 - 2019 ddd ddd
+(check (pp '(*PP_SINGLE_COMMENT* "guenchi (c) 2018 - 2019 ddd ddd")) => "; guenchi (c) 2018 - 2019 ddd ddd")
+
+; 测试包含括号和年份的长注释内容
+(check (pp '(*PP_SINGLE_COMMENT* "Copyright (c) 2018 - 2019 guenchi project, all rights reserved")) => "; Copyright (c) 2018 - 2019 guenchi project, all rights reserved")
+
+; 测试混合内容的长注释
+(check (pp '(*PP_SINGLE_COMMENT* "guenchi (c) 2018 - 2019 ddd ddd (with additional text) and more content")) => "; guenchi (c) 2018 - 2019 ddd ddd (with additional text) and more content")
+
+; 测试在复杂表达式中的长注释
+(check (pp '(begin
+              (*PP_SINGLE_COMMENT* "guenchi (c) 2018 - 2019 ddd ddd")
+              (define copyright-holder "guenchi")
+              (*PP_SINGLE_COMMENT* "Additional copyright notice for the project"))) => "(begin\n  ; guenchi (c) 2018 - 2019 ddd ddd\n  (define copyright-holder \"guenchi\")\n  ; Additional copyright notice for the project)")
+
 (check-report)

@@ -1,5 +1,5 @@
 (define-library (liii pretty-print)
-(export pretty-print pp pp-post pp-multi-comment)
+(export pretty-print pp pp-post pp-multi-comment pp-single-comment)
 (import (liii string))
 (begin
 
@@ -57,6 +57,8 @@
                     (set! p (cdr p))
                     (set! obj (car p))) ; pair? cdr p above
 
+                  ;; 处理 PP_SINGLE_COMMENT 的特殊逻辑
+
                   (cond ((or (hash-table? obj)
                              (let? obj))
                          (pretty-print-1 obj port col))
@@ -64,7 +66,8 @@
                         ((and (pair? obj)
                               (pair? (cdr obj))
                               (null? (cddr obj))
-                              (> len (/ *pretty-print-length* 2)))
+                              (> len (/ *pretty-print-length* 2))
+                              (not (eq? (car obj) '*PP_SINGLE_COMMENT*)))  ; PP_SINGLE_COMMENT 不应该应用长对格式化
                          (if (eq? (car obj) 'quote)
                              (write-char #\' port)
                              (begin
@@ -529,6 +532,16 @@
                        (display "|#" port)))
                    (hash-table-set! h '*PP_MULTI_COMMENT* w-pp-multi-comment)
 
+                   ;; -------- PP_SINGLE_COMMENT
+                   (define (w-pp-single-comment obj port column)
+                     (let ((comment-text (cadr obj)))  ; 获取注释内容
+                       (display ";" port)
+                       (if (not (string-null? comment-text))
+                           (begin
+                             (display " " port)
+                             (display comment-text port)))))
+                   (hash-table-set! h '*PP_SINGLE_COMMENT* w-pp-single-comment)
+
                    h)))
 
             ;; pretty-print-1
@@ -649,6 +662,7 @@
                     (else
                      (let* ((objstr (object->string obj))
                             (strlen (length objstr)))
+                       ;; 处理对象字符串
                        (if (< (+ column strlen) *pretty-print-length*)
                            (display objstr port)
 

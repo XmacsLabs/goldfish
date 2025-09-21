@@ -173,61 +173,7 @@
                     (next-state-from-normal str pos result)
              (loop next-state next-pos next-result)))))))
 
-(define (find-matched-right-paren str pos)
-  (let ((len (string-length str)))
-    (if (or (< pos 0) (>= pos len) (not (char=? (string-ref str pos) #\()))
-        -1  ; 无效起始位置或不是左括号
-        (let loop ((p (+ pos 1)) (in-string? #f))
-          (cond
-            ((>= p len) -1)  ; 到达字符串末尾未找到
-            ;; 找到右括号且不在字符串内
-            ((and (not in-string?) (char=? (string-ref str p) #\)))
-             p)
-            ;; 进入/退出字符串
-            ((char=? (string-ref str p) #\")
-             (loop (+ p 1) (not in-string?)))
-            ;; 其他情况继续扫描
-            (else
-             (loop (+ p 1) in-string?)))))))
-
-; start状态
-; 含义：位置在代码的第一行第一列
-; 转移：直接进入normal状态即可
-(define (next-state-from-start-post str pos result)
-  (values 'normal pos result))
-
-(define (next-state-from-newline-post str pos result)
-  (values 'normal pos result))
-
-
-(define (is-pp-single-comment? str pos)
-  (and (< (+ pos 20) (string-length str)) ; "(*PP_SINGLE_COMMENT*" 长度
-       (string=? (substring str pos (+ pos 20)) "(*PP_SINGLE_COMMENT*")))
-
-(define (next-state-from-single-comment-post str pos result)
-  (let* ((start-pos (+ pos 20))  ; 跳过 "(*PP_SINGLE_COMMENT*"
-         (end-pos (find-matched-right-paren str pos)))  ; 找到匹配的右括号
-    (if (>= end-pos 0)
-        (let* ((full-expr (substring str pos (+ end-pos 1)))  ; 提取完整表达式
-               (expr (with-input-from-string full-expr read))  ; 用 read 解析
-               (comment-text (cadr expr)))  ; 获取注释内容
-          ;; 注意：换行符已经在解析阶段被保留，这里不需要额外添加
-          ;; 对于空注释（如版权头的纯;），不添加空格；对于有内容的注释，添加空格
-          (let* ((trimmed-text (string-trim comment-text))
-                 (comment-prefix (if (string-null? trimmed-text) ";" "; ")))
-            (values 'normal (+ end-pos 1) (string-append result comment-prefix trimmed-text))))
-        (values 'normal (string-length str) result))))  ; 未找到右括号，直接结束
-
-
-(define (next-state-from-normal-post str pos result)
-  (if (>= pos (string-length str))
-      (values 'end pos result)
-      (cond ((is-pp-single-comment? str pos)
-             ;; normal -> single-comment 状态转换
-             (values 'single-comment pos result))
-            (else
-             ;; 正常处理字符，直接按原样输出
-             (values 'normal (+ pos 1) (string-append result (string (str pos))))))))
+; 格式化文件相关函数
 
 (define (clean-empty-lines str)
   ;; 清理空行中的空白字符：将只包含空格和制表符的行转换为纯换行
@@ -276,24 +222,8 @@
      (substring str (+ end-pos 1) (string-length str)))))
 
 (define (pp-post str)
-  (let loop ((state 'start) (pos 0) (result ""))
-    (if (>= pos (string-length str))
-        (clean-empty-lines result)  ;; 清理空行中的空白字符
-        (case state
-          ((start) (receive (next-state next-pos next-result)
-                        (next-state-from-start-post str pos result)
-                      (loop next-state next-pos next-result)))
-          ((single-comment) (receive (next-state next-pos next-result)
-                        (next-state-from-single-comment-post str pos result)
-                      (loop next-state next-pos next-result)))
-          ((normal) (receive (next-state next-pos next-result)
-                        (next-state-from-normal-post str pos result)
-                      (loop next-state next-pos next-result)))
-          ((end) result)
-          (else
-           (receive (next-state next-pos next-result)
-                               (next-state-from-normal-post str pos result)
-                        (loop next-state next-pos next-result)))))))
+  ;; 后处理只保留清理空行的功能
+  (clean-empty-lines str))
 
 (define (format-file filename)
   (let* ((content (path-read-text filename))
