@@ -123,8 +123,16 @@
                               (pretty-print-1 (caddr obj) port (+ column *pretty-print-spacing*)))
                             (begin
                               (write-char #\space port)
-                              (write (caddr obj) port))))
-                              (write (cddr obj) port)))
+                              (write (caddr obj) port)))
+                        (if (pair? (cdddr obj))
+                            (begin
+                              (write-char #\space port)
+                              (write (cadddr obj) port)
+                              (if (pair? (cddddr obj))
+                                  (begin
+                                    (spaces port (+ column *pretty-print-spacing*))
+                                    (stacked-list port (cddddr obj) (+ column *pretty-print-spacing*)))))))
+                      (write (cddr obj) port)))
             (write-char #\) port))))
       (hash-table-set! h 'define w-define)
 

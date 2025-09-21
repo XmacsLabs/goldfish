@@ -80,6 +80,7 @@
 
 ; 使用 pp 测试简单的 define 表达式
 (check (pp '(define x 10)) => "(define x 10)")
+(check (pp '(define x (display 1) 2)) => "(define x (display 1) 2)")
 
 ; 使用 pp 测试函数定义（注意：pp 会格式化并添加换行）
 (check (pp '(define (f x) (+ x 1))) => "(define (f x)
