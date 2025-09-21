@@ -104,6 +104,62 @@
 (check (pp '(*PP_NEWLINE* 1)) => "")  ; 1-2=-1，但我们的实现中n<2时输出空字符串
 (check (pp '(*PP_NEWLINE* 0)) => "")  ; 0-2=-2，输出空字符串
 
+; 测试 PP_MULTI_COMMENT 功能
+(let ((result (pp '(*PP_MULTI_COMMENT* "line1" "line2"))))
+  (check (string-contains result "#|") => #t)
+  (check (string-contains result "|#") => #t)
+  (check (string-contains result "line1") => #t)
+  (check (string-contains result "line2") => #t))
+
+; 测试 PP_MULTI_COMMENT 空内容
+(check (pp '(*PP_MULTI_COMMENT*)) => "#||#")
+
+; 测试 PP_MULTI_COMMENT 单行内容
+(check (pp '(*PP_MULTI_COMMENT* "single line")) => "#|single line|#")
+
+; 测试 PP_MULTI_COMMENT 多行内容（内容之间需要换行符）
+(check (pp '(*PP_MULTI_COMMENT* "line1" "line2" "line3")) => "#|line1\nline2\nline3|#")
+
+; 测试 PP_MULTI_COMMENT 包含空行
+(let ((result (pp '(*PP_MULTI_COMMENT* "line1" "" "line3"))))
+  (check (string-contains result "line1") => #t)
+  (check (string-contains result "line3") => #t))
+
+; 测试 PP_MULTI_COMMENT 在复杂表达式中的使用
+(let ((result (pp '(begin 
+                     (display 1) 
+                     (*PP_MULTI_COMMENT* "comment1" "comment2") 
+                     (display 2)))))
+  (check (string-contains result "#|") => #t)
+  (check (string-contains result "comment1") => #t)
+  (check (string-contains result "comment2") => #t))
+
+; 测试 PP_MULTI_COMMENT 第一个参数是空字符串
+(check (pp '(*PP_MULTI_COMMENT* "" "line2")) => "#|\nline2|#")
+
+; 测试 PP_MULTI_COMMENT 最后一个参数是空字符串
+(check (pp '(*PP_MULTI_COMMENT* "line1" "")) => "#|line1\n|#")
+
+; 测试 PP_MULTI_COMMENT 两个参数都是空字符串
+(check (pp '(*PP_MULTI_COMMENT* "" "")) => "#|\n\n|#")
+
+; 测试 PP_MULTI_COMMENT 第一个参数是空字符串且参数数量>2
+(check (pp '(*PP_MULTI_COMMENT* "" "line2" "line3")) => "#|\nline2\nline3|#")
+
+; 测试 PP_MULTI_COMMENT 最后一个参数是空字符串且参数数量>2  
+(check (pp '(*PP_MULTI_COMMENT* "line1" "line2" "")) => "#|line1\nline2\n|#")
+
+; 测试 PP_MULTI_COMMENT 中间参数是空字符串且参数数量>2
+(check (pp '(*PP_MULTI_COMMENT* "line1" "" "line3")) => "#|line1\n\nline3|#")
+
+; 测试 PP_MULTI_COMMENT 多个空字符串参数
+(check (pp '(*PP_MULTI_COMMENT* "" "" "")) => "#|\n\n\n|#")
+
+; 测试 PP_MULTI_COMMENT 参数数量是3，前后都是空字符串，中间有内容
+(check (pp '(*PP_MULTI_COMMENT* "" "middle content" "")) => "#|\nmiddle content\n|#")
+
+(check (pp '(*PP_NEWLINE* 0)) => "")  ; 0-2=-2，输出空字符串
+
 ; 测试 PP_NEWLINE 在复杂表达式中的使用
 (let ((result (pp '(begin 
                      (display 1) 

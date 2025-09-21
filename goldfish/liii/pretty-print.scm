@@ -1,5 +1,6 @@
 (define-library (liii pretty-print)
-(export pretty-print pp pp-post)
+(export pretty-print pp pp-post pp-multi-comment)
+(import (liii string))
 (begin
 
 (define pretty-print  ; (lambda* (obj (port (current-output-port)) (column 0))
@@ -508,6 +509,25 @@
                            (display (make-string (- n 2) #\newline) port)
                            (display "" port))))  ; n<2时输出空字符串
                    (hash-table-set! h '*PP_NEWLINE* w-pp-newline)
+
+                   ;; -------- PP_MULTI_COMMENT
+                   (define (w-pp-multi-comment obj port column)
+                     (let ((comment-texts (cdr obj)))  ; 获取所有注释内容
+                       (display "#|" port)
+                       (if (> (length comment-texts) 0)
+                           (let loop ((lines comment-texts) (first? #t))
+                             (if (not (null? lines))
+                                 (let ((line (car lines)))
+                                   (if (or (not first?) (not (string-null? line)))
+                                       (begin
+                                         (if (not first?) (newline port))
+                                         (display line port)
+                                         (loop (cdr lines) #f))
+                                       (begin
+                                         (if first? (newline port))  ; 第一个参数为空字符串时添加换行
+                                         (loop (cdr lines) first?)))))))
+                       (display "|#" port)))
+                   (hash-table-set! h '*PP_MULTI_COMMENT* w-pp-multi-comment)
 
                    h)))
 

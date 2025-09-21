@@ -199,41 +199,6 @@
 (define (next-state-from-newline-post str pos result)
   (values 'normal pos result))
 
-(define (next-state-from-multi-comment-post str pos result)
-  (let* ((start-pos (+ pos 20))  ; 跳过 "(*PP_MULTI_COMMENT*"
-         (end-pos (find-matched-right-paren str pos))  ; 找到匹配的右括号
-         (indent (let loop ((i pos))
-                   (if (and (> i 0) (char-whitespace? (string-ref str (- i 1))))
-                       (loop (- i 1))
-                       (- pos i)))))  ; 计算缩进空格数
-    
-    (if (>= end-pos 0)
-        (let* ((full-expr (substring str pos (+ end-pos 1)))  ; 提取完整表达式
-               (expr (with-input-from-string full-expr read))  ; 用 read 解析
-               (comment-texts (cdr expr))  ; 获取所有注释内容
-               (indent-str (make-string indent #\space))  ; 生成缩进字符串
-               ;; 检查第一行是否以非空白字符开头，如果是，则不添加缩进
-               (should-indent? (and (> (length comment-texts) 0)
-                                    (let ((trimmed (string-trim (car comment-texts))))
-                                      (and (> (string-length trimmed) 0)
-                                           (not (string-every char-whitespace? trimmed))))))
-               (indented-texts (if should-indent?
-                                   (map (lambda (s) 
-                                          (if (string-every char-whitespace? s)
-                                              s  ; 保留空行不变
-                                              (string-append indent-str s)))
-                                        comment-texts)
-                                   comment-texts)))  ; 保持原始格式
-          
-          (values 'normal 
-                  (+ end-pos 1)
-                  (string-append result 
-                               "#|"
-                               (if (and (> indent 0) should-indent?) "\n" "")  ; 只在需要缩进时添加换行
-                               (string-join indented-texts "\n")
-                               "|#")))
-        (values 'normal (string-length str) result))))
-
 
 (define (is-pp-single-comment? str pos)
   (and (< (+ pos 20) (string-length str)) ; "(*PP_SINGLE_COMMENT*" 长度
@@ -253,9 +218,6 @@
             (values 'normal (+ end-pos 1) (string-append result comment-prefix trimmed-text))))
         (values 'normal (string-length str) result))))  ; 未找到右括号，直接结束
 
-(define (is-pp-multi-comment? str pos)
-  (and (< (+ pos 20) (string-length str)) ; "(*PP_MULTI_COMMENT*" 长度
-       (string=? (substring str pos (+ pos 20)) "(*PP_MULTI_COMMENT* ")))
 
 (define (next-state-from-normal-post str pos result)
   (if (>= pos (string-length str))
@@ -263,9 +225,6 @@
       (cond ((is-pp-single-comment? str pos)
              ;; normal -> single-comment 状态转换
              (values 'single-comment pos result))
-            ((is-pp-multi-comment? str pos)
-             ;; normal -> multi-comment 状态转换
-             (values 'multi-comment pos result))
             (else
              ;; 正常处理字符，直接按原样输出
              (values 'normal (+ pos 1) (string-append result (string (str pos))))))))
@@ -326,9 +285,6 @@
                       (loop next-state next-pos next-result)))
           ((single-comment) (receive (next-state next-pos next-result)
                         (next-state-from-single-comment-post str pos result)
-                      (loop next-state next-pos next-result)))
-          ((multi-comment) (receive (next-state next-pos next-result)
-                        (next-state-from-multi-comment-post str pos result)
                       (loop next-state next-pos next-result)))
           ((normal) (receive (next-state next-pos next-result)
                         (next-state-from-normal-post str pos result)
