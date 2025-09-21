@@ -370,7 +370,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-/* #include <time.h> */
+#include <time.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -38593,21 +38593,6 @@ static s7_pointer g_getenvs(s7_scheme *sc, s7_pointer args)
   return(p);
 }
 
-/* -------------------------------- clock_gettime -------------------------------- */
-static s7_pointer g_clock_gettime(s7_scheme *sc, s7_pointer args)
-{
-#if (defined(__FreeBSD__)) || ((defined(__linux__)) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ > 17)) || (defined(__OpenBSD__)) || (defined(__NetBSD__))
-  struct timespec t0;
-  s7_pointer clock_id = car(args); /* CLOCK_REALTIME probably */
-  if (!s7_is_integer(clock_id))
-    return(sole_arg_method_or_bust(sc, clock_id, sc->clock_gettime_symbol, args, sc->type_names[T_INTEGER]));
-  int res = clock_gettime(integer(clock_id), &t0);
-  return(list_3(sc, make_integer(sc, res), make_integer(sc, t0.tv_sec), make_integer(sc, t0.tv_nsec)));
-#else
-  return(minus_one);
-#endif
-}
-
 /* -------------------------------- time -------------------------------- */
 static s7_pointer g_time(s7_scheme *sc, s7_pointer args)
 {
@@ -38619,27 +38604,6 @@ static s7_pointer g_time(s7_scheme *sc, s7_pointer args)
   return(minus_one);
 #endif
 }
-
-/* -------------------------------- uname -------------------------------- */
-#if (!MS_WINDOWS)
-#include <sys/utsname.h>
-
-static s7_pointer g_uname(s7_scheme *sc, s7_pointer args)
-{
-  struct utsname buf;
-  uname(&buf);
-  return(s7_list(sc, 5, s7_make_string(sc, buf.sysname),
-		 s7_make_string(sc, buf.machine),
-		 s7_make_string(sc, buf.nodename),
-		 s7_make_string(sc, buf.version),
-		 s7_make_string(sc, buf.release)));
-}
-#else
-static s7_pointer g_uname(s7_scheme *sc, s7_pointer args)
-{ /* return a list to be somewhat compatible with the uname-related functions */
-  return(s7_list(sc, 5, sc->nil_string, sc->nil_string, sc->nil_string, sc->nil_string, sc->nil_string));
-}
-#endif
 
 /* -------------------------------- unlink -------------------------------- */
 static s7_pointer g_unlink(s7_scheme *sc, s7_pointer args)
@@ -99185,9 +99149,7 @@ static void r7rs_init(s7_scheme *sc)
   sc->access_symbol = make_symbol(sc, "access", 6);
   sc->unlink_symbol = make_symbol(sc, "unlink", 6);
   sc->time_symbol = make_symbol(sc, "time", 4);
-  sc->clock_gettime_symbol = make_symbol(sc, "clock_gettime", 13);
   sc->getenvs_symbol = make_symbol(sc, "getenvs", 7);
-  sc->uname_symbol = make_symbol(sc, "uname", 5);
 
 #ifdef CLOCK_REALTIME
   s7_define(sc, cur_env, make_symbol(sc, "CLOCK_REALTIME", 14), make_integer(sc, (s7_int)CLOCK_REALTIME));
@@ -99197,12 +99159,6 @@ static void r7rs_init(s7_scheme *sc)
 #endif
   s7_define(sc, cur_env, sc->getenvs_symbol,
             s7_make_typed_function_with_environment(sc, "getenvs", g_getenvs, 0, 0, false, "(getenvs) returns all the environment variables in an alist",
-						    s7_make_signature(sc, 1, sc->is_pair_symbol), cur_env));
-  s7_define(sc, cur_env, sc->clock_gettime_symbol,
-            s7_make_typed_function_with_environment(sc, "clock_gettime", g_clock_gettime, 1, 0, false, "clock_gettime", 
-						    s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_integer_symbol), cur_env));
-  s7_define(sc, cur_env, sc->uname_symbol,
-            s7_make_typed_function_with_environment(sc, "uname", g_uname, 0, 0, false, "uname", 
 						    s7_make_signature(sc, 1, sc->is_pair_symbol), cur_env));
   s7_define(sc, cur_env, sc->unlink_symbol,
             s7_make_typed_function_with_environment(sc, "unlink", g_unlink, 1, 0, false, "int unlink(char*)",
