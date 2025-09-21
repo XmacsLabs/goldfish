@@ -370,7 +370,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <time.h>
+/* #include <time.h> */
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15598,7 +15598,7 @@ static void init_ctables(void)
   /* In R7RS mode, newlines should be escaped to ensure proper serialization */
   slashify_table[(uint8_t)'\n'] = true;
 #else
-  slashify_table[(uint8_t)'\n'] = false;
+   slashify_table[(uint8_t)'\n'] = false;
 #endif
 
   for (int32_t i = 0; i < CTABLE_SIZE; i++)
@@ -38593,13 +38593,53 @@ static s7_pointer g_getenvs(s7_scheme *sc, s7_pointer args)
   return(p);
 }
 
+/* -------------------------------- clock_gettime -------------------------------- */
+static s7_pointer g_clock_gettime(s7_scheme *sc, s7_pointer args)
+{
+#if (defined(__FreeBSD__)) || ((defined(__linux__)) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ > 17)) || (defined(__OpenBSD__)) || (defined(__NetBSD__))
+  struct timespec t0;
+  s7_pointer clock_id = car(args); /* CLOCK_REALTIME probably */
+  if (!s7_is_integer(clock_id))
+    return(sole_arg_method_or_bust(sc, clock_id, sc->clock_gettime_symbol, args, sc->type_names[T_INTEGER]));
+  int res = clock_gettime(integer(clock_id), &t0);
+  return(list_3(sc, make_integer(sc, res), make_integer(sc, t0.tv_sec), make_integer(sc, t0.tv_nsec)));
+#else
+  return(minus_one);
+#endif
+}
+
 /* -------------------------------- time -------------------------------- */
 static s7_pointer g_time(s7_scheme *sc, s7_pointer args)
 {
+#if (!MS_WINDOWS)
   s7_pointer arg = car(args);
   time_t* time_val = (time_t*)s7_c_pointer_with_type(sc, arg, make_symbol(sc, "time_t*", 7), "time", 0); /* 0 = argnum */
   return(make_integer(sc, (s7_int)time(time_val)));
+#else
+  return(minus_one);
+#endif
 }
+
+/* -------------------------------- uname -------------------------------- */
+#if (!MS_WINDOWS)
+#include <sys/utsname.h>
+
+static s7_pointer g_uname(s7_scheme *sc, s7_pointer args)
+{
+  struct utsname buf;
+  uname(&buf);
+  return(s7_list(sc, 5, s7_make_string(sc, buf.sysname),
+		 s7_make_string(sc, buf.machine),
+		 s7_make_string(sc, buf.nodename),
+		 s7_make_string(sc, buf.version),
+		 s7_make_string(sc, buf.release)));
+}
+#else
+static s7_pointer g_uname(s7_scheme *sc, s7_pointer args)
+{ /* return a list to be somewhat compatible with the uname-related functions */
+  return(s7_list(sc, 5, sc->nil_string, sc->nil_string, sc->nil_string, sc->nil_string, sc->nil_string));
+}
+#endif
 
 /* -------------------------------- unlink -------------------------------- */
 static s7_pointer g_unlink(s7_scheme *sc, s7_pointer args)
@@ -62479,15 +62519,13 @@ static s7_int opt_i_add_any_f(opt_info *o)
   for (s7_int i = 0; i < q_i_am_args(o).i; i++)
     {
       opt_info *o1 = q_i_am_arg(o, i).o1;
-#if WITH_WARNINGS
+#if WITH_WARNINGS && HAVE_OVERFLOW_CHECKS
       s7_int new_val, val = q_call(o1).fi(o1); /* this is not worth all this bother */
-#if HAVE_OVERFLOW_CHECKS
       if (add_overflow(sum, val, &new_val))
 	{
-	  s7_warn(cur_sc, 128, "integer add overflow: (+ %" ld64 " %" ld64 ")\n", sum, val);
+	  s7_warn(o->sc, 128, "integer add overflow: (+ %" ld64 " %" ld64 ")\n", sum, val);
 	  return(sum);
 	}
-#endif
       sum = new_val;
 #else
       sum += q_call(o1).fi(o1);
@@ -98741,7 +98779,7 @@ static const char r7rs_scm[] = "(provide 'r7rs.scm) \n\
     (copy s (make-vector (- stop start)) start stop))) \n\
 (define list-copy copy) \n\
 (define vector-copy string->vector) \n\
-(define r7rs-string-copy vector->string) \n\
+(define r7rs-string-copy substring) \n\
 (define* (vector-copy! dest at src (start 0) end) \n\
   (if (not at) \n\
       (copy dest) \n\
@@ -98760,15 +98798,7 @@ static const char r7rs_scm[] = "(provide 'r7rs.scm) \n\
 			 (k (- len 1) (- k 1))) \n\
 			((< k start) dest) \n\
 		      (set! (dest i) (src k))))))))) \n\
-(define (r7rs-make-hash-table . args) \n\
-  (if (null? args) \n\
-      (#_make-hash-table) \n\
-      (if (procedure? (car args)) \n\
-	  (#_make-hash-table (if (null? (cdr args))  \n\
-				 (*s7* 'default-hash-table-length) \n\
-				 (cadr args)) \n\
-			     (car args)) \n\
-	  (apply #_make-hash-table args)))) \n\
+(define string-copy! vector-copy!) \n\
 (define bytevector byte-vector) \n\
 (define bytevector? byte-vector?) \n\
 (define make-bytevector make-byte-vector) \n\
@@ -98776,7 +98806,6 @@ static const char r7rs_scm[] = "(provide 'r7rs.scm) \n\
 (define bytevector-set! byte-vector-set!) \n\
 (define bytevector-copy! vector-copy!) \n\
 (define (bytevector->list bv) (copy bv (make-list (length bv)))) \n\
-(define string-copy! vector-copy!) \n\
 (define (boolean=? . args) \n\
   (or (null? args) \n\
       (and (boolean? (car args)) \n\
@@ -99168,6 +99197,12 @@ static void r7rs_init(s7_scheme *sc)
 #endif
   s7_define(sc, cur_env, sc->getenvs_symbol,
             s7_make_typed_function_with_environment(sc, "getenvs", g_getenvs, 0, 0, false, "(getenvs) returns all the environment variables in an alist",
+						    s7_make_signature(sc, 1, sc->is_pair_symbol), cur_env));
+  s7_define(sc, cur_env, sc->clock_gettime_symbol,
+            s7_make_typed_function_with_environment(sc, "clock_gettime", g_clock_gettime, 1, 0, false, "clock_gettime", 
+						    s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_integer_symbol), cur_env));
+  s7_define(sc, cur_env, sc->uname_symbol,
+            s7_make_typed_function_with_environment(sc, "uname", g_uname, 0, 0, false, "uname", 
 						    s7_make_signature(sc, 1, sc->is_pair_symbol), cur_env));
   s7_define(sc, cur_env, sc->unlink_symbol,
             s7_make_typed_function_with_environment(sc, "unlink", g_unlink, 1, 0, false, "int unlink(char*)",
@@ -102504,9 +102539,10 @@ int main(int argc, char **argv)
  * tmethod? why the (quote ...) in t725 output (not '...)
  *
  * (*s7* scheme-version) possible unnecessary load_string/inits, check #_ funcs via t884, lint
- *   r7rs-*: string-copy string-copy! make-hash-table delay: need s7/r7rs versions, are there any similar cases in r5rs?
- *          promise.scm has tests, provide for local?
- *          #;<> is supposed to return nothing(?), what is #;#;?
+ *   r7rs: string-copy needs to be protected/restored, as does delay, rtst->s7test
+ *         problematic: guard (wrong return type)
+ *         promise.scm has tests, provide for local?
+ *         #;<> is supposed to return nothing(?), what is #;#;? #;3 reads more than it should
  *
  * build-in a repl as in nrepl, so WITH_MAIN is less stupid, maybe nrepl if not too onerous
  *    repl.scm is ca 4 times bigger, and will require libc -> s7.c for shell control etc
