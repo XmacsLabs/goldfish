@@ -7,7 +7,12 @@ if (== (count $args) 0) {
   bin/goldfish tools/format.scm -i goldfish/liii/alist.scm
   bin/goldfish tools/format.scm -i goldfish/liii/argparse.scm
   bin/goldfish tools/format.scm -i goldfish/liii/base64.scm
+  bin/goldfish tools/format.scm -i goldfish/liii/bitwise.scm
   bin/goldfish tools/format.scm -i goldfish/liii/chez.scm
+  bin/goldfish tools/format.scm -i goldfish/liii/comparator.scm
+  bin/goldfish tools/format.scm -i goldfish/liii/either.scm
+  bin/goldfish tools/format.scm -i goldfish/liii/error.scm
+  bin/goldfish tools/format.scm -i goldfish/srfi/srfi-1.scm
   bin/goldfish tools/format.scm -i tests/goldfish/liii/base64-test.scm
 } else {
   # Format each file (all arguments are file paths)
