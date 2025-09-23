@@ -13,6 +13,11 @@ if (== (count $args) 0) {
   bin/goldfish tools/format.scm -i goldfish/liii/either.scm
   bin/goldfish tools/format.scm -i goldfish/liii/error.scm
   bin/goldfish tools/format.scm -i goldfish/srfi/srfi-1.scm
+  bin/goldfish tools/format.scm -i goldfish/srfi/srfi-13.scm
+  bin/goldfish tools/format.scm -i goldfish/srfi/srfi-125.scm
+  bin/goldfish tools/format.scm -i goldfish/srfi/srfi-128.scm
+  bin/goldfish tools/format.scm -i goldfish/srfi/srfi-133.scm
+  bin/goldfish tools/format.scm -i goldfish/srfi/srfi-151.scm
   bin/goldfish tools/format.scm -i tests/goldfish/liii/base64-test.scm
 } else {
   # Format each file (all arguments are file paths)
