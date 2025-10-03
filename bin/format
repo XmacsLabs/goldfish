@@ -10,7 +10,6 @@ if (== (count $args) 0) {
   bin/goldfish tools/format.scm -i goldfish/liii/bitwise.scm
   bin/goldfish tools/format.scm -i goldfish/liii/chez.scm
   bin/goldfish tools/format.scm -i goldfish/liii/comparator.scm
-  bin/goldfish tools/format.scm -i goldfish/liii/either.scm
   bin/goldfish tools/format.scm -i goldfish/liii/error.scm
   bin/goldfish tools/format.scm -i goldfish/srfi/srfi-1.scm
   bin/goldfish tools/format.scm -i goldfish/srfi/srfi-13.scm

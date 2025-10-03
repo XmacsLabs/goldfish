@@ -295,7 +295,6 @@
         ((8)
          ((make-vector<? (make-comparator exact-integer? = < default-hash) bytevector? bytevector-length bytevector-u8-ref) a
            b))
-        (*PP_SINGLE_COMMENT* "Add more here")
         (else (binary<? (registered-comparator type) a b))))
 
     (define (default-ordering a b)
@@ -320,7 +319,6 @@
         ((8)
          ((make-vector=? (make-comparator exact-integer? = < default-hash) bytevector? bytevector-length bytevector-u8-ref) a
            b))
-        (*PP_SINGLE_COMMENT* "Add more here")
         (else (binary=? (registered-comparator type) a b))))
 
     (define (default-equality a b)
