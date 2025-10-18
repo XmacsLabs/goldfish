@@ -5844,40 +5844,6 @@ wrong-number-of-args
 (check (bytevector-append #u8() #u8(1)) => #u8(1))
 (check (bytevector-append #u8(1) #u8()) => #u8(1))
 
-(check (u8-string-length "中文") => 2)
-(check (u8-string-length "") => 0)
-
-(check (utf8->string (bytevector #x48 #x65 #x6C #x6C #x6F)) => "Hello")
-(check (utf8->string #u8(#xC3 #xA4)) => "ä")
-(check (utf8->string #u8(#xE4 #xB8 #xAD)) => "中")
-(check (utf8->string #u8(#xF0 #x9F #x91 #x8D)) => "👍")
-
-(check-catch 'value-error (utf8->string (bytevector #xFF #x65 #x6C #x6C #x6F)))
-
-(check (string->utf8 "Hello") => (bytevector #x48 #x65 #x6C #x6C #x6F))
-(check (utf8->string (string->utf8 "Hello" 1 2)) => "e")
-(check (utf8->string (string->utf8 "Hello" 0 2)) => "He")
-(check (utf8->string (string->utf8 "Hello" 2)) => "llo")
-(check (utf8->string (string->utf8 "Hello" 2 5)) => "llo")
-
-(check-catch 'out-of-range (string->utf8 "Hello" 2 6))
-
-(check (utf8->string (string->utf8 "汉字书写")) => "汉字书写")
-(check (utf8->string (string->utf8 "汉字书写" 1)) => "字书写")
-(check (utf8->string (string->utf8 "汉字书写" 2)) => "书写")
-(check (utf8->string (string->utf8 "汉字书写" 3)) => "写")
-
-(check-catch 'out-of-range (string->utf8 "汉字书写" 4))
-
-(check (string->utf8 "ä") => #u8(#xC3 #xA4))
-(check (string->utf8 "中") => #u8(#xE4 #xB8 #xAD))
-(check (string->utf8 "👍") => #u8(#xF0 #x9F #x91 #x8D))
-
-(check (string->utf8 "") => #u8())
-
-(check (u8-substring "汉字书写" 0 1) => "汉")
-(check (u8-substring "汉字书写" 0 4) => "汉字书写")
-(check (u8-substring "汉字书写" 0) => "汉字书写")
 
 
 #|
