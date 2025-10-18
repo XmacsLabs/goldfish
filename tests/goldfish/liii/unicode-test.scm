@@ -28,6 +28,68 @@
 ;; UTF-8 错误处理测试
 (check-catch 'value-error (utf8->string (bytevector #xFF #x65 #x6C #x6C #x6F)))
 
+#|
+string->utf8
+将字符串转换为 UTF-8 编码的字节向量
+
+函数签名
+----
+(string->utf8 string [start [end]]) → bytevector
+
+参数
+----
+string : string
+要转换的字符串
+
+start : integer (可选，默认 0)
+起始字符位置（基于字符计数）
+
+end : integer (可选，默认字符串末尾)
+结束字符位置（基于字符计数）
+
+返回值
+----
+bytevector
+包含 UTF-8 编码字节的字节向量
+
+描述
+----
+`string->utf8` 用于将字符串转换为 UTF-8 编码的字节向量。
+该函数遵循 R7RS 标准，支持所有有效的 Unicode 字符编码。
+
+行为特征
+------
+- 支持所有有效的 Unicode 字符，包括基本多文种平面（BMP）和辅助平面字符
+- 正确处理 ASCII 字符（单字节编码）
+- 正确处理多字节 UTF-8 字符序列
+- 支持可选参数 start 和 end 来指定字符串范围
+- 空字符串返回空的字节向量
+
+编码规则
+------
+- ASCII 字符 (U+0000 到 U+007F): 1 字节编码
+- 基本多文种平面字符 (U+0080 到 U+07FF): 2 字节编码
+- 其他 BMP 字符 (U+0800 到 U+FFFF): 3 字节编码
+- 辅助平面字符 (U+10000 到 U+10FFFF): 4 字节编码
+
+错误处理
+------
+- 如果 start 或 end 超出字符串范围，会抛出 `out-of-range` 异常
+- 参数必须是正确的类型，否则会抛出 `type-error` 异常
+- 如果字符串包含无效的 Unicode 字符，行为取决于具体实现
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (liii base) 库中重新导出
+- 支持与 `utf8->string` 函数的互逆操作
+
+相关函数
+--------
+- `utf8->string` : 将 UTF-8 字节向量转换为字符串
+- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `u8-substring` : 基于 Unicode 字符位置提取子字符串
+|#
+
 
 (check (string->utf8 "Hello") => (bytevector #x48 #x65 #x6C #x6C #x6F))
 (check (string->utf8 "ä") => #u8(#xC3 #xA4))
@@ -38,6 +100,31 @@
 ;; UTF-8 边界错误处理测试
 (check-catch 'out-of-range (string->utf8 "Hello" 2 6))
 (check-catch 'out-of-range (string->utf8 "汉字书写" 4))
+
+;; string->utf8 更多边界测试
+(check (string->utf8 "Hello" 0 0) => #u8())
+(check (string->utf8 "Hello" 1 1) => #u8())
+(check (string->utf8 "Hello" 2 3) => #u8(#x6C))  ; "l"
+(check (string->utf8 "Hello" 3 5) => #u8(#x6C #x6F))  ; "lo"
+
+;; string->utf8 复杂 Unicode 字符测试
+(check (string->utf8 "🚀") => #u8(#xF0 #x9F #x9A #x80))
+(check (string->utf8 "🎉") => #u8(#xF0 #x9F #x8E #x89))
+(check (string->utf8 "🎊") => #u8(#xF0 #x9F #x8E #x8A))
+
+;; string->utf8 混合字符测试
+(check (string->utf8 "Hello 🚀 World") => #u8(#x48 #x65 #x6C #x6C #x6F #x20 #xF0 #x9F #x9A #x80 #x20 #x57 #x6F #x72 #x6C #x64))
+(check (string->utf8 "你好 🎉 测试") => #u8(#xE4 #xBD #xA0 #xE5 #xA5 #xBD #x20 #xF0 #x9F #x8E #x89 #x20 #xE6 #xB5 #x8B #xE8 #xAF #x95))
+
+;; string->utf8 默认参数行为测试
+(check (string->utf8 "Hello") => (bytevector #x48 #x65 #x6C #x6C #x6F))
+(check (string->utf8 "Hello" 2) => #u8(#x6C #x6C #x6F))  ; "llo"
+(check (string->utf8 "Hello" 0 3) => #u8(#x48 #x65 #x6C))  ; "Hel"
+
+;; string->utf8 单字符提取测试
+(check (string->utf8 "汉") => #u8(#xE6 #xB1 #x89))
+(check (string->utf8 "字") => #u8(#xE5 #xAD #x97))
+(check (string->utf8 "👍") => #u8(#xF0 #x9F #x91 #x8D))
 
 
 (check (utf8->string (string->utf8 "Hello" 1 2)) => "e")
