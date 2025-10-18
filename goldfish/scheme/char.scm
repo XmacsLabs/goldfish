@@ -24,6 +24,20 @@
           (- (char->integer ch) (char->integer #\0))
           #f))
 
+    (define s7-char-upcase char-upcase)
+
+    (define (char-upcase char)
+      (unless (char? char)
+        (error 'type-error "char-upcase: parameter must be character"))
+      (s7-char-upcase char))
+
+    (define s7-char-downcase char-downcase)
+
+    (define (char-downcase char)
+      (unless (char? char)
+        (error 'type-error "char-downcase: parameter must be character"))
+      (s7-char-downcase char))
+
     ) ; end of begin
   ) ; end of define-library
 

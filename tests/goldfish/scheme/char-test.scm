@@ -19,6 +19,54 @@
 
 (check-set-mode! 'report-failed)
 
+#|
+char-upcase
+将字符转换为大写形式
+
+函数签名
+----
+(char-upcase char) → char
+
+参数
+----
+char : character
+要转换的字符
+
+返回值
+----
+character
+转换后的大写字符
+
+描述
+----
+`char-upcase` 用于将字符转换为大写形式。如果字符已经是大写或不是字母，则返回原字符。
+
+行为特征
+------
+- 对于小写字母，返回对应的大写字母
+- 对于大写字母，返回原字符
+- 对于非字母字符，返回原字符
+- 遵循 R7RS 标准规范
+
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- char-upcase 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `char-downcase` : 将字符转换为小写形式
+- `char-upper-case?` : 判断字符是否为大写字母
+- `char-lower-case?` : 判断字符是否为小写字母
+- `char-foldcase` : 执行大小写折叠
+|#
+
 (check (char-upcase #\z) => #\Z)
 (check (char-upcase #\a) => #\A)
 
@@ -37,10 +85,67 @@
 (check (char-upcase #\newline) => #\newline)
 (check (char-upcase #\null) => #\null)
 
+;; Test char-upcase error handling
+(check-catch 'type-error (char-upcase "a"))
+(check-catch 'type-error (char-upcase 65))
+(check-catch 'type-error (char-upcase 'a))
+
+#|
+char-downcase
+将字符转换为小写形式
+
+函数签名
+----
+(char-downcase char) → char
+
+参数
+----
+char : character
+要转换的字符
+
+返回值
+----
+character
+转换后的小写字符
+
+描述
+----
+`char-downcase` 用于将字符转换为小写形式。如果字符已经是小写或不是字母，则返回原字符。
+
+行为特征
+------
+- 对于大写字母，返回对应的小写字母
+- 对于小写字母，返回原字符
+- 对于非字母字符，返回原字符
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- char-downcase 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `char-upcase` : 将字符转换为大写形式
+- `char-upper-case?` : 判断字符是否为大写字母
+- `char-lower-case?` : 判断字符是否为小写字母
+- `char-foldcase` : 执行大小写折叠
+|#
+
 (check (char-downcase #\A) => #\a)
 (check (char-downcase #\Z) => #\z)
 
 (check (char-downcase #\a) => #\a)
+
+;; Test char-downcase error handling
+(check-catch 'type-error (char-downcase "A"))
+(check-catch 'type-error (char-downcase 65))
+(check-catch 'type-error (char-downcase 'A))
 
 (check-true (char-upper-case? #\A))
 (check-true (char-upper-case? #\Z))

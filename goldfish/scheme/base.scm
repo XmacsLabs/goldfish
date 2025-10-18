@@ -610,7 +610,7 @@ wrong-type-arg
     ; Bill Schottstaedt
     ; from S7 source repo: r7rs.scm
     (define* (string->vector s (start 0) end)
-      (let ((stop (or end (length s)))) 
+      (let ((stop (or end (length s))))
         (copy s (make-vector (- stop start)) start stop)))
 
     ) ; end of begin
