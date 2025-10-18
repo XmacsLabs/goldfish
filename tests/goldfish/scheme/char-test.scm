@@ -159,6 +159,49 @@ character
 (check-false (char-lower-case? #\A))
 (check-false (char-lower-case? #\Z))
 
+#|
+digit-value
+获取数字字符的数值
+
+函数签名
+----
+(digit-value char) → integer | #f
+
+参数
+----
+char : character
+要获取数值的字符
+
+返回值
+----
+integer | #f
+如果字符是数字字符，返回对应的整数值（0-9）；否则返回 #f
+
+描述
+----
+`digit-value` 用于获取数字字符对应的整数值。该函数只处理基本的 ASCII 数字字符（0-9）。
+
+行为特征
+------
+- 对于数字字符 #\0 到 #\9，返回对应的整数值 0 到 9
+- 对于非数字字符，返回 #f
+- 遵循 R7RS 标准规范
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- 使用 char-numeric? 判断字符是否为数字
+- 通过字符编码的差值计算数值
+
+相关函数
+--------
+- `char-numeric?` : 判断字符是否为数字字符
+- `char->integer` : 获取字符的整数编码
+- `integer->char` : 将整数转换为字符
+|#
+
+;; Test digit-value with numeric characters
+(check (digit-value #\0) => 0)
 (check (digit-value #\1) => 1)
 (check (digit-value #\2) => 2)
 (check (digit-value #\3) => 3)
@@ -168,9 +211,44 @@ character
 (check (digit-value #\7) => 7)
 (check (digit-value #\8) => 8)
 (check (digit-value #\9) => 9)
-(check (digit-value #\0) => 0)
+
+;; Test digit-value with non-numeric characters
 (check (digit-value #\a) => #f)
 (check (digit-value #\c) => #f)
+(check (digit-value #\A) => #f)
+(check (digit-value #\Z) => #f)
+(check (digit-value #\space) => #f)
+(check (digit-value #\newline) => #f)
+(check (digit-value #\null) => #f)
+(check (digit-value #\.) => #f)
+(check (digit-value #\,) => #f)
+(check (digit-value #\!) => #f)
+(check (digit-value #\@) => #f)
+(check (digit-value #\$) => #f)
+(check (digit-value #\%) => #f)
+(check (digit-value #\^) => #f)
+(check (digit-value #\&) => #f)
+(check (digit-value #\*) => #f)
+(check (digit-value #\( ) => #f)
+(check (digit-value #\)) => #f)
+(check (digit-value #\_) => #f)
+(check (digit-value #\+) => #f)
+(check (digit-value #\-) => #f)
+(check (digit-value #\=) => #f)
+(check (digit-value #\[) => #f)
+(check (digit-value #\]) => #f)
+(check (digit-value #\{) => #f)
+(check (digit-value #\}) => #f)
+(check (digit-value #\|) => #f)
+(check (digit-value #\\) => #f)
+(check (digit-value #\:) => #f)
+(check (digit-value #\;) => #f)
+(check (digit-value #\") => #f)
+(check (digit-value #\') => #f)
+(check (digit-value #\<) => #f)
+(check (digit-value #\>) => #f)
+(check (digit-value #\?) => #f)
+(check (digit-value #\/) => #f)
 
 (check-report)
 
