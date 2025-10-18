@@ -243,6 +243,87 @@ boolean?
 (check-catch 'wrong-number-of-args (char-numeric? #\1 #\2))
 
 #|
+char-alphabetic?
+判断字符是否为字母。
+
+函数签名
+----
+(char-alphabetic? char) → boolean?
+
+参数
+----
+char : character
+要判断的字符
+
+返回值
+----
+boolean?
+如果字符是字母则返回 #t，否则返回 #f
+
+描述
+----
+`char-alphabetic?` 用于判断字符是否为字母字符。该函数正确处理大小写字母。
+
+行为特征
+------
+- 对于字母字符（A-Z, a-z），返回 #t
+- 对于非字母字符，返回 #f
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- char-alphabetic? 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `char-upper-case?` : 判断字符是否为大写字母
+- `char-lower-case?` : 判断字符是否为小写字母
+- `char-numeric?` : 判断字符是否为数字
+|#
+
+;; 小写字母测试
+(check (char-alphabetic? #\a) => #t)
+(check (char-alphabetic? #\b) => #t)
+(check (char-alphabetic? #\z) => #t)
+
+;; 大写字母测试
+(check (char-alphabetic? #\A) => #t)
+(check (char-alphabetic? #\B) => #t)
+(check (char-alphabetic? #\Z) => #t)
+
+;; 非字母字符测试
+(check (char-alphabetic? #\0) => #f)
+(check (char-alphabetic? #\1) => #f)
+(check (char-alphabetic? #\9) => #f)
+(check (char-alphabetic? #\!) => #f)
+(check (char-alphabetic? #\@) => #f)
+(check (char-alphabetic? #\#) => #f)
+
+;; 特殊字符测试
+(check (char-alphabetic? #\space) => #f)
+(check (char-alphabetic? #\newline) => #f)
+(check (char-alphabetic? #\tab) => #f)
+(check (char-alphabetic? #\return) => #f)
+
+;; 边界字符测试
+(check (char-alphabetic? #\[) => #f)
+(check (char-alphabetic? #\\) => #f)
+(check (char-alphabetic? #\`) => #f)
+(check (char-alphabetic? #\{) => #f)
+
+;; 错误处理测试
+(check-catch 'type-error (char-alphabetic? 1))
+(check-catch 'type-error (char-alphabetic? "a"))
+(check-catch 'wrong-number-of-args (char-alphabetic?))
+(check-catch 'wrong-number-of-args (char-alphabetic? #\a #\b))
+
+#|
 digit-value
 获取数字字符的数值
 
@@ -332,6 +413,84 @@ integer | #f
 (check (digit-value #\>) => #f)
 (check (digit-value #\?) => #f)
 (check (digit-value #\/) => #f)
+
+#|
+char-whitespace?
+判断字符是否为空白字符。
+
+函数签名
+----
+(char-whitespace? char) → boolean?
+
+参数
+----
+char : character
+要判断的字符
+
+返回值
+----
+boolean?
+如果字符是空白字符则返回 #t，否则返回 #f
+
+描述
+----
+`char-whitespace?` 用于判断字符是否为空白字符。该函数正确处理各种空白字符。
+
+行为特征
+------
+- 对于空白字符（空格、换行符、制表符等），返回 #t
+- 对于非空白字符，返回 #f
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- char-whitespace? 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `char-alphabetic?` : 判断字符是否为字母
+- `char-numeric?` : 判断字符是否为数字
+- `char-upper-case?` : 判断字符是否为大写字母
+- `char-lower-case?` : 判断字符是否为小写字母
+|#
+
+;; 标准空白测试
+(check (char-whitespace? #\space) => #t)
+(check (char-whitespace? #\newline) => #t)
+(check (char-whitespace? #\tab) => #t)
+
+;; 控制字符测试
+(check (char-whitespace? #\return) => #t)
+(check (char-whitespace? #\backspace) => #f)
+
+;; 非空白字符测试
+(check (char-whitespace? #\a) => #f)
+(check (char-whitespace? #\A) => #f)
+(check (char-whitespace? #\0) => #f)
+(check (char-whitespace? #\9) => #f)
+(check (char-whitespace? #\!) => #f)
+(check (char-whitespace? #\@) => #f)
+
+;; 特殊边界测试
+(check (char-whitespace? #\0) => #f)
+(check (char-whitespace? #\a) => #f)
+
+;; 符号
+(check (char-whitespace? #\.) => #f)
+(check (char-whitespace? #\,) => #f)
+(check (char-whitespace? #\;) => #f)
+
+;; 错误处理测试
+(check-catch 'type-error (char-whitespace? 1))
+(check-catch 'type-error (char-whitespace? " "))
+(check-catch 'wrong-number-of-args (char-whitespace?))
+(check-catch 'wrong-number-of-args (char-whitespace? #\space #\a))
 
 (check-report)
 

@@ -17,7 +17,7 @@
 (define-library (scheme char)
   (export
     char-upcase char-downcase char-upper-case? char-lower-case? digit-value
-    char-numeric?
+    char-numeric? char-alphabetic? char-whitespace?
     )
   (begin
     (define (digit-value ch)
@@ -45,6 +45,20 @@
       (unless (char? char)
         (error 'type-error "char-numeric?: parameter must be character"))
       (s7-char-numeric? char))
+
+    (define s7-char-alphabetic? char-alphabetic?)
+
+    (define (char-alphabetic? char)
+      (unless (char? char)
+        (error 'type-error "char-alphabetic?: parameter must be character"))
+      (s7-char-alphabetic? char))
+
+    (define s7-char-whitespace? char-whitespace?)
+
+    (define (char-whitespace? char)
+      (unless (char? char)
+        (error 'type-error "char-whitespace?: parameter must be character"))
+      (s7-char-whitespace? char))
 
     ) ; end of begin
   ) ; end of define-library
