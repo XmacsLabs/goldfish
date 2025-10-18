@@ -20,6 +20,61 @@
 
 (check-set-mode! 'report-failed)
 
+#|
+utf8->string
+将 UTF-8 编码的字节向量转换为字符串
+
+函数签名
+----
+(utf8->string bytevector) → string
+
+参数
+----
+bytevector : bytevector
+包含 UTF-8 编码字节的字节向量
+
+返回值
+----
+string
+转换后的字符串
+
+描述
+----
+`utf8->string` 用于将 UTF-8 编码的字节向量转换为字符串。
+该函数遵循 R7RS 标准，支持所有有效的 Unicode 字符编码。
+
+行为特征
+------
+- 支持所有有效的 Unicode 字符，包括基本多文种平面（BMP）和辅助平面字符
+- 正确处理 ASCII 字符（单字节编码）
+- 正确处理多字节 UTF-8 字符序列
+- 空字节向量返回空字符串
+- 与 `string->utf8` 函数形成互逆操作
+
+编码规则
+------
+- ASCII 字符 (U+0000 到 U+007F): 1 字节编码
+- 基本多文种平面字符 (U+0080 到 U+07FF): 2 字节编码
+- 其他 BMP 字符 (U+0800 到 U+FFFF): 3 字节编码
+- 辅助平面字符 (U+10000 到 U+10FFFF): 4 字节编码
+
+错误处理
+------
+- 如果字节向量包含无效的 UTF-8 编码序列，会抛出 `value-error` 异常
+- 参数必须是字节向量类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (liii base) 库中重新导出
+- 与 `string->utf8` 函数形成互逆操作对
+
+相关函数
+--------
+- `string->utf8` : 将字符串转换为 UTF-8 字节向量
+- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `u8-substring` : 基于 Unicode 字符位置提取子字符串
+|#
+
 (check (utf8->string (bytevector #x48 #x65 #x6C #x6C #x6F)) => "Hello")
 (check (utf8->string #u8(#xC3 #xA4)) => "ä")
 (check (utf8->string #u8(#xE4 #xB8 #xAD)) => "中")
@@ -27,6 +82,43 @@
 
 ;; UTF-8 错误处理测试
 (check-catch 'value-error (utf8->string (bytevector #xFF #x65 #x6C #x6C #x6F)))
+
+;; utf8->string 边界条件测试
+(check (utf8->string #u8()) => "")
+(check (utf8->string #u8(#x48)) => "H")
+(check (utf8->string #u8(#x48 #x65)) => "He")
+
+;; utf8->string 复杂 Unicode 字符测试
+(check (utf8->string #u8(#xF0 #x9F #x9A #x80)) => "🚀")
+(check (utf8->string #u8(#xF0 #x9F #x8E #x89)) => "🎉")
+(check (utf8->string #u8(#xF0 #x9F #x8E #x8A)) => "🎊")
+(check (utf8->string #u8(#xF0 #x9F #x91 #x8D #xF0 #x9F #x9A #x80)) => "👍🚀")
+
+;; utf8->string 混合字符测试
+(check (utf8->string #u8(#x48 #x65 #x6C #x6C #x6F #x20 #xF0 #x9F #x9A #x80 #x20 #x57 #x6F #x72 #x6C #x64)) => "Hello 🚀 World")
+(check (utf8->string #u8(#xE4 #xBD #xA0 #xE5 #xA5 #xBD #x20 #xF0 #x9F #x8E #x89 #x20 #xE6 #xB5 #x8B #xE8 #xAF #x95)) => "你好 🎉 测试")
+
+;; utf8->string 错误处理测试 - 更多无效 UTF-8 序列
+(check-catch 'value-error (utf8->string (bytevector #x80)))
+(check-catch 'value-error (utf8->string (bytevector #xF8 #x80 #x80 #x80 #x80)))
+(check-catch 'value-error (utf8->string (bytevector #xFC #x80 #x80 #x80 #x80 #x80)))
+
+;; utf8->string 与 string->utf8 互逆操作验证
+(check (utf8->string (string->utf8 "")) => "")
+(check (utf8->string (string->utf8 "H")) => "H")
+(check (utf8->string (string->utf8 "Hello")) => "Hello")
+(check (utf8->string (string->utf8 "ä")) => "ä")
+(check (utf8->string (string->utf8 "中")) => "中")
+(check (utf8->string (string->utf8 "👍")) => "👍")
+(check (utf8->string (string->utf8 "🚀")) => "🚀")
+(check (utf8->string (string->utf8 "汉字书写")) => "汉字书写")
+(check (utf8->string (string->utf8 "Hello 你好 👍")) => "Hello 你好 👍")
+
+;; utf8->string 单字符提取测试
+(check (utf8->string #u8(#xE6 #xB1 #x89)) => "汉")
+(check (utf8->string #u8(#xE5 #xAD #x97)) => "字")
+(check (utf8->string #u8(#xF0 #x9F #x91 #x8D)) => "👍")
+
 
 #|
 string->utf8
