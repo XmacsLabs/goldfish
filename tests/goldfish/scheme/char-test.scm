@@ -659,5 +659,111 @@ boolean?
 (check-catch 'wrong-number-of-args (char-lower-case?))
 (check-catch 'wrong-number-of-args (char-lower-case? #\a #\b))
 
+#|
+char-ci=?
+按大小写不敏感的方式比较字符是否相等。
+
+函数签名
+-----
+(char-ci=? char1 char2 char3 ...) → boolean?
+
+参数
+----
+char1, char2, char3, ... : character
+要比较的字符
+
+返回值
+----
+boolean?
+如果所有字符在大小写不敏感的情况下都相等，则返回 #t，否则返回 #f
+
+描述
+----
+`char-ci=?` 用于按大小写不敏感的方式比较字符是否相等。该函数忽略字符的大小写差异，
+将大写字母和小写字母视为相等。
+
+行为特征
+------
+- 对于相同字母的大小写不同形式（如 #\a 和 #\A），返回 #t
+- 对于相同的字符（无论大小写），返回 #t
+- 对于不同的字符，返回 #f
+- 支持多个参数，只有当所有字符在大小写不敏感的情况下都相等时才返回 #t
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 所有参数必须是字符类型，否则会抛出 `type-error` 异常
+- 至少需要两个参数，否则会抛出 `wrong-number-of-args` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- 使用底层 S7 的 char-ci=? 函数实现核心功能
+- 添加了参数类型检查，确保所有参数都是字符类型
+
+相关函数
+--------
+- `char=?` : 按大小写敏感的方式比较字符是否相等
+- `char-ci<?` : 按大小写不敏感的方式比较字符是否小于
+- `char-ci>?` : 按大小写不敏感的方式比较字符是否大于
+- `char-ci<=?` : 按大小写不敏感的方式比较字符是否小于等于
+- `char-ci>=?` : 按大小写不敏感的方式比较字符是否大于等于
+|#
+
+;; char-ci=? 基本功能测试
+(check (char-ci=? #\a #\A) => #t)
+(check (char-ci=? #\A #\a) => #t)
+(check (char-ci=? #\z #\Z) => #t)
+(check (char-ci=? #\Z #\z) => #t)
+(check (char-ci=? #\b #\B) => #t)
+(check (char-ci=? #\B #\b) => #t)
+
+;; 大小写一致测试
+(check (char-ci=? #\a #\a) => #t)
+(check (char-ci=? #\A #\A) => #t)
+(check (char-ci=? #\1 #\1) => #t)
+
+;; 不同大小写混合测试
+(check (char-ci=? #\a #\b) => #f)
+(check (char-ci=? #\a #\B) => #f)
+(check (char-ci=? #\A #\b) => #f)
+(check (char-ci=? #\A #\z) => #f)
+(check (char-ci=? #\Z #\a) => #f)
+
+;; 多参数测试
+(check (char-ci=? #\a #\a #\A) => #t)
+(check (char-ci=? #\A #\a #\a) => #t)
+(check (char-ci=? #\z #\Z #\z #\Z) => #t)
+(check (char-ci=? #\a #\b #\A) => #f)
+(check (char-ci=? #\A #\B #\a) => #f)
+
+;; 数字字符测试（char-ci不影响数字）
+(check (char-ci=? #\0 #\0) => #t)
+(check (char-ci=? #\1 #\1) => #t)
+(check (char-ci=? #\1 #\2) => #f)
+
+;; 特殊字符测试
+(check (char-ci=? #\space #\space) => #t)
+(check (char-ci=? #\newline #\newline) => #t)
+(check (char-ci=? #\! #\!) => #t)
+(check (char-ci=? #\! #\@) => #f)
+
+;; 大小写转换边界测试
+(check (char-ci=? #\a #\A #\b #\B) => #f)
+(check (char-ci=? #\A #\a #\A) => #t)
+(check (char-ci=? #\m #\M #\m) => #t)
+(check (char-ci=? #\M #\m #\M) => #t)
+
+;; 边界字符测试
+(check (char-ci=? #\0 #\a) => #f)
+(check (char-ci=? #\A #\z) => #f)
+(check (char-ci=? #\Z #\a) => #f)
+
+;; 错误处理测试 - 更新为 type-error
+(check-catch 'type-error (char-ci=? 1 #\A))
+(check-catch 'type-error (char-ci=? #\A 'symbol))
+(check-catch 'wrong-number-of-args (char-ci=?))
+(check-catch 'wrong-number-of-args (char-ci=? #\A))
+
 (check-report)
 
