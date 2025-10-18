@@ -492,5 +492,172 @@ boolean?
 (check-catch 'wrong-number-of-args (char-whitespace?))
 (check-catch 'wrong-number-of-args (char-whitespace? #\space #\a))
 
+#|
+char-upper-case?
+判断字符是否为大写字母字符。
+
+函数签名
+----
+(char-upper-case? char) → boolean?
+
+参数
+----
+char : character
+要判断的字符
+
+返回值
+----
+boolean?
+如果字符是大写字母则返回 #t，否则返回 #f
+
+描述
+----
+`char-upper-case?` 用于判断字符是否为大写字母。该函数只处理基本的 ASCII 大写字母字符（A-Z）。
+
+行为特征
+------
+- 对于大写字母字符（A-Z），返回 #t
+- 对于小写字母、数字、符号和空白字符，返回 #f
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- char-upper-case? 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `char-lower-case?` : 判断字符是否为小写字母
+- `char-alphabetic?` : 判断字符是否为字母
+- `char-numeric?` : 判断字符是否为数字
+- `char-whitespace?` : 判断字符是否为空白字符
+|#
+
+;; char-upper-case? 大写字母测试
+(check (char-upper-case? #\A) => #t)
+(check (char-upper-case? #\B) => #t)
+(check (char-upper-case? #\Z) => #t)
+
+;; 小写字母测试
+(check (char-upper-case? #\a) => #f)
+(check (char-upper-case? #\z) => #f)
+(check (char-upper-case? #\b) => #f)
+
+;; 特殊测试
+(check (char-upper-case? #\@) => #f)
+(check (char-upper-case? #\[) => #f)
+(check (char-upper-case? #\`) => #f)
+
+;; 非字母字符测试
+(check (char-upper-case? #\0) => #f)
+(check (char-upper-case? #\9) => #f)
+(check (char-upper-case? #\!) => #f)
+(check (char-upper-case? #\space) => #f)
+(check (char-upper-case? #\newline) => #f)
+
+;; 混合测试
+(check (char-upper-case? #\@) => #f)
+(check (char-upper-case? #\_) => #f)
+(check (char-upper-case? #\`) => #f)
+
+;; 字母测试
+(check (char-upper-case? #\M) => #t)
+(check (char-upper-case? #\m) => #f)
+
+;; 错误处理测试
+(check-catch 'type-error (char-upper-case? 1))
+(check-catch 'type-error (char-upper-case? "A"))
+(check-catch 'wrong-number-of-args (char-upper-case?))
+(check-catch 'wrong-number-of-args (char-upper-case? #\A #\B))
+
+#|
+char-lower-case?
+判断字符是否为小写字母字符。
+
+函数签名
+----
+(char-lower-case? char) → boolean?
+
+参数
+----
+char : character
+要判断的字符
+
+返回值
+----
+boolean?
+如果字符是小写字母则返回 #t，否则返回 #f
+
+描述
+----
+`char-lower-case?` 用于判断字符是否为小写字母。该函数只处理基本的 ASCII 小写字母字符（a-z）。
+
+行为特征
+------
+- 对于小写字母字符（a-z），返回 #t
+- 对于大写字母、数字、符号和空白字符，返回 #f
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- char-lower-case? 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `char-upper-case?` : 判断字符是否为大写字母
+- `char-alphabetic?` : 判断字符是否为字母
+- `char-numeric?` : 判断字符是否为数字
+- `char-whitespace?` : 判断字符是否为空白字符
+|#
+
+;; char-lower-case? 小写字母测试
+(check (char-lower-case? #\a) => #t)
+(check (char-lower-case? #\b) => #t)
+(check (char-lower-case? #\z) => #t)
+
+;; 大写字母测试
+(check (char-lower-case? #\A) => #f)
+(check (char-lower-case? #\B) => #f)
+(check (char-lower-case? #\Z) => #f)
+
+;; 特殊测试
+(check (char-lower-case? #\`) => #f)
+(check (char-lower-case? #\{) => #f)
+
+;; 非字母字符测试
+(check (char-lower-case? #\0) => #f)
+(check (char-lower-case? #\9) => #f)
+(check (char-lower-case? #\!) => #f)
+(check (char-lower-case? #\space) => #f)
+(check (char-lower-case? #\newline) => #f)
+
+;; 混合测试
+(check (char-lower-case? #\a) => #t)
+(check (char-lower-case? #\z) => #t)
+(check (char-lower-case? #\_) => #f)
+(check (char-lower-case? #\`) => #f)
+(check (char-lower-case? #\{) => #f)
+
+;; 字母测试
+(check (char-lower-case? #\m) => #t)
+(check (char-lower-case? #\M) => #f)
+
+;; 错误处理测试
+(check-catch 'type-error (char-lower-case? 1))
+(check-catch 'type-error (char-lower-case? "a"))
+(check-catch 'wrong-number-of-args (char-lower-case?))
+(check-catch 'wrong-number-of-args (char-lower-case? #\a #\b))
+
 (check-report)
 

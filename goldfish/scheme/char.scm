@@ -60,6 +60,20 @@
         (error 'type-error "char-whitespace?: parameter must be character"))
       (s7-char-whitespace? char))
 
+    (define s7-char-upper-case? char-upper-case?)
+
+    (define (char-upper-case? char)
+      (unless (char? char)
+        (error 'type-error "char-upper-case?: parameter must be character"))
+      (s7-char-upper-case? char))
+
+    (define s7-char-lower-case? char-lower-case?)
+
+    (define (char-lower-case? char)
+      (unless (char? char)
+        (error 'type-error "char-lower-case?: parameter must be character"))
+      (s7-char-lower-case? char))
+
     ) ; end of begin
   ) ; end of define-library
 
