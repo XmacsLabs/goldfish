@@ -103,4 +103,87 @@ real-part(z) = x
 (check (real-part 0+9i) => 0.0)
 (check (real-part 10+0i) => 10.0)
 
+#|
+imag-part
+返回复数的虚部
+
+函数签名
+----
+(imag-part z) → real
+
+参数
+----
+z : number
+复数或实数
+
+返回值
+----
+real
+复数 z 的虚部
+
+描述
+----
+`imag-part` 用于返回复数或实数的虚部。对于实数，返回 0；
+对于复数，返回其虚部。
+
+行为特征
+------
+- 对于实数，返回 0
+- 对于复数，返回其虚部
+- 支持精确数和近似数
+- 遵循 R7RS 标准规范
+
+数学定义
+------
+如果 z = x + yi，其中 x 和 y 是实数，i 是虚数单位，则：
+imag-part(z) = y
+
+特殊情况
+------
+- (imag-part 5) → 0
+- (imag-part 3.14) → 0.0
+- (imag-part (make-rectangular 3 4)) → 4
+- (imag-part (make-rectangular -3 4)) → 4
+
+错误处理
+------
+- 参数必须是数值类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme complex) 库中提供
+- imag-part 是内置函数，由 S7 scheme 引擎实现
+- 不需要额外的实现代码
+
+相关函数
+--------
+- `real-part` : 返回复数的实部
+- `make-rectangular` : 根据实部和虚部构造复数
+- `magnitude` : 返回复数的模
+- `angle` : 返回复数的辐角
+|#
+
+;; Test imag-part with complex numbers
+(check (imag-part (make-rectangular 3 4)) => 4.0)
+(check (imag-part (make-rectangular -3 4)) => 4.0)
+(check (imag-part (make-rectangular 3 -4)) => -4.0)
+(check (imag-part (make-rectangular -3 -4)) => -4.0)
+
+;; Test imag-part with real numbers
+(check (imag-part 5) => 0)
+(check (imag-part -5) => 0)
+(check (imag-part 0) => 0)
+
+;; Test imag-part with floating point numbers
+(check (imag-part 3.14) => 0.0)
+(check (imag-part -2.71) => 0.0)
+
+;; Test imag-part with complex number literals
+(check (imag-part 1+2i) => 2.0)
+(check (imag-part 3-4i) => -4.0)
+(check (imag-part -5+6i) => 6.0)
+(check (imag-part -7-8i) => -8.0)
+(check (imag-part 0+9i) => 9.0)
+(check (imag-part 10+0i) => 0.0)
+
 (check-report)
