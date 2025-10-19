@@ -592,4 +592,190 @@ bytevector
 (check unicode-max-codepoint => #x10FFFF)
 (check unicode-replacement-char => #xFFFD)
 
+#|
+hexstr->codepoint
+将纯十六进制字符串转换为 Unicode 码点
+
+函数签名
+----
+(hexstr->codepoint hex-string) → integer
+
+参数
+----
+hex-string : string
+纯十六进制字符串，不包含 "U+" 或 "0x" 前缀
+
+返回值
+----
+integer
+Unicode 码点值
+
+描述
+----
+`hexstr->codepoint` 用于将纯十六进制字符串转换为 Unicode 码点。
+
+行为特征
+------
+- 支持纯十六进制字符串（如 "1F600"）
+- 不区分大小写
+- 支持有效的 Unicode 码点范围 (0-0x10FFFF)
+
+错误处理
+------
+- 如果字符串包含无效的十六进制字符，会抛出 `value-error` 异常
+- 如果码点超出 Unicode 范围，会抛出 `value-error` 异常
+- 参数必须是字符串类型，否则会抛出 `type-error` 异常
+
+相关函数
+--------
+- `codepoint->hexstr` : 将 Unicode 码点转换为十六进制字符串
+- `codepoint->utf8` : 将 Unicode 码点转换为 UTF-8 字节向量
+- `utf8->codepoint` : 将 UTF-8 字节向量转换为 Unicode 码点
+|#
+
+#|
+codepoint->hexstr
+将 Unicode 码点转换为纯十六进制字符串
+
+函数签名
+----
+(codepoint->hexstr codepoint) → string
+
+参数
+----
+codepoint : integer
+Unicode 码点值
+
+返回值
+----
+string
+纯十六进制字符串，不包含 "U+" 或 "0x" 前缀
+
+描述
+----
+`codepoint->hexstr` 用于将 Unicode 码点转换为纯十六进制字符串。
+
+行为特征
+------
+- 返回纯十六进制字符串（如 "1F600"）
+- 输出使用大写字母
+- 支持有效的 Unicode 码点范围 (0-0x10FFFF)
+
+错误处理
+------
+- 如果码点超出 Unicode 范围，会抛出 `value-error` 异常
+- 参数必须是整数类型，否则会抛出 `type-error` 异常
+
+相关函数
+--------
+- `hexstr->codepoint` : 将十六进制字符串转换为 Unicode 码点
+- `codepoint->utf8` : 将 Unicode 码点转换为 UTF-8 字节向量
+- `utf8->codepoint` : 将 UTF-8 字节向量转换为 Unicode 码点
+|#
+
+;; hexstr->codepoint 基本功能测试
+(check (hexstr->codepoint "48") => #x48)  ; "H"
+(check (hexstr->codepoint "65") => #x65)  ; "e"
+(check (hexstr->codepoint "6C") => #x6C)  ; "l"
+(check (hexstr->codepoint "6F") => #x6F)  ; "o"
+(check (hexstr->codepoint "20") => #x20)  ; 空格
+(check (hexstr->codepoint "0A") => #x0A)  ; 换行符
+
+;; hexstr->codepoint 基本多文种平面字符测试
+(check (hexstr->codepoint "A4") => #xA4)  ; "¤" (CURRENCY SIGN)
+(check (hexstr->codepoint "E4") => #xE4)  ; "ä"
+(check (hexstr->codepoint "E9") => #xE9)  ; "é"
+(check (hexstr->codepoint "F6") => #xF6)  ; "ö"
+(check (hexstr->codepoint "FC") => #xFC)  ; "ü"
+
+;; hexstr->codepoint 其他 BMP 字符测试
+(check (hexstr->codepoint "4E2D") => #x4E2D)  ; "中"
+(check (hexstr->codepoint "6C49") => #x6C49)  ; "汉"
+(check (hexstr->codepoint "5B57") => #x5B57)  ; "字"
+(check (hexstr->codepoint "5199") => #x5199)  ; "写"
+
+;; hexstr->codepoint 辅助平面字符测试
+(check (hexstr->codepoint "1F44D") => #x1F44D)  ; "👍"
+(check (hexstr->codepoint "1F680") => #x1F680)  ; "🚀"
+(check (hexstr->codepoint "1F389") => #x1F389)  ; "🎉"
+(check (hexstr->codepoint "1F38A") => #x1F38A)  ; "🎊"
+
+;; hexstr->codepoint 边界值测试
+(check (hexstr->codepoint "0") => 0)  ; 最小码点
+(check (hexstr->codepoint "7F") => 127)  ; ASCII 最大
+(check (hexstr->codepoint "80") => 128)  ; 2字节编码最小
+(check (hexstr->codepoint "7FF") => 2047)  ; 2字节编码最大
+(check (hexstr->codepoint "800") => 2048)  ; 3字节编码最小
+(check (hexstr->codepoint "FFFF") => 65535)  ; 3字节编码最大
+(check (hexstr->codepoint "10000") => 65536)  ; 4字节编码最小
+(check (hexstr->codepoint "10FFFF") => #x10FFFF)  ; Unicode 最大码点
+
+;; hexstr->codepoint 不区分大小写测试
+(check (hexstr->codepoint "1f44d") => #x1F44D)  ; "👍"
+(check (hexstr->codepoint "1F44D") => #x1F44D)  ; "👍"
+(check (hexstr->codepoint "1f44D") => #x1F44D)  ; "👍"
+
+;; hexstr->codepoint 错误处理测试
+(check-catch 'value-error (hexstr->codepoint ""))  ; 空字符串
+(check-catch 'value-error (hexstr->codepoint "G"))  ; 无效十六进制字符
+(check-catch 'value-error (hexstr->codepoint "1G"))  ; 包含无效字符
+(check-catch 'value-error (hexstr->codepoint "110000"))  ; 超出 Unicode 范围
+(check-catch 'value-error (hexstr->codepoint "200000"))  ; 远超出范围
+
+;; codepoint->hexstr 基本功能测试
+(check (codepoint->hexstr #x48) => "48")  ; "H"
+(check (codepoint->hexstr #x65) => "65")  ; "e"
+(check (codepoint->hexstr #x6C) => "6C")  ; "l"
+(check (codepoint->hexstr #x6F) => "6F")  ; "o"
+(check (codepoint->hexstr #x20) => "20")  ; 空格
+(check (codepoint->hexstr #x0A) => "0A")  ; 换行符
+
+;; codepoint->hexstr 基本多文种平面字符测试
+(check (codepoint->hexstr #xA4) => "A4")  ; "¤" (CURRENCY SIGN)
+(check (codepoint->hexstr #xE4) => "E4")  ; "ä"
+(check (codepoint->hexstr #xE9) => "E9")  ; "é"
+(check (codepoint->hexstr #xF6) => "F6")  ; "ö"
+(check (codepoint->hexstr #xFC) => "FC")  ; "ü"
+
+;; codepoint->hexstr 其他 BMP 字符测试
+(check (codepoint->hexstr #x4E2D) => "4E2D")  ; "中"
+(check (codepoint->hexstr #x6C49) => "6C49")  ; "汉"
+(check (codepoint->hexstr #x5B57) => "5B57")  ; "字"
+(check (codepoint->hexstr #x5199) => "5199")  ; "写"
+
+;; codepoint->hexstr 辅助平面字符测试
+(check (codepoint->hexstr #x1F44D) => "1F44D")  ; "👍"
+(check (codepoint->hexstr #x1F680) => "1F680")  ; "🚀"
+(check (codepoint->hexstr #x1F389) => "1F389")  ; "🎉"
+(check (codepoint->hexstr #x1F38A) => "1F38A")  ; "🎊"
+
+;; codepoint->hexstr 边界值测试
+(check (codepoint->hexstr 0) => "0")  ; 最小码点
+(check (codepoint->hexstr 127) => "7F")  ; ASCII 最大
+(check (codepoint->hexstr 128) => "80")  ; 2字节编码最小
+(check (codepoint->hexstr 2047) => "7FF")  ; 2字节编码最大
+(check (codepoint->hexstr 2048) => "800")  ; 3字节编码最小
+(check (codepoint->hexstr 65535) => "FFFF")  ; 3字节编码最大
+(check (codepoint->hexstr 65536) => "10000")  ; 4字节编码最小
+(check (codepoint->hexstr #x10FFFF) => "10FFFF")  ; Unicode 最大码点
+
+;; codepoint->hexstr 错误处理测试
+(check-catch 'value-error (codepoint->hexstr -1))  ; 负码点
+(check-catch 'value-error (codepoint->hexstr #x110000))  ; 超出 Unicode 范围
+(check-catch 'value-error (codepoint->hexstr #x200000))  ; 远超出范围
+
+;; hexstr->codepoint 与 codepoint->hexstr 互逆操作验证
+(check (hexstr->codepoint (codepoint->hexstr 0)) => 0)
+(check (hexstr->codepoint (codepoint->hexstr 127)) => 127)
+(check (hexstr->codepoint (codepoint->hexstr 128)) => 128)
+(check (hexstr->codepoint (codepoint->hexstr 2047)) => 2047)
+(check (hexstr->codepoint (codepoint->hexstr 2048)) => 2048)
+(check (hexstr->codepoint (codepoint->hexstr 65535)) => 65535)
+(check (hexstr->codepoint (codepoint->hexstr 65536)) => 65536)
+(check (hexstr->codepoint (codepoint->hexstr #x10FFFF)) => #x10FFFF)
+(check (hexstr->codepoint (codepoint->hexstr #x48)) => #x48)
+(check (hexstr->codepoint (codepoint->hexstr #xE4)) => #xE4)
+(check (hexstr->codepoint (codepoint->hexstr #x4E2D)) => #x4E2D)
+(check (hexstr->codepoint (codepoint->hexstr #x1F44D)) => #x1F44D)
+
 (check-report)

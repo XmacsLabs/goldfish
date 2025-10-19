@@ -20,22 +20,15 @@
    utf8->string string->utf8 u8-string-length u8-substring bytevector-advance-u8
    codepoint->utf8 utf8->codepoint
 
+   ;; 十六进制字符串与码点转换函数
+   hexstr->codepoint codepoint->hexstr
+
    ;; Unicode 常量
    unicode-max-codepoint unicode-replacement-char)
 
   (import (liii base) (liii bitwise) (liii error))
 
   (begin
-    ;; ============================================================================
-    ;; UTF-8 函数重新导出
-    ;; ============================================================================
-
-    ;; 这些函数已经在 (liii base) 中定义，直接重新导出
-
-    ;; ============================================================================
-    ;; Unicode 码点与 UTF-8 转换函数
-    ;; ============================================================================
-
     (define (codepoint->utf8 codepoint)
       (unless (integer? codepoint)
         (error 'type-error "codepoint->utf8: expected integer, got" codepoint))
@@ -75,11 +68,9 @@
 
         (let ((first-byte (bytevector-u8-ref bytevector 0)))
           (cond
-            ;; 1字节编码: 0xxxxxxx
             ((<= first-byte #x7F)
              first-byte)
 
-            ;; 2字节编码: 110xxxxx 10xxxxxx
             ((<= #xC2 first-byte #xDF)
              (when (< len 2)
                (error 'value-error "utf8->codepoint: incomplete 2-byte sequence"))
@@ -90,7 +81,6 @@
                  (arithmetic-shift (bitwise-and first-byte #b00011111) 6)
                  (bitwise-and byte2 #b00111111))))
 
-            ;; 3字节编码: 1110xxxx 10xxxxxx 10xxxxxx
             ((<= #xE0 first-byte #xEF)
              (when (< len 3)
                (error 'value-error "utf8->codepoint: incomplete 3-byte sequence"))
@@ -102,14 +92,12 @@
                                  (arithmetic-shift (bitwise-and first-byte #b00001111) 12)
                                  (arithmetic-shift (bitwise-and byte2 #b00111111) 6)
                                  (bitwise-and byte3 #b00111111))))
-                 ;; 检查码点有效性 (避免代理对和过编码)
-                 (when (or (<= #xD800 codepoint #xDFFF)  ; 代理对范围
-                           (and (= first-byte #xE0) (< codepoint #x0800))  ; 过编码检查
-                           (and (= first-byte #xED) (>= codepoint #xD800)))  ; 代理对检查
+                 (when (or (<= #xD800 codepoint #xDFFF)
+                           (and (= first-byte #xE0) (< codepoint #x0800))
+                           (and (= first-byte #xED) (>= codepoint #xD800)))
                    (error 'value-error "utf8->codepoint: invalid codepoint"))
                  codepoint)))
 
-            ;; 4字节编码: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
             ((<= #xF0 first-byte #xF4)
              (when (< len 4)
                (error 'value-error "utf8->codepoint: incomplete 4-byte sequence"))
@@ -123,21 +111,53 @@
                                  (arithmetic-shift (bitwise-and byte2 #b00111111) 12)
                                  (arithmetic-shift (bitwise-and byte3 #b00111111) 6)
                                  (bitwise-and byte4 #b00111111))))
-                 ;; 检查码点有效性
-                 (when (or (< codepoint #x10000)  ; 4字节编码的最小码点
-                           (> codepoint #x10FFFF)  ; Unicode 最大码点
-                           (and (= first-byte #xF0) (< codepoint #x10000))  ; 过编码检查
-                           (and (= first-byte #xF4) (> codepoint #x10FFFF)))  ; 超出范围检查
+                 (when (or (< codepoint #x10000)
+                           (> codepoint #x10FFFF)
+                           (and (= first-byte #xF0) (< codepoint #x10000))
+                           (and (= first-byte #xF4) (> codepoint #x10FFFF)))
                    (error 'value-error "utf8->codepoint: invalid codepoint"))
                  codepoint)))
 
-            ;; 无效的起始字节
             (else
              (error 'value-error "utf8->codepoint: invalid UTF-8 sequence"))))))
 
-    ;; ============================================================================
-    ;; Unicode 常量
-    ;; ============================================================================
-
     (define unicode-max-codepoint #x10FFFF)
-    (define unicode-replacement-char #xFFFD)))
+    (define unicode-replacement-char #xFFFD)
+
+    (define (hexstr->codepoint hex-string)
+      (unless (string? hex-string)
+        (error 'type-error "hexstr->codepoint: expected string, got" hex-string))
+
+      (when (string=? hex-string "")
+        (error 'value-error "hexstr->codepoint: empty string"))
+
+      ;; 验证十六进制字符
+      (let loop ((chars (string->list hex-string)))
+        (unless (null? chars)
+          (let ((c (car chars)))
+            (unless (or (char-numeric? c)
+                        (char<=? #\A c #\F)
+                        (char<=? #\a c #\f))
+              (error 'value-error "hexstr->codepoint: invalid hexadecimal string" hex-string))
+            (loop (cdr chars)))))
+
+      (let ((codepoint (string->number hex-string 16)))
+        (unless codepoint
+          (error 'value-error "hexstr->codepoint: invalid hexadecimal format" hex-string))
+
+        (when (or (< codepoint 0) (> codepoint unicode-max-codepoint))
+          (error 'value-error "hexstr->codepoint: codepoint out of Unicode range" codepoint))
+
+        codepoint))
+
+    (define (codepoint->hexstr codepoint)
+      (unless (integer? codepoint)
+        (error 'type-error "codepoint->hexstr: expected integer, got" codepoint))
+
+      (when (or (< codepoint 0) (> codepoint unicode-max-codepoint))
+        (error 'value-error "codepoint->hexstr: codepoint out of Unicode range" codepoint))
+
+      (let ((hex-str (string-upcase (number->string codepoint 16))))
+        (if (and (> codepoint 0) (< codepoint 16) (= (string-length hex-str) 1))
+            (string-append "0" hex-str)
+            hex-str)))))
