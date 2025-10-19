@@ -395,6 +395,113 @@ string
 (check-catch 'out-of-range (u8-substring "汉字" 0 3))
 
 #|
+utf8->codepoint
+将 UTF-8 编码的字节向量转换为 Unicode 码点
+
+函数签名
+----
+(utf8->codepoint bytevector) → integer
+
+参数
+----
+bytevector : bytevector
+包含 UTF-8 编码字节的字节向量
+
+返回值
+----
+integer
+Unicode 码点值
+
+描述
+----
+`utf8->codepoint` 用于将 UTF-8 编码的字节序列转换为 Unicode 码点。
+
+解码规则
+------
+- 1 字节编码 (0xxxxxxx): ASCII 字符 (U+0000 到 U+007F)
+- 2 字节编码 (110xxxxx 10xxxxxx): 基本多文种平面字符 (U+0080 到 U+07FF)
+- 3 字节编码 (1110xxxx 10xxxxxx 10xxxxxx): 其他 BMP 字符 (U+0800 到 U+FFFF)
+- 4 字节编码 (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx): 辅助平面字符 (U+10000 到 U+10FFFF)
+
+错误处理
+------
+- 如果字节向量包含无效的 UTF-8 编码序列，会抛出 `value-error` 异常
+- 参数必须是字节向量类型，否则会抛出 `type-error` 异常
+- 如果字节向量为空，会抛出 `value-error` 异常
+
+实现说明
+------
+- 函数根据字节序列的第一个字节确定编码长度
+- 支持与 `codepoint->utf8` 函数的互逆操作
+
+相关函数
+--------
+- `codepoint->utf8` : 将 Unicode 码点转换为 UTF-8 字节向量
+- `string->utf8` : 将字符串转换为 UTF-8 字节向量
+- `utf8->string` : 将 UTF-8 字节向量转换为字符串
+|#
+
+;; utf8->codepoint ASCII 字符测试 (1字节编码)
+(check (utf8->codepoint (bytevector #x48)) => #x48)  ; "H"
+(check (utf8->codepoint (bytevector #x65)) => #x65)  ; "e"
+(check (utf8->codepoint (bytevector #x6C)) => #x6C)  ; "l"
+(check (utf8->codepoint (bytevector #x6F)) => #x6F)  ; "o"
+(check (utf8->codepoint (bytevector #x20)) => #x20)  ; 空格
+(check (utf8->codepoint (bytevector #x0A)) => #x0A)  ; 换行符
+
+;; utf8->codepoint 基本多文种平面字符测试 (2字节编码)
+(check (utf8->codepoint #u8(#xC2 #xA4)) => #xA4)  ; "¤" (CURRENCY SIGN)
+(check (utf8->codepoint #u8(#xC3 #xA4)) => #xE4)  ; "ä"
+(check (utf8->codepoint #u8(#xC3 #xA9)) => #xE9)  ; "é"
+(check (utf8->codepoint #u8(#xC3 #xB6)) => #xF6)  ; "ö"
+(check (utf8->codepoint #u8(#xC3 #xBC)) => #xFC)  ; "ü"
+
+;; utf8->codepoint 其他 BMP 字符测试 (3字节编码)
+(check (utf8->codepoint #u8(#xE4 #xB8 #xAD)) => #x4E2D)  ; "中"
+(check (utf8->codepoint #u8(#xE6 #xB1 #x89)) => #x6C49)  ; "汉"
+(check (utf8->codepoint #u8(#xE5 #xAD #x97)) => #x5B57)  ; "字"
+(check (utf8->codepoint #u8(#xE5 #x86 #x99)) => #x5199)  ; "写"
+
+;; utf8->codepoint 辅助平面字符测试 (4字节编码)
+(check (utf8->codepoint #u8(#xF0 #x9F #x91 #x8D)) => #x1F44D)  ; "👍"
+(check (utf8->codepoint #u8(#xF0 #x9F #x9A #x80)) => #x1F680)  ; "🚀"
+(check (utf8->codepoint #u8(#xF0 #x9F #x8E #x89)) => #x1F389)  ; "🎉"
+(check (utf8->codepoint #u8(#xF0 #x9F #x8E #x8A)) => #x1F38A)  ; "🎊"
+
+;; utf8->codepoint 边界值测试
+(check (utf8->codepoint (bytevector #x00)) => 0)  ; 最小码点
+(check (utf8->codepoint (bytevector #x7F)) => 127)  ; ASCII 最大
+(check (utf8->codepoint #u8(#xC2 #x80)) => 128)  ; 2字节编码最小
+(check (utf8->codepoint #u8(#xDF #xBF)) => 2047)  ; 2字节编码最大
+(check (utf8->codepoint #u8(#xE0 #xA0 #x80)) => 2048)  ; 3字节编码最小
+(check (utf8->codepoint #u8(#xEF #xBF #xBF)) => 65535)  ; 3字节编码最大
+(check (utf8->codepoint #u8(#xF0 #x90 #x80 #x80)) => 65536)  ; 4字节编码最小
+(check (utf8->codepoint #u8(#xF4 #x8F #xBF #xBF)) => #x10FFFF)  ; Unicode 最大码点
+
+;; utf8->codepoint 错误处理测试
+(check-catch 'value-error (utf8->codepoint #u8()))  ; 空字节向量
+(check-catch 'value-error (utf8->codepoint (bytevector #x80)))  ; 无效的起始字节
+(check-catch 'value-error (utf8->codepoint (bytevector #xC2)))  ; 不完整的2字节序列
+(check-catch 'value-error (utf8->codepoint (bytevector #xE4 #xB8)))  ; 不完整的3字节序列
+(check-catch 'value-error (utf8->codepoint (bytevector #xF0 #x9F #x91)))  ; 不完整的4字节序列
+(check-catch 'value-error (utf8->codepoint (bytevector #xFF)))  ; 无效字节
+(check-catch 'value-error (utf8->codepoint (bytevector #xF8 #x80 #x80 #x80 #x80)))  ; 5字节序列（无效）
+
+;; utf8->codepoint 与 codepoint->utf8 互逆操作验证
+(check (utf8->codepoint (codepoint->utf8 0)) => 0)
+(check (utf8->codepoint (codepoint->utf8 127)) => 127)
+(check (utf8->codepoint (codepoint->utf8 128)) => 128)
+(check (utf8->codepoint (codepoint->utf8 2047)) => 2047)
+(check (utf8->codepoint (codepoint->utf8 2048)) => 2048)
+(check (utf8->codepoint (codepoint->utf8 65535)) => 65535)
+(check (utf8->codepoint (codepoint->utf8 65536)) => 65536)
+(check (utf8->codepoint (codepoint->utf8 #x10FFFF)) => #x10FFFF)
+(check (utf8->codepoint (codepoint->utf8 #x48)) => #x48)
+(check (utf8->codepoint (codepoint->utf8 #xE4)) => #xE4)
+(check (utf8->codepoint (codepoint->utf8 #x4E2D)) => #x4E2D)
+(check (utf8->codepoint (codepoint->utf8 #x1F44D)) => #x1F44D)
+
+#|
 codepoint->utf8
 将 Unicode 码点转换为 UTF-8 编码的字节向量
 
