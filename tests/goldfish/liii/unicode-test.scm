@@ -394,6 +394,94 @@ string
 (check-catch 'out-of-range (u8-substring "Hello" 0 6))
 (check-catch 'out-of-range (u8-substring "汉字" 0 3))
 
+#|
+codepoint->utf8
+将 Unicode 码点转换为 UTF-8 编码的字节向量
+
+函数签名
+----
+(codepoint->utf8 codepoint) → bytevector
+
+参数
+----
+codepoint : integer
+Unicode 码点值
+
+返回值
+----
+bytevector
+包含 UTF-8 编码字节的字节向量
+
+描述
+----
+`codepoint->utf8` 用于将 Unicode 码点转换为 UTF-8 编码的字节序列。
+
+编码规则
+------
+- ASCII 字符 (U+0000 到 U+007F): 1 字节编码
+- 基本多文种平面字符 (U+0080 到 U+07FF): 2 字节编码
+- 其他 BMP 字符 (U+0800 到 U+FFFF): 3 字节编码
+- 辅助平面字符 (U+10000 到 U+10FFFF): 4 字节编码
+
+错误处理
+------
+- 如果码点超出 Unicode 范围 (0-0x10FFFF)，会抛出 `value-error` 异常
+- 参数必须是整数类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数根据码点大小自动选择合适的 UTF-8 编码长度
+- 返回字节向量便于与 `string->utf8` 保持一致
+
+相关函数
+--------
+- `utf8->codepoint` : 将 UTF-8 字节向量转换为 Unicode 码点
+- `string->utf8` : 将字符串转换为 UTF-8 字节向量
+- `utf8->string` : 将 UTF-8 字节向量转换为字符串
+|#
+
+;; codepoint->utf8 ASCII 字符测试 (1字节编码)
+(check (codepoint->utf8 #x48) => (bytevector #x48))  ; "H"
+(check (codepoint->utf8 #x65) => (bytevector #x65))  ; "e"
+(check (codepoint->utf8 #x6C) => (bytevector #x6C))  ; "l"
+(check (codepoint->utf8 #x6F) => (bytevector #x6F))  ; "o"
+(check (codepoint->utf8 #x20) => (bytevector #x20))  ; 空格
+(check (codepoint->utf8 #x0A) => (bytevector #x0A))  ; 换行符
+
+;; codepoint->utf8 基本多文种平面字符测试 (2字节编码)
+(check (codepoint->utf8 #xA4) => #u8(#xC2 #xA4))  ; "¤" (CURRENCY SIGN)
+(check (codepoint->utf8 #xE4) => #u8(#xC3 #xA4))  ; "ä"
+(check (codepoint->utf8 #xE9) => #u8(#xC3 #xA9))  ; "é"
+(check (codepoint->utf8 #xF6) => #u8(#xC3 #xB6))  ; "ö"
+(check (codepoint->utf8 #xFC) => #u8(#xC3 #xBC))  ; "ü"
+
+;; codepoint->utf8 其他 BMP 字符测试 (3字节编码)
+(check (codepoint->utf8 #x4E2D) => #u8(#xE4 #xB8 #xAD))  ; "中"
+(check (codepoint->utf8 #x6C49) => #u8(#xE6 #xB1 #x89))  ; "汉"
+(check (codepoint->utf8 #x5B57) => #u8(#xE5 #xAD #x97))  ; "字"
+(check (codepoint->utf8 #x5199) => #u8(#xE5 #x86 #x99))  ; "写"
+
+;; codepoint->utf8 辅助平面字符测试 (4字节编码)
+(check (codepoint->utf8 #x1F44D) => #u8(#xF0 #x9F #x91 #x8D))  ; "👍"
+(check (codepoint->utf8 #x1F680) => #u8(#xF0 #x9F #x9A #x80))  ; "🚀"
+(check (codepoint->utf8 #x1F389) => #u8(#xF0 #x9F #x8E #x89))  ; "🎉"
+(check (codepoint->utf8 #x1F38A) => #u8(#xF0 #x9F #x8E #x8A))  ; "🎊"
+
+;; codepoint->utf8 边界值测试
+(check (codepoint->utf8 0) => (bytevector #x00))  ; 最小码点
+(check (codepoint->utf8 127) => (bytevector #x7F))  ; ASCII 最大
+(check (codepoint->utf8 128) => #u8(#xC2 #x80))  ; 2字节编码最小
+(check (codepoint->utf8 2047) => #u8(#xDF #xBF))  ; 2字节编码最大
+(check (codepoint->utf8 2048) => #u8(#xE0 #xA0 #x80))  ; 3字节编码最小
+(check (codepoint->utf8 65535) => #u8(#xEF #xBF #xBF))  ; 3字节编码最大
+(check (codepoint->utf8 65536) => #u8(#xF0 #x90 #x80 #x80))  ; 4字节编码最小
+(check (codepoint->utf8 #x10FFFF) => #u8(#xF4 #x8F #xBF #xBF))  ; Unicode 最大码点
+
+;; codepoint->utf8 错误处理测试
+(check-catch 'value-error (codepoint->utf8 -1))  ; 负码点
+(check-catch 'value-error (codepoint->utf8 #x110000))  ; 超出 Unicode 范围
+(check-catch 'value-error (codepoint->utf8 #x200000))  ; 远超出范围
+
 (check unicode-max-codepoint => #x10FFFF)
 (check unicode-replacement-char => #xFFFD)
 
