@@ -20,6 +20,9 @@
    utf8->string string->utf8 u8-string-length u8-substring bytevector-advance-u8
    codepoint->utf8 utf8->codepoint
 
+   ;; UTF-16BE 函数
+   codepoint->utf16be utf16be->codepoint
+
    ;; 十六进制字符串与码点转换函数
    hexstr->codepoint codepoint->hexstr
 
@@ -160,4 +163,74 @@
       (let ((hex-str (string-upcase (number->string codepoint 16))))
         (if (and (> codepoint 0) (< codepoint 16) (= (string-length hex-str) 1))
             (string-append "0" hex-str)
-            hex-str)))))
+            hex-str)))
+
+    (define (codepoint->utf16be codepoint)
+      (unless (integer? codepoint)
+        (error 'type-error "codepoint->utf16be: expected integer, got" codepoint))
+
+      (when (or (< codepoint 0) (> codepoint #x10FFFF))
+        (error 'value-error "codepoint->utf16be: codepoint out of Unicode range" codepoint))
+
+      ;; 检查是否为代理对码点（无效）
+      (when (<= #xD800 codepoint #xDFFF)
+        (error 'value-error "codepoint->utf16be: codepoint in surrogate pair range" codepoint))
+
+      (cond
+        ((<= codepoint #xFFFF)
+         ;; 基本多文种平面字符 - 单个码元
+         (let ((high-byte (arithmetic-shift codepoint -8))
+               (low-byte (bitwise-and codepoint #xFF)))
+           (bytevector high-byte low-byte)))
+
+        (else
+         ;; 辅助平面字符 - 代理对
+         (let* ((codepoint-prime (- codepoint #x10000))
+                (high-surrogate (+ #xD800 (arithmetic-shift codepoint-prime -10)))
+                (low-surrogate (+ #xDC00 (bitwise-and codepoint-prime #x3FF)))
+                (high-surrogate-high (arithmetic-shift high-surrogate -8))
+                (high-surrogate-low (bitwise-and high-surrogate #xFF))
+                (low-surrogate-high (arithmetic-shift low-surrogate -8))
+                (low-surrogate-low (bitwise-and low-surrogate #xFF)))
+           (bytevector high-surrogate-high high-surrogate-low
+                       low-surrogate-high low-surrogate-low)))))
+
+    (define (utf16be->codepoint bytevector)
+      (unless (bytevector? bytevector)
+        (error 'type-error "utf16be->codepoint: expected bytevector, got" bytevector))
+
+      (let ((len (bytevector-length bytevector)))
+        (when (= len 0)
+          (error 'value-error "utf16be->codepoint: empty bytevector"))
+
+        (when (< len 2)
+          (error 'value-error "utf16be->codepoint: incomplete UTF-16BE sequence"))
+
+        (let* ((first-high (bytevector-u8-ref bytevector 0))
+               (first-low (bytevector-u8-ref bytevector 1))
+               (first-codepoint (+ (arithmetic-shift first-high 8) first-low)))
+
+          (cond
+            ((<= #xD800 first-codepoint #xDBFF)
+             ;; 高代理对 - 需要低代理对
+             (when (< len 4)
+               (error 'value-error "utf16be->codepoint: incomplete surrogate pair"))
+
+             (let* ((second-high (bytevector-u8-ref bytevector 2))
+                    (second-low (bytevector-u8-ref bytevector 3))
+                    (second-codepoint (+ (arithmetic-shift second-high 8) second-low)))
+
+               (unless (<= #xDC00 second-codepoint #xDFFF)
+                 (error 'value-error "utf16be->codepoint: invalid low surrogate"))
+
+               (let ((codepoint-prime (+ (arithmetic-shift (- first-codepoint #xD800) 10)
+                                         (- second-codepoint #xDC00))))
+                 (+ codepoint-prime #x10000))))
+
+            ((<= #xDC00 first-codepoint #xDFFF)
+             ;; 低代理对作为第一个码元 - 无效
+             (error 'value-error "utf16be->codepoint: invalid high surrogate"))
+
+            (else
+             ;; 基本多文种平面字符 - 单个码元
+             first-codepoint)))))))

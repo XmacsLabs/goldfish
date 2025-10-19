@@ -778,4 +778,197 @@ string
 (check (hexstr->codepoint (codepoint->hexstr #x4E2D)) => #x4E2D)
 (check (hexstr->codepoint (codepoint->hexstr #x1F44D)) => #x1F44D)
 
+#|
+codepoint->utf16be
+将 Unicode 码点转换为 UTF-16BE 编码的字节向量
+
+函数签名
+----
+(codepoint->utf16be codepoint) → bytevector
+
+参数
+----
+codepoint : integer
+Unicode 码点值
+
+返回值
+----
+bytevector
+包含 UTF-16BE 编码字节的字节向量
+
+描述
+----
+`codepoint->utf16be` 用于将 Unicode 码点转换为 UTF-16BE 编码的字节序列。
+
+编码规则
+------
+- 基本多文种平面字符 (U+0000 到 U+FFFF): 2 字节编码
+- 辅助平面字符 (U+10000 到 U+10FFFF): 4 字节编码（代理对）
+
+错误处理
+------
+- 如果码点超出 Unicode 范围 (0-0x10FFFF)，会抛出 `value-error` 异常
+- 如果码点在代理对范围 (U+D800 到 U+DFFF)，会抛出 `value-error` 异常
+- 参数必须是整数类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数根据码点大小自动选择合适的 UTF-16BE 编码长度
+- 对于辅助平面字符，使用代理对编码
+- 返回字节向量便于与其他编码函数保持一致
+
+相关函数
+--------
+- `utf16be->codepoint` : 将 UTF-16BE 字节向量转换为 Unicode 码点
+- `codepoint->utf8` : 将 Unicode 码点转换为 UTF-8 字节向量
+- `utf8->codepoint` : 将 UTF-8 字节向量转换为 Unicode 码点
+|#
+
+#|
+utf16be->codepoint
+将 UTF-16BE 编码的字节向量转换为 Unicode 码点
+
+函数签名
+----
+(utf16be->codepoint bytevector) → integer
+
+参数
+----
+bytevector : bytevector
+包含 UTF-16BE 编码字节的字节向量
+
+返回值
+----
+integer
+Unicode 码点值
+
+描述
+----
+`utf16be->codepoint` 用于将 UTF-16BE 编码的字节序列转换为 Unicode 码点。
+
+解码规则
+------
+- 2 字节序列: 基本多文种平面字符 (U+0000 到 U+FFFF)
+- 4 字节序列: 辅助平面字符 (U+10000 到 U+10FFFF)
+
+错误处理
+------
+- 如果字节向量包含无效的 UTF-16BE 编码序列，会抛出 `value-error` 异常
+- 参数必须是字节向量类型，否则会抛出 `type-error` 异常
+- 如果字节向量为空，会抛出 `value-error` 异常
+- 如果序列不完整，会抛出 `value-error` 异常
+
+实现说明
+------
+- 函数根据字节序列的第一个码元判断是否为代理对
+- 支持与 `codepoint->utf16be` 函数的互逆操作
+
+相关函数
+--------
+- `codepoint->utf16be` : 将 Unicode 码点转换为 UTF-16BE 字节向量
+- `utf8->codepoint` : 将 UTF-8 字节向量转换为 Unicode 码点
+- `codepoint->utf8` : 将 Unicode 码点转换为 UTF-8 字节向量
+|#
+
+;; codepoint->utf16be ASCII 字符测试 (2字节编码)
+(check (codepoint->utf16be #x48) => (bytevector #x00 #x48))  ; "H"
+(check (codepoint->utf16be #x65) => (bytevector #x00 #x65))  ; "e"
+(check (codepoint->utf16be #x6C) => (bytevector #x00 #x6C))  ; "l"
+(check (codepoint->utf16be #x6F) => (bytevector #x00 #x6F))  ; "o"
+(check (codepoint->utf16be #x20) => (bytevector #x00 #x20))  ; 空格
+(check (codepoint->utf16be #x0A) => (bytevector #x00 #x0A))  ; 换行符
+
+;; codepoint->utf16be 基本多文种平面字符测试 (2字节编码)
+(check (codepoint->utf16be #xA4) => (bytevector #x00 #xA4))  ; "¤" (CURRENCY SIGN)
+(check (codepoint->utf16be #xE4) => (bytevector #x00 #xE4))  ; "ä"
+(check (codepoint->utf16be #xE9) => (bytevector #x00 #xE9))  ; "é"
+(check (codepoint->utf16be #xF6) => (bytevector #x00 #xF6))  ; "ö"
+(check (codepoint->utf16be #xFC) => (bytevector #x00 #xFC))  ; "ü"
+
+;; codepoint->utf16be 其他 BMP 字符测试 (2字节编码)
+(check (codepoint->utf16be #x4E2D) => (bytevector #x4E #x2D))  ; "中"
+(check (codepoint->utf16be #x6C49) => (bytevector #x6C #x49))  ; "汉"
+(check (codepoint->utf16be #x5B57) => (bytevector #x5B #x57))  ; "字"
+(check (codepoint->utf16be #x5199) => (bytevector #x51 #x99))  ; "写"
+
+;; codepoint->utf16be 辅助平面字符测试 (4字节编码)
+(check (codepoint->utf16be #x1F44D) => (bytevector #xD8 #x3D #xDC #x4D))  ; "👍"
+(check (codepoint->utf16be #x1F680) => (bytevector #xD8 #x3D #xDE #x80))  ; "🚀"
+(check (codepoint->utf16be #x1F389) => (bytevector #xD8 #x3C #xDF #x89))  ; "🎉"
+(check (codepoint->utf16be #x1F38A) => (bytevector #xD8 #x3C #xDF #x8A))  ; "🎊"
+
+;; codepoint->utf16be 边界值测试
+(check (codepoint->utf16be 0) => (bytevector #x00 #x00))  ; 最小码点
+(check (codepoint->utf16be 127) => (bytevector #x00 #x7F))  ; ASCII 最大
+(check (codepoint->utf16be 128) => (bytevector #x00 #x80))  ; 2字节编码最小
+(check (codepoint->utf16be 2047) => (bytevector #x07 #xFF))  ; 2字节编码
+(check (codepoint->utf16be 2048) => (bytevector #x08 #x00))  ; 3字节编码最小
+(check (codepoint->utf16be 65535) => (bytevector #xFF #xFF))  ; BMP 最大
+(check (codepoint->utf16be 65536) => (bytevector #xD8 #x00 #xDC #x00))  ; 4字节编码最小
+(check (codepoint->utf16be #x10FFFF) => (bytevector #xDB #xFF #xDF #xFF))  ; Unicode 最大码点
+
+;; codepoint->utf16be 错误处理测试
+(check-catch 'value-error (codepoint->utf16be -1))  ; 负码点
+(check-catch 'value-error (codepoint->utf16be #x110000))  ; 超出 Unicode 范围
+(check-catch 'value-error (codepoint->utf16be #xD800))  ; 代理对范围 - 高代理
+(check-catch 'value-error (codepoint->utf16be #xDC00))  ; 代理对范围 - 低代理
+
+;; utf16be->codepoint ASCII 字符测试 (2字节编码)
+(check (utf16be->codepoint (bytevector #x00 #x48)) => #x48)  ; "H"
+(check (utf16be->codepoint (bytevector #x00 #x65)) => #x65)  ; "e"
+(check (utf16be->codepoint (bytevector #x00 #x6C)) => #x6C)  ; "l"
+(check (utf16be->codepoint (bytevector #x00 #x6F)) => #x6F)  ; "o"
+(check (utf16be->codepoint (bytevector #x00 #x20)) => #x20)  ; 空格
+(check (utf16be->codepoint (bytevector #x00 #x0A)) => #x0A)  ; 换行符
+
+;; utf16be->codepoint 基本多文种平面字符测试 (2字节编码)
+(check (utf16be->codepoint (bytevector #x00 #xA4)) => #xA4)  ; "¤" (CURRENCY SIGN)
+(check (utf16be->codepoint (bytevector #x00 #xE4)) => #xE4)  ; "ä"
+(check (utf16be->codepoint (bytevector #x00 #xE9)) => #xE9)  ; "é"
+(check (utf16be->codepoint (bytevector #x00 #xF6)) => #xF6)  ; "ö"
+(check (utf16be->codepoint (bytevector #x00 #xFC)) => #xFC)  ; "ü"
+
+;; utf16be->codepoint 其他 BMP 字符测试 (2字节编码)
+(check (utf16be->codepoint (bytevector #x4E #x2D)) => #x4E2D)  ; "中"
+(check (utf16be->codepoint (bytevector #x6C #x49)) => #x6C49)  ; "汉"
+(check (utf16be->codepoint (bytevector #x5B #x57)) => #x5B57)  ; "字"
+(check (utf16be->codepoint (bytevector #x51 #x99)) => #x5199)  ; "写"
+
+;; utf16be->codepoint 辅助平面字符测试 (4字节编码)
+(check (utf16be->codepoint (bytevector #xD8 #x3D #xDC #x4D)) => #x1F44D)  ; "👍"
+(check (utf16be->codepoint (bytevector #xD8 #x3D #xDE #x80)) => #x1F680)  ; "🚀"
+(check (utf16be->codepoint (bytevector #xD8 #x3C #xDF #x89)) => #x1F389)  ; "🎉"
+(check (utf16be->codepoint (bytevector #xD8 #x3C #xDF #x8A)) => #x1F38A)  ; "🎊"
+
+;; utf16be->codepoint 边界值测试
+(check (utf16be->codepoint (bytevector #x00 #x00)) => 0)  ; 最小码点
+(check (utf16be->codepoint (bytevector #x00 #x7F)) => 127)  ; ASCII 最大
+(check (utf16be->codepoint (bytevector #x00 #x80)) => 128)  ; 2字节编码最小
+(check (utf16be->codepoint (bytevector #x07 #xFF)) => 2047)  ; 2字节编码
+(check (utf16be->codepoint (bytevector #x08 #x00)) => 2048)  ; 3字节编码最小
+(check (utf16be->codepoint (bytevector #xFF #xFF)) => 65535)  ; BMP 最大
+(check (utf16be->codepoint (bytevector #xD8 #x00 #xDC #x00)) => 65536)  ; 4字节编码最小
+(check (utf16be->codepoint (bytevector #xDB #xFF #xDF #xFF)) => #x10FFFF)  ; Unicode 最大码点
+
+;; utf16be->codepoint 错误处理测试
+(check-catch 'value-error (utf16be->codepoint #u8()))  ; 空字节向量
+(check-catch 'value-error (utf16be->codepoint (bytevector #x00)))  ; 不完整序列
+(check-catch 'value-error (utf16be->codepoint (bytevector #xD8 #x3D)))  ; 不完整代理对
+(check-catch 'value-error (utf16be->codepoint (bytevector #xDC #x00 #x00 #x00)))  ; 低代理对作为第一个码元
+(check-catch 'value-error (utf16be->codepoint (bytevector #xD8 #x3D #x00 #x00)))  ; 无效低代理对
+
+;; codepoint->utf16be 与 utf16be->codepoint 互逆操作验证
+(check (utf16be->codepoint (codepoint->utf16be 0)) => 0)
+(check (utf16be->codepoint (codepoint->utf16be 127)) => 127)
+(check (utf16be->codepoint (codepoint->utf16be 128)) => 128)
+(check (utf16be->codepoint (codepoint->utf16be 2047)) => 2047)
+(check (utf16be->codepoint (codepoint->utf16be 2048)) => 2048)
+(check (utf16be->codepoint (codepoint->utf16be 65535)) => 65535)
+(check (utf16be->codepoint (codepoint->utf16be 65536)) => 65536)
+(check (utf16be->codepoint (codepoint->utf16be #x10FFFF)) => #x10FFFF)
+(check (utf16be->codepoint (codepoint->utf16be #x48)) => #x48)
+(check (utf16be->codepoint (codepoint->utf16be #xE4)) => #xE4)
+(check (utf16be->codepoint (codepoint->utf16be #x4E2D)) => #x4E2D)
+(check (utf16be->codepoint (codepoint->utf16be #x1F44D)) => #x1F44D)
+
 (check-report)
