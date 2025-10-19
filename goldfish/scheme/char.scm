@@ -17,7 +17,7 @@
 (define-library (scheme char)
   (export
     char-upcase char-downcase char-upper-case? char-lower-case? digit-value
-    char-numeric? char-alphabetic? char-whitespace? char-ci=? char-ci<? char-ci>?
+    char-numeric? char-alphabetic? char-whitespace? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=?
     )
   (begin
     (define (digit-value ch)
@@ -126,6 +126,42 @@
                 (error 'type-error "char-ci>?: parameter must be character"))
               (and current
                    (loop (s7-char-ci>? char2 next-char)
+                         (cdr remaining)))))))
+
+    (define s7-char-ci>=? char-ci>=?)
+
+    (define (char-ci>=? char1 char2 . rest)
+      (unless (char? char1)
+        (error 'type-error "char-ci>=?: first parameter must be character"))
+      (unless (char? char2)
+        (error 'type-error "char-ci>=?: second parameter must be character"))
+      (let loop ((current (s7-char-ci>=? char1 char2))
+                 (remaining rest))
+        (if (null? remaining)
+            current
+            (let ((next-char (car remaining)))
+              (unless (char? next-char)
+                (error 'type-error "char-ci>=?: parameter must be character"))
+              (and current
+                   (loop (s7-char-ci>=? char2 next-char)
+                         (cdr remaining)))))))
+
+    (define s7-char-ci<=? char-ci<=?)
+
+    (define (char-ci<=? char1 char2 . rest)
+      (unless (char? char1)
+        (error 'type-error "char-ci<=?: first parameter must be character"))
+      (unless (char? char2)
+        (error 'type-error "char-ci<=?: second parameter must be character"))
+      (let loop ((current (s7-char-ci<=? char1 char2))
+                 (remaining rest))
+        (if (null? remaining)
+            current
+            (let ((next-char (car remaining)))
+              (unless (char? next-char)
+                (error 'type-error "char-ci<=?: parameter must be character"))
+              (and current
+                   (loop (s7-char-ci<=? char2 next-char)
                          (cdr remaining)))))))
 
     ) ; end of begin
