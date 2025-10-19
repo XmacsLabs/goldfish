@@ -16,7 +16,7 @@
 
 (define-library (scheme char)
   (export
-    char-upcase char-downcase char-upper-case? char-lower-case? digit-value
+    char-upcase char-downcase char-foldcase char-upper-case? char-lower-case? digit-value
     char-numeric? char-alphabetic? char-whitespace? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=?
     )
   (begin
@@ -38,6 +38,11 @@
       (unless (char? char)
         (error 'type-error "char-downcase: parameter must be character"))
       (s7-char-downcase char))
+
+    (define (char-foldcase char)
+      (unless (char? char)
+        (error 'type-error "char-foldcase: parameter must be character"))
+      (char-downcase char))
 
     (define s7-char-numeric? char-numeric?)
 

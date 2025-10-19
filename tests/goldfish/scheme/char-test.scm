@@ -137,6 +137,53 @@ character
 - `char-foldcase` : 执行大小写折叠
 |#
 
+#|
+char-foldcase
+执行字符的大小写折叠
+
+函数签名
+----
+(char-foldcase char) → char
+
+参数
+----
+char : character
+要转换的字符
+
+返回值
+----
+character
+转换后的字符
+
+描述
+----
+`char-foldcase` 用于执行字符的大小写折叠。大小写折叠是一种 Unicode 规范化过程，
+用于将字符转换为一种形式，使得大小写不敏感的比较能够正确工作。
+
+行为特征
+------
+- 对于 ASCII 字母字符，当前实现与 `char-downcase` 相同
+- 对于非字母字符，返回原字符
+- 遵循 R7RS 标准规范
+
+错误处理
+------
+- 参数必须是字符类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数在 R7RS 标准库中定义，在 (scheme char) 库中提供
+- 当前实现暂时定义为 `char-downcase`，因为 S7 目前不支持希腊字母等 Unicode 字符字面量
+- 对于完整的 Unicode 大小写折叠支持，需要底层引擎的增强
+
+相关函数
+--------
+- `char-upcase` : 将字符转换为大写形式
+- `char-downcase` : 将字符转换为小写形式
+- `char-upper-case?` : 判断字符是否为大写字母
+- `char-lower-case?` : 判断字符是否为小写字母
+|#
+
 (check (char-downcase #\A) => #\a)
 (check (char-downcase #\Z) => #\z)
 
