@@ -24,7 +24,7 @@
    codepoint->utf16be utf16be->codepoint
 
    ;; UTF-16LE 函数
-   codepoint->utf16le utf16le->codepoint utf8->utf16le bytevector-utf16le-advance
+   codepoint->utf16le utf16le->codepoint utf8->utf16le utf16le->utf8 bytevector-utf16le-advance
 
    ;; 十六进制字符串与码点转换函数
    hexstr->codepoint codepoint->hexstr
@@ -64,15 +64,15 @@
                (byte4 (bitwise-ior #b10000000 (bitwise-and codepoint #b00111111))))
            (bytevector byte1 byte2 byte3 byte4)))))
 
-    (define (utf8->codepoint bytevector)
-      (unless (bytevector? bytevector)
-        (error 'type-error "utf8->codepoint: expected bytevector, got" bytevector))
+    (define (utf8->codepoint bv)
+      (unless (bytevector? bv)
+        (error 'type-error "utf8->codepoint: expected bytevector"))
 
-      (let ((len (bytevector-length bytevector)))
+      (let ((len (bytevector-length bv)))
         (when (= len 0)
           (error 'value-error "utf8->codepoint: empty bytevector"))
 
-        (let ((first-byte (bytevector-u8-ref bytevector 0)))
+        (let ((first-byte (bytevector-u8-ref bv 0)))
           (cond
             ((<= first-byte #x7F)
              first-byte)
@@ -80,7 +80,7 @@
             ((<= #xC2 first-byte #xDF)
              (when (< len 2)
                (error 'value-error "utf8->codepoint: incomplete 2-byte sequence"))
-             (let ((byte2 (bytevector-u8-ref bytevector 1)))
+             (let ((byte2 (bytevector-u8-ref bv 1)))
                (unless (<= #x80 byte2 #xBF)
                  (error 'value-error "utf8->codepoint: invalid continuation byte"))
                (bitwise-ior
@@ -90,8 +90,8 @@
             ((<= #xE0 first-byte #xEF)
              (when (< len 3)
                (error 'value-error "utf8->codepoint: incomplete 3-byte sequence"))
-             (let ((byte2 (bytevector-u8-ref bytevector 1))
-                   (byte3 (bytevector-u8-ref bytevector 2)))
+             (let ((byte2 (bytevector-u8-ref bv 1))
+                   (byte3 (bytevector-u8-ref bv 2)))
                (unless (and (<= #x80 byte2 #xBF) (<= #x80 byte3 #xBF))
                  (error 'value-error "utf8->codepoint: invalid continuation byte"))
                (let ((codepoint (bitwise-ior
@@ -107,9 +107,9 @@
             ((<= #xF0 first-byte #xF4)
              (when (< len 4)
                (error 'value-error "utf8->codepoint: incomplete 4-byte sequence"))
-             (let ((byte2 (bytevector-u8-ref bytevector 1))
-                   (byte3 (bytevector-u8-ref bytevector 2))
-                   (byte4 (bytevector-u8-ref bytevector 3)))
+             (let ((byte2 (bytevector-u8-ref bv 1))
+                   (byte3 (bytevector-u8-ref bv 2))
+                   (byte4 (bytevector-u8-ref bv 3)))
                (unless (and (<= #x80 byte2 #xBF) (<= #x80 byte3 #xBF) (<= #x80 byte4 #xBF))
                  (error 'value-error "utf8->codepoint: invalid continuation byte"))
                (let ((codepoint (bitwise-ior
@@ -132,7 +132,7 @@
 
     (define (hexstr->codepoint hex-string)
       (unless (string? hex-string)
-        (error 'type-error "hexstr->codepoint: expected string, got" hex-string))
+        (error 'type-error "hexstr->codepoint: expected string"))
 
       (when (string=? hex-string "")
         (error 'value-error "hexstr->codepoint: empty string"))
@@ -144,12 +144,12 @@
             (unless (or (char-numeric? c)
                         (char<=? #\A c #\F)
                         (char<=? #\a c #\f))
-              (error 'value-error "hexstr->codepoint: invalid hexadecimal string" hex-string))
+              (error 'value-error "hexstr->codepoint: invalid hexadecimal string"))
             (loop (cdr chars)))))
 
       (let ((codepoint (string->number hex-string 16)))
         (unless codepoint
-          (error 'value-error "hexstr->codepoint: invalid hexadecimal format" hex-string))
+          (error 'value-error "hexstr->codepoint: invalid hexadecimal format"))
 
         (when (or (< codepoint 0) (> codepoint unicode-max-codepoint))
           (error 'value-error "hexstr->codepoint: codepoint out of Unicode range" codepoint))
@@ -198,19 +198,19 @@
            (bytevector high-surrogate-high high-surrogate-low
                        low-surrogate-high low-surrogate-low)))))
 
-    (define (utf16be->codepoint bytevector)
-      (unless (bytevector? bytevector)
-        (error 'type-error "utf16be->codepoint: expected bytevector, got" bytevector))
+    (define (utf16be->codepoint bv)
+      (unless (bytevector? bv)
+        (error 'type-error "utf16be->codepoint: expected bytevector"))
 
-      (let ((len (bytevector-length bytevector)))
+      (let ((len (bytevector-length bv)))
         (when (= len 0)
           (error 'value-error "utf16be->codepoint: empty bytevector"))
 
         (when (< len 2)
           (error 'value-error "utf16be->codepoint: incomplete UTF-16BE sequence"))
 
-        (let* ((first-high (bytevector-u8-ref bytevector 0))
-               (first-low (bytevector-u8-ref bytevector 1))
+        (let* ((first-high (bytevector-u8-ref bv 0))
+               (first-low (bytevector-u8-ref bv 1))
                (first-codepoint (+ (ash first-high 8) first-low)))
 
           (cond
@@ -219,8 +219,8 @@
              (when (< len 4)
                (error 'value-error "utf16be->codepoint: incomplete surrogate pair"))
 
-             (let* ((second-high (bytevector-u8-ref bytevector 2))
-                    (second-low (bytevector-u8-ref bytevector 3))
+             (let* ((second-high (bytevector-u8-ref bv 2))
+                    (second-low (bytevector-u8-ref bv 3))
                     (second-codepoint (+ (ash second-high 8) second-low)))
 
                (unless (<= #xDC00 second-codepoint #xDFFF)
@@ -268,19 +268,19 @@
            (bytevector high-surrogate-low high-surrogate-high
                        low-surrogate-low low-surrogate-high)))))
 
-    (define (utf16le->codepoint bytevector)
-      (unless (bytevector? bytevector)
-        (error 'type-error "utf16le->codepoint: expected bytevector, got" bytevector))
+    (define (utf16le->codepoint bv)
+      (unless (bytevector? bv)
+        (error 'type-error "utf16le->codepoint: expected bytevector"))
 
-      (let ((len (bytevector-length bytevector)))
+      (let ((len (bytevector-length bv)))
         (when (= len 0)
           (error 'value-error "utf16le->codepoint: empty bytevector"))
 
         (when (< len 2)
           (error 'value-error "utf16le->codepoint: incomplete UTF-16LE sequence"))
 
-        (let* ((first-low (bytevector-u8-ref bytevector 0))
-               (first-high (bytevector-u8-ref bytevector 1))
+        (let* ((first-low (bytevector-u8-ref bv 0))
+               (first-high (bytevector-u8-ref bv 1))
                (first-codepoint (+ (ash first-high 8) first-low)))
 
           (cond
@@ -289,8 +289,8 @@
              (when (< len 4)
                (error 'value-error "utf16le->codepoint: incomplete surrogate pair"))
 
-             (let* ((second-low (bytevector-u8-ref bytevector 2))
-                    (second-high (bytevector-u8-ref bytevector 3))
+             (let* ((second-low (bytevector-u8-ref bv 2))
+                    (second-high (bytevector-u8-ref bv 3))
                     (second-codepoint (+ (ash second-high 8) second-low)))
 
                (unless (<= #xDC00 second-codepoint #xDFFF)
@@ -310,7 +310,7 @@
 
     (define (utf8->utf16le bv)
       (unless (bytevector? bv)
-        (error 'type-error "utf8->utf16le: expected bytevector, got" bv))
+        (error 'type-error "utf8->utf16le: expected bytevector"))
 
       (let ((len (bytevector-length bv)))
         (if (= len 0)
@@ -328,9 +328,29 @@
                           (loop next-index
                                 (bytevector-append result utf16le-bytes))))))))))
 
+    (define (utf16le->utf8 bv)
+      (unless (bytevector? bv)
+        (error 'type-error "utf16le->utf8: expected bytevector"))
+
+      (let ((len (bytevector-length bv)))
+        (if (= len 0)
+            (bytevector)
+            (let loop ((index 0)
+                       (result (bytevector)))
+              (if (>= index len)
+                  result
+                  (let ((next-index (bytevector-utf16le-advance bv index len)))
+                    (if (= next-index index)
+                        (error 'value-error "utf16le->utf8: invalid UTF-16LE sequence at index" index)
+                        (let* ((utf16le-bytes (bytevector-copy bv index next-index))
+                               (codepoint (utf16le->codepoint utf16le-bytes))
+                               (utf8-bytes (codepoint->utf8 codepoint)))
+                          (loop next-index
+                                (bytevector-append result utf8-bytes))))))))))
+
     (define* (bytevector-utf16le-advance bv index (end (bytevector-length bv)))
       (unless (bytevector? bv)
-        (error 'type-error "bytevector-utf16le-advance: expected bytevector, got" bv))
+        (error 'type-error "bytevector-utf16le-advance: expected bytevector"))
 
       (if (>= index end)
           index  ; 已经到达结束位置
