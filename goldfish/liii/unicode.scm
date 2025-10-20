@@ -24,7 +24,7 @@
    codepoint->utf16be utf16be->codepoint
 
    ;; UTF-16LE 函数
-   codepoint->utf16le utf16le->codepoint utf8->utf16le
+   codepoint->utf16le utf16le->codepoint utf8->utf16le bytevector-utf16le-advance
 
    ;; 十六进制字符串与码点转换函数
    hexstr->codepoint codepoint->hexstr
@@ -47,20 +47,20 @@
          (bytevector codepoint))
 
         ((<= codepoint #x7FF)
-         (let ((byte1 (bitwise-ior #b11000000 (bitwise-and (arithmetic-shift codepoint -6) #b00011111)))
+         (let ((byte1 (bitwise-ior #b11000000 (bitwise-and (ash codepoint -6) #b00011111)))
                (byte2 (bitwise-ior #b10000000 (bitwise-and codepoint #b00111111))))
            (bytevector byte1 byte2)))
 
         ((<= codepoint #xFFFF)
-         (let ((byte1 (bitwise-ior #b11100000 (bitwise-and (arithmetic-shift codepoint -12) #b00001111)))
-               (byte2 (bitwise-ior #b10000000 (bitwise-and (arithmetic-shift codepoint -6) #b00111111)))
+         (let ((byte1 (bitwise-ior #b11100000 (bitwise-and (ash codepoint -12) #b00001111)))
+               (byte2 (bitwise-ior #b10000000 (bitwise-and (ash codepoint -6) #b00111111)))
                (byte3 (bitwise-ior #b10000000 (bitwise-and codepoint #b00111111))))
            (bytevector byte1 byte2 byte3)))
 
         (else
-         (let ((byte1 (bitwise-ior #b11110000 (bitwise-and (arithmetic-shift codepoint -18) #b00000111)))
-               (byte2 (bitwise-ior #b10000000 (bitwise-and (arithmetic-shift codepoint -12) #b00111111)))
-               (byte3 (bitwise-ior #b10000000 (bitwise-and (arithmetic-shift codepoint -6) #b00111111)))
+         (let ((byte1 (bitwise-ior #b11110000 (bitwise-and (ash codepoint -18) #b00000111)))
+               (byte2 (bitwise-ior #b10000000 (bitwise-and (ash codepoint -12) #b00111111)))
+               (byte3 (bitwise-ior #b10000000 (bitwise-and (ash codepoint -6) #b00111111)))
                (byte4 (bitwise-ior #b10000000 (bitwise-and codepoint #b00111111))))
            (bytevector byte1 byte2 byte3 byte4)))))
 
@@ -84,7 +84,7 @@
                (unless (<= #x80 byte2 #xBF)
                  (error 'value-error "utf8->codepoint: invalid continuation byte"))
                (bitwise-ior
-                 (arithmetic-shift (bitwise-and first-byte #b00011111) 6)
+                 (ash (bitwise-and first-byte #b00011111) 6)
                  (bitwise-and byte2 #b00111111))))
 
             ((<= #xE0 first-byte #xEF)
@@ -95,8 +95,8 @@
                (unless (and (<= #x80 byte2 #xBF) (<= #x80 byte3 #xBF))
                  (error 'value-error "utf8->codepoint: invalid continuation byte"))
                (let ((codepoint (bitwise-ior
-                                 (arithmetic-shift (bitwise-and first-byte #b00001111) 12)
-                                 (arithmetic-shift (bitwise-and byte2 #b00111111) 6)
+                                 (ash (bitwise-and first-byte #b00001111) 12)
+                                 (ash (bitwise-and byte2 #b00111111) 6)
                                  (bitwise-and byte3 #b00111111))))
                  (when (or (<= #xD800 codepoint #xDFFF)
                            (and (= first-byte #xE0) (< codepoint #x0800))
@@ -113,9 +113,9 @@
                (unless (and (<= #x80 byte2 #xBF) (<= #x80 byte3 #xBF) (<= #x80 byte4 #xBF))
                  (error 'value-error "utf8->codepoint: invalid continuation byte"))
                (let ((codepoint (bitwise-ior
-                                 (arithmetic-shift (bitwise-and first-byte #b00000111) 18)
-                                 (arithmetic-shift (bitwise-and byte2 #b00111111) 12)
-                                 (arithmetic-shift (bitwise-and byte3 #b00111111) 6)
+                                 (ash (bitwise-and first-byte #b00000111) 18)
+                                 (ash (bitwise-and byte2 #b00111111) 12)
+                                 (ash (bitwise-and byte3 #b00111111) 6)
                                  (bitwise-and byte4 #b00111111))))
                  (when (or (< codepoint #x10000)
                            (> codepoint #x10FFFF)
@@ -182,18 +182,18 @@
       (cond
         ((<= codepoint #xFFFF)
          ;; 基本多文种平面字符 - 单个码元
-         (let ((high-byte (arithmetic-shift codepoint -8))
+         (let ((high-byte (ash codepoint -8))
                (low-byte (bitwise-and codepoint #xFF)))
            (bytevector high-byte low-byte)))
 
         (else
          ;; 辅助平面字符 - 代理对
          (let* ((codepoint-prime (- codepoint #x10000))
-                (high-surrogate (+ #xD800 (arithmetic-shift codepoint-prime -10)))
+                (high-surrogate (+ #xD800 (ash codepoint-prime -10)))
                 (low-surrogate (+ #xDC00 (bitwise-and codepoint-prime #x3FF)))
-                (high-surrogate-high (arithmetic-shift high-surrogate -8))
+                (high-surrogate-high (ash high-surrogate -8))
                 (high-surrogate-low (bitwise-and high-surrogate #xFF))
-                (low-surrogate-high (arithmetic-shift low-surrogate -8))
+                (low-surrogate-high (ash low-surrogate -8))
                 (low-surrogate-low (bitwise-and low-surrogate #xFF)))
            (bytevector high-surrogate-high high-surrogate-low
                        low-surrogate-high low-surrogate-low)))))
@@ -211,7 +211,7 @@
 
         (let* ((first-high (bytevector-u8-ref bytevector 0))
                (first-low (bytevector-u8-ref bytevector 1))
-               (first-codepoint (+ (arithmetic-shift first-high 8) first-low)))
+               (first-codepoint (+ (ash first-high 8) first-low)))
 
           (cond
             ((<= #xD800 first-codepoint #xDBFF)
@@ -221,12 +221,12 @@
 
              (let* ((second-high (bytevector-u8-ref bytevector 2))
                     (second-low (bytevector-u8-ref bytevector 3))
-                    (second-codepoint (+ (arithmetic-shift second-high 8) second-low)))
+                    (second-codepoint (+ (ash second-high 8) second-low)))
 
                (unless (<= #xDC00 second-codepoint #xDFFF)
                  (error 'value-error "utf16be->codepoint: invalid low surrogate"))
 
-               (let ((codepoint-prime (+ (arithmetic-shift (- first-codepoint #xD800) 10)
+               (let ((codepoint-prime (+ (ash (- first-codepoint #xD800) 10)
                                          (- second-codepoint #xDC00))))
                  (+ codepoint-prime #x10000))))
 
@@ -253,18 +253,18 @@
         ((<= codepoint #xFFFF)
          ;; 基本多文种平面字符 - 单个码元
          (let ((low-byte (bitwise-and codepoint #xFF))
-               (high-byte (arithmetic-shift codepoint -8)))
+               (high-byte (ash codepoint -8)))
            (bytevector low-byte high-byte)))
 
         (else
          ;; 辅助平面字符 - 代理对
          (let* ((codepoint-prime (- codepoint #x10000))
-                (high-surrogate (+ #xD800 (arithmetic-shift codepoint-prime -10)))
+                (high-surrogate (+ #xD800 (ash codepoint-prime -10)))
                 (low-surrogate (+ #xDC00 (bitwise-and codepoint-prime #x3FF)))
                 (high-surrogate-low (bitwise-and high-surrogate #xFF))
-                (high-surrogate-high (arithmetic-shift high-surrogate -8))
+                (high-surrogate-high (ash high-surrogate -8))
                 (low-surrogate-low (bitwise-and low-surrogate #xFF))
-                (low-surrogate-high (arithmetic-shift low-surrogate -8)))
+                (low-surrogate-high (ash low-surrogate -8)))
            (bytevector high-surrogate-low high-surrogate-high
                        low-surrogate-low low-surrogate-high)))))
 
@@ -281,7 +281,7 @@
 
         (let* ((first-low (bytevector-u8-ref bytevector 0))
                (first-high (bytevector-u8-ref bytevector 1))
-               (first-codepoint (+ (arithmetic-shift first-high 8) first-low)))
+               (first-codepoint (+ (ash first-high 8) first-low)))
 
           (cond
             ((<= #xD800 first-codepoint #xDBFF)
@@ -291,12 +291,12 @@
 
              (let* ((second-low (bytevector-u8-ref bytevector 2))
                     (second-high (bytevector-u8-ref bytevector 3))
-                    (second-codepoint (+ (arithmetic-shift second-high 8) second-low)))
+                    (second-codepoint (+ (ash second-high 8) second-low)))
 
                (unless (<= #xDC00 second-codepoint #xDFFF)
                  (error 'value-error "utf16le->codepoint: invalid low surrogate"))
 
-               (let ((codepoint-prime (+ (arithmetic-shift (- first-codepoint #xD800) 10)
+               (let ((codepoint-prime (+ (ash (- first-codepoint #xD800) 10)
                                          (- second-codepoint #xDC00))))
                  (+ codepoint-prime #x10000))))
 
@@ -327,3 +327,39 @@
                                (utf16le-bytes (codepoint->utf16le codepoint)))
                           (loop next-index
                                 (bytevector-append result utf16le-bytes))))))))))
+
+    (define* (bytevector-utf16le-advance bv index (end (bytevector-length bv)))
+      (unless (bytevector? bv)
+        (error 'type-error "bytevector-utf16le-advance: expected bytevector, got" bv))
+
+      (if (>= index end)
+          index  ; 已经到达结束位置
+          (let ((remaining (- end index)))
+            (if (< remaining 2)
+                index  ; 字节不足，无法构成完整的 UTF-16LE 字符
+                (let* ((low-byte (bytevector-u8-ref bv index))
+                       (high-byte (bytevector-u8-ref bv (+ index 1)))
+                       (codepoint (+ (ash high-byte 8) low-byte)))
+
+                  (cond
+                   ;; 基本多文种平面字符 (非代理对)
+                   ((or (< codepoint #xD800) (> codepoint #xDFFF))
+                    (+ index 2))
+
+                   ;; 高代理对 (需要低代理对)
+                   ((<= #xD800 codepoint #xDBFF)
+                    (if (< remaining 4)
+                        index  ; 字节不足，无法构成完整的代理对
+                        (let* ((second-low (bytevector-u8-ref bv (+ index 2)))
+                               (second-high (bytevector-u8-ref bv (+ index 3)))
+                               (second-codepoint (+ (ash second-high 8) second-low)))
+                          (if (<= #xDC00 second-codepoint #xDFFF)
+                              (+ index 4)  ; 有效的代理对
+                              index))))    ; 无效的低代理对
+
+                   ;; 低代理对作为第一个码元 - 无效
+                   ((<= #xDC00 codepoint #xDFFF)
+                    index)
+
+                   (else
+                    index)))))))

@@ -1361,4 +1361,113 @@ bytevector
 (check-catch 'value-error (utf8->utf16le (bytevector #x80)))  ; 无效 UTF-8 序列
 (check-catch 'value-error (utf8->utf16le (bytevector #xC2)))  ; 不完整的 UTF-8 序列
 
+#|
+bytevector-utf16le-advance
+在 UTF-16LE 编码的字节向量中前进到下一个字符的起始位置
+
+函数签名
+----
+(bytevector-utf16le-advance bytevector index [end]) → integer
+
+参数
+----
+bytevector : bytevector
+UTF-16LE 编码的字节向量
+
+index : integer
+当前字节位置
+
+end : integer (可选，默认字节向量长度)
+字节向量的结束位置
+
+返回值
+----
+integer
+下一个 UTF-16LE 字符的起始字节位置，或者当前位置（如果遇到无效序列）
+
+描述
+----
+`bytevector-utf16le-advance` 用于在 UTF-16LE 编码的字节向量中前进到下一个字符的起始位置。
+该函数能够识别完整的 UTF-16LE 字符序列，包括代理对编码，并跳过无效或不完整的序列。
+
+行为特征
+------
+- 对于基本多文种平面字符，前进 2 个字节
+- 对于辅助平面字符（代理对），前进 4 个字节
+- 对于无效的 UTF-16LE 序列，返回当前位置（不前进）
+- 对于不完整的序列（字节不足），返回当前位置（不前进）
+- 支持所有有效的 Unicode 字符编码
+- 正确处理边界条件（起始位置、结束位置等）
+
+UTF-16LE 编码规则
+------
+- 基本多文种平面字符 (U+0000 到 U+FFFF): 2 字节编码
+- 辅助平面字符 (U+10000 到 U+10FFFF): 4 字节编码（代理对）
+  - 高代理对: 0xD800-0xDBFF
+  - 低代理对: 0xDC00-0xDFFF
+
+返回值说明
+------
+- 如果当前位置已经是结束位置，返回当前位置
+- 如果遇到有效的 UTF-16LE 序列，返回下一个字符的起始位置
+- 如果遇到无效的 UTF-16LE 序列，返回当前位置
+- 如果遇到不完整的序列（字节不足），返回当前位置
+
+实现说明
+------
+- 函数在 (liii unicode) 库中定义
+- 与 `bytevector-advance-utf8` 函数形成对称设计
+- 提供 UTF-16LE 序列验证功能
+
+相关函数
+--------
+- `codepoint->utf16le` : 将 Unicode 码点转换为 UTF-16LE 字节向量
+- `utf16le->codepoint` : 将 UTF-16LE 字节向量转换为 Unicode 码点
+- `utf8->utf16le` : 将 UTF-8 字节向量转换为 UTF-16LE 字节向量
+- `bytevector-advance-utf8` : 在 UTF-8 字节向量中前进到下一个字符
+|#
+
+;; bytevector-utf16le-advance ASCII 字符测试 (2字节编码)
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F #x00) 0) => 2)  ; "H" -> "e"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F #x00) 2) => 4)  ; "e" -> "l"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F #x00) 4) => 6)  ; "l" -> "l"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F #x00) 6) => 8)  ; "l" -> "o"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F #x00) 8) => 10)  ; "o" -> 结束
+
+;; bytevector-utf16le-advance 基本多文种平面字符测试 (2字节编码)
+(check (bytevector-utf16le-advance (bytevector #xE4 #x00 #x48 #x00) 0) => 2)  ; "ä" -> "H"
+(check (bytevector-utf16le-advance (bytevector #xE9 #x00 #x65 #x00) 0) => 2)  ; "é" -> "e"
+(check (bytevector-utf16le-advance (bytevector #x2D #x4E #x48 #x00) 0) => 2)  ; "中" -> "H"
+
+;; bytevector-utf16le-advance 辅助平面字符测试 (4字节编码)
+(check (bytevector-utf16le-advance (bytevector #x3D #xD8 #x4D #xDC #x48 #x00) 0) => 4)  ; "👍" -> "H"
+(check (bytevector-utf16le-advance (bytevector #x3D #xD8 #x80 #xDE #x65 #x00) 0) => 4)  ; "🚀" -> "e"
+(check (bytevector-utf16le-advance (bytevector #x3C #xD8 #x89 #xDF #x6C #x00) 0) => 4)  ; "🎉" -> "l"
+
+;; bytevector-utf16le-advance 混合字符序列测试
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #xE4 #x00 #x2D #x4E #x3D #xD8 #x4D #xDC) 0) => 2)  ; "H" -> "ä"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #xE4 #x00 #x2D #x4E #x3D #xD8 #x4D #xDC) 2) => 4)  ; "ä" -> "中"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #xE4 #x00 #x2D #x4E #x3D #xD8 #x4D #xDC) 4) => 6)  ; "中" -> "👍"
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #xE4 #x00 #x2D #x4E #x3D #xD8 #x4D #xDC) 6) => 10)  ; "👍" -> 结束
+
+;; bytevector-utf16le-advance 边界条件测试
+(check (bytevector-utf16le-advance #u8() 0) => 0)  ; 空字节向量
+(check (bytevector-utf16le-advance (bytevector #x48 #x00) 0) => 2)  ; 单字符
+(check (bytevector-utf16le-advance (bytevector #x48 #x00) 2) => 2)  ; 结束位置
+
+;; bytevector-utf16le-advance 不完整序列测试
+(check (bytevector-utf16le-advance (bytevector #x48) 0) => 0)  ; 不完整序列（只有1字节）
+(check (bytevector-utf16le-advance (bytevector #x3D #xD8) 0) => 0)  ; 不完整代理对（只有高代理）
+(check (bytevector-utf16le-advance (bytevector #x3D #xD8 #x4D) 0) => 0)  ; 不完整代理对（缺少低代理字节）
+
+;; bytevector-utf16le-advance 无效序列测试
+(check (bytevector-utf16le-advance (bytevector #x00 #xDC #x00 #x00) 0) => 0)  ; 低代理对作为第一个码元
+(check (bytevector-utf16le-advance (bytevector #x3D #xD8 #x00 #x00) 0) => 0)  ; 无效低代理对
+
+;; bytevector-utf16le-advance 结束位置参数测试
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00) 0 2) => 2)  ; "H" -> 结束
+(check (bytevector-utf16le-advance (bytevector #x48 #x00 #x65 #x00 #x6C #x00) 0 4) => 2)  ; "H" -> "e"
+(check (bytevector-utf16le-advance (bytevector #xE4 #x00 #x48 #x00) 0 2) => 2)  ; "ä" -> 结束
+(check (bytevector-utf16le-advance (bytevector #xE4 #x00 #x48 #x00) 0 4) => 2)  ; "ä" -> "H"
+
 (check-report)
