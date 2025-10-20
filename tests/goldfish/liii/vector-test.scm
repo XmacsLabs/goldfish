@@ -71,12 +71,37 @@ out-of-range
 wrong-type-arg
 当vector不是向量或k不是精确整数时抛出错误。
 
-示例
-----
-(vector-ref #(a b c) 0) => a
-(vector-ref #(a b c) 1) => b
-(vector-ref #(a b c) 2) => c
 |#
+
+(let1 v #(1 2 3)
+  (check (vector-ref v 0) => 1)
+  (check (vector-ref v 1) => 2)
+  (check (vector-ref v 2) => 3))
+
+;; 边界情况测试
+(let1 v #(a b c d)
+  (check (vector-ref v 0) => 'a)  ; 第一个元素
+  (check (vector-ref v 3) => 'd)) ; 最后一个元素
+
+;; 空向量测试
+(check-catch 'out-of-range (vector-ref #() 0))
+
+;; 单元素向量测试
+(check (vector-ref #(42) 0) => 42)
+
+;; 错误处理测试
+(let1 v #(1 2 3)
+  ; 索引超出范围
+  (check-catch 'out-of-range (vector-ref v -1))
+  (check-catch 'out-of-range (vector-ref v 3)))
+
+;; 不同类型向量测试
+(let1 v #(1 2.5 "hello" symbol #\c #t #f)
+  (check (vector-ref v 0) => 1)
+  (check (vector-ref v 2) => "hello")
+  (check (vector-ref v 4) => #\c)
+  (check (vector-ref v 6) => #f))
+
 
 #|
 vector-set!
@@ -116,51 +141,7 @@ out-of-range
 
 wrong-type-arg
 当vector不是向量或k不是精确整数时抛出错误。
-
-示例
-----
-(let ((v #(a b c)))
-  (vector-set! v 1 'x)
-  v) => #(a x c)
-
-(let ((v #(1 2 3)))
-  (vector-set! v 0 42)
-  v) => #(42 2 3)
 |#
-
-;;; vector-ref 测试
-
-;; 基本功能测试
-(let1 v #(1 2 3)
-  (check (vector-ref v 0) => 1)
-  (check (vector-ref v 1) => 2)
-  (check (vector-ref v 2) => 3))
-
-;; 边界情况测试
-(let1 v #(a b c d)
-  (check (vector-ref v 0) => 'a)  ; 第一个元素
-  (check (vector-ref v 3) => 'd)) ; 最后一个元素
-
-;; 空向量测试
-(check-catch 'out-of-range (vector-ref #() 0))
-
-;; 单元素向量测试
-(check (vector-ref #(42) 0) => 42)
-
-;; 错误处理测试
-(let1 v #(1 2 3)
-  ; 索引超出范围
-  (check-catch 'out-of-range (vector-ref v -1))
-  (check-catch 'out-of-range (vector-ref v 3)))
-
-;; 不同类型向量测试
-(let1 v #(1 2.5 "hello" symbol #\c #t #f)
-  (check (vector-ref v 0) => 1)
-  (check (vector-ref v 2) => "hello")
-  (check (vector-ref v 4) => #\c)
-  (check (vector-ref v 6) => #f))
-
-;;; vector-set! 测试
 
 ;; 基本功能测试
 (let1 v #(1 2 3)
@@ -192,6 +173,49 @@ wrong-type-arg
   ; 索引超出范围
   (check-catch 'out-of-range (vector-set! v -1 42))
   (check-catch 'out-of-range (vector-set! v 3 42)))
+
+#|
+vector-length
+获取向量的长度（元素个数）。
+
+语法
+----
+(vector-length vector)
+
+参数
+----
+vector : vector?
+要获取长度的向量
+
+返回值
+-----
+exact?
+向量的长度，即包含的元素个数，是一个非负的精确整数
+
+说明
+----
+1. 返回向量中元素的数量
+2. 空向量的长度为0
+3. 向量长度是固定的，创建后不会改变
+4. 时间复杂度为O(1)
+
+错误处理
+--------
+wrong-type-arg
+当vector不是向量时抛出错误。
+
+|#
+
+;; 基本功能测试
+(check (vector-length #()) => 0)  ; 空向量
+(check (vector-length #(42)) => 1)  ; 单元素向量
+(check (vector-length #(1 2 3)) => 3)  ; 多元素向量
+
+;; 不同类型向量测试
+(check (vector-length #(1 2.5 "hello" symbol #\c #t #f)) => 7)
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (vector-length 'not-a-vector))
 
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
