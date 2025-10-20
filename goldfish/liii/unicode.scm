@@ -21,7 +21,7 @@
    codepoint->utf8 utf8->codepoint
 
    ;; UTF-16BE 函数
-   codepoint->utf16be utf16be->codepoint utf8->utf16be
+   codepoint->utf16be utf16be->codepoint utf8->utf16be bytevector-utf16be-advance
 
    ;; UTF-16LE 函数
    codepoint->utf16le utf16le->codepoint utf8->utf16le utf16le->utf8 bytevector-utf16le-advance
@@ -403,3 +403,39 @@
                                (utf16be-bytes (codepoint->utf16be codepoint)))
                           (loop next-index
                                 (bytevector-append result utf16be-bytes))))))))))
+
+    (define* (bytevector-utf16be-advance bv index (end (bytevector-length bv)))
+      (unless (bytevector? bv)
+        (error 'type-error "bytevector-utf16be-advance: expected bytevector"))
+
+      (if (>= index end)
+          index  ; 已经到达结束位置
+          (let ((remaining (- end index)))
+            (if (< remaining 2)
+                index  ; 字节不足，无法构成完整的 UTF-16BE 字符
+                (let* ((high-byte (bytevector-u8-ref bv index))
+                       (low-byte (bytevector-u8-ref bv (+ index 1)))
+                       (codepoint (+ (ash high-byte 8) low-byte)))
+
+                  (cond
+                   ;; 基本多文种平面字符 (非代理对)
+                   ((or (< codepoint #xD800) (> codepoint #xDFFF))
+                    (+ index 2))
+
+                   ;; 高代理对 (需要低代理对)
+                   ((<= #xD800 codepoint #xDBFF)
+                    (if (< remaining 4)
+                        index  ; 字节不足，无法构成完整的代理对
+                        (let* ((second-high (bytevector-u8-ref bv (+ index 2)))
+                               (second-low (bytevector-u8-ref bv (+ index 3)))
+                               (second-codepoint (+ (ash second-high 8) second-low)))
+                          (if (<= #xDC00 second-codepoint #xDFFF)
+                              (+ index 4)  ; 有效的代理对
+                              index))))    ; 无效的低代理对
+
+                   ;; 低代理对作为第一个码元 - 无效
+                   ((<= #xDC00 codepoint #xDFFF)
+                    index)
+
+                   (else
+                    index)))))))
