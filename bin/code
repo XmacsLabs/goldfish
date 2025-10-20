@@ -73,21 +73,6 @@ if (== (count $args) 0) {
 # 权限配置已迁移到.claude/settings.json文件中
 # 无需在此处配置allowedTools
 
-# 检查ccr命令是否存在
-if $platform:is-windows {
-    # Windows系统使用where命令
-    if (not ?(where ccr)) {
-        echo "Error: ccr command not found. Please install ccr."
-        exit 1
-    }
-} else {
-    # Unix/Linux系统使用which命令
-    if (not ?(which ccr)) {
-        echo "Error: ccr command not found. Please install ccr."
-        exit 1
-    }
-}
-
-# 启动ccr code
-echo "Starting ccr code..."
-ccr code
+# 启动Claude Code
+echo "claude ..."
+claude
