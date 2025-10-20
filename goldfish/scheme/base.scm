@@ -38,7 +38,7 @@
     ; R7RS 6.9: Bytevectors
     bytevector? make-bytevector bytevector bytevector-length bytevector-u8-ref
     bytevector-u8-set! bytevector-copy bytevector-append
-    utf8->string string->utf8 u8-string-length bytevector-advance-utf8
+    utf8->string string->utf8 utf8-string-length bytevector-advance-utf8
     ; Input and Output
     call-with-port port? binary-port? textual-port? input-port-open? output-port-open?
     open-binary-input-file open-binary-output-file close-port eof-object
@@ -445,7 +445,7 @@ wrong-type-arg
                         (+ index 4)))))
              (else index)))))  ; Invalid leading byte
 
-    (define (u8-string-length str)
+    (define (utf8-string-length str)
       (let ((bv (string->byte-vector str))
             (N (string-length str)))
         (if (zero? N)
@@ -493,7 +493,7 @@ wrong-type-arg
   
       (when (not (string? str))
         (error 'type-error "str must be string"))
-      (let ((N (u8-string-length str)))
+      (let ((N (utf8-string-length str)))
         (when (and (> N 0) (or (< start 0) (>= start N)))
           (error 'out-of-range
                  (string-append "start must >= 0 and < " (number->string N))))

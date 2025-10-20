@@ -71,7 +71,7 @@ string
 相关函数
 --------
 - `string->utf8` : 将字符串转换为 UTF-8 字节向量
-- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `utf8-string-length` : 获取字符串的 Unicode 字符数量
 - `u8-substring` : 基于 Unicode 字符位置提取子字符串
 |#
 
@@ -178,7 +178,7 @@ bytevector
 相关函数
 --------
 - `utf8->string` : 将 UTF-8 字节向量转换为字符串
-- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `utf8-string-length` : 获取字符串的 Unicode 字符数量
 - `u8-substring` : 基于 Unicode 字符位置提取子字符串
 |#
 
@@ -234,12 +234,12 @@ bytevector
 (check (utf8->string (string->utf8 "汉字书写" 3)) => "写")
 
 #|
-u8-string-length
+utf8-string-length
 计算 UTF-8 编码字符串的 Unicode 字符数量（码点数量）。
 
 函数签名
 ----
-(u8-string-length string) → integer
+(utf8-string-length string) → integer
 
 参数
 ----
@@ -253,7 +253,7 @@ integer
 
 描述
 ----
-`u8-string-length` 用于计算 UTF-8 编码字符串中的 Unicode 字符数量，与 `string-length` 不同，
+`utf8-string-length` 用于计算 UTF-8 编码字符串中的 Unicode 字符数量，与 `string-length` 不同，
 它返回的是 Unicode 码点（code point）的数量，而不是字节数量。
 
 行为特征
@@ -266,7 +266,7 @@ integer
 与 string-length 的区别
 -------------------
 - `string-length` : 返回字符串的字节数量
-- `u8-string-length` : 返回字符串的 Unicode 字符数量
+- `utf8-string-length` : 返回字符串的 Unicode 字符数量
 
 
 错误处理
@@ -287,15 +287,15 @@ integer
 - `string->utf8` : 将字符串转换为 UTF-8 字节向量
 |#
 
-(check (u8-string-length "") => 0)
-(check (u8-string-length "Hello") => 5)
-(check (u8-string-length "你好") => 2)
-(check (u8-string-length "Hello 你好") => 8)
-(check (u8-string-length "👍") => 1)
-(check (u8-string-length "🚀") => 1)
-(check (u8-string-length "🎉") => 1)
-(check (u8-string-length "Hello 👍 World") => 13)
-(check (u8-string-length "你好 🚀 测试") => 7)
+(check (utf8-string-length "") => 0)
+(check (utf8-string-length "Hello") => 5)
+(check (utf8-string-length "你好") => 2)
+(check (utf8-string-length "Hello 你好") => 8)
+(check (utf8-string-length "👍") => 1)
+(check (utf8-string-length "🚀") => 1)
+(check (utf8-string-length "🎉") => 1)
+(check (utf8-string-length "Hello 👍 World") => 13)
+(check (utf8-string-length "你好 🚀 测试") => 7)
 
 #|
 u8-substring
@@ -352,7 +352,7 @@ string
 
 相关函数
 --------
-- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `utf8-string-length` : 获取字符串的 Unicode 字符数量
 - `string-substring` : 基于字节位置提取子字符串
 - `utf8->string` : 将 UTF-8 字节向量转换为字符串
 - `string->utf8` : 将字符串转换为 UTF-8 字节向量
@@ -1218,12 +1218,12 @@ UTF-8 编码规则
 实现说明
 ------
 - 函数在 (scheme base) 库中定义，在 (liii base) 和 (liii unicode) 库中重新导出
-- 被 `u8-string-length`、`utf8->string`、`string->utf8` 等函数内部使用
+- 被 `utf8-string-length`、`utf8->string`、`string->utf8` 等函数内部使用
 - 提供 UTF-8 序列验证功能
 
 相关函数
 --------
-- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `utf8-string-length` : 获取字符串的 Unicode 字符数量
 - `utf8->string` : 将 UTF-8 字节向量转换为字符串
 - `string->utf8` : 将字符串转换为 UTF-8 字节向量
 - `u8-substring` : 基于 Unicode 字符位置提取子字符串

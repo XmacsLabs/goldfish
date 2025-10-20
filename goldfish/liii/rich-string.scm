@@ -27,7 +27,7 @@
     (define-case-class rich-string
       ((data string?))
   
-      (define N (u8-string-length data))
+      (define N (utf8-string-length data))
 
       (define (@empty . args)
         (chain-apply args (rich-string "")))
@@ -330,7 +330,7 @@
 
       (define (%split sep)
         (let ((str-len N)
-              (sep-len (u8-string-length sep)))
+              (sep-len (utf8-string-length sep)))
     
           (define (split-helper start acc)
             (let ((next-pos (%index-of sep start)))
