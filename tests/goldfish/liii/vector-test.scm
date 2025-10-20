@@ -78,6 +78,56 @@ wrong-type-arg
 (vector-ref #(a b c) 2) => c
 |#
 
+#|
+vector-set!
+修改向量中指定位置的元素。
+
+语法
+----
+(vector-set! vector k obj)
+
+参数
+----
+vector : vector?
+要修改的向量
+
+k : exact?
+必须是非负的精确整数，表示要修改的索引位置，必须小于向量的长度
+
+obj : any?
+要设置的新值，可以是任何类型的值
+
+返回值
+-----
+未定义值
+
+说明
+----
+1. 从0开始索引，第一个元素的索引为0
+2. 索引k必须在有效范围内：0 <= k < (vector-length vector)
+3. 将向量中位置k处的元素修改为obj
+4. 向量是固定长度的数据结构，修改操作的时间复杂度为O(1)
+5. 这是一个副作用操作，会直接修改原始向量
+
+错误处理
+--------
+out-of-range
+当k为负数或大于等于向量长度时抛出错误。
+
+wrong-type-arg
+当vector不是向量或k不是精确整数时抛出错误。
+
+示例
+----
+(let ((v #(a b c)))
+  (vector-set! v 1 'x)
+  v) => #(a x c)
+
+(let ((v #(1 2 3)))
+  (vector-set! v 0 42)
+  v) => #(42 2 3)
+|#
+
 ;;; vector-ref 测试
 
 ;; 基本功能测试
@@ -109,6 +159,39 @@ wrong-type-arg
   (check (vector-ref v 2) => "hello")
   (check (vector-ref v 4) => #\c)
   (check (vector-ref v 6) => #f))
+
+;;; vector-set! 测试
+
+;; 基本功能测试
+(let1 v #(1 2 3)
+  (vector-set! v 1 42)
+  (check v => #(1 42 3)))
+
+;; 边界情况测试
+(let1 v #(a b c d)
+  (vector-set! v 0 'x)  ; 修改第一个元素
+  (vector-set! v 3 'y)  ; 修改最后一个元素
+  (check v => #(x b c y)))
+
+;; 单元素向量测试
+(let1 v #(42)
+  (vector-set! v 0 100)
+  (check v => #(100)))
+
+;; 不同类型值测试
+(let1 v #(1 2 3 4 5)
+  (vector-set! v 0 "string")
+  (vector-set! v 1 3.14)
+  (vector-set! v 2 'symbol)
+  (vector-set! v 3 #\c)
+  (vector-set! v 4 #t)
+  (check v => #("string" 3.14 symbol #\c #t)))
+
+;; 错误处理测试
+(let1 v #(1 2 3)
+  ; 索引超出范围
+  (check-catch 'out-of-range (vector-set! v -1 42))
+  (check-catch 'out-of-range (vector-set! v 3 42)))
 
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
