@@ -276,7 +276,7 @@ integer
 
 实现原理
 ------
-函数通过遍历字符串的 UTF-8 编码字节序列，使用 `bytevector-advance-u8` 函数
+函数通过遍历字符串的 UTF-8 编码字节序列，使用 `bytevector-advance-utf8` 函数
 逐个识别完整的 UTF-8 字符，并统计字符数量。
 
 相关函数
@@ -1163,5 +1163,128 @@ Unicode 码点值
 (check (utf16le->codepoint (codepoint->utf16le #xE4)) => #xE4)
 (check (utf16le->codepoint (codepoint->utf16le #x4E2D)) => #x4E2D)
 (check (utf16le->codepoint (codepoint->utf16le #x1F44D)) => #x1F44D)
+
+#|
+bytevector-advance-utf8
+在 UTF-8 编码的字节向量中前进到下一个字符的起始位置
+
+函数签名
+----
+(bytevector-advance-utf8 bytevector index [end]) → integer
+
+参数
+----
+bytevector : bytevector
+UTF-8 编码的字节向量
+
+index : integer
+当前字节位置
+
+end : integer (可选，默认字节向量长度)
+字节向量的结束位置
+
+返回值
+----
+integer
+下一个 UTF-8 字符的起始字节位置，或者当前位置（如果遇到无效序列）
+
+描述
+----
+`bytevector-advance-utf8` 用于在 UTF-8 编码的字节向量中前进到下一个字符的起始位置。
+该函数能够识别完整的 UTF-8 字符序列，并跳过无效或不完整的序列。
+
+行为特征
+------
+- 对于有效的 UTF-8 序列，返回下一个字符的起始位置
+- 对于无效的 UTF-8 序列，返回当前位置（不前进）
+- 对于不完整的序列，返回当前位置（不前进）
+- 支持所有有效的 Unicode 字符编码
+- 正确处理边界条件（起始位置、结束位置等）
+
+UTF-8 编码规则
+------
+- ASCII 字符 (U+0000 到 U+007F): 1 字节编码 (0xxxxxxx)
+- 基本多文种平面字符 (U+0080 到 U+07FF): 2 字节编码 (110xxxxx 10xxxxxx)
+- 其他 BMP 字符 (U+0800 到 U+FFFF): 3 字节编码 (1110xxxx 10xxxxxx 10xxxxxx)
+- 辅助平面字符 (U+10000 到 U+10FFFF): 4 字节编码 (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
+
+返回值说明
+------
+- 如果当前位置已经是结束位置，返回当前位置
+- 如果遇到有效的 UTF-8 序列，返回下一个字符的起始位置
+- 如果遇到无效的 UTF-8 序列，返回当前位置
+- 如果遇到不完整的序列（字节不足），返回当前位置
+
+实现说明
+------
+- 函数在 (scheme base) 库中定义，在 (liii base) 和 (liii unicode) 库中重新导出
+- 被 `u8-string-length`、`utf8->string`、`string->utf8` 等函数内部使用
+- 提供 UTF-8 序列验证功能
+
+相关函数
+--------
+- `u8-string-length` : 获取字符串的 Unicode 字符数量
+- `utf8->string` : 将 UTF-8 字节向量转换为字符串
+- `string->utf8` : 将字符串转换为 UTF-8 字节向量
+- `u8-substring` : 基于 Unicode 字符位置提取子字符串
+|#
+
+;; bytevector-advance-utf8 ASCII 字符测试 (1字节编码)
+(check (bytevector-advance-utf8 (bytevector #x48 #x65 #x6C #x6C #x6F) 0) => 1)  ; "H" -> "e"
+(check (bytevector-advance-utf8 (bytevector #x48 #x65 #x6C #x6C #x6F) 1) => 2)  ; "e" -> "l"
+(check (bytevector-advance-utf8 (bytevector #x48 #x65 #x6C #x6C #x6F) 2) => 3)  ; "l" -> "l"
+(check (bytevector-advance-utf8 (bytevector #x48 #x65 #x6C #x6C #x6F) 3) => 4)  ; "l" -> "o"
+(check (bytevector-advance-utf8 (bytevector #x48 #x65 #x6C #x6C #x6F) 4) => 5)  ; "o" -> 结束
+
+;; bytevector-advance-utf8 基本多文种平面字符测试 (2字节编码)
+(check (bytevector-advance-utf8 #u8(#xC3 #xA4 #x48) 0) => 2)  ; "ä" -> "H"
+(check (bytevector-advance-utf8 #u8(#xC3 #xA9 #x65) 0) => 2)  ; "é" -> "e"
+(check (bytevector-advance-utf8 #u8(#xC3 #xB6 #x6C) 0) => 2)  ; "ö" -> "l"
+
+;; bytevector-advance-utf8 其他 BMP 字符测试 (3字节编码)
+(check (bytevector-advance-utf8 #u8(#xE4 #xB8 #xAD #x48) 0) => 3)  ; "中" -> "H"
+(check (bytevector-advance-utf8 #u8(#xE6 #xB1 #x89 #x65) 0) => 3)  ; "汉" -> "e"
+(check (bytevector-advance-utf8 #u8(#xE5 #xAD #x97 #x6C) 0) => 3)  ; "字" -> "l"
+
+;; bytevector-advance-utf8 辅助平面字符测试 (4字节编码)
+(check (bytevector-advance-utf8 #u8(#xF0 #x9F #x91 #x8D #x48) 0) => 4)  ; "👍" -> "H"
+(check (bytevector-advance-utf8 #u8(#xF0 #x9F #x9A #x80 #x65) 0) => 4)  ; "🚀" -> "e"
+(check (bytevector-advance-utf8 #u8(#xF0 #x9F #x8E #x89 #x6C) 0) => 4)  ; "🎉" -> "l"
+
+;; bytevector-advance-utf8 混合字符序列测试
+(check (bytevector-advance-utf8 #u8(#x48 #xC3 #xA4 #xE4 #xB8 #xAD #xF0 #x9F #x91 #x8D) 0) => 1)  ; "H" -> "ä"
+(check (bytevector-advance-utf8 #u8(#x48 #xC3 #xA4 #xE4 #xB8 #xAD #xF0 #x9F #x91 #x8D) 1) => 3)  ; "ä" -> "中"
+(check (bytevector-advance-utf8 #u8(#x48 #xC3 #xA4 #xE4 #xB8 #xAD #xF0 #x9F #x91 #x8D) 3) => 6)  ; "中" -> "👍"
+(check (bytevector-advance-utf8 #u8(#x48 #xC3 #xA4 #xE4 #xB8 #xAD #xF0 #x9F #x91 #x8D) 6) => 10)  ; "👍" -> 结束
+
+;; bytevector-advance-utf8 边界条件测试
+(check (bytevector-advance-utf8 #u8() 0) => 0)  ; 空字节向量
+(check (bytevector-advance-utf8 (bytevector #x48) 0) => 1)  ; 单字节字符
+(check (bytevector-advance-utf8 (bytevector #x48) 1) => 1)  ; 结束位置
+
+;; bytevector-advance-utf8 无效 UTF-8 序列测试
+(check (bytevector-advance-utf8 (bytevector #x80) 0) => 0)  ; 无效起始字节
+(check (bytevector-advance-utf8 (bytevector #xC2) 0) => 0)  ; 不完整的2字节序列
+(check (bytevector-advance-utf8 (bytevector #xE4 #xB8) 0) => 0)  ; 不完整的3字节序列
+(check (bytevector-advance-utf8 (bytevector #xF0 #x9F #x91) 0) => 0)  ; 不完整的4字节序列
+(check (bytevector-advance-utf8 (bytevector #xFF) 0) => 0)  ; 无效字节
+
+;; bytevector-advance-utf8 无效延续字节测试
+(check (bytevector-advance-utf8 (bytevector #xC2 #x00) 0) => 0)  ; 无效延续字节
+(check (bytevector-advance-utf8 (bytevector #xE4 #x00 #xAD) 0) => 0)  ; 无效延续字节
+(check (bytevector-advance-utf8 (bytevector #xF0 #x9F #x00 #x8D) 0) => 0)  ; 无效延续字节
+
+;; bytevector-advance-utf8 结束位置参数测试
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 0 1) => 1)  ; "H" -> 结束
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 0 2) => 1)  ; "H" -> "e"
+(check (bytevector-advance-utf8 #u8(#xC3 #xA4 #x48) 0 2) => 2)  ; "ä" -> 结束
+(check (bytevector-advance-utf8 #u8(#xC3 #xA4 #x48) 0 3) => 2)  ; "ä" -> "H"
+
+;; bytevector-advance-utf8 在有效序列中的位置测试
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 0) => 1)
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 1) => 2)
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 2) => 3)
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 3) => 4)
+(check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 4) => 5)
 
 (check-report)

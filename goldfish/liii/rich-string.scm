@@ -154,7 +154,7 @@
           (let loop ((i 0) (pos 0))
             (if (>= i char-index)
                 pos
-                (loop (+ i 1) (bytevector-advance-u8 bv pos size)))))
+                (loop (+ i 1) (bytevector-advance-utf8 bv pos size)))))
   
         (define* (inner-index-of str start-index)
           (if (or (string-null? data) (string-null? str))
@@ -173,7 +173,7 @@
                           ((bytes-match? data-bv byte-pos str-bv str-size data-size)
                            current-char-index)
                           (else
-                           (search (bytevector-advance-u8 data-bv byte-pos data-size)
+                           (search (bytevector-advance-utf8 data-bv byte-pos data-size)
                                    (+ current-char-index 1))))))))))
 
         (unless (integer? start-index)
@@ -224,7 +224,7 @@
             (cond
               ((>= byte-pos len) -1)
               (else
-               (let* ((next-pos (bytevector-advance-u8 bytes byte-pos len))
+               (let* ((next-pos (bytevector-advance-utf8 bytes byte-pos len))
                       (char-bytes (bytevector-copy bytes byte-pos next-pos))
                       (char (rich-char :from-bytevector char-bytes)))
                  (if (pred char)
@@ -257,7 +257,7 @@
               (let loop ((i 0) (j 0))
                 (if (>= i N)
                     result
-                    (let* ((next-j (bytevector-advance-u8 bv j bv-size))
+                    (let* ((next-j (bytevector-advance-utf8 bv j bv-size))
                            (ch (rich-char :from-bytevector (bytevector-copy bv j next-j))))
                       (vector-set! result i ch)
                       (loop (+ i 1) next-j)))))))

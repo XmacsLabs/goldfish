@@ -17,7 +17,7 @@
 (define-library (liii unicode)
   (export
    ;; UTF-8 函数
-   utf8->string string->utf8 u8-string-length u8-substring bytevector-advance-u8
+   utf8->string string->utf8 u8-string-length u8-substring bytevector-advance-utf8
    codepoint->utf8 utf8->codepoint
 
    ;; UTF-16BE 函数
