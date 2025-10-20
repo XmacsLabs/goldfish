@@ -24,7 +24,19 @@
 
     (define bitwise-not lognot)
 
-    (define bitwise-and logand)
+    (define (bitwise-and i j . rest)
+      (unless (integer? i)
+        (type-error "bitwise-and: first argument must be integer" i))
+      (unless (integer? j)
+        (type-error "bitwise-and: second argument must be integer" j))
+      (let loop ((result (logand i j))
+                 (args rest))
+        (if (null? args)
+            result
+            (let ((arg (car args)))
+              (unless (integer? arg)
+                (type-error "bitwise-and: argument must be integer" arg))
+              (loop (logand result arg) (cdr args))))))
 
     (define bitwise-ior logior)
 
