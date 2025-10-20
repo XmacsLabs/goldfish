@@ -1741,4 +1741,85 @@ UTF-16BE 编码规则
 (check (bytevector-utf16be-advance (bytevector #x00 #xE4 #x00 #x48) 0 2) => 2)  ; "ä" -> 结束
 (check (bytevector-utf16be-advance (bytevector #x00 #xE4 #x00 #x48) 0 4) => 2)  ; "ä" -> "H"
 
+#|
+utf16be->utf8
+将 UTF-16BE 编码的字节向量转换为 UTF-8 编码的字节向量
+
+函数签名
+----
+(utf16be->utf8 bytevector) → bytevector
+
+参数
+----
+bytevector : bytevector
+包含 UTF-16BE 编码字节的字节向量
+
+返回值
+----
+bytevector
+包含 UTF-8 编码字节的字节向量
+
+描述
+----
+`utf16be->utf8` 用于将 UTF-16BE 编码的字节向量转换为 UTF-8 编码的字节向量。
+
+转换规则
+------
+- 遍历 UTF-16BE 字节向量中的每个 Unicode 字符
+- 使用 `utf16be->codepoint` 将 UTF-16BE 字节转换为 Unicode 码点
+- 使用 `codepoint->utf8` 将码点转换为 UTF-8 字节向量
+- 将转换后的字节向量拼接起来形成最终结果
+
+错误处理
+------
+- 如果字节向量包含无效的 UTF-16BE 编码序列，会抛出 `value-error` 异常
+- 参数必须是字节向量类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数使用 `bytevector-utf16be-advance` 遍历 UTF-16BE 字节向量
+- 支持所有有效的 Unicode 字符，包括基本多文种平面和辅助平面字符
+- 正确处理代理对编码
+
+相关函数
+--------
+- `utf16be->codepoint` : 将 UTF-16BE 字节向量转换为 Unicode 码点
+- `codepoint->utf8` : 将 Unicode 码点转换为 UTF-8 字节向量
+- `utf8->utf16be` : 将 UTF-8 字节向量转换为 UTF-16BE 字节向量
+- `bytevector-utf16be-advance` : 在 UTF-16BE 字节向量中前进到下一个字符
+|#
+
+;; utf16be->utf8 ASCII 字符测试
+(check (utf16be->utf8 (bytevector #x00 #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F)) => (bytevector #x48 #x65 #x6C #x6C #x6F))  ; "Hello"
+(check (utf16be->utf8 (bytevector #x00 #x20)) => (bytevector #x20))  ; 空格
+
+;; utf16be->utf8 基本多文种平面字符测试
+(check (utf16be->utf8 (bytevector #x00 #xE4)) => #u8(#xC3 #xA4))  ; "ä"
+(check (utf16be->utf8 (bytevector #x00 #xE9)) => #u8(#xC3 #xA9))  ; "é"
+
+;; utf16be->utf8 其他 BMP 字符测试
+(check (utf16be->utf8 (bytevector #x4E #x2D)) => #u8(#xE4 #xB8 #xAD))  ; "中"
+(check (utf16be->utf8 (bytevector #x6C #x49)) => #u8(#xE6 #xB1 #x89))  ; "汉"
+
+;; utf16be->utf8 辅助平面字符测试
+(check (utf16be->utf8 (bytevector #xD8 #x3D #xDC #x4D)) => #u8(#xF0 #x9F #x91 #x8D))  ; "👍"
+(check (utf16be->utf8 (bytevector #xD8 #x3D #xDE #x80)) => #u8(#xF0 #x9F #x9A #x80))  ; "🚀"
+
+;; utf16be->utf8 混合字符测试
+(check (utf16be->utf8 (bytevector #x00 #x48 #x00 #xE4 #x4E #x2D #xD8 #x3D #xDC #x4D)) => #u8(#x48 #xC3 #xA4 #xE4 #xB8 #xAD #xF0 #x9F #x91 #x8D))  ; "Hä中👍"
+
+;; utf16be->utf8 边界条件测试
+(check (utf16be->utf8 #u8()) => #u8())  ; 空字节向量
+(check (utf16be->utf8 (bytevector #x00 #x48)) => (bytevector #x48))  ; 单字符
+
+;; utf16be->utf8 错误处理测试
+(check-catch 'value-error (utf16be->utf8 (bytevector #x00)))  ; 不完整的 UTF-16BE 序列
+(check-catch 'value-error (utf16be->utf8 (bytevector #xDC #x00 #x00 #x00)))  ; 无效 UTF-16BE 序列
+
+;; utf16be->utf8 与 utf8->utf16be 互逆操作验证
+(check (utf16be->utf8 (utf8->utf16be (bytevector #x48 #x65 #x6C #x6C #x6F))) => (bytevector #x48 #x65 #x6C #x6C #x6F))  ; "Hello"
+(check (utf16be->utf8 (utf8->utf16be #u8(#xC3 #xA4))) => #u8(#xC3 #xA4))  ; "ä"
+(check (utf16be->utf8 (utf8->utf16be #u8(#xE4 #xB8 #xAD))) => #u8(#xE4 #xB8 #xAD))  ; "中"
+(check (utf16be->utf8 (utf8->utf16be #u8(#xF0 #x9F #x91 #x8D))) => #u8(#xF0 #x9F #x91 #x8D))  ; "👍"
+
 (check-report)
