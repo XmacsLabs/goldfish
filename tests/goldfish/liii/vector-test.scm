@@ -35,10 +35,80 @@
 (check-true (vector? (int-vector 1 2 3)))
 (check-catch 'wrong-type-arg (int-vector 1 2 'a))
 
-(let1 v (int-vector 1 2 3)
+#|
+vector-ref
+按索引访问向量中的元素。
+
+语法
+----
+(vector-ref vector k)
+
+参数
+----
+vector : vector?
+要访问的向量
+
+k : exact?
+必须是非负的精确整数，表示要访问的索引位置，必须小于向量的长度
+
+返回值
+-----
+any?
+向量中位置k处的元素
+
+说明
+----
+1. 从0开始索引，第一个元素的索引为0
+2. 索引k必须在有效范围内：0 <= k < (vector-length vector)
+3. 返回k位置处的元素，可以是任何类型的值
+4. 向量是固定长度的数据结构，访问操作的时间复杂度为O(1)
+
+错误处理
+--------
+out-of-range
+当k为负数或大于等于向量长度时抛出错误。
+
+wrong-type-arg
+当vector不是向量或k不是精确整数时抛出错误。
+
+示例
+----
+(vector-ref #(a b c) 0) => a
+(vector-ref #(a b c) 1) => b
+(vector-ref #(a b c) 2) => c
+|#
+
+;;; vector-ref 测试
+
+;; 基本功能测试
+(let1 v #(1 2 3)
   (check (vector-ref v 0) => 1)
   (check (vector-ref v 1) => 2)
   (check (vector-ref v 2) => 3))
+
+;; 边界情况测试
+(let1 v #(a b c d)
+  (check (vector-ref v 0) => 'a)  ; 第一个元素
+  (check (vector-ref v 3) => 'd)) ; 最后一个元素
+
+;; 空向量测试
+(check-catch 'out-of-range (vector-ref #() 0))
+
+;; 单元素向量测试
+(check (vector-ref #(42) 0) => 42)
+
+;; 错误处理测试
+(let1 v #(1 2 3)
+  ; 索引超出范围
+  (check-catch 'out-of-range (vector-ref v -1))
+  (check-catch 'out-of-range (vector-ref v 3)))
+
+;; 不同类型向量测试
+(let1 v #(1 2.5 "hello" symbol #\c #t #f)
+  (check (vector-ref v 0) => 1)
+  (check (vector-ref v 2) => "hello")
+  (check (vector-ref v 4) => #\c)
+  (check (vector-ref v 6) => #f))
 
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
