@@ -21,7 +21,7 @@
    codepoint->utf8 utf8->codepoint
 
    ;; UTF-16BE 函数
-   codepoint->utf16be utf16be->codepoint
+   codepoint->utf16be utf16be->codepoint utf8->utf16be
 
    ;; UTF-16LE 函数
    codepoint->utf16le utf16le->codepoint utf8->utf16le utf16le->utf8 bytevector-utf16le-advance
@@ -383,3 +383,23 @@
 
                    (else
                     index)))))))
+
+    (define (utf8->utf16be bv)
+      (unless (bytevector? bv)
+        (error 'type-error "utf8->utf16be: expected bytevector"))
+
+      (let ((len (bytevector-length bv)))
+        (if (= len 0)
+            (bytevector)
+            (let loop ((index 0)
+                       (result (bytevector)))
+              (if (>= index len)
+                  result
+                  (let ((next-index (bytevector-advance-utf8 bv index len)))
+                    (if (= next-index index)
+                        (error 'value-error "utf8->utf16be: invalid UTF-8 sequence at index" index)
+                        (let* ((utf8-bytes (bytevector-copy bv index next-index))
+                               (codepoint (utf8->codepoint utf8-bytes))
+                               (utf16be-bytes (codepoint->utf16be codepoint)))
+                          (loop next-index
+                                (bytevector-append result utf16be-bytes))))))))))
