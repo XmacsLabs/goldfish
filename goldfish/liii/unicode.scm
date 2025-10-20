@@ -24,7 +24,7 @@
    codepoint->utf16be utf16be->codepoint
 
    ;; UTF-16LE 函数
-   codepoint->utf16le utf16le->codepoint
+   codepoint->utf16le utf16le->codepoint utf8->utf16le
 
    ;; 十六进制字符串与码点转换函数
    hexstr->codepoint codepoint->hexstr
@@ -307,3 +307,23 @@
             (else
              ;; 基本多文种平面字符 - 单个码元
              first-codepoint))))))
+
+    (define (utf8->utf16le bv)
+      (unless (bytevector? bv)
+        (error 'type-error "utf8->utf16le: expected bytevector, got" bv))
+
+      (let ((len (bytevector-length bv)))
+        (if (= len 0)
+            (bytevector)
+            (let loop ((index 0)
+                       (result (bytevector)))
+              (if (>= index len)
+                  result
+                  (let ((next-index (bytevector-advance-utf8 bv index len)))
+                    (if (= next-index index)
+                        (error 'value-error "utf8->utf16le: invalid UTF-8 sequence at index" index)
+                        (let* ((utf8-bytes (bytevector-copy bv index next-index))
+                               (codepoint (utf8->codepoint utf8-bytes))
+                               (utf16le-bytes (codepoint->utf16le codepoint)))
+                          (loop next-index
+                                (bytevector-append result utf16le-bytes))))))))))

@@ -1287,4 +1287,78 @@ UTF-8 编码规则
 (check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 3) => 4)
 (check (bytevector-advance-utf8 #u8(#x48 #x65 #x6C #x6C #x6F) 4) => 5)
 
+#|
+utf8->utf16le
+将 UTF-8 编码的字节向量转换为 UTF-16LE 编码的字节向量
+
+函数签名
+----
+(utf8->utf16le bytevector) → bytevector
+
+参数
+----
+bytevector : bytevector
+包含 UTF-8 编码字节的字节向量
+
+返回值
+----
+bytevector
+包含 UTF-16LE 编码字节的字节向量
+
+描述
+----
+`utf8->utf16le` 用于将 UTF-8 编码的字节向量转换为 UTF-16LE 编码的字节向量。
+
+转换规则
+------
+- 遍历 UTF-8 字节向量中的每个 Unicode 字符
+- 使用 `utf8->codepoint` 将 UTF-8 字节转换为 Unicode 码点
+- 使用 `codepoint->utf16le` 将码点转换为 UTF-16LE 字节向量
+- 将转换后的字节向量拼接起来形成最终结果
+
+错误处理
+------
+- 如果字节向量包含无效的 UTF-8 编码序列，会抛出 `value-error` 异常
+- 参数必须是字节向量类型，否则会抛出 `type-error` 异常
+
+实现说明
+------
+- 函数使用 `bytevector-advance-utf8` 遍历 UTF-8 字节向量
+- 支持所有有效的 Unicode 字符，包括基本多文种平面和辅助平面字符
+- 正确处理代理对编码
+
+相关函数
+--------
+- `codepoint->utf16le` : 将 Unicode 码点转换为 UTF-16LE 字节向量
+- `utf8->codepoint` : 将 UTF-8 字节向量转换为 Unicode 码点
+- `bytevector-advance-utf8` : 在 UTF-8 字节向量中前进到下一个字符
+|#
+
+;; utf8->utf16le ASCII 字符测试
+(check (utf8->utf16le (bytevector #x48 #x65 #x6C #x6C #x6F)) => (bytevector #x48 #x00 #x65 #x00 #x6C #x00 #x6C #x00 #x6F #x00))  ; "Hello"
+(check (utf8->utf16le (bytevector #x20)) => (bytevector #x20 #x00))  ; 空格
+
+;; utf8->utf16le 基本多文种平面字符测试
+(check (utf8->utf16le #u8(#xC3 #xA4)) => (bytevector #xE4 #x00))  ; "ä"
+(check (utf8->utf16le #u8(#xC3 #xA9)) => (bytevector #xE9 #x00))  ; "é"
+
+;; utf8->utf16le 其他 BMP 字符测试
+(check (utf8->utf16le #u8(#xE4 #xB8 #xAD)) => (bytevector #x2D #x4E))  ; "中"
+(check (utf8->utf16le #u8(#xE6 #xB1 #x89)) => (bytevector #x49 #x6C))  ; "汉"
+
+;; utf8->utf16le 辅助平面字符测试
+(check (utf8->utf16le #u8(#xF0 #x9F #x91 #x8D)) => (bytevector #x3D #xD8 #x4D #xDC))  ; "👍"
+(check (utf8->utf16le #u8(#xF0 #x9F #x9A #x80)) => (bytevector #x3D #xD8 #x80 #xDE))  ; "🚀"
+
+;; utf8->utf16le 混合字符测试
+(check (utf8->utf16le #u8(#x48 #xC3 #xA4 #xE4 #xB8 #xAD #xF0 #x9F #x91 #x8D)) => (bytevector #x48 #x00 #xE4 #x00 #x2D #x4E #x3D #xD8 #x4D #xDC))  ; "Hä中👍"
+
+;; utf8->utf16le 边界条件测试
+(check (utf8->utf16le #u8()) => #u8())  ; 空字节向量
+(check (utf8->utf16le (bytevector #x48)) => (bytevector #x48 #x00))  ; 单字节字符
+
+;; utf8->utf16le 错误处理测试
+(check-catch 'value-error (utf8->utf16le (bytevector #x80)))  ; 无效 UTF-8 序列
+(check-catch 'value-error (utf8->utf16le (bytevector #xC2)))  ; 不完整的 UTF-8 序列
+
 (check-report)
