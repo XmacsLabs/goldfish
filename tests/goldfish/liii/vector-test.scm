@@ -217,6 +217,78 @@ wrong-type-arg
 ;; 错误处理测试
 (check-catch 'wrong-type-arg (vector-length 'not-a-vector))
 
+#|
+make-vector
+创建指定长度的向量。
+
+语法
+----
+(make-vector k)
+(make-vector k fill)
+
+参数
+----
+k : exact?
+必须是非负的精确整数，表示要创建的向量长度
+
+fill : any? (可选)
+向量的初始值，可以是任何类型的值。如果未提供，则向量元素未定义
+
+返回值
+-----
+vector?
+新创建的向量，长度为k
+
+说明
+----
+1. 创建一个长度为k的新向量
+2. 如果提供了fill参数，则所有元素都初始化为fill
+3. 如果未提供fill参数，则向量元素的值未定义
+4. 向量长度是固定的，创建后不会改变
+5. 时间复杂度为O(k)
+
+错误处理
+--------
+wrong-type-arg
+当k不是精确整数时抛出错误。
+
+out-of-range
+当k为负数时抛出错误。
+
+示例
+----
+(make-vector 3) => #(#<undefined> #<undefined> #<undefined>)
+(make-vector 3 0) => #(0 0 0)
+(make-vector 2 'a) => #(a a)
+(make-vector 0) => #()
+|#
+
+;;; make-vector 测试
+
+;; 基本功能测试
+(check (vector-length (make-vector 0)) => 0)  ; 空向量
+(check (vector-length (make-vector 3)) => 3)  ; 长度为3的向量
+
+;; 带初始值的测试
+(check (make-vector 3 0) => #(0 0 0))  ; 初始化为0
+(check (make-vector 2 'a) => #(a a))  ; 初始化为符号
+(check (make-vector 1 "hello") => #("hello"))  ; 初始化为字符串
+
+;; 边界情况测试
+(check (make-vector 0) => #())  ; 长度为0的向量
+(check (vector-length (make-vector 1)) => 1)  ; 长度为1的向量，无初始值
+
+;; 不同类型初始值测试
+(let1 v (make-vector 5 3.14)
+  (check (vector-length v) => 5)
+  (check (vector-ref v 0) => 3.14)
+  (check (vector-ref v 4) => 3.14))
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (make-vector 'not-a-number))  ; 非数字参数
+(check-catch 'wrong-type-arg (make-vector -1))  ; 负长度
+(check-catch 'wrong-type-arg (make-vector -1 0))  ; 负长度带初始值
+
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
 (check (vector-copy #(0 1 2 3) 3) => #(3))
