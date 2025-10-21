@@ -4,6 +4,14 @@
 
 (check-set-mode! 'report-failed)
 
+;;; @empty 构造函数测试
+(let ((empty-v (rich-vector :empty)))
+  (check (empty-v :is-instance-of 'rich-vector) => #t)
+  (check (= (empty-v :length) 0) => #t)
+  (check (empty-v :empty?) => #t)
+  (check (equal? (empty-v :to-list) '()) => #t)
+  (check (equal? (empty-v :to-string) "#()") => #t))
+
 ;;; 测试构造函数
 (let ((v (rich-vector #(1 2 3))))
   (check (v :is-instance-of 'rich-vector) => #t)
