@@ -1034,14 +1034,61 @@ wrong-type-arg
 (define a (vector "a0" "a1" "a2" "a3" "a4"))
 (define b (vector "b0" "b1" "b2" "b3" "b4"))
 (vector-copy! b 0 a 0 5)
-(check b => #("a0" "a1" "a2" "a3" "a4")) 
+(check b => #("a0" "a1" "a2" "a3" "a4"))
 
-(check (reverse-list->vector '()) => '#())
-(check (reverse-list->vector '(1 2 3)) => '#(3 2 1))
+#|
+reverse-list->vector
+将列表转换为反向的向量。
 
-(check-catch 'type-error (reverse-list->vector '(1 2 . 3)))
+语法
+----
+(reverse-list->vector list)
 
-(check-catch 'type-error (reverse-list->vector (circular-list 1 2 3)))
+参数
+----
+list : list?
+要转换为向量的列表
+
+返回值
+-----
+vector?
+新创建的向量，包含列表中的所有元素，顺序与列表相反
+
+说明
+----
+1. 创建一个新向量，长度等于列表的长度
+2. 向量中的元素顺序与列表中的元素顺序相反
+3. 列表中的每个元素都会被复制到向量中
+4. 向量长度是固定的，创建后不会改变
+5. 时间复杂度为O(n)，其中n是列表的长度
+
+错误处理
+--------
+wrong-type-arg
+当list不是列表时抛出错误。
+
+|#
+
+;;; reverse-list->vector 测试
+
+;; 基本功能测试
+(check (reverse-list->vector '()) => '#())  ; 空列表
+(check (reverse-list->vector '(1 2 3)) => '#(3 2 1))  ; 数字列表
+(check (reverse-list->vector '(a b c)) => '#(c b a))  ; 符号列表
+
+;; 边界情况测试
+(check (reverse-list->vector '(42)) => '#(42))  ; 单元素列表
+
+;; 不同类型元素测试
+(check (reverse-list->vector '(1 2.5 "hello" symbol #\c #t #f)) => '#(#f #t #\c symbol "hello" 2.5 1))
+
+;; 嵌套结构测试
+(check (reverse-list->vector '((1 2) (3 4))) => '#((3 4) (1 2)))  ; 嵌套列表
+
+;; 错误处理测试
+(check-catch 'type-error (reverse-list->vector 'not-a-list))  ; 非列表参数
+(check-catch 'type-error (reverse-list->vector '(1 2 . 3)))  ; 非正规列表
+(check-catch 'type-error (reverse-list->vector (circular-list 1 2 3)))  ; 循环列表
 
 #|
 vector->string
