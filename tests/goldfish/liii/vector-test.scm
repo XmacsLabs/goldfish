@@ -1043,6 +1043,51 @@ wrong-type-arg
 
 (check-catch 'type-error (reverse-list->vector (circular-list 1 2 3)))
 
+#|
+vector->string
+将字符向量转换为字符串。
+
+语法
+----
+(vector->string vector)
+(vector->string vector start)
+(vector->string vector start end)
+
+参数
+----
+vector : vector?
+要转换为字符串的字符向量
+
+start : exact? (可选)
+起始索引位置，默认为0
+
+end : exact? (可选)
+结束索引位置，默认为向量的长度
+
+返回值
+-----
+string?
+新创建的字符串，包含向量中指定范围内的字符
+
+说明
+----
+1. 将向量中的字符元素转换为字符串
+2. 向量中的元素必须是字符类型
+3. 如果未指定 start 和 end，则转换整个向量
+4. 如果只指定 start，则从 start 开始到向量末尾
+5. 新字符串与向量是不同的对象
+6. 时间复杂度为O(n)，其中n是转换的字符数量
+
+错误处理
+--------
+out-of-range
+当start或end为负数，或start大于end，或end大于向量长度时抛出错误。
+
+wrong-type-arg
+当vector不是向量，或start/end不是精确整数，或向量包含非字符元素时抛出错误。
+
+|#
+
 (check (vector->string (vector #\0 #\1 #\2 #\3)) => "0123")
 (check (vector->string (vector #\a #\b #\c)) => "abc")
 
