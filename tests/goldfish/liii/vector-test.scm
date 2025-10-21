@@ -444,6 +444,60 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (vector->list #(1 2 3) 'not-a-number))  ; 非数字起始索引
 (check-catch 'wrong-type-arg (vector->list #(1 2 3) 0 'not-a-number))  ; 非数字结束索引
 
+#|
+vector-copy
+创建向量的副本。
+
+语法
+----
+(vector-copy vector)
+(vector-copy vector start)
+(vector-copy vector start end)
+
+参数
+----
+vector : vector?
+要复制的向量
+
+start : exact? (可选)
+必须是非负的精确整数，表示起始索引位置，默认为0
+
+end : exact? (可选)
+必须是非负的精确整数，表示结束索引位置，默认为向量的长度
+
+返回值
+-----
+vector?
+新创建的向量，包含原始向量中指定范围内的元素
+
+说明
+----
+1. 创建一个新向量，长度等于指定范围内的元素数量
+2. 新向量中的元素与原始向量中对应位置的元素相同（通过eqv?比较）
+3. 新向量与原始向量是不同的对象（通过eq?比较）
+4. 如果未指定 start 和 end，则复制整个向量
+5. 如果只指定 start，则从 start 开始到向量末尾
+6. 时间复杂度为O(n)，其中n是复制的元素数量
+
+错误处理
+--------
+out-of-range
+当start或end为负数，或start大于end，或end大于向量长度时抛出错误。
+
+wrong-type-arg
+当vector不是向量，或start/end不是精确整数时抛出错误。
+
+示例
+----
+(vector-copy #(1 2 3)) => #(1 2 3)
+(vector-copy #(1 2 3 4) 1) => #(2 3 4)
+(vector-copy #(1 2 3 4) 1 3) => #(2 3)
+(vector-copy #(1 2 3 4) 4) => #()
+|#
+
+;;; vector-copy 测试
+
+;; 基本功能测试
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
 (check (vector-copy #(0 1 2 3) 3) => #(3))
@@ -461,6 +515,59 @@ wrong-type-arg
 (check (vector-copy #(0 1 2 3) 1 1) => #())
 (check (vector-copy #(0 1 2 3) 1 2) => #(1))
 (check (vector-copy #(0 1 2 3) 1 4) => #(1 2 3))
+
+;; 空向量测试
+(check (vector-copy #()) => #())  ; 空向量复制
+(check (vector-copy #() 0) => #())  ; 空向量从索引0开始
+(check (vector-copy #() 0 0) => #())  ; 空向量指定空范围
+
+;; 单元素向量测试
+(check (vector-copy #(42)) => #(42))  ; 单元素向量
+(check (vector-copy #(42) 0) => #(42))  ; 单元素向量从索引0开始
+(check (vector-copy #(42) 0 1) => #(42))  ; 单元素向量指定范围
+(check (vector-copy #(42) 1) => #())  ; 单元素向量从索引1开始
+
+;; 不同类型元素测试
+(let1 v #(1 2.5 "hello" symbol #\c #t #f)
+  (check (vector-copy v) => v)  ; 完整复制
+  (check (vector-copy v 2 5) => #("hello" symbol #\c)))  ; 部分复制
+
+;; 嵌套结构测试
+(check (vector-copy #((1 2) (3 4))) => #((1 2) (3 4)))  ; 嵌套向量
+(check (vector-copy #((1 2) (3 4)) 1) => #((3 4)))  ; 嵌套向量部分复制
+
+;; 对象标识测试
+(let1 original #(a b c)
+  (let1 copied (vector-copy original)
+    (check-true (vector? copied))  ; 是向量
+    (check-false (eq? original copied))  ; 不是同一个对象
+    (check-true (eqv? (vector-ref original 1) (vector-ref copied 1)))  ; 元素相同
+    (check (vector-length copied) => (vector-length original))))  ; 长度相同
+
+;; 修改独立性测试
+(let1 original #(1 2 3)
+  (let1 copied (vector-copy original)
+    (vector-set! copied 1 99)  ; 修改副本
+    (check original => #(1 2 3))  ; 原始向量不变
+    (check copied => #(1 99 3))))  ; 副本已修改
+
+;; 更多边界范围测试
+(check (vector-copy #(0 1 2 3) 0 0) => #())  ; 空范围
+(check (vector-copy #(0 1 2 3) 2 2) => #())  ; 空范围
+(check (vector-copy #(0 1 2 3) 0 1) => #(0))  ; 第一个元素
+(check (vector-copy #(0 1 2 3) 3 4) => #(3))  ; 最后一个元素
+
+;; 错误处理测试 - 类型错误
+(check-catch 'wrong-type-arg (vector-copy 'not-a-vector))  ; 非向量参数
+(check-catch 'wrong-type-arg (vector-copy #(1 2 3) 'not-a-number))  ; 非数字起始索引
+(check-catch 'wrong-type-arg (vector-copy #(1 2 3) 0 'not-a-number))  ; 非数字结束索引
+
+;; 错误处理测试 - 范围错误
+(let1 v #(1 2 3)
+  (check-catch 'out-of-range (vector-copy v -1))  ; 负起始索引
+  (check-catch 'out-of-range (vector-copy v 4))  ; 起始索引超出长度
+  (check-catch 'out-of-range (vector-copy v 2 5))  ; 结束索引超出长度
+  (check-catch 'out-of-range (vector-copy v 3 2)))  ; 起始索引大于结束索引
 
 (check-true (int-vector? (int-vector 1 2 3)))
 (check-false (int-vector? (vector 1 2 3)))
