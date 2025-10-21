@@ -6,6 +6,68 @@
 
 (check-set-mode! 'report-failed)
 
+#|
+rich-vector
+创建rich-vector对象的构造函数。
+
+语法
+----
+(rich-vector data)
+
+参数
+----
+data : vector
+用于初始化rich-vector的向量数据。
+
+返回值
+-----
+以rich-vector形式返回包装后的向量对象。
+
+说明
+----
+将普通向量包装为rich-vector对象，提供丰富的函数式操作方法。
+
+边界条件
+--------
+- 空向量：创建空的rich-vector
+- 非空向量：创建包含指定元素的rich-vector
+- 非向量参数：抛出type-error
+
+性能特征
+--------
+- 时间复杂度：O(1)，直接包装现有向量
+- 空间复杂度：O(n)，需要存储向量引用
+
+兼容性
+------
+- 支持所有rich-vector实例方法
+- 与普通向量操作兼容
+|#
+
+;;; 测试构造函数
+(let ((v (rich-vector #(1 2 3))))
+  (check (v :is-instance-of 'rich-vector) => #t)
+  (check (= (v :length) 3) => #t))
+
+;;; 测试基本操作
+(let ((v (rich-vector #(1 2 3))))
+  (check (= (v :fold 0 +) 6) => #t)
+  (check (= (v :head) 1) => #t)
+  (check (= (v :last) 3) => #t))
+
+;;; 测试元素查找
+(let ((v (rich-vector #(1 2 3))))
+  (check (= (v :index-of 2) 1) => #t)
+  (check (v :contains 2) => #t))
+
+;;; 测试转换
+(let ((v (rich-vector #(1 2 3))))
+  (check (equal? (v :to-list) '(1 2 3)) => #t))
+
+;;; 测试函数式操作
+(let ((v (rich-vector #(1 2 3))))
+  (check (equal? ((v :map (lambda (x) (* x 2))) :to-list) '(2 4 6)) => #t)
+  (check (equal? ((v :filter (lambda (x) (> x 1))) :to-list) '(2 3)) => #t))
 
 #|
 rich-vector@empty
@@ -64,31 +126,6 @@ args : list
   (check (empty-v :empty?) => #t)
   (check (equal? (empty-v :to-list) '()) => #t)
   (check (equal? (empty-v :to-string) "#()") => #t))
-
-;;; 测试构造函数
-(let ((v (rich-vector #(1 2 3))))
-  (check (v :is-instance-of 'rich-vector) => #t)
-  (check (= (v :length) 3) => #t))
-
-;;; 测试基本操作
-(let ((v (rich-vector #(1 2 3))))
-  (check (= (v :fold 0 +) 6) => #t)
-  (check (= (v :head) 1) => #t)
-  (check (= (v :last) 3) => #t))
-
-;;; 测试元素查找
-(let ((v (rich-vector #(1 2 3))))
-  (check (= (v :index-of 2) 1) => #t)
-  (check (v :contains 2) => #t))
-
-;;; 测试转换
-(let ((v (rich-vector #(1 2 3))))
-  (check (equal? (v :to-list) '(1 2 3)) => #t))
-
-;;; 测试函数式操作
-(let ((v (rich-vector #(1 2 3))))
-  (check (equal? ((v :map (lambda (x) (* x 2))) :to-list) '(2 4 6)) => #t)
-  (check (equal? ((v :filter (lambda (x) (> x 1))) :to-list) '(2 3)) => #t))
 
 #|
 rich-vector@fill
