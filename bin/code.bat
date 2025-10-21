@@ -1,1 +1,1 @@
-elvish bin\code %*
+python3 bin\code %*

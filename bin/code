@@ -1,78 +1,117 @@
-#!/usr/bin/env elvish
+#!/usr/bin/env python3
+"""
+bin/code - Python 3 implementation of the original Elvish script
 
-use path
-use str
-use platform
+This script performs the following tasks:
+1. Checks if on main branch (when arguments are provided)
+2. Pulls latest code from origin if on main branch
+3. Syncs pre-commit hook
+4. Launches Claude Code
+"""
 
-# 只有在有参数的情况下才检查main分支
-if (== (count $args) 0) {
-    echo "No branch argument provided, skipping main branch check..."
-} else {
-    # 取当前分支名
-    var current-branch = (git rev-parse --abbrev-ref HEAD)
-    
-    if (not-eq $current-branch main) {
-        echo (styled "Error: You are not on the main branch. Current branch: "$current-branch red)
-        echo (styled "Please switch to main branch first: git checkout main" yellow)
-        exit 1
-    }
-    
-    echo "Already on main branch."
-}
+import os
+import sys
+import subprocess
+import shutil
+from pathlib import Path
 
 
-# 检查是否真的在main分支上，才进行拉取
-if (eq (git rev-parse --abbrev-ref HEAD) main) {
-    # 检查是否存在origin远程仓库
-    var has_origin
-    if $platform:is-windows {
-        set has_origin = ?(git remote get-url origin > NUL 2>&1)
-    } else {
-        set has_origin = ?(git remote get-url origin > /dev/null 2>&1)
-    }
-    
-    # 如果origin不存在，添加origin并拉取，然后移除origin
-    if (not $has_origin) {
-        echo "Adding origin git@gitee.com:XmacsLabs/goldfish.git..."
-        git remote add origin git@gitee.com:XmacsLabs/goldfish.git
-        echo "Pulling latest code from main branch..."
-        git pull origin main
-        echo "Removing temporary origin...\n"
-    } else {
-        # 如果origin存在，直接拉取
-        echo "Pulling latest code from main branch..."
-        git pull origin main
-    }
-} else {
-    echo "Not on main branch, skipping git pull from origin/main..."
-}
+def run_command(cmd, check=True, capture_output=False):
+    """Run a shell command and return the result."""
+    try:
+        result = subprocess.run(
+            cmd,
+            shell=True,
+            check=check,
+            capture_output=capture_output,
+            text=True
+        )
+        if capture_output:
+            return result.stdout.strip()
+        return True
+    except subprocess.CalledProcessError as e:
+        if check:
+            raise
+        return False
 
-# 检查是否有参数
-if (== (count $args) 0) {
-    # 没有参数，直接进入 ccr code 而不使用 worktree
-    echo "No branch argument provided, using current directory..."
-} else {
-    # 有参数，使用 worktree 创建新工作空间
-    var branch_name = (path:base $args[0])
-    var timestamp = (date +%Y%m%d_%H%M%S_%N)
-    var workspace_dir
-    if $platform:is-windows {
-        set workspace_dir = (get-env TEMP)/goldfish/$branch_name/$timestamp
-    } else {
-        set workspace_dir = /tmp/goldfish/$branch_name/$timestamp
-    }
-    
-    # 使用git worktree创建新的工作空间
-    echo "Creating workspace with git worktree: $workspace_dir"
-    git worktree add -b $branch_name $workspace_dir
-    
-    # 切换到工作空间
-    cd $workspace_dir
-}
 
-# 权限配置已迁移到.claude/settings.json文件中
-# 无需在此处配置allowedTools
+def get_current_branch():
+    """Get the current git branch name."""
+    return run_command("git rev-parse --abbrev-ref HEAD", capture_output=True)
 
-# 启动Claude Code
-echo "claude ..."
-claude
+
+def check_main_branch():
+    """Check if current branch is main."""
+    current_branch = get_current_branch()
+    return current_branch == "main"
+
+
+def has_origin_remote():
+    """Check if origin remote exists."""
+    return run_command("git remote get-url origin", check=False, capture_output=False)
+
+
+def sync_pre_commit_hook():
+    """Sync the pre-commit hook if needed."""
+    source_hook = Path("hooks/pre-commit")
+    target_hook = Path(".git/hooks/pre-commit")
+
+    # Check if source hook exists
+    if not source_hook.is_file():
+        print(f"Source hook {source_hook} does not exist, skipping...")
+        return
+
+    # Check if sync is needed
+    sync_needed = False
+    if not target_hook.is_file():
+        sync_needed = True
+    else:
+        # Compare file contents
+        with open(source_hook, 'r') as f1, open(target_hook, 'r') as f2:
+            if f1.read() != f2.read():
+                sync_needed = True
+
+    if sync_needed:
+        print("Syncing pre-commit hook...")
+        shutil.copy2(source_hook, target_hook)
+        target_hook.chmod(0o755)  # Make executable
+        print("Pre-commit hook synchronized successfully.")
+
+
+def main():
+    # Sync pre-commit hook
+    sync_pre_commit_hook()
+
+    # Check if we should verify main branch (only when arguments are provided)
+    if len(sys.argv) > 1:
+        if not check_main_branch():
+            current_branch = get_current_branch()
+            print(f"\033[31mError: You are not on the main branch. Current branch: {current_branch}\033[0m")
+            print(f"\033[33mPlease switch to main branch first: git checkout main\033[0m")
+            sys.exit(1)
+        print("Already on main branch.")
+    else:
+        print("No branch argument provided, skipping main branch check...")
+
+    # Pull from origin if on main branch
+    if check_main_branch():
+        if not has_origin_remote():
+            print("Adding origin git@gitee.com:XmacsLabs/goldfish.git...")
+            run_command("git remote add origin git@gitee.com:XmacsLabs/goldfish.git")
+            print("Pulling latest code from main branch...")
+            run_command("git pull origin main")
+            print("Removing temporary origin...\n")
+            run_command("git remote remove origin")
+        else:
+            print("Pulling latest code from main branch...")
+            run_command("git pull origin main")
+    else:
+        print("Not on main branch, skipping git pull from origin/main...")
+
+    # Launch Claude Code
+    print("claude ...")
+    os.execvp("claude", ["claude"])
+
+
+if __name__ == "__main__":
+    main()
