@@ -867,5 +867,90 @@ wrong-type-arg
 (check (vector-filter (lambda (x) #t) #()) => #())
 (check (vector-filter (lambda (x) #f) #(1 2 3)) => #())
 
+#|
+vector-append
+连接多个向量，创建一个新向量。
+
+语法
+----
+(vector-append vector ...)
+
+参数
+----
+vector : vector?
+要连接的向量，可以接受零个或多个向量参数
+
+返回值
+-----
+vector?
+新创建的向量，包含所有输入向量的元素，按参数顺序连接
+
+说明
+----
+1. 创建一个新向量，长度等于所有输入向量长度的总和
+2. 新向量中的元素按参数顺序排列：第一个向量的元素在前，然后是第二个向量的元素，依此类推
+3. 如果未提供任何向量参数，则返回空向量
+4. 如果只提供一个向量参数，则返回该向量的副本
+5. 新向量与输入向量是不同的对象
+6. 时间复杂度为O(n)，其中n是所有输入向量中元素的总数
+
+错误处理
+--------
+wrong-type-arg
+当任何参数不是向量时抛出错误。
+
+示例
+----
+(vector-append) => #()
+(vector-append #(1 2 3)) => #(1 2 3)
+(vector-append #(1 2) #(3 4)) => #(1 2 3 4)
+(vector-append #(a b) #(c d) #(e f)) => #(a b c d e f)
+(vector-append #() #(1) #(2 3)) => #(1 2 3)
+|#
+
+;;; vector-append 测试
+
+;; 基本功能测试
+(check (vector-append) => #())  ; 无参数
+(check (vector-append #(1 2 3)) => #(1 2 3))  ; 单向量
+(check (vector-append #(1 2) #(3 4)) => #(1 2 3 4))  ; 两个向量
+(check (vector-append #(a b) #(c d) #(e f)) => #(a b c d e f))  ; 三个向量
+
+;; 空向量测试
+(check (vector-append #()) => #())  ; 单个空向量
+(check (vector-append #() #()) => #())  ; 两个空向量
+(check (vector-append #() #(1) #()) => #(1))  ; 混合空向量
+
+;; 单元素向量测试
+(check (vector-append #(42)) => #(42))  ; 单元素向量
+(check (vector-append #(1) #(2) #(3)) => #(1 2 3))  ; 多个单元素向量
+
+;; 不同类型元素测试
+(check (vector-append #(1 2.5) #("hello" symbol) #(#\c #t #f)) => #(1 2.5 "hello" symbol #\c #t #f))
+
+;; 嵌套结构测试
+(check (vector-append #((1 2)) #((3 4))) => #((1 2) (3 4)))  ; 嵌套向量
+
+;; 对象标识测试
+(let1 original #(a b c)
+  (let1 appended (vector-append original)
+    (check-true (vector? appended))  ; 是向量
+    (check-false (eq? original appended))  ; 不是同一个对象
+    (check (vector-length appended) => (vector-length original))))  ; 长度相同
+
+;; 修改独立性测试
+(let1 v1 #(1 2 3)
+  (let1 v2 #(4 5 6)
+    (let1 result (vector-append v1 v2)
+      (vector-set! result 0 99)  ; 修改结果向量
+      (check v1 => #(1 2 3))  ; 原始向量不变
+      (check v2 => #(4 5 6))  ; 原始向量不变
+      (check result => #(99 2 3 4 5 6)))))  ; 结果已修改
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (vector-append 'not-a-vector))  ; 非向量参数
+(check-catch 'wrong-type-arg (vector-append #(1 2) 'not-a-vector))  ; 混合参数
+(check-catch 'wrong-type-arg (vector-append #(1 2) 3 #(4 5)))  ; 数字参数
+
 (check-report)
 
