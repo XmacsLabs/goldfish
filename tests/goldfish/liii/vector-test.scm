@@ -289,6 +289,66 @@ out-of-range
 (check-catch 'wrong-type-arg (make-vector -1))  ; 负长度
 (check-catch 'wrong-type-arg (make-vector -1 0))  ; 负长度带初始值
 
+#|
+list->vector
+将列表转换为向量。
+
+语法
+----
+(list->vector list)
+
+参数
+----
+list : list?
+要转换为向量的列表
+
+返回值
+-----
+vector?
+新创建的向量，包含列表中的所有元素，顺序与列表相同
+
+说明
+----
+1. 创建一个新向量，长度等于列表的长度
+2. 向量中的元素顺序与列表中的元素顺序相同
+3. 列表中的每个元素都会被复制到向量中
+4. 向量长度是固定的，创建后不会改变
+5. 时间复杂度为O(n)，其中n是列表的长度
+
+错误处理
+--------
+wrong-type-arg
+当list不是列表时抛出错误。
+
+示例
+----
+(list->vector '()) => #()
+(list->vector '(a b c)) => #(a b c)
+(list->vector '(1 2 3)) => #(1 2 3)
+(list->vector '(1 "hello" #\c)) => #(1 "hello" #\c)
+|#
+
+;;; list->vector 测试
+
+;; 基本功能测试
+(check (list->vector '()) => #())  ; 空列表
+(check (list->vector '(a b c)) => #(a b c))  ; 符号列表
+(check (list->vector '(1 2 3)) => #(1 2 3))  ; 数字列表
+
+;; 边界情况测试
+(check (list->vector '(42)) => #(42))  ; 单元素列表
+(check (list->vector '(a)) => #(a))  ; 单符号列表
+
+;; 不同类型元素测试
+(check (list->vector '(1 2.5 "hello" symbol #\c #t #f)) => #(1 2.5 "hello" symbol #\c #t #f))
+
+;; 嵌套结构测试
+(check (list->vector '((1 2) (3 4))) => #((1 2) (3 4)))  ; 嵌套列表
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (list->vector 'not-a-list))  ; 非列表参数
+(check-catch 'wrong-type-arg (list->vector '(1 2 . 3)))  ; 非正规列表
+
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
 (check (vector-copy #(0 1 2 3) 3) => #(3))
