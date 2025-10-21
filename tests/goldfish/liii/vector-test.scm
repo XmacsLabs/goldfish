@@ -793,7 +793,155 @@ wrong-type-arg
 
 (define my-vector (vector 0 1 2 3 4))
 (fill! my-vector #f 1 2)
-(check my-vector => #(0 #f 2 3 4)) 
+(check my-vector => #(0 #f 2 3 4))
+
+#|
+vector-fill!
+用指定的值填充向量的元素。
+
+语法
+----
+(vector-fill! vector fill)
+(vector-fill! vector fill start)
+(vector-fill! vector fill start end)
+
+参数
+----
+vector : vector?
+要填充的向量
+
+fill : any?
+要填充的值，可以是任何类型的值
+
+start : exact? (可选)
+必须是非负的精确整数，表示起始索引位置，默认为0
+
+end : exact? (可选)
+必须是非负的精确整数，表示结束索引位置，默认为向量的长度
+
+返回值
+-----
+未定义值
+
+说明
+----
+1. 将向量中指定范围内的所有元素设置为fill值
+2. 如果未指定start和end，则填充整个向量
+3. 如果只指定start，则从start开始到向量末尾
+4. 这是一个副作用操作，会直接修改原始向量
+5. 时间复杂度为O(n)，其中n是填充的元素数量
+
+错误处理
+--------
+out-of-range
+当start或end为负数，或start大于end，或end大于向量长度时抛出错误。
+
+wrong-type-arg
+当vector不是向量，或start/end不是精确整数时抛出错误。
+
+示例
+----
+(let ((v (vector 1 2 3 4))) (vector-fill! v 0) v) => #(0 0 0 0)
+(let ((v (vector 1 2 3 4))) (vector-fill! v 'a 1) v) => #(1 a a a)
+(let ((v (vector 1 2 3 4))) (vector-fill! v #\x 1 3) v) => #(1 #\x #\x 4)
+|#
+
+;;; vector-fill! 测试
+
+;; 基本功能测试
+(let1 v (vector 1 2 3 4)
+  (vector-fill! v 0)
+  (check v => #(0 0 0 0)))
+
+(let1 v (vector 'a 'b 'c 'd)
+  (vector-fill! v 'x)
+  (check v => #(x x x x)))
+
+;; 带起始索引的测试
+(let1 v (vector 1 2 3 4)
+  (vector-fill! v 'a 1)
+  (check v => #(1 a a a)))
+
+(let1 v (vector 1 2 3 4)
+  (vector-fill! v #\x 2)
+  (check v => #(1 2 #\x #\x)))
+
+;; 带起始和结束索引的测试
+(let1 v (vector 1 2 3 4)
+  (vector-fill! v #\x 1 3)
+  (check v => #(1 #\x #\x 4)))
+
+(let1 v (vector 1 2 3 4)
+  (vector-fill! v "hello" 0 2)
+  (check v => #("hello" "hello" 3 4)))
+
+;; 空向量测试
+(let1 v (vector)
+  (vector-fill! v 42)
+  (check v => #()))
+
+(let1 v (vector)
+  (vector-fill! v 42 0 0)
+  (check v => #()))
+
+;; 单元素向量测试
+(let1 v (vector 100)
+  (vector-fill! v 999)
+  (check v => #(999)))
+
+(let1 v (vector 100)
+  (vector-fill! v 999 0 1)
+  (check v => #(999)))
+
+;; 不同类型值测试
+(let1 v (vector 1 2 3 4 5)
+  (vector-fill! v "string")
+  (check v => #("string" "string" "string" "string" "string")))
+
+(let1 v (vector 1 2 3 4 5)
+  (vector-fill! v 3.14 1 4)
+  (check v => #(1 3.14 3.14 3.14 5)))
+
+(let1 v (vector 1 2 3 4 5)
+  (vector-fill! v 'symbol 2 5)
+  (check v => #(1 2 symbol symbol symbol)))
+
+(let1 v (vector 1 2 3 4 5)
+  (vector-fill! v #\c 3 4)
+  (check v => #(1 2 3 #\c 5)))
+
+(let1 v (vector 1 2 3 4 5)
+  (vector-fill! v #t 0 1)
+  (check v => #(#t 2 3 4 5)))
+
+;; 边界范围测试
+(let1 v (vector 0 1 2 3)
+  (vector-fill! v 99 0 0)  ; 空范围
+  (check v => #(0 1 2 3)))
+
+(let1 v (vector 0 1 2 3)
+  (vector-fill! v 99 2 2)  ; 空范围
+  (check v => #(0 1 2 3)))
+
+(let1 v (vector 0 1 2 3)
+  (vector-fill! v 99 0 1)  ; 第一个元素
+  (check v => #(99 1 2 3)))
+
+(let1 v (vector 0 1 2 3)
+  (vector-fill! v 99 3 4)  ; 最后一个元素
+  (check v => #(0 1 2 99)))
+
+;; 错误处理测试 - 类型错误
+(check-catch 'wrong-type-arg (vector-fill! 'not-a-vector 42))  ; 非向量参数
+(check-catch 'wrong-type-arg (vector-fill! #(1 2 3) 42 'not-a-number))  ; 非数字起始索引
+(check-catch 'wrong-type-arg (vector-fill! #(1 2 3) 42 0 'not-a-number))  ; 非数字结束索引
+
+;; 错误处理测试 - 范围错误
+(let1 v #(1 2 3)
+  (check-catch 'out-of-range (vector-fill! v 42 -1))  ; 负起始索引
+  (check-catch 'out-of-range (vector-fill! v 42 4))  ; 起始索引超出长度
+  (check-catch 'out-of-range (vector-fill! v 42 2 5))  ; 结束索引超出长度
+  (check-catch 'out-of-range (vector-fill! v 42 3 2)))  ; 起始索引大于结束索引 
 
 (define a (vector "a0" "a1" "a2" "a3" "a4"))
 (define b (vector "b0" "b1" "b2" "b3" "b4"))
