@@ -1164,5 +1164,82 @@ wrong-number-of-args
 (check-catch 'wrong-type-arg (vector-map 'not-a-proc #(1 2 3)))  ; 非过程参数
 (check-catch 'wrong-type-arg (vector-map + 'not-a-vector))  ; 非向量参数
 
+#|
+vector-for-each
+对向量中的每个元素应用函数，主要用于副作用操作。
+
+语法
+----
+(vector-for-each proc vector1 vector2 ...)
+
+参数
+----
+proc : procedure?
+要应用的函数，接受与向量数量相同的参数
+
+vector1, vector2, ... : vector?
+要遍历的向量，所有向量必须具有相同的长度
+
+返回值
+-----
+未定义值
+
+说明
+----
+1. 对每个向量中对应位置的元素应用函数proc
+2. 主要用于副作用操作，不返回值
+3. 所有输入向量必须具有相同的长度
+4. 按顺序处理元素，从索引0开始
+5. 时间复杂度为O(n)，其中n是向量的长度
+
+错误处理
+--------
+wrong-type-arg
+当任何参数不是向量或proc不是过程时抛出错误。
+
+wrong-number-of-args
+当向量长度不一致时抛出错误。
+
+示例
+----
+(let ((sum 0))
+  (vector-for-each (lambda (x) (set! sum (+ sum x))) #(1 2 3))
+  sum) => 6
+
+(let ((result '()))
+  (vector-for-each (lambda (x) (set! result (cons x result))) #(a b c))
+  result) => (c b a)
+|#
+
+;;; vector-for-each 测试
+
+;; 基本功能测试 - 单向量
+(let ((sum 0))
+  (vector-for-each (lambda (x) (set! sum (+ sum x))) #(1 2 3))
+  (check sum => 6))
+
+(let ((result '()))
+  (vector-for-each (lambda (x) (set! result (cons x result))) #(a b c))
+  (check result => '(c b a)))
+
+;; 多向量遍历
+(let ((result '()))
+  (vector-for-each (lambda (x y) (set! result (cons (cons x y) result))) #(a b c) #(1 2 3))
+  (check result => '((c . 3) (b . 2) (a . 1))))
+
+;; 空向量测试
+(let ((count 0))
+  (vector-for-each (lambda (x) (set! count (+ count 1))) #())
+  (check count => 0))
+
+;; 单元素向量测试
+(let ((value #f))
+  (vector-for-each (lambda (x) (set! value x)) #(42))
+  (check value => 42))
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (vector-for-each 'not-a-proc #(1 2 3)))  ; 非过程参数
+(check-catch 'wrong-type-arg (vector-for-each + 'not-a-vector))  ; 非向量参数
+
 (check-report)
 
