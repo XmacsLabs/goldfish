@@ -36,6 +36,54 @@
 (check-catch 'wrong-type-arg (int-vector 1 2 'a))
 
 #|
+vector
+创建包含指定元素的向量。
+
+语法
+----
+(vector obj ...)
+
+参数
+----
+obj : any?
+要包含在向量中的元素，可以是任意类型和任意数量
+
+返回值
+-----
+vector?
+新创建的向量，包含指定的元素
+
+说明
+----
+1. 创建一个新向量，长度等于参数的数量
+2. 向量中的元素顺序与参数顺序相同
+3. 可以接受零个或多个参数
+4. 如果未提供任何参数，则返回空向量
+5. 向量长度是固定的，创建后不会改变
+6. 时间复杂度为O(n)，其中n是参数的数量
+
+示例
+----
+(vector) => #()
+(vector 1 2 3) => #(1 2 3)
+(vector 'a 'b 'c) => #(a b c)
+(vector 1 "hello" #\c) => #(1 "hello" #\c)
+|#
+
+;;; vector 测试
+
+;; 基本功能测试
+(check (vector) => #())  ; 空向量
+(check (vector 1 2 3) => #(1 2 3))  ; 数字向量
+(check (vector 'a 'b 'c) => #(a b c))  ; 符号向量
+
+;; 不同类型元素测试
+(check (vector 1 2.5 "hello" 'symbol #\c #t #f) => #(1 2.5 "hello" symbol #\c #t #f))
+
+;; 单元素向量测试
+(check (vector 42) => #(42))  ; 单元素向量
+
+#|
 vector-ref
 按索引访问向量中的元素。
 
@@ -96,7 +144,7 @@ wrong-type-arg
   (check-catch 'out-of-range (vector-ref v 3)))
 
 ;; 不同类型向量测试
-(let1 v #(1 2.5 "hello" symbol #\c #t #f)
+(let1 v #(1 2.5 "hello" 'symbol #\c #t #f)
   (check (vector-ref v 0) => 1)
   (check (vector-ref v 2) => "hello")
   (check (vector-ref v 4) => #\c)
@@ -212,7 +260,7 @@ wrong-type-arg
 (check (vector-length #(1 2 3)) => 3)  ; 多元素向量
 
 ;; 不同类型向量测试
-(check (vector-length #(1 2.5 "hello" symbol #\c #t #f)) => 7)
+(check (vector-length #(1 2.5 "hello" 'symbol #\c #t #f)) => 7)
 
 ;; 错误处理测试
 (check-catch 'wrong-type-arg (vector-length 'not-a-vector))
@@ -414,7 +462,7 @@ wrong-type-arg
 (check (vector->list #(a)) => '(a))  ; 单符号向量
 
 ;; 不同类型元素测试
-(check (vector->list #(1 2.5 "hello" symbol #\c #t #f)) => '(1 2.5 "hello" symbol #\c #t #f))
+(check (vector->list #(1 2.5 "hello" 'symbol #\c #t #f)) => '(1 2.5 "hello" 'symbol #\c #t #f))
 
 ;; 嵌套结构测试
 (check (vector->list #((1 2) (3 4))) => '((1 2) (3 4)))  ; 嵌套向量
@@ -528,9 +576,9 @@ wrong-type-arg
 (check (vector-copy #(42) 1) => #())  ; 单元素向量从索引1开始
 
 ;; 不同类型元素测试
-(let1 v #(1 2.5 "hello" symbol #\c #t #f)
+(let1 v #(1 2.5 "hello" 'symbol #\c #t #f)
   (check (vector-copy v) => v)  ; 完整复制
-  (check (vector-copy v 2 5) => #("hello" symbol #\c)))  ; 部分复制
+  (check (vector-copy v 2 5) => #("hello" 'symbol #\c)))  ; 部分复制
 
 ;; 嵌套结构测试
 (check (vector-copy #((1 2) (3 4))) => #((1 2) (3 4)))  ; 嵌套向量
@@ -1074,7 +1122,7 @@ wrong-type-arg
 (check (vector-append #(1) #(2) #(3)) => #(1 2 3))  ; 多个单元素向量
 
 ;; 不同类型元素测试
-(check (vector-append #(1 2.5) #("hello" symbol) #(#\c #t #f)) => #(1 2.5 "hello" symbol #\c #t #f))
+(check (vector-append #(1 2.5) #("hello" 'symbol) #(#\c #t #f)) => #(1 2.5 "hello" 'symbol #\c #t #f))
 
 ;; 嵌套结构测试
 (check (vector-append #((1 2)) #((3 4))) => #((1 2) (3 4)))  ; 嵌套向量
