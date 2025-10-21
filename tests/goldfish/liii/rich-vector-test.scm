@@ -1,8 +1,61 @@
 (import (liii check)
+        (scheme base)
         (liii rich-vector)
-        (liii lang))
+        (liii lang)
+        (liii error))
 
 (check-set-mode! 'report-failed)
+
+
+#|
+rich-vector@empty
+创建一个空的rich-vector对象。
+
+语法
+----
+(rich-vector :empty . args)
+
+参数
+----
+args : list
+可选参数，用于链式调用其他方法。
+
+返回值
+-----
+以rich-vector形式返回空的向量对象。
+
+说明
+----
+创建一个不包含任何元素的rich-vector。通常用于初始化数据结构或作为
+链式操作的起点。
+
+边界条件
+--------
+- 无参数调用：返回空向量
+- 支持链式调用：可与其他rich-vector方法组合使用
+
+性能特征
+--------
+- 时间复杂度：O(1)，固定时间创建
+- 空间复杂度：O(1)，创建空对象所需最小内存
+
+兼容性
+------
+- 与所有rich-vector实例方法兼容
+- 支持链式调用模式
+|#
+
+;; 基本测试
+(check ((rich-vector :empty) :collect) => #())
+(check ((rich-vector :empty) :length) => 0)
+(check ((rich-vector :empty) :empty?) => #t)
+
+;; 边界测试
+(check ((rich-vector :empty :map (lambda (x) (* x 2))) :collect) => #())
+(check ((rich-vector :empty :filter (lambda (x) #t)) :collect) => #())
+(check ((rich-vector :empty :take 0) :collect) => #())
+(check ((rich-vector :empty :drop 0) :collect) => #())
+(check ((rich-vector :empty :reverse) :collect) => #())
 
 ;;; @empty 构造函数测试
 (let ((empty-v (rich-vector :empty)))
