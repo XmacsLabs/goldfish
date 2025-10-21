@@ -349,6 +349,101 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (list->vector 'not-a-list))  ; 非列表参数
 (check-catch 'wrong-type-arg (list->vector '(1 2 . 3)))  ; 非正规列表
 
+#|
+vector->list
+将向量转换为列表。
+
+语法
+----
+(vector->list vector)
+(vector->list vector start)
+(vector->list vector start end)
+
+参数
+----
+vector : vector?
+要转换为列表的向量
+
+start : exact? (可选)
+必须是非负的精确整数，表示起始索引位置，默认为0
+
+end : exact? (可选)
+必须是非负的精确整数，表示结束索引位置，默认为向量的长度
+
+返回值
+-----
+list?
+新创建的列表，包含向量中指定范围内的元素，顺序与向量相同
+
+说明
+----
+1. 创建一个新列表，长度等于指定范围内的元素数量
+2. 列表中的元素顺序与向量中的元素顺序相同
+3. 向量中的每个元素都会被复制到列表中
+4. 如果未指定 start 和 end，则转换整个向量
+5. 如果只指定 start，则从 start 开始到向量末尾
+6. 时间复杂度为O(n)，其中n是转换的元素数量
+
+错误处理
+--------
+out-of-range
+当start或end为负数，或start大于end，或end大于向量长度时抛出错误。
+
+wrong-type-arg
+当vector不是向量，或start/end不是精确整数时抛出错误。
+
+示例
+----
+(vector->list #()) => ()
+(vector->list #(a b c)) => (a b c)
+(vector->list #(1 2 3)) => (1 2 3)
+(vector->list #(1 "hello" #\c)) => (1 "hello" #\c)
+(vector->list #(1 2 3 4) 1) => (2 3 4)
+(vector->list #(1 2 3 4) 1 3) => (2 3)
+|#
+
+;;; vector->list 测试
+
+;; 基本功能测试
+(check (vector->list #()) => ())  ; 空向量
+(check (vector->list #(a b c)) => '(a b c))  ; 符号向量
+(check (vector->list #(1 2 3)) => '(1 2 3))  ; 数字向量
+
+;; 边界情况测试
+(check (vector->list #(42)) => '(42))  ; 单元素向量
+(check (vector->list #(a)) => '(a))  ; 单符号向量
+
+;; 不同类型元素测试
+(check (vector->list #(1 2.5 "hello" symbol #\c #t #f)) => '(1 2.5 "hello" symbol #\c #t #f))
+
+;; 嵌套结构测试
+(check (vector->list #((1 2) (3 4))) => '((1 2) (3 4)))  ; 嵌套向量
+
+;; 带索引参数的测试
+(check (vector->list #(0 1 2 3) 1) => '(1 2 3))  ; 从索引1开始
+(check (vector->list #(0 1 2 3) 2) => '(2 3))  ; 从索引2开始
+(check (vector->list #(0 1 2 3) 3) => '(3))  ; 从索引3开始
+(check (vector->list #(0 1 2 3) 4) => ())  ; 从索引4开始（空列表）
+
+;; 带起始和结束索引的测试
+(check (vector->list #(0 1 2 3) 1 3) => '(1 2))  ; 索引1到3（不包括3）
+(check (vector->list #(0 1 2 3) 0 4) => '(0 1 2 3))  ; 整个向量
+(check (vector->list #(0 1 2 3) 1 1) => ())  ; 空范围
+(check (vector->list #(0 1 2 3) 2 4) => '(2 3))  ; 索引2到4
+
+;; 错误处理测试
+(let1 v #(1 2 3)
+  ; 索引超出范围
+  (check-catch 'out-of-range (vector->list v -1))  ; 负索引
+  (check-catch 'out-of-range (vector->list v 4))  ; 索引超出长度
+  (check-catch 'out-of-range (vector->list v 2 5))  ; 结束索引超出长度
+  (check-catch 'out-of-range (vector->list v 3 2)))  ; 起始索引大于结束索引
+
+;; 类型错误测试
+(check-catch 'wrong-type-arg (vector->list 'not-a-vector))  ; 非向量参数
+(check-catch 'wrong-type-arg (vector->list #(1 2 3) 'not-a-number))  ; 非数字起始索引
+(check-catch 'wrong-type-arg (vector->list #(1 2 3) 0 'not-a-number))  ; 非数字结束索引
+
 (check (vector-copy #(0 1 2 3)) => #(0 1 2 3))
 (check (vector-copy #(0 1 2 3) 1) => #(1 2 3))
 (check (vector-copy #(0 1 2 3) 3) => #(3))
