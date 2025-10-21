@@ -1100,5 +1100,69 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (vector-append #(1 2) 'not-a-vector))  ; 混合参数
 (check-catch 'wrong-type-arg (vector-append #(1 2) 3 #(4 5)))  ; 数字参数
 
+#|
+vector-map
+对向量中的每个元素应用函数，返回新向量。
+
+语法
+----
+(vector-map proc vector1 vector2 ...)
+
+参数
+----
+proc : procedure?
+要应用的函数，接受与向量数量相同的参数
+
+vector1, vector2, ... : vector?
+要映射的向量，所有向量必须具有相同的长度
+
+返回值
+-----
+vector?
+新创建的向量，包含应用函数后的结果
+
+说明
+----
+1. 对每个向量中对应位置的元素应用函数proc
+2. 返回的新向量长度与输入向量相同
+3. 所有输入向量必须具有相同的长度
+4. 新向量与输入向量是不同的对象
+5. 时间复杂度为O(n)，其中n是向量的长度
+
+错误处理
+--------
+wrong-type-arg
+当任何参数不是向量或proc不是过程时抛出错误。
+
+wrong-number-of-args
+当向量长度不一致时抛出错误。
+
+示例
+----
+(vector-map (lambda (x) (* x 2)) #(1 2 3)) => #(2 4 6)
+(vector-map + #(1 2 3) #(4 5 6)) => #(5 7 9)
+(vector-map cons #(a b c) #(1 2 3)) => #((a . 1) (b . 2) (c . 3))
+|#
+
+;;; vector-map 测试
+
+;; 基本功能测试 - 单向量
+(check (vector-map (lambda (x) (* x 2)) #(1 2 3)) => #(2 4 6))
+(check (vector-map (lambda (x) (string-append x "!")) #("a" "b" "c")) => #("a!" "b!" "c!"))
+
+;; 多向量映射
+(check (vector-map + #(1 2 3) #(4 5 6)) => #(5 7 9))
+(check (vector-map cons #(a b c) #(1 2 3)) => #((a . 1) (b . 2) (c . 3)))
+
+;; 空向量测试
+(check (vector-map (lambda (x) (* x 2)) #()) => #())
+
+;; 单元素向量测试
+(check (vector-map (lambda (x) (+ x 10)) #(5)) => #(15))
+
+;; 错误处理测试
+(check-catch 'wrong-type-arg (vector-map 'not-a-proc #(1 2 3)))  ; 非过程参数
+(check-catch 'wrong-type-arg (vector-map + 'not-a-vector))  ; 非向量参数
+
 (check-report)
 
