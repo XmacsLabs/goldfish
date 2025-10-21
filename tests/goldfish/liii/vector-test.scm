@@ -1020,6 +1020,42 @@ wrong-type-arg
 
 (check-catch 'out-of-range (string->vector "0123" 2 10))
 
+#|
+vector-filter
+根据谓词筛选向量中的元素，返回新向量。
+
+语法
+----
+(vector-filter pred vector)
+
+参数
+----
+pred : procedure?
+谓词函数，接受一个参数，返回布尔值
+
+vector : vector?
+要筛选的向量
+
+返回值
+-----
+vector?
+新创建的向量，包含满足谓词的所有元素，顺序与原始向量相同
+
+说明
+----
+1. 对向量中的每个元素应用谓词函数pred
+2. 返回包含所有满足谓词的元素的新向量
+3. 新向量中元素的顺序与原始向量中出现的顺序相同
+4. 新向量与原始向量是不同的对象
+5. 时间复杂度为O(n)，其中n是向量的长度
+
+错误处理
+--------
+wrong-type-arg
+当vector不是向量或pred不是过程时抛出错误。
+
+|#
+
 (check (vector-filter even? #(1 2 3 4 5 6)) => #(2 4 6))
 (check (vector-filter (lambda (x) (> x 3)) #(1 2 3 4 5 6)) => #(4 5 6))
 (check (vector-filter (lambda (x) (string? x)) #(1 "a" 2 "b" 3)) => #("a" "b"))
