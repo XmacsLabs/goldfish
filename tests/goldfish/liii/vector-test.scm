@@ -1103,6 +1103,51 @@ wrong-type-arg
 
 (check-catch 'wrong-type-arg (vector->string (vector 0 1 #\2 3 4) 1 3))
 
+#|
+string->vector
+将字符串转换为字符向量。
+
+语法
+----
+(string->vector string)
+(string->vector string start)
+(string->vector string start end)
+
+参数
+----
+string : string?
+要转换为字符向量的字符串
+
+start : exact? (可选)
+起始索引位置，默认为0
+
+end : exact? (可选)
+结束索引位置，默认为字符串的长度
+
+返回值
+-----
+vector?
+新创建的字符向量，包含字符串中指定范围内的字符
+
+说明
+----
+1. 将字符串中的字符转换为字符向量
+2. 字符串中的每个字符都会成为向量中的一个元素
+3. 如果未指定 start 和 end，则转换整个字符串
+4. 如果只指定 start，则从 start 开始到字符串末尾
+5. 新向量与字符串是不同的对象
+6. 时间复杂度为O(n)，其中n是转换的字符数量
+
+错误处理
+--------
+out-of-range
+当start或end为负数，或start大于end，或end大于字符串长度时抛出错误。
+
+wrong-type-arg
+当string不是字符串，或start/end不是精确整数时抛出错误。
+
+|#
+
 (check (string->vector "0123") => (vector #\0 #\1 #\2 #\3))
 (check (string->vector "abc") => (vector #\a #\b #\c))
 
