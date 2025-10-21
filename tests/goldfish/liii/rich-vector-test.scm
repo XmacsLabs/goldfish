@@ -90,4 +90,65 @@ args : list
   (check (equal? ((v :map (lambda (x) (* x 2))) :to-list) '(2 4 6)) => #t)
   (check (equal? ((v :filter (lambda (x) (> x 1))) :to-list) '(2 3)) => #t))
 
+#|
+rich-vector@fill
+创建一个包含重复元素的rich-vector对象。
+
+语法
+----
+(rich-vector :fill n elem . args)
+
+参数
+----
+n : integer
+向量的长度，必须是非负整数。
+
+elem : any
+用于填充向量的元素。
+
+args : list
+可选参数，用于链式调用其他方法。
+
+返回值
+-----
+以rich-vector形式返回包含n个elem元素的向量对象。
+
+说明
+----
+创建一个长度为n的向量，所有元素都是elem。
+
+边界条件
+--------
+- n = 0：返回空向量
+- n > 0：返回包含n个elem元素的向量
+- n < 0：抛出value-error
+- n不是整数：抛出type-error
+
+性能特征
+--------
+- 时间复杂度：O(n)，需要初始化n个元素
+- 空间复杂度：O(n)，需要存储n个元素
+
+兼容性
+------
+- 与所有rich-vector实例方法兼容
+- 支持链式调用模式
+|#
+
+;; 基本测试
+(check ((rich-vector :fill 3 42) :collect) => #(42 42 42))
+(check ((rich-vector :fill 0 42) :collect) => #())
+(check ((rich-vector :fill 1 "hello") :collect) => #("hello"))
+
+;; 边界测试
+(check ((rich-vector :fill 3 42 :map (lambda (x) (+ x 1))) :collect) => #(43 43 43))
+(check ((rich-vector :fill 2 "a" :filter (lambda (x) (string=? x "a"))) :collect) => #("a" "a"))
+
+;;; @fill 构造函数测试
+(let ((filled-v (rich-vector :fill 4 99)))
+  (check (filled-v :is-instance-of 'rich-vector) => #t)
+  (check (= (filled-v :length) 4) => #t)
+  (check (equal? (filled-v :to-list) '(99 99 99 99)) => #t)
+  (check (equal? (filled-v :to-string) "#(99 99 99 99)") => #t))
+
 (check-report)
