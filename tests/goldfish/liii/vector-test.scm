@@ -62,12 +62,6 @@ vector?
 5. 向量长度是固定的，创建后不会改变
 6. 时间复杂度为O(n)，其中n是参数的数量
 
-示例
-----
-(vector) => #()
-(vector 1 2 3) => #(1 2 3)
-(vector 'a 'b 'c) => #(a b c)
-(vector 1 "hello" #\c) => #(1 "hello" #\c)
 |#
 
 ;;; vector 测试
@@ -303,12 +297,6 @@ wrong-type-arg
 out-of-range
 当k为负数时抛出错误。
 
-示例
-----
-(make-vector 3) => #(#<undefined> #<undefined> #<undefined>)
-(make-vector 3 0) => #(0 0 0)
-(make-vector 2 'a) => #(a a)
-(make-vector 0) => #()
 |#
 
 ;;; make-vector 测试
@@ -368,12 +356,6 @@ vector?
 wrong-type-arg
 当list不是列表时抛出错误。
 
-示例
-----
-(list->vector '()) => #()
-(list->vector '(a b c)) => #(a b c)
-(list->vector '(1 2 3)) => #(1 2 3)
-(list->vector '(1 "hello" #\c)) => #(1 "hello" #\c)
 |#
 
 ;;; list->vector 测试
@@ -440,14 +422,6 @@ out-of-range
 wrong-type-arg
 当vector不是向量，或start/end不是精确整数时抛出错误。
 
-示例
-----
-(vector->list #()) => ()
-(vector->list #(a b c)) => (a b c)
-(vector->list #(1 2 3)) => (1 2 3)
-(vector->list #(1 "hello" #\c)) => (1 "hello" #\c)
-(vector->list #(1 2 3 4) 1) => (2 3 4)
-(vector->list #(1 2 3 4) 1 3) => (2 3)
 |#
 
 ;;; vector->list 测试
@@ -535,12 +509,6 @@ out-of-range
 wrong-type-arg
 当vector不是向量，或start/end不是精确整数时抛出错误。
 
-示例
-----
-(vector-copy #(1 2 3)) => #(1 2 3)
-(vector-copy #(1 2 3 4) 1) => #(2 3 4)
-(vector-copy #(1 2 3 4) 1 3) => #(2 3)
-(vector-copy #(1 2 3 4) 4) => #()
 |#
 
 ;;; vector-copy 测试
@@ -887,11 +855,6 @@ out-of-range
 wrong-type-arg
 当vector不是向量，或start/end不是精确整数时抛出错误。
 
-示例
-----
-(let ((v (vector 1 2 3 4))) (vector-fill! v 0) v) => #(0 0 0 0)
-(let ((v (vector 1 2 3 4))) (vector-fill! v 'a 1) v) => #(1 a a a)
-(let ((v (vector 1 2 3 4))) (vector-fill! v #\x 1 3) v) => #(1 #\x #\x 4)
 |#
 
 ;;; vector-fill! 测试
@@ -1095,13 +1058,6 @@ vector?
 wrong-type-arg
 当任何参数不是向量时抛出错误。
 
-示例
-----
-(vector-append) => #()
-(vector-append #(1 2 3)) => #(1 2 3)
-(vector-append #(1 2) #(3 4)) => #(1 2 3 4)
-(vector-append #(a b) #(c d) #(e f)) => #(a b c d e f)
-(vector-append #() #(1) #(2 3)) => #(1 2 3)
 |#
 
 ;;; vector-append 测试
@@ -1185,11 +1141,6 @@ wrong-type-arg
 wrong-number-of-args
 当向量长度不一致时抛出错误。
 
-示例
-----
-(vector-map (lambda (x) (* x 2)) #(1 2 3)) => #(2 4 6)
-(vector-map + #(1 2 3) #(4 5 6)) => #(5 7 9)
-(vector-map cons #(a b c) #(1 2 3)) => #((a . 1) (b . 2) (c . 3))
 |#
 
 ;;; vector-map 测试
@@ -1248,15 +1199,6 @@ wrong-type-arg
 wrong-number-of-args
 当向量长度不一致时抛出错误。
 
-示例
-----
-(let ((sum 0))
-  (vector-for-each (lambda (x) (set! sum (+ sum x))) #(1 2 3))
-  sum) => 6
-
-(let ((result '()))
-  (vector-for-each (lambda (x) (set! result (cons x result))) #(a b c))
-  result) => (c b a)
 |#
 
 ;;; vector-for-each 测试
