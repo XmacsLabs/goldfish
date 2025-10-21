@@ -588,9 +588,49 @@ wrong-type-arg
 (check-true (int-vector? (int-vector 1 2 3)))
 (check-false (int-vector? (vector 1 2 3)))
 
-(check-true (vector-empty? (vector)))
-(check-false (vector-empty? (vector 1)))
-(check-catch 'type-error (vector-empty? 1))
+#|
+vector-empty?
+检查向量是否为空。
+
+语法
+----
+(vector-empty? vector)
+
+参数
+----
+vector : vector?
+要检查的向量
+
+返回值
+-----
+boolean?
+如果向量为空（长度为0）则返回#t，否则返回#f
+
+说明
+----
+1. 检查向量的长度是否为0
+2. 空向量返回#t，非空向量返回#f
+3. 时间复杂度为O(1)
+
+错误处理
+--------
+type-error
+当vector不是向量时抛出错误。
+
+|#
+
+;;; vector-empty? 测试
+
+;; 基本功能测试
+(check-true (vector-empty? (vector)))  ; 空向量
+(check-false (vector-empty? (vector 1)))  ; 非空向量
+
+;; 不同类型向量测试
+(check-false (vector-empty? #(a b c)))  ; 符号向量
+(check-false (vector-empty? #(1 2.5 "hello" 'symbol #\c #t #f)))  ; 混合类型向量
+
+;; 错误处理测试
+(check-catch 'type-error (vector-empty? 1))  ; 非向量参数
 
 ; trivial cases
 (check-true (vector= eq?))
@@ -607,6 +647,83 @@ wrong-type-arg
 ; complex cases in srfi-133
 (check-true (vector= equal? (vector (vector 'a)) (vector (vector 'a))))
 (check-false (vector= eq? (vector (vector 'a)) (vector (vector 'a))))
+
+#|
+vector-fold
+从左到右折叠向量，将函数应用于每个元素和累加器。
+
+语法
+----
+(vector-fold proc knil vector)
+
+参数
+----
+proc : procedure?
+折叠函数，接受两个参数：(当前元素, 累加器)
+
+knil : any?
+初始累加器值
+
+vector : vector?
+要折叠的向量
+
+返回值
+-----
+any?
+折叠后的最终结果
+
+说明
+----
+1. 从左到右处理向量元素
+2. 对每个元素调用 proc(element, accumulator)
+3. 返回最终的累加器值
+4. 时间复杂度为O(n)，其中n是向量的长度
+
+错误处理
+--------
+wrong-type-arg
+当vector不是向量或proc不是过程时抛出错误。
+
+|#
+
+#|
+vector-fold-right
+从右到左折叠向量，将函数应用于每个元素和累加器。
+
+语法
+----
+(vector-fold-right proc knil vector)
+
+参数
+----
+proc : procedure?
+折叠函数，接受两个参数：(当前元素, 累加器)
+
+knil : any?
+初始累加器值
+
+vector : vector?
+要折叠的向量
+
+返回值
+-----
+any?
+折叠后的最终结果
+
+说明
+----
+1. 从右到左处理向量元素
+2. 对每个元素调用 proc(element, accumulator)
+3. 返回最终的累加器值
+4. 时间复杂度为O(n)，其中n是向量的长度
+
+错误处理
+--------
+wrong-type-arg
+当vector不是向量或proc不是过程时抛出错误。
+
+|#
+
 (check (vector-fold + 0 #(1 2 3 4)) => 10)  ; 1 + 2 + 3 + 4 = 10
 (check (vector-fold * 1 #(1 2 3 4)) => 24)  ; 1 * 2 * 3 * 4 = 24
 
