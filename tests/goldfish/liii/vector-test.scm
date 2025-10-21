@@ -952,7 +952,56 @@ wrong-type-arg
   (check-catch 'out-of-range (vector-fill! v 42 -1))  ; 负起始索引
   (check-catch 'out-of-range (vector-fill! v 42 4))  ; 起始索引超出长度
   (check-catch 'out-of-range (vector-fill! v 42 2 5))  ; 结束索引超出长度
-  (check-catch 'out-of-range (vector-fill! v 42 3 2)))  ; 起始索引大于结束索引 
+  (check-catch 'out-of-range (vector-fill! v 42 3 2)))  ; 起始索引大于结束索引
+
+#|
+vector-copy!
+将源向量的元素复制到目标向量中。
+
+语法
+----
+(vector-copy! to at from)
+(vector-copy! to at from start)
+(vector-copy! to at from start end)
+
+参数
+----
+to : vector?
+目标向量，元素将被复制到这里
+
+at : exact?
+目标向量的起始索引位置
+
+from : vector?
+源向量，元素从这里复制
+
+start : exact? (可选)
+源向量的起始索引位置，默认为0
+
+end : exact? (可选)
+源向量的结束索引位置，默认为源向量的长度
+
+返回值
+-----
+未定义值
+
+说明
+----
+1. 将源向量中指定范围内的元素复制到目标向量的指定位置
+2. 复制的元素数量为 (end - start)
+3. 目标向量中从位置at开始，将填充复制的元素
+4. 这是一个副作用操作，会直接修改目标向量
+5. 时间复杂度为O(n)，其中n是复制的元素数量
+
+错误处理
+--------
+out-of-range
+当at、start或end为负数，或超出向量长度，或start大于end，或目标向量空间不足时抛出错误。
+
+wrong-type-arg
+当to或from不是向量，或at/start/end不是精确整数时抛出错误。
+
+|#
 
 (define a (vector "a0" "a1" "a2" "a3" "a4"))
 (define b (vector "b0" "b1" "b2" "b3" "b4"))
