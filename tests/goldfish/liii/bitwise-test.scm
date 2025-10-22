@@ -104,13 +104,13 @@ integer?
 实现说明
 --------
 - bitwise-and 是 SRFI 151 标准定义的函数，提供标准化的位运算接口
-- 如果考虑性能优化，可以使用 S7 Scheme 内置的 logand 函数
-- logand 是 S7 的原生函数，通常比 bitwise-and 有更好的性能
-- bitwise-and支持三个或更多参数，logand仅支持两个参数
+- 在 Goldfish Scheme 中，bitwise-and 直接定义为 logand 的别名
+- logand 是 S7 的原生函数，支持多个参数的按位与操作
+- 使用 S7 内置的 logand 函数提供更好的性能和兼容性
 
 错误
 ----
-type-error
+wrong-type-arg
 当参数不是整数时抛出错误。
 |#
 
@@ -160,22 +160,22 @@ type-error
 (check (bitwise-and 1 1 1) => 1)          ; 全1相与
 (check (bitwise-and 2 2 2) => 2)          ; 相同数相与
 
-;;; 错误处理测试 - type-error
-(check-catch 'type-error
+;;; 错误处理测试 - wrong-type-arg
+(check-catch 'wrong-type-arg
              (bitwise-and "string" 1))  ; 字符串参数
-(check-catch 'type-error
+(check-catch 'wrong-type-arg
              (bitwise-and 1 'symbol))   ; 符号参数
-(check-catch 'type-error
+(check-catch 'wrong-type-arg
              (bitwise-and 3.14 2))      ; 浮点数参数
-(check-catch 'type-error
+(check-catch 'wrong-type-arg
              (bitwise-and #\a 1))       ; 字符参数
-(check-catch 'type-error
+(check-catch 'wrong-type-arg
              (bitwise-and '(1 2) 3))    ; 列表参数
 
 ;;; 多参数错误处理测试
-(check-catch 'type-error
+(check-catch 'wrong-type-arg
              (bitwise-and 1 2 3 "four"))  ; 第四个参数不是整数
-(check-catch 'type-error
+(check-catch 'wrong-type-arg
              (bitwise-and 1 2 "three" 4))  ; 第三个参数不是整数
 
 #|
