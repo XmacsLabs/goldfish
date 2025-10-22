@@ -85,8 +85,7 @@ none
 ;;; 测试none函数
 (let ((opt (none)))
   (check (opt :empty?) => #t)
-  (check (opt :defined?) => #f)
-  (check (opt :get-or-else 42) => 42))
+  (check (opt :defined?) => #f))
 
 #|
 option%get
@@ -129,12 +128,54 @@ option%get
   (check (opt1 :get) => 42)
   (check (opt2 :get) => "hello"))
 
+#|
+option%get-or-else
+安全获取option对象中的值，如果option为空则返回默认值。
+
+语法
+----
+(option%get-or-else default)
+
+参数
+----
+default : any
+当option为空时返回的默认值，可以是任意值或返回值的函数。
+
+返回值
+-----
+如果option非空，返回包装的值；如果option为空，返回默认值。
+
+说明
+----
+安全地从option对象中提取包装的值，避免空option的错误。
+
+边界条件
+--------
+- 非空option：返回包装的值
+- 空option：返回默认值
+- 默认值为函数：调用函数并返回结果
+
+性能特征
+--------
+- 时间复杂度：O(1)
+- 空间复杂度：O(1)
+
+兼容性
+------
+- 适用于所有option实例
+|#
+
+;;; 测试option%get-or-else方法
+(let ((opt1 (option 42))
+      (opt2 (none)))
+  (check (opt1 :get-or-else 0) => 42)
+  (check (opt2 :get-or-else 0) => 0)
+  (check (opt2 :get-or-else (lambda () "default")) => "default"))
+
 ;;; 测试基本操作
 (let ((opt1 (option 42))
       (opt2 (none)))
-  (check (opt1 :get) => 42)
-  (check (opt1 :get-or-else 0) => 42)
-  (check (opt2 :get-or-else 0) => 0))
+  (check (opt1 :get) => 42))
 
 ;;; 测试谓词函数
 (let ((opt1 (option 42))
