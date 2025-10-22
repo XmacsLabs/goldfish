@@ -781,9 +781,66 @@ wrong-type-arg
     lst)
   => '(#f #f #f #f #f))
 
-(check (vector-count even? #()) => 0)
-(check (vector-count even? #(1 3 5 7 9)) => 0)
-(check (vector-count even? #(1 3 4 7 8)) => 2)
+#|
+vector-count
+统计向量中满足谓词的元素数量。
+
+语法
+----
+(vector-count pred vector)
+
+参数
+----
+pred : procedure?
+谓词函数，接受一个参数，返回布尔值
+
+vector : vector?
+要统计的向量
+
+返回值
+-----
+exact?
+满足谓词的元素的个数，是一个非负的精确整数
+
+说明
+----
+1. 对向量中的每个元素应用谓词函数pred
+2. 统计并返回满足谓词的元素数量
+3. 如果向量为空，返回0
+4. 时间复杂度为O(n)，其中n是向量的长度
+
+错误处理
+--------
+wrong-type-arg
+当vector不是向量或pred不是过程时抛出错误。
+
+|#
+
+;;; vector-count 测试
+
+;; 基本功能测试
+(check (vector-count even? #()) => 0)  ; 空向量
+(check (vector-count even? #(1 3 5 7 9)) => 0)  ; 没有偶数
+(check (vector-count even? #(1 3 4 7 8)) => 2)  ; 两个偶数
+
+;; 边界情况测试
+(check (vector-count (lambda (x) #t) #()) => 0)  ; 空向量，总是真
+(check (vector-count (lambda (x) #f) #(1 2 3)) => 0)  ; 总是假
+(check (vector-count (lambda (x) #t) #(1 2 3)) => 3)  ; 总是真
+
+;; 不同类型元素测试
+(check (vector-count string? #(1 "a" 2 "b" 3)) => 2)  ; 字符串元素
+(check (vector-count number? #(1 "a" 2 "b" 3)) => 3)  ; 数字元素
+(check (vector-count symbol? #(a b 1 2)) => 2)  ; 符号元素
+
+;; 单元素向量测试
+(check (vector-count even? #(42)) => 1)  ; 单偶数元素
+(check (vector-count even? #(43)) => 0)  ; 单奇数元素
+
+;; 复杂谓词测试
+(check (vector-count (lambda (x) (> x 5)) #(1 6 2 7 3 8)) => 3)  ; 大于5的元素
+(check (vector-count (lambda (x) (char=? x #\a)) #(#\a #\b #\a #\c)) => 2)  ; 字符等于#\a
+
 
 ; Trivial cases.
 (check (vector-cumulate + 0 '#(1 2 3 4)) => #(1 3 6 10))
