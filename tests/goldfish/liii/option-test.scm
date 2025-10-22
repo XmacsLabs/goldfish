@@ -88,6 +88,47 @@ none
   (check (opt :defined?) => #f)
   (check (opt :get-or-else 42) => 42))
 
+#|
+option%get
+获取option对象中的值。
+
+语法
+----
+(option%get)
+
+参数
+----
+无参数。
+
+返回值
+-----
+返回option对象中包装的值。
+
+说明
+----
+从option对象中提取包装的值。如果option为空，会抛出错误。
+
+边界条件
+--------
+- 非空option：返回包装的值
+- 空option：抛出错误
+
+性能特征
+--------
+- 时间复杂度：O(1)
+- 空间复杂度：O(1)
+
+兼容性
+------
+- 适用于所有option实例
+|#
+
+;;; 测试option%get方法
+(let ((opt1 (option 42))
+      (opt2 (option "hello")))
+  (check (opt1 :get) => 42)
+  (check (opt2 :get) => "hello"))
+
 ;;; 测试基本操作
 (let ((opt1 (option 42))
       (opt2 (none)))
