@@ -48,6 +48,46 @@ value : any
   (check (opt2 :defined?) => #t)
   (check (opt3 :empty?) => #t))
 
+#|
+none
+创建空的option对象。
+
+语法
+----
+(none)
+
+参数
+----
+无参数。
+
+返回值
+-----
+返回空的option对象。
+
+说明
+----
+创建表示缺失值的空option对象。
+
+边界条件
+--------
+- 总是返回空的option对象
+
+性能特征
+--------
+- 时间复杂度：O(1)
+- 空间复杂度：O(1)
+
+兼容性
+------
+- 支持所有option实例方法
+|#
+
+;;; 测试none函数
+(let ((opt (none)))
+  (check (opt :empty?) => #t)
+  (check (opt :defined?) => #f)
+  (check (opt :get-or-else 42) => 42))
+
 ;;; 测试基本操作
 (let ((opt1 (option 42))
       (opt2 (none)))
