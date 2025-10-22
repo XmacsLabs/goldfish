@@ -172,6 +172,53 @@ default : any
   (check (opt2 :get-or-else 0) => 0)
   (check (opt2 :get-or-else (lambda () "default")) => "default"))
 
+#|
+option%or-else
+链式操作option对象，如果当前option为空则返回备选option。
+
+语法
+----
+(option%or-else default . args)
+
+参数
+----
+default : option
+当当前option为空时返回的备选option对象。
+args : any
+可选的额外参数，用于链式操作。
+
+返回值
+-----
+如果当前option非空，返回当前option；如果当前option为空，返回备选option。
+
+说明
+----
+提供链式操作option对象的能力，支持多个备选option的链式调用。
+
+边界条件
+--------
+- 非空option：返回当前option
+- 空option：返回备选option
+- 参数类型检查：default必须是option类型
+
+性能特征
+--------
+- 时间复杂度：O(1)
+- 空间复杂度：O(1)
+
+兼容性
+------
+- 适用于所有option实例
+|#
+
+;;; 测试option%or-else方法
+(let ((opt1 (option 42))
+      (opt2 (option 0))
+      (opt3 (none)))
+  (check ((opt1 :or-else opt2) :get) => 42)
+  (check ((opt3 :or-else opt1) :get) => 42)
+  (check ((opt3 :or-else opt2) :get) => 0))
+
 ;;; 测试基本操作
 (let ((opt1 (option 42))
       (opt2 (none)))
