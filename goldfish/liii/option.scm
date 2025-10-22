@@ -43,7 +43,7 @@
 
       (define (%equals that)
         (and (option :is-type-of that)
-             (equal? value (that 'value))))
+             (class=? value (that 'value))))
 
       (define (%defined?) (not (null? value)))
   
