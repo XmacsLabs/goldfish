@@ -66,22 +66,22 @@
       (define (%head)
         (if (string-null? data)
             (index-error "rich-string%head: string is empty")
-            ($ data 0)))
+            (%char-at 0)))
 
       (define (%head-option)
         (if (string-null? data)
             (none)
-            (option ($ data 0))))
+            (option (%char-at 0))))
 
       (define (%last)
         (if (string-null? data)
             (index-error "rich-string%last: string is empty")
-            ($ data (- N 1))))
+            (%char-at (- N 1))))
 
       (define (%last-option)
         (if (string-null? data)
             (none)
-            (option ($ data (- N 1)))))
+            (option (%char-at (- N 1)))))
 
       (define (%slice from until . args)
         (chain-apply args
