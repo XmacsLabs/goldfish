@@ -479,4 +479,331 @@ pred : procedure
 (check (($ '(1 2 3 4 5) :filter (lambda (x) (> x 1)) :find-last even?) :get) => 4)
 
 
+#|
+rich-list%head
+返回rich-list的第一个元素。
+
+语法
+----
+(lst :head)
+
+参数
+----
+无
+
+返回值
+-----
+列表的第一个元素。
+
+功能
+----
+返回rich-list的第一个元素。如果列表为空，则抛出out-of-range异常。
+
+边界条件
+--------
+- 空列表：抛出out-of-range异常
+- 单元素列表：返回该元素
+- 多元素列表：返回第一个元素
+
+异常处理
+--------
+当列表为空时，抛出out-of-range异常，错误信息为"rich-list%head: list is empty"。
+
+性能特征
+--------
+- 时间复杂度：O(1)，直接访问列表头元素
+- 空间复杂度：O(1)，仅返回元素引用
+
+兼容性
+------
+- 适用于任何非空rich-list实例
+- 与标准Scheme的car操作语义一致
+|#
+
+;; 基本测试 - 非空列表
+(check ($ '(1 2 3) :head) => 1)
+(check ($ '(a b c) :head) => 'a)
+(check ($ '(42) :head) => 42)
+
+;; 边界测试 - 单元素列表
+(check ($ '(hello) :head) => 'hello)
+(check ($ '(#t) :head) => #t)
+(check ($ '("test") :head) => "test")
+
+;; 边界测试 - 多元素列表
+(check ($ '(1 2 3 4 5) :head) => 1)
+(check ($ '(x y z) :head) => 'x)
+
+;; 边界测试 - 异常处理
+(check-catch 'out-of-range ($ '() :head))
+
+;; 链式调用测试
+(check ($ '(1 2 3) :head) => 1)
+(check ($ '(a b c) :take 2 :head) => 'a)
+
+
+#|
+rich-list%head-option
+返回rich-list的第一个元素，使用option类型包装结果。
+
+语法
+----
+(lst :head-option)
+
+参数
+----
+无
+
+返回值
+-----
+以option形式返回列表的第一个元素。
+- 如果列表不为空：返回包含第一个元素的option对象
+- 如果列表为空：返回none
+
+功能
+----
+安全地获取rich-list的第一个元素，避免空列表异常。
+使用option类型包装结果，提供类型安全的空值处理。
+
+边界条件
+--------
+- 空列表：返回none
+- 单元素列表：返回包含该元素的option
+- 多元素列表：返回包含第一个元素的option
+
+性能特征
+--------
+- 时间复杂度：O(1)，直接访问列表头元素
+- 空间复杂度：O(1)，仅返回option对象引用
+
+兼容性
+------
+- 与option类型系统兼容
+- 支持链式调用模式
+- 适用于任何rich-list实例
+|#
+
+;; 基本测试 - 非空列表
+(check (($ '(1 2 3) :head-option) :get) => 1)
+(check (($ '(a b c) :head-option) :get) => 'a)
+(check (($ '(42) :head-option) :get) => 42)
+
+;; 边界测试 - 空列表
+(check (($ '() :head-option) :defined?) => #f)
+
+;; 边界测试 - 单元素列表
+(check (($ '(hello) :head-option) :get) => 'hello)
+(check (($ '(#t) :head-option) :get) => #t)
+(check (($ '("test") :head-option) :get) => "test")
+
+;; 边界测试 - 多元素列表
+(check (($ '(1 2 3 4 5) :head-option) :get) => 1)
+(check (($ '(x y z) :head-option) :get) => 'x)
+
+;; 链式调用测试
+(check (($ '(1 2 3) :head-option) :get) => 1)
+(check (($ '(a b c) :take 2 :head-option) :get) => 'a)
+
+
+#|
+rich-list%last
+返回rich-list的最后一个元素。
+
+语法
+----
+(lst :last)
+
+参数
+----
+无
+
+返回值
+-----
+列表的最后一个元素。
+
+功能
+----
+返回rich-list的最后一个元素。如果列表为空，则抛出index-error异常。
+
+边界条件
+--------
+- 空列表：抛出index-error异常
+- 单元素列表：返回该元素
+- 多元素列表：返回最后一个元素
+
+异常处理
+--------
+当列表为空时，抛出index-error异常，错误信息为"rich-list%last: empty list"。
+
+性能特征
+--------
+- 时间复杂度：O(n)，需要反转列表
+- 空间复杂度：O(n)，需要临时存储反转后的列表
+
+兼容性
+------
+- 适用于任何非空rich-list实例
+- 与标准Scheme的last操作语义一致
+|#
+
+;; 基本测试 - 非空列表
+(check ($ '(1 2 3) :last) => 3)
+(check ($ '(a b c) :last) => 'c)
+(check ($ '(42) :last) => 42)
+
+;; 边界测试 - 单元素列表
+(check ($ '(hello) :last) => 'hello)
+(check ($ '(#t) :last) => #t)
+(check ($ '("test") :last) => "test")
+
+;; 边界测试 - 多元素列表
+(check ($ '(1 2 3 4 5) :last) => 5)
+(check ($ '(x y z) :last) => 'z)
+
+;; 边界测试 - 异常处理
+(check-catch 'index-error ($ '() :last))
+
+;; 链式调用测试
+(check ($ '(1 2 3) :last) => 3)
+(check ($ '(a b c) :reverse :last) => 'a)
+
+
+#|
+rich-list%last-option
+返回rich-list的最后一个元素，使用option类型包装结果。
+
+语法
+----
+(lst :last-option)
+
+参数
+----
+无
+
+返回值
+-----
+以option形式返回列表的最后一个元素。
+- 如果列表不为空：返回包含最后一个元素的option对象
+- 如果列表为空：返回none
+
+功能
+----
+安全地获取rich-list的最后一个元素，避免空列表异常。
+使用option类型包装结果，提供类型安全的空值处理。
+
+边界条件
+--------
+- 空列表：返回none
+- 单元素列表：返回包含该元素的option
+- 多元素列表：返回包含最后一个元素的option
+
+性能特征
+--------
+- 时间复杂度：O(n)，需要反转列表
+- 空间复杂度：O(n)，需要临时存储反转后的列表
+
+兼容性
+------
+- 与option类型系统兼容
+- 支持链式调用模式
+- 适用于任何rich-list实例
+|#
+
+;; 基本测试 - 非空列表
+(check (($ '(1 2 3) :last-option) :get) => 3)
+(check (($ '(a b c) :last-option) :get) => 'c)
+(check (($ '(42) :last-option) :get) => 42)
+
+;; 边界测试 - 空列表
+(check (($ '() :last-option) :defined?) => #f)
+
+;; 边界测试 - 单元素列表
+(check (($ '(hello) :last-option) :get) => 'hello)
+(check (($ '(#t) :last-option) :get) => #t)
+(check (($ '("test") :last-option) :get) => "test")
+
+;; 边界测试 - 多元素列表
+(check (($ '(1 2 3 4 5) :last-option) :get) => 5)
+(check (($ '(x y z) :last-option) :get) => 'z)
+
+;; 链式调用测试
+(check (($ '(1 2 3) :last-option) :get) => 3)
+(check (($ '(a b c) :reverse :last-option) :get) => 'a)
+
+
+#|
+rich-list%slice
+提取rich-list中指定范围的子列表。
+
+语法
+----
+(lst :slice from until . args)
+
+参数
+----
+from : integer
+子列表的起始索引（包含）。
+
+until : integer
+子列表的结束索引（不包含）。
+
+args : list
+可选参数，用于链式调用其他方法。
+
+返回值
+-----
+以rich-list形式返回指定范围的子列表。
+
+功能
+----
+提取从索引from开始到索引until结束（不包含until）的子列表。
+自动处理边界情况，当索引超出范围时自动调整到有效范围。
+如果start >= end，返回空列表。
+
+边界条件
+--------
+- from < 0：自动调整为0
+- until > 列表长度：自动调整为列表长度
+- from >= until：返回空列表
+- 支持链式调用模式
+
+性能特征
+--------
+- 时间复杂度：O(n)，需要遍历部分列表
+- 空间复杂度：O(k)，k为子列表长度
+
+兼容性
+------
+- 与所有rich-list实例方法兼容
+- 支持链式调用模式
+|#
+
+;; 基本测试 - 正常范围
+(check (($ '(1 2 3 4 5) :slice 1 4) :collect) => '(2 3 4))
+(check (($ '(a b c d e) :slice 0 3) :collect) => '(a b c))
+(check (($ '(10 20 30 40) :slice 2 4) :collect) => '(30 40))
+
+;; 边界测试 - 空列表
+(check (($ '() :slice 0 3) :collect) => ())
+(check (($ '() :slice 1 2) :collect) => ())
+
+;; 边界测试 - 单元素列表
+(check (($ '(42) :slice 0 1) :collect) => '(42))
+(check (($ '(42) :slice 1 2) :collect) => ())
+
+;; 边界测试 - 索引超出范围
+(check (($ '(1 2 3) :slice -1 2) :collect) => '(1 2))
+(check (($ '(1 2 3) :slice 1 10) :collect) => '(2 3))
+(check (($ '(1 2 3) :slice -5 5) :collect) => '(1 2 3))
+
+;; 边界测试 - 无效范围
+(check (($ '(1 2 3) :slice 2 1) :collect) => ())
+(check (($ '(1 2 3) :slice 3 3) :collect) => ())
+(check (($ '(1 2 3) :slice 5 10) :collect) => ())
+
+;; 链式调用测试
+(check (($ '(1 2 3 4 5) :slice 1 4 :map (lambda (x) (* x 2))) :collect) => '(4 6 8))
+(check (($ '(a b c d e) :slice 1 4 :filter (lambda (x) (not (eq? x 'c)))) :collect) => '(b d))
+
+
 (check-report)
