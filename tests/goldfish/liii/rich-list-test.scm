@@ -355,4 +355,128 @@ rich-list%collect
   (check (cadr result) => 2)
   (check (cddr result) => '(3)))
 
+
+#|
+rich-list%find
+在rich-list中查找第一个满足条件的元素。
+
+语法
+----
+(lst :find pred)
+
+参数
+----
+pred : procedure
+用于测试元素的谓词函数，接受一个参数并返回布尔值。
+
+返回值
+-----
+以option形式返回找到的第一个满足条件的元素。
+- 如果找到匹配元素：返回包含该元素的option对象
+- 如果没有找到匹配元素：返回none
+
+功能
+----
+从列表的开头开始遍历，返回第一个满足谓词条件的元素。
+使用option类型包装结果，避免空值异常。
+
+边界条件
+--------
+- 空列表：返回none
+- 没有满足条件的元素：返回none
+- 多个满足条件的元素：返回第一个匹配的元素
+
+性能特征
+--------
+- 时间复杂度：O(n)，最坏情况下需要遍历整个列表
+- 空间复杂度：O(1)，仅返回option对象引用
+
+兼容性
+------
+- 与option类型系统兼容
+- 支持链式调用模式
+|#
+
+;; 基本测试 - 找到元素
+(check (($ '(1 2 3 4 5) :find even?) :get) => 2)
+(check (($ '(1 3 5 7 9) :find (lambda (x) (> x 5))) :get) => 7)
+(check (($ '(a b c d) :find (lambda (x) (eq? x 'c))) :get) => 'c)
+
+;; 边界测试 - 空列表
+(check (($ '() :find (lambda (x) #t)) :defined?) => #f)
+
+;; 边界测试 - 没有匹配元素
+(check (($ '(1 3 5 7) :find even?) :defined?) => #f)
+(check (($ '(a b c) :find (lambda (x) (eq? x 'z))) :defined?) => #f)
+
+;; 边界测试 - 多个匹配元素，返回第一个
+(check (($ '(1 2 4 6 8) :find even?) :get) => 2)
+(check (($ '(5 10 15 20) :find (lambda (x) (= (modulo x 5) 0))) :get) => 5)
+
+;; 链式调用测试
+(check (($ '(1 2 3 4 5) :filter (lambda (x) (> x 2)) :find even?) :get) => 4)
+
+
+#|
+rich-list%find-last
+在rich-list中从后往前查找第一个满足条件的元素。
+
+语法
+----
+(lst :find-last pred)
+
+参数
+----
+pred : procedure
+用于测试元素的谓词函数，接受一个参数并返回布尔值。
+
+返回值
+-----
+以option形式返回从后往前找到的第一个满足条件的元素。
+- 如果找到匹配元素：返回包含该元素的option对象
+- 如果没有找到匹配元素：返回none
+
+功能
+----
+从列表的末尾开始向前遍历，返回第一个满足谓词条件的元素。
+与find方法相反，find-last返回最后一个匹配的元素。
+使用option类型包装结果，避免空值异常。
+
+边界条件
+--------
+- 空列表：返回none
+- 没有满足条件的元素：返回none
+- 多个满足条件的元素：返回最后一个匹配的元素
+
+性能特征
+--------
+- 时间复杂度：O(n)，最坏情况下需要遍历整个列表
+- 空间复杂度：O(n)，需要反转列表（临时空间）
+
+兼容性
+------
+- 与option类型系统兼容
+- 支持链式调用模式
+|#
+
+;; 基本测试 - 找到最后一个匹配元素
+(check (($ '(1 2 3 4 5) :find-last even?) :get) => 4)
+(check (($ '(1 3 5 7 9) :find-last (lambda (x) (> x 5))) :get) => 9)
+(check (($ '(a b c d c) :find-last (lambda (x) (eq? x 'c))) :get) => 'c)
+
+;; 边界测试 - 空列表
+(check (($ '() :find-last (lambda (x) #t)) :defined?) => #f)
+
+;; 边界测试 - 没有匹配元素
+(check (($ '(1 3 5 7) :find-last even?) :defined?) => #f)
+(check (($ '(a b c) :find-last (lambda (x) (eq? x 'z))) :defined?) => #f)
+
+;; 边界测试 - 多个匹配元素，返回最后一个
+(check (($ '(1 2 4 6 8) :find-last even?) :get) => 8)
+(check (($ '(5 10 15 20) :find-last (lambda (x) (= (modulo x 5) 0))) :get) => 20)
+
+;; 链式调用测试
+(check (($ '(1 2 3 4 5) :filter (lambda (x) (> x 1)) :find-last even?) :get) => 4)
+
+
 (check-report)
