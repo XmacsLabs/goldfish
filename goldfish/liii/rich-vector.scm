@@ -48,7 +48,7 @@
 
       (define (@concat v1 v2 . args)
         (chain-apply args
-          (rich-vector (append (v1 :collect) (v2 :collect)))))
+          (rich-vector (vector-append (v1 :collect) (v2 :collect)))))
 
       (define (%collect) data)
 

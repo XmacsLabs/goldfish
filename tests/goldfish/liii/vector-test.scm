@@ -23,15 +23,6 @@
 
 (check-set-mode! 'report-failed)
 
-(for-each (lambda (p) (check (procedure? p) => #t))
-  (list
-   vector-empty?
-   vector-count
-   vector-any vector-every vector-copy vector-copy!
-   vector-index vector-index-right vector-partition
-   vector-swap! vector-reverse! vector-cumulate reverse-list->vector
-   vector=))
-
 (check-true (vector? (int-vector 1 2 3)))
 (check-catch 'wrong-type-arg (int-vector 1 2 'a))
 
@@ -1424,7 +1415,7 @@ wrong-type-arg
 
 #|
 vector-append
-连接多个向量，创建一个新向量。
+连接多个向量，创建一个新向量。R7RS定义的内置函数。
 
 语法
 ----
@@ -1455,8 +1446,6 @@ wrong-type-arg
 当任何参数不是向量时抛出错误。
 
 |#
-
-;;; vector-append 测试
 
 ;; 基本功能测试
 (check (vector-append) => #())  ; 无参数

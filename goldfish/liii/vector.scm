@@ -23,7 +23,7 @@
     make-vector vector vector-length vector-ref vector-set! vector->list list->vector
     ; from (scheme base)
     vector-copy vector-fill! vector-copy! vector->string string->vector
-    vector-map vector-for-each
+    vector-map vector-for-each vector-append
     ; from (srfi srfi-133)
     vector-empty?
     vector-fold vector-fold-right
@@ -53,18 +53,6 @@
                 (vector-set! result-vec i (car lst))
                 (loop (- i 1) (cdr lst)))))))
 
-    (define (vector-append . vectors)
-      (let* ((total-length (apply + (map vector-length vectors)))
-             (result (make-vector total-length)))
-        (let loop ((vecs vectors) (index 0))
-          (if (null? vecs)
-              result
-              (let* ((current-vec (car vecs))
-                     (current-length (vector-length current-vec)))
-                (do ((i 0 (+ i 1)))
-                    ((= i current-length))
-                  (vector-set! result (+ index i) (vector-ref current-vec i)))
-                (loop (cdr vecs) (+ index current-length)))))))
 
     ) ; end of begin
   ) ; end of define-library

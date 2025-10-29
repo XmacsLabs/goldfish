@@ -4263,8 +4263,6 @@ wrong-type-arg
 (check (vector 'a 'b 'c) => #(a b c))
 (check (vector) => #())
 
-(check (vector-append #(0 1 2) #(3 4 5)) => #(0 1 2 3 4 5))
-
 (check (vector? #(1 2 3)) => #t)
 (check (vector? #()) => #t)
 (check (vector? '(1 2 3)) => #f)
