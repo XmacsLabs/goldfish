@@ -64,11 +64,19 @@ Just like S7 Scheme, [src/goldfish.hpp](src/goldfish.hpp) and [src/goldfish.cpp]
 
 
 ## Standard Library
-### Python-like standard library and Scala-like collections
+### Scala-like collections
+| Library | Description |
+|---------|-------------|
+| [(liii rich-char)](tests/goldfish/liii/rich-char-test.scm) | boxed char with rich char and instance methods |
+| [(liii rich-string)](tests/goldfish/liii/rich-string-test.scm) | boxed string with rich char and instance methods |
+| [(liii rich-list)](tests/goldfish/liii/rich-list-test.scm) | boxed list with rich static and instance methods |
+| [(liii rich-vector)](tests/goldfish/liii/rich-vector-test.scm) | boxed vector with rich static and instance methods |
+| [(liii rich-hash-table)](tests/goldfish/liii/rich-hash-table-test.scm) | boxed hash-table with rich static and instance methods |
+
+### Python-like standard library
 
 | Library                                           | Description                          | Example functions                                                |
 | ------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------- |
-| [(liii lang)](goldfish/liii/lang.scm)             | Scala-like Collection                | `box` for functional api, `rich-char`, `rich-string` for unicode |
 | [(liii base)](goldfish/liii/base.scm)             | Basic routines                       | `==`, `!=`, `display*`                                           |
 | [(liii error)](goldfish/liii/error.scm)           | Python like Errors                   | `os-error` to raise `'os-error` just like OSError in Python      |
 | [(liii check)](goldfish/liii/check.scm)           | Test framework based on SRFI-78      | `check`, `check-catch`                                           |
