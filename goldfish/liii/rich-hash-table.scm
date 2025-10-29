@@ -96,6 +96,9 @@
               data)
             (rich-hash-table r))))
 
+      (define (%size)
+        (hash-table-size data))
+
       ) ; end of define-case-class
 
     ) ; end of begin
