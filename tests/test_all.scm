@@ -20,13 +20,28 @@
         (liii path)
         (liii lang))
 
-(define (all-tests)
+(define level1-tests
   ((path :./ "tests" :/ "goldfish" :list-path)
    :filter (@ _ :dir?)
    :flat-map (lambda (x) ((x :list-path) :collect))
    :filter (@ _ :file?)
    :filter (lambda (x) (not ($ (x :to-string) :contains "srfi-78")))
    :map (@ _ :to-string)))
+
+(define level2-tests
+  ((path :./ "tests" :/ "goldfish" :list-path)
+   :filter (@ _ :dir?)
+   :flat-map (lambda (x) ((x :list-path) :collect))
+   :filter (@ _ :dir?)
+   :flat-map (lambda (x) ((x :list-path) :collect))
+   :filter (@ _ :file?)
+   :filter (lambda (x) (not ($ (x :to-string) :contains "srfi-78")))
+   :map (@ _ :to-string)))
+
+(display* (level1-tests :length))
+
+(define (all-tests)
+  (rich-vector :concat level1-tests level2-tests))
 
 (define (goldfish-cmd)
   (if (os-windows?)

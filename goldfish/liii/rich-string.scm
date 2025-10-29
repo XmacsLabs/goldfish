@@ -316,14 +316,20 @@
         (chain-apply args
           (rich-string (replace-helper data old new 0))))
 
-      (define* (%pad-left len (char #\space) . args)
-        (let ((result (rich-string (string-pad data len char))))
+      (define* (%pad-left len ch . args)
+        (let ((result (if (<= len N)
+                          (%this)
+                          (let ((padding (make-string (- len N) ch)))
+                            (rich-string (string-append padding data))))))
           (if (null? args)
               result
               (apply result args))))
 
-      (define* (%pad-right len (char #\space) . args)
-        (let ((result (rich-string (string-pad-right data len char))))
+      (define* (%pad-right len ch . args)
+        (let ((result (if (<= len N)
+                          (%this)
+                          (let ((padding (make-string (- len N) ch)))
+                            (rich-string (string-append data padding))))))
           (if (null? args)
               result
               (apply result args))))
