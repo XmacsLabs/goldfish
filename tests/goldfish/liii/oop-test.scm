@@ -205,6 +205,7 @@ procedure
 - 方法分发: 支持静态方法和实例方法
 - 相等性比较: 自动实现 `:equals` 方法
 - 字符串表示: 自动实现 `:to-string` 方法
+- 类型检查: 自动生成 `:is-type-of` 静态方法
 
 注意事项
 ----
@@ -452,6 +453,151 @@ define-object 是 (liii oop) 模块中用于创建对象的宏，它创建一个
 ;; 测试空参数调用
 (check-catch 'value-error
   (string-utils))
+
+#|
+define-class
+定义一个具有私有字段和自动生成 getter/setter 的类。
+
+语法
+-----
+(define-class class-name ((field-name type-predicate [default-value]) ...) method-definition ...)
+
+参数
+-----
+class-name : symbol
+要定义的类名称，必须是一个符号。
+
+field-name : symbol
+私有字段的名称。
+
+type-predicate : procedure
+字段的类型断言函数，用于验证字段值的类型。
+
+default-value : any (可选)
+字段的默认值，如果未提供则使用空列表。
+
+method-definition : any
+类的方法定义，可以是静态方法、实例方法或内部方法。
+
+返回值
+-----
+返回 #t，表示类定义成功。
+
+描述
+-----
+define-class 是 (liii oop) 模块中用于创建类的宏，它基于 define-case-class 构建，
+提供了自动生成私有字段的 getter 和 setter 方法的功能。
+
+该宏会自动为每个私有字段生成：
+- 字段定义：使用默认值初始化字段
+- Getter 方法：格式为 `:get-fieldname`，返回字段值
+- Setter 方法：格式为 `:set-fieldname!`，设置字段值（带类型检查）
+
+生成的 getter 和 setter 方法通过消息传递机制调用，例如：
+- `(instance :get-name)` 获取 name 字段的值
+- `(instance :set-name! "Alice")` 设置 name 字段的值
+
+特点
+-----
+- 自动为私有字段生成 getter 和 setter 方法
+- 支持类型检查和默认值
+- 基于 define-case-class 构建，继承其所有特性
+- 支持静态方法（@前缀）、实例方法（%前缀）和内部方法
+- 类型验证在运行时进行
+- 自动生成 `:is-type-of` 静态方法用于类型检查
+
+注意事项
+-----
+- 类名称必须是符号
+- 字段类型断言函数必须是一个过程
+- setter 方法会进行类型检查，类型不匹配会抛出 type-error
+- 默认值在类定义时计算，如果涉及变量引用会捕获当前环境
+- 支持任意数量的私有字段和方法定义
+|#
+(let ()
+  (define-class person
+    ((name string? "")
+     (age integer? 0))
+    
+    (define (@apply name)
+      (let1 r (person)
+        (r :set-name! name)
+        (r :set-age! 10)
+        r)))
+  
+  ;; 测试@apply
+  (define p1 (person))
+  (define p2 (person "Bob"))
+  
+  ;; 测试setter和getter
+  (p1 :set-name! "Alice")
+  (p1 :set-age! 25)
+  (check (p1 :get-name) => "Alice")
+  (check (p1 :get-age) => 25)
+  (check (p2 :get-name) => "Bob")
+  (check (p2 :get-age) => 10)
+  
+  (check-true (person :is-type-of p1))
+  (check-true (person :is-type-of p2))
+
+  ;; 测试类型检查
+  (check-catch 'type-error (p1 :set-name! 123))
+  (check-catch 'type-error (p1 :set-age! "invalid"))
+  )
+
+#|
+case-class?
+判断一个对象是否为案例类（case class）实例。
+
+语法
+-----
+(case-class? obj)
+
+参数
+-----
+obj : any
+待检查的对象，可以是任何 Goldfish Scheme 值。
+
+返回值
+-----
+boolean
+如果对象是案例类实例则返回 #t，否则返回 #f。
+
+描述
+-----
+case-class? 是 (liii oop) 模块中用于类型检查的函数，它判断给定的对象是否是通过
+`define-case-class` 或 `define-class` 宏创建的案例类实例。
+
+该函数通过分析对象的源代码结构来识别案例类，具体检查：
+- 对象是否为过程
+- 过程源代码是否具有特定的结构
+- 过程体中是否包含案例类特有的消息分发模式
+- 是否包含 `:is-instance-of` 和 `:equals` 方法
+
+特点
+-----
+- 运行时类型检查：在运行时动态判断对象类型
+- 结构识别：通过源代码结构识别案例类
+- 通用性：适用于所有通过 define-case-class 和 define-class 创建的对象
+- 精确性：能够准确区分案例类实例和普通过程
+
+注意事项
+-----
+- 只能识别通过 define-case-class 和 define-class 创建的案例类
+- 对于其他类型的对象（包括普通过程、数字、字符串等）返回 #f
+- 依赖于过程源代码的结构，不适用于编译后优化的代码
+- 是底层类型检查函数，通常使用 `:is-type-of` 方法进行类型检查更直观
+|#
+(check-false (case-class? (lambda (x) x)))
+(check-false (case-class? +))
+(check-false (case-class? identity))
+
+(let ((bob (person "Bob" 21)))
+  (check-true (case-class? bob))
+  (check-false (case-class? +))
+  (check-false (case-class? 42))
+  )
+
 
 (check-report)
 
