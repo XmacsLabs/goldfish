@@ -377,4 +377,81 @@ procedure
        (define (test-name str)
          (string-append str " ")))))
 
+
+#|
+define-object
+定义一个具有静态方法的对象。
+
+语法
+-----
+(define-object object-name definition ...)
+
+参数
+-----
+object-name : symbol
+要定义的对象名称，必须是一个符号。
+
+definition : any
+对象的定义内容，可以是变量定义或函数定义。
+
+返回值
+-----
+返回 #t，表示对象定义成功。
+
+描述
+-----
+define-object 是 (liii oop) 模块中用于创建对象的宏，它创建一个具有静态方法的对象。
+对象通过消息传递机制调用方法，使用 `:method-name` 语法。
+
+该宏会自动识别以 `@` 开头的函数定义作为静态方法，并将这些方法映射到对应的消息关键字。
+例如，定义 `(@concat x y)` 会创建一个可以通过 `object-name :concat arg1 arg2` 调用的方法。
+
+对象可以包含普通变量定义和静态方法定义，所有定义都在对象的私有环境中执行。
+
+特点
+-----
+- 支持静态方法，通过 `@` 前缀定义
+- 使用消息传递机制调用方法
+- 支持对象间的相互引用
+- 方法调用使用关键字语法（`:method-name`）
+- 对象可以包含任意数量的变量和方法定义
+
+注意事项
+-----
+- 对象名称必须是符号
+- 静态方法必须以 `@` 开头
+- 调用不存在的静态方法会抛出 value-error
+- 对象可以包含普通变量定义，这些变量在对象内部可见
+- 对象可以返回其他对象，支持对象组合
+|#
+
+(define-object string-utils
+  (define (@concat x y)
+    (string-append x y)))
+
+(check (string-utils :concat "a" "b") => "ab")
+
+(define-object object1
+  (define x 0)
+  (define (@concat x y) 
+    (string-append x y)))
+
+(define-object object2
+  (define y 0)
+  (define (@return-object1) object1))
+
+(check ((object2 :return-object1) :concat "a" "b") => "ab")
+
+;; 测试调用不存在的方法
+(check-catch 'value-error
+  (string-utils :nonexistent-method))
+
+(check-catch 'value-error
+  (object1 :unknown-method "arg1" "arg2"))
+
+;; 测试空参数调用
+(check-catch 'value-error
+  (string-utils))
+
 (check-report)
+
