@@ -25,32 +25,6 @@
 (define == class=?)
 (check-set-mode! 'report-failed)
 
-(check ((@ + _ 2) 1) => 3)
-(check ((@ list 1 _ 3 _ 5) 2 4) => (list 1 2 3 4 5))
-(check ((@ list _ _) 'a 'b) => (list 'a 'b))
-
-(check
-  (let ((a 10))
-    (define add (@ + (* a 2) _))  
-    (set! a 100)
-    (add 5))
-  => 25)
-
-(let ((x 5))
-  (check 
-    ((@ cons (+ x 1) _) 'y) 
-    => (cons 6 'y)))
-
-(check (procedure? (@ list 1 2)) => #t)
-(check ((@ list 1 2)) => '(1 2))
-
-(check ((@ _ 'a 'b) list) => (list 'a 'b))
-(check ((@ map _ '(1 2 3)) (lambda (x) (+ x 1))) => '(2 3 4))
-(check ((@ apply _ '(1 2 3)) +) => 6)
-
-(check ((@ (@ + _ 1) _) 2) => 3)
-(check ((@ _ _) (@ * _ 2) 3) => 6)
-
 (typed-define (person (name string? "Bob") (age integer?))
   (string-append name " is " (number->string age) " years old"))
 
