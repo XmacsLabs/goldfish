@@ -14,20 +14,44 @@
 ; under the License.
 ;
 
-(import (scheme time)
+(import (liii timeit)
         (liii lang))
 
-(define (timing msg thunk)
-  (let* ((start (current-jiffy))
-         (val (thunk))
-         (end (current-jiffy)))
-    (display* msg (number->string (- end start)) "\n")))
-
-(define (repeat n proc)
-  (when (>= n 0)
-        (proc)
-        (repeat (- n 1) proc)))
+(define (timing msg stmt number)
+  (display* msg (number->string (timeit stmt (lambda () #t) number)) "\n"))
 
 (timing "rich-vector%empty%length:\t"
-  (lambda () (repeat 10000 (lambda () (rich-vector :empty :length)))))
+  (lambda () (rich-vector :empty :length))
+  10000)
 
+(timing "vector-length (vector):\t"
+  (lambda () (vector-length (vector)))
+  10000)
+
+;; 测试长度为100的随机向量求和操作
+(define (create-random-vector n)
+  (let ((vec (make-vector n)))
+    (do ((i 0 (+ i 1)))
+        ((>= i n) vec)
+      (vector-set! vec i (random 1000)))))
+
+(define (create-random-rich-vector n)
+  (rich-vector (create-random-vector n)))
+
+(define (vector-sum vec)
+  (apply + (vector->list vec)))
+
+(define (rich-vector-sum rvec)
+  (rvec :reduce +))
+
+;; 测试 rich-vector 求和（只计算求和操作）
+(let ((rvec (create-random-rich-vector 100)))
+  (timing "rich-vector-sum-only (length=100):\t"
+    (lambda () (rich-vector-sum rvec))
+    50000))
+
+;; 测试 vector 求和（只计算求和操作）
+(let ((vec (create-random-vector 100)))
+  (timing "vector-sum-only (length=100):\t"
+    (lambda () (vector-sum vec))
+    50000))
