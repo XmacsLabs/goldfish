@@ -357,7 +357,8 @@
       (let* ((field-defs '())
              (getter-defs '())
              (setter-defs '())
-         
+             (field-names (map car private-fields))
+
              ;; generate define, getter, setter
              (process-fields
               (map (lambda (field-spec)
@@ -366,33 +367,50 @@
                             (default-value (if (>= (length field-spec) 3)
                                              (caddr field-spec)
                                              ''()))
-                            (getter-name (string->symbol 
+                            (getter-name (string->symbol
                                           (string-append "%get-" (symbol->string field-name))))
-                            (setter-name (string->symbol 
+                            (setter-name (string->symbol
                                           (string-append "%set-" (symbol->string field-name) "!"))))
-                   
-                       (set! field-defs 
+
+                       (set! field-defs
                              (cons `(define ,field-name ,default-value) field-defs))
-                   
-                       (set! getter-defs 
+
+                       (set! getter-defs
                              (cons `(define (,getter-name) ,field-name) getter-defs))
-                   
-                       (set! setter-defs 
+
+                       (set! setter-defs
                              (cons `(typed-define (,setter-name (x ,type-pred))
                                       (set! ,field-name x))
                                    setter-defs))))
-                   private-fields)))
-    
+                   private-fields))
+
+             ;; generate %equals method
+             (equals-def
+              `(define (%equals that)
+                 (unless (case-class? that)
+                   (type-error
+                     (format #f "In funtion #<~a ~a>: argument *~a* must be *~a*!    **Got ~a**"
+                       %equals '(that) 'that "case-class" (object->string that))))
+                 (and (that :is-instance-of ',class-name)
+                      ,@(map (lambda (field-name)
+                               (let ((getter-name (string->symbol
+                                                   (string-append ":get-" (symbol->string field-name)))))
+                                 `(equal? ,field-name (that ,getter-name))))
+                             field-names)))))
+
         `(define-case-class ,class-name ()
            ;; define
            ,@(reverse field-defs)
-       
+
            ;; Getter
            ,@(reverse getter-defs)
-       
+
            ;; Setter
            ,@(reverse setter-defs)
-       
+
+           ;; %equals method
+           ,equals-def
+
            ;; else
            ,@private-fields-and-methods)))
 

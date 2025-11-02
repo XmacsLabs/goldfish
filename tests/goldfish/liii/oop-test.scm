@@ -207,6 +207,36 @@ procedure
 - 字符串表示: 自动实现 `:to-string` 方法
 - 类型检查: 自动生成 `:is-type-of` 静态方法
 
+自动生成的方法
+----
+`define-case-class` 会自动为每个样本类生成以下方法：
+
+**实例方法**
+- `:equals` - 相等性比较方法
+  - 比较两个样本类实例是否相等
+  - 检查两个实例是否为同一类型
+  - 使用 `equal?` 比较所有字段的值
+  - 如果比较的对象不是样本类实例，会抛出 `type-error`
+
+- `:to-string` - 字符串表示方法
+  - 返回样本类实例的字符串表示
+  - 格式为 `(class-name :field1 value1 :field2 value2 ...)`
+
+- `:is-instance-of` - 实例类型检查方法
+  - 检查实例是否属于指定的类
+  - 与 `:is-type-of` 静态方法配合使用
+
+**静态方法**
+- `:is-type-of` - 类型检查方法
+  - 检查对象是否为该样本类的实例
+  - 通过调用对象的 `:is-instance-of` 方法实现
+  - 返回布尔值，表示对象是否属于该类
+
+- `:apply` - 实例创建方法
+  - 通过位置参数创建样本类实例
+  - 参数顺序与字段定义顺序一致
+  - 提供位置参数调用的便捷方式
+
 注意事项
 ----
 - 方法名不能与字段名冲突
@@ -378,6 +408,102 @@ procedure
        (define (test-name str)
          (string-append str " ")))))
 
+;; 测试自动生成的 %equals 方法
+(let ()
+  (define-case-class point
+    ((x integer?)
+     (y integer?)))
+
+  (define p1 (point :x 1 :y 2))
+  (define p2 (point :x 1 :y 2))
+  (define p3 (point :x 3 :y 4))
+
+  ;; 测试相同值的实例相等
+  (check-true (p1 :equals p2))
+  (check-true (p2 :equals p1))
+
+  ;; 测试不同值的实例不相等
+  (check-false (p1 :equals p3))
+  (check-false (p3 :equals p1))
+
+  ;; 测试实例与自身相等
+  (check-true (p1 :equals p1))
+  (check-true (p2 :equals p2))
+  (check-true (p3 :equals p3)))
+
+;; 测试 %equals 方法的类型检查
+(let ()
+  (define-case-class person
+    ((name string?)
+     (age integer?)))
+
+  (define bob (person "Bob" 21))
+
+  ;; 测试与非样本类对象比较抛出 type-error
+  (check-catch 'type-error (bob :equals "not-a-sample-class"))
+  (check-catch 'type-error (bob :equals 123))
+  (check-catch 'type-error (bob :equals +)))
+
+;; 测试不同类型样本类实例的比较
+(let ()
+  (define-case-class person
+    ((name string?)
+     (age integer?)))
+
+  (define-case-class point
+    ((x integer?)
+     (y integer?)))
+
+  (define bob (person "Bob" 21))
+  (define p1 (point :x 1 :y 2))
+
+  ;; 测试不同类型样本类实例不相等
+  (check-false (bob :equals p1))
+  (check-false (p1 :equals bob)))
+
+;; 测试 %equals 方法在复杂样本类中的行为
+(let ()
+  (define-case-class complex-class
+    ((name string?)
+     (numbers list?)
+     (flag boolean? #f)))
+
+  (define c1 (complex-class :name "test" :numbers '(1 2 3) :flag #t))
+  (define c2 (complex-class :name "test" :numbers '(1 2 3) :flag #t))
+  (define c3 (complex-class :name "test" :numbers '(4 5 6) :flag #t))
+
+  ;; 测试复杂字段的相等性比较
+  (check-true (c1 :equals c2))
+  (check-false (c1 :equals c3)))
+
+;; 测试 %equals 方法在带有默认值的样本类中的行为
+(let ()
+  (define-case-class person-with-default
+    ((name string? "Unknown")
+     (age integer? 0)))
+
+  (define p1 (person-with-default))
+  (define p2 (person-with-default :name "Unknown" :age 0))
+  (define p3 (person-with-default :name "Alice" :age 25))
+
+  ;; 测试默认值实例的相等性
+  (check-true (p1 :equals p2))
+  (check-false (p1 :equals p3)))
+
+;; 测试 %equals 方法在带有私有字段的样本类中的行为
+(let ()
+  (define-case-class person-with-private
+    ((name string?)
+     (age integer?))
+
+    (define secret "private"))
+
+  (define p1 (person-with-private "Bob" 21))
+  (define p2 (person-with-private "Bob" 21))
+
+  ;; 测试私有字段不影响相等性比较
+  (check-true (p1 :equals p2)))
+
 
 #|
 define-object
@@ -493,18 +619,33 @@ define-class 是 (liii oop) 模块中用于创建类的宏，它基于 define-ca
 - Getter 方法：格式为 `:get-fieldname`，返回字段值
 - Setter 方法：格式为 `:set-fieldname!`，设置字段值（带类型检查）
 
+此外，宏还会自动生成以下方法：
+- `:equals` - 相等性比较方法
+  - 比较两个样本类实例是否相等
+  - 检查两个实例是否为同一类型
+  - 使用 `equal?` 比较所有私有字段的值
+  - 如果比较的对象不是样本类实例，会抛出 `type-error`
+
 生成的 getter 和 setter 方法通过消息传递机制调用，例如：
 - `(instance :get-name)` 获取 name 字段的值
 - `(instance :set-name! "Alice")` 设置 name 字段的值
+- `(instance :equals other)` 比较两个实例是否相等
 
 特点
 -----
 - 自动为私有字段生成 getter 和 setter 方法
+- 自动生成 `:equals` 相等性比较方法
 - 支持类型检查和默认值
 - 基于 define-case-class 构建，继承其所有特性
 - 支持静态方法（@前缀）、实例方法（%前缀）和内部方法
 - 类型验证在运行时进行
 - 自动生成 `:is-type-of` 静态方法用于类型检查
+
+关于 `:equals` 方法的说明
+-----
+自动生成的 `:equals` 方法使用 `equal?` 来比较所有私有字段的值。
+如果私有字段包含其他样本类实例，`equal?` 会比较它们的引用而不是内容。
+如果需要深度比较嵌套的样本类实例，可以自定义 `%equals` 方法。
 
 注意事项
 -----
@@ -543,11 +684,176 @@ define-class 是 (liii oop) 模块中用于创建类的宏，它基于 define-ca
   ;; 测试类型检查
   (check-catch 'type-error (p1 :set-name! 123))
   (check-catch 'type-error (p1 :set-age! "invalid"))
+
+  ;; 测试 %equals 方法
+  (check-true (p1 :equals p1))
+  (check-true (p2 :equals p2))
+  (check-false (p1 :equals p2))
   )
+
+;; 测试 define-class 的 %equals 方法
+(let ()
+  (define-class point
+    ((x integer? 0)
+     (y integer? 0)))
+
+  (define p1 (point))
+  (define p2 (point))
+  (define p3 (point))
+
+  (p1 :set-x! 1)
+  (p1 :set-y! 2)
+  (p2 :set-x! 1)
+  (p2 :set-y! 2)
+  (p3 :set-x! 3)
+  (p3 :set-y! 4)
+
+  ;; 测试相同值的实例相等
+  (check-true (p1 :equals p2))
+  (check-true (p2 :equals p1))
+
+  ;; 测试不同值的实例不相等
+  (check-false (p1 :equals p3))
+  (check-false (p3 :equals p1))
+
+  ;; 测试实例与自身相等
+  (check-true (p1 :equals p1))
+  (check-true (p2 :equals p2))
+  (check-true (p3 :equals p3)))
+
+;; 测试 define-class %equals 方法的类型检查
+(let ()
+  (define-class person
+    ((name string? "")
+     (age integer? 0)))
+
+  (define bob (person))
+  (bob :set-name! "Bob")
+  (bob :set-age! 21)
+
+  ;; 测试与非样本类对象比较抛出 type-error
+  (check-catch 'type-error (bob :equals "not-a-sample-class"))
+  (check-catch 'type-error (bob :equals 123))
+  (check-catch 'type-error (bob :equals +)))
+
+;; 测试不同类型 define-class 实例的比较
+(let ()
+  (define-class person
+    ((name string? "")
+     (age integer? 0)))
+
+  (define-class point
+    ((x integer? 0)
+     (y integer? 0)))
+
+  (define bob (person))
+  (bob :set-name! "Bob")
+  (bob :set-age! 21)
+
+  (define p1 (point))
+  (p1 :set-x! 1)
+  (p1 :set-y! 2)
+
+  ;; 测试不同类型样本类实例不相等
+  (check-false (bob :equals p1))
+  (check-false (p1 :equals bob)))
+
+;; 测试 define-class %equals 方法在复杂类中的行为
+(let ()
+  (define-class complex-class
+    ((name string? "")
+     (numbers list? '())
+     (flag boolean? #f)))
+
+  (define c1 (complex-class))
+  (c1 :set-name! "test")
+  (c1 :set-numbers! '(1 2 3))
+  (c1 :set-flag! #t)
+
+  (define c2 (complex-class))
+  (c2 :set-name! "test")
+  (c2 :set-numbers! '(1 2 3))
+  (c2 :set-flag! #t)
+
+  (define c3 (complex-class))
+  (c3 :set-name! "test")
+  (c3 :set-numbers! '(4 5 6))
+  (c3 :set-flag! #t)
+
+  ;; 测试复杂字段的相等性比较
+  (check-true (c1 :equals c2))
+  (check-false (c1 :equals c3)))
+
+;; 测试 define-class %equals 方法在带有默认值的类中的行为
+(let ()
+  (define-class person-with-default
+    ((name string? "Unknown")
+     (age integer? 0)))
+
+  (define p1 (person-with-default))
+  (define p2 (person-with-default))
+  (define p3 (person-with-default))
+
+  (p3 :set-name! "Alice")
+  (p3 :set-age! 25)
+
+  ;; 测试默认值实例的相等性
+  (check-true (p1 :equals p2))
+  (check-false (p1 :equals p3)))
+
+;; 测试 define-class %equals 方法在嵌套类中的行为（仅使用 equal? 比较）
+(let ()
+  (define-class inner-class
+    ((value integer? 0)))
+
+  (define-class outer-class
+    ((inner inner-class? (inner-class))
+     (name string? "")))
+
+  (define o1 (outer-class))
+  (define o2 (outer-class))
+  (define o3 (outer-class))
+
+  (o1 :set-name! "test")
+  (o2 :set-name! "test")
+  (o3 :set-name! "different")
+
+  ;; 测试嵌套类实例的相等性（仅使用 equal? 比较，不会递归调用 %equals）
+  ;; 注意：由于 inner 字段是样本类实例，equal? 会比较它们的引用而不是内容
+  ;; 因此 o1 和 o2 的 inner 字段引用不同，导致 :equals 返回 #f
+  (check-false (o1 :equals o2))
+  (check-false (o1 :equals o3)))
+
+;; 测试 define-class %equals 方法在自定义方法冲突时的行为
+(let ()
+  (define-class person-with-custom-equals
+    ((name string? "")
+     (age integer? 0))
+
+    ;; 自定义的 %equals 方法会覆盖自动生成的方法
+    (define (%equals that)
+      (and (that :is-instance-of 'person-with-custom-equals)
+           (equal? name (that :get-name)))))
+
+  (define p1 (person-with-custom-equals))
+  (p1 :set-name! "Bob")
+  (p1 :set-age! 21)
+
+  (define p2 (person-with-custom-equals))
+  (p2 :set-name! "Bob")
+  (p2 :set-age! 30)
+
+  (define p3 (person-with-custom-equals))
+  (p3 :set-name! "Alice")
+  (p3 :set-age! 21)
+
+  ;; 测试自定义 %equals 方法的行为（只比较 name，不比较 age）
+  (check-true (p1 :equals p2))
+  (check-false (p1 :equals p3)))
 
 #|
 case-class?
-判断一个对象是否为案例类（case class）实例。
+判断一个对象是否为样本类（case class）实例。
 
 语法
 -----
@@ -561,29 +867,29 @@ obj : any
 返回值
 -----
 boolean
-如果对象是案例类实例则返回 #t，否则返回 #f。
+如果对象是样本类实例则返回 #t，否则返回 #f。
 
 描述
 -----
 case-class? 是 (liii oop) 模块中用于类型检查的函数，它判断给定的对象是否是通过
-`define-case-class` 或 `define-class` 宏创建的案例类实例。
+`define-case-class` 或 `define-class` 宏创建的样本类实例。
 
-该函数通过分析对象的源代码结构来识别案例类，具体检查：
+该函数通过分析对象的源代码结构来识别样本类，具体检查：
 - 对象是否为过程
 - 过程源代码是否具有特定的结构
-- 过程体中是否包含案例类特有的消息分发模式
+- 过程体中是否包含样本类特有的消息分发模式
 - 是否包含 `:is-instance-of` 和 `:equals` 方法
 
 特点
 -----
 - 运行时类型检查：在运行时动态判断对象类型
-- 结构识别：通过源代码结构识别案例类
+- 结构识别：通过源代码结构识别样本类
 - 通用性：适用于所有通过 define-case-class 和 define-class 创建的对象
-- 精确性：能够准确区分案例类实例和普通过程
+- 精确性：能够准确区分样本类实例和普通过程
 
 注意事项
 -----
-- 只能识别通过 define-case-class 和 define-class 创建的案例类
+- 只能识别通过 define-case-class 和 define-class 创建的样本类
 - 对于其他类型的对象（包括普通过程、数字、字符串等）返回 #f
 - 依赖于过程源代码的结构，不适用于编译后优化的代码
 - 是底层类型检查函数，通常使用 `:is-type-of` 方法进行类型检查更直观
