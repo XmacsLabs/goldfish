@@ -23,73 +23,73 @@
   (display "=== Either Operations Benchmark ===\n\n")
 
   ; Test either%get-or-else with right value
-  (let ((time (timeit (lambda () ((right 65536) :get-or-else 0)))))
+  (let ((time (timeit (lambda () ((right 65536) :get-or-else 0)) :number 100000)))
     (display* "either%get-or-else (right):\t" (number->string time) " seconds\n"))
 
   ; Test either%get-or-else with left value
-  (let ((time (timeit (lambda () ((left "error") :get-or-else 0)))))
+  (let ((time (timeit (lambda () ((left "error") :get-or-else 0)) :number 100000)))
     (display* "either%get-or-else (left):\t" (number->string time) " seconds\n"))
 
   ; Test either%or-else with left value
   (let ((time (timeit (lambda ()
-                              ((left "error") :or-else (right 0))))))
+                              ((left "error") :or-else (right 0))) :number 100000)))
     (display* "either%or-else (left):\t\t" (number->string time) " seconds\n"))
 
   ; Test either%or-else with right value
-  (let ((time (timeit (lambda () ((right 65536) :or-else (left 0))))))
+  (let ((time (timeit (lambda () ((right 65536) :or-else (left 0))) :number 100000)))
     (display* "either%or-else (right):\t\t" (number->string time) " seconds\n"))
 
   ; Test either%left? and either%right?
-  (let ((time (timeit (lambda () ((right 42) :left?)))))
+  (let ((time (timeit (lambda () ((right 42) :left?)) :number 100000)))
     (display* "either%left? (right):\t\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((left "error") :right?)))))
+  (let ((time (timeit (lambda () ((left "error") :right?)) :number 100000)))
     (display* "either%right? (left):\t\t" (number->string time) " seconds\n"))
 
   ; Test either%get
-  (let ((time (timeit (lambda () ((right 42) :get)))))
+  (let ((time (timeit (lambda () ((right 42) :get)) :number 100000)))
     (display* "either%get (right):\t\t" (number->string time) " seconds\n"))
 
   ; Test either%filter-or-else
-  (let ((time (timeit (lambda () ((right 42) :filter-or-else even? 0)))))
+  (let ((time (timeit (lambda () ((right 42) :filter-or-else even? 0)) :number 100000)))
     (display* "either%filter-or-else (right):\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((left "error") :filter-or-else even? 0)))))
+  (let ((time (timeit (lambda () ((left "error") :filter-or-else even? 0)) :number 100000)))
     (display* "either%filter-or-else (left):\t" (number->string time) " seconds\n"))
 
   ; Test either%contains
-  (let ((time (timeit (lambda () ((right 42) :contains 42)))))
+  (let ((time (timeit (lambda () ((right 42) :contains 42)) :number 100000)))
     (display* "either%contains (right):\t\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((left "error") :contains 42)))))
+  (let ((time (timeit (lambda () ((left "error") :contains 42)) :number 100000)))
     (display* "either%contains (left):\t\t" (number->string time) " seconds\n"))
 
   ; Test either%map
-  (let ((time (timeit (lambda () ((right 42) :map (lambda (x) (* x 2)))))))
+  (let ((time (timeit (lambda () ((right 42) :map (lambda (x) (* x 2)))) :number 100000)))
     (display* "either%map (right):\t\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((left "error") :map (lambda (x) (* x 2)))))))
+  (let ((time (timeit (lambda () ((left "error") :map (lambda (x) (* x 2)))) :number 100000)))
     (display* "either%map (left):\t\t" (number->string time) " seconds\n"))
 
   ; Test either%flat-map
-  (let ((time (timeit (lambda () ((right 42) :flat-map (lambda (x) (right (* x 2))))))))
+  (let ((time (timeit (lambda () ((right 42) :flat-map (lambda (x) (right (* x 2))))) :number 100000)))
     (display* "either%flat-map (right):\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((left "error") :flat-map (lambda (x) (right (* x 2))))))))
+  (let ((time (timeit (lambda () ((left "error") :flat-map (lambda (x) (right (* x 2))))) :number 100000)))
     (display* "either%flat-map (left):\t" (number->string time) " seconds\n"))
 
   ; Test either%to-option
-  (let ((time (timeit (lambda () ((right 42) :to-option)))))
+  (let ((time (timeit (lambda () ((right 42) :to-option)) :number 100000)))
     (display* "either%to-option (right):\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((left "error") :to-option)))))
+  (let ((time (timeit (lambda () ((left "error") :to-option)) :number 100000)))
     (display* "either%to-option (left):\t" (number->string time) " seconds\n"))
 
   ; Test either%forall and either%exists
-  (let ((time (timeit (lambda () ((right 42) :forall even?)))))
+  (let ((time (timeit (lambda () ((right 42) :forall even?)) :number 100000)))
     (display* "either%forall (right):\t\t" (number->string time) " seconds\n"))
 
-  (let ((time (timeit (lambda () ((right 42) :exists even?)))))
+  (let ((time (timeit (lambda () ((right 42) :exists even?)) :number 100000)))
     (display* "either%exists (right):\t\t" (number->string time) " seconds\n"))
 
   (display "\n"))
