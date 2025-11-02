@@ -14,7 +14,8 @@
 ; under the License.
 ;
 
-(import (liii oop) (liii check))
+(import (liii oop) (liii check) (liii error))
+(check-set-mode! 'report-failed)
 
 #|
 @
@@ -63,7 +64,6 @@ procedure
 - 支持任意类型的参数，包括过程、列表、符号等
 |#
 
-;;; 基础用法测试
 (check ((@ + _ 2) 1) => 3)
 (check ((@ list 1 _ 3 _ 5) 2 4) => (list 1 2 3 4 5))
 (check ((@ list _ _) 'a 'b) => (list 'a 'b))
@@ -85,3 +85,73 @@ procedure
 
 (check ((@ (@ + _ 1) _) 2) => 3)
 (check ((@ _ _) (@ * _ 2) 3) => 6)
+
+#|
+typed-define
+定义一个带有类型检查和默认值的函数。
+
+语法
+----
+(typed-define (name (param1 type-pred1 default1) (param2 type-pred2 default2) ...)
+  body-expr
+  ...)
+
+参数
+----
+name : symbol
+要定义的函数名称。
+
+param : (symbol predicate [default])
+参数定义，包含：
+- 参数名称 (symbol)
+- 类型谓词 (procedure)，用于参数类型检查
+- 可选默认值 (any)，当参数未提供时使用
+
+body-expr : any
+函数体表达式，可以包含多个表达式。
+
+返回值
+----
+procedure
+返回一个函数，该函数接受关键字参数，支持类型检查和默认值。
+
+描述
+----
+typed-define 是 (liii oop) 模块中用于定义类型安全函数的宏。它允许为函数的每个参数
+指定类型谓词和默认值，在函数调用时会自动进行类型检查，确保参数类型正确。
+
+该宏生成的函数使用关键字参数调用方式，参数顺序可以任意排列。每个参数都会在运行时
+进行类型检查，如果类型不匹配会抛出 'type-error 异常。
+
+特点
+----
+- 支持运行时类型检查
+- 支持参数默认值
+- 使用关键字参数调用方式
+- 参数顺序可以任意排列
+- 提供清晰的错误信息
+
+注意事项
+----
+- 类型谓词必须是返回布尔值的函数
+- 默认值必须符合类型谓词的要求
+- 函数调用时必须使用关键字参数语法
+- 所有参数都会进行类型检查，包括默认值
+- 类型错误会抛出 'type-error 异常
+|#
+
+(typed-define (person (name string? "Bob") (age integer?))
+  (string-append name " is " (number->string age) " years old"))
+
+(check (person :age 21) => "Bob is 21 years old")
+(check (person :name "Alice" :age 25) => "Alice is 25 years old")
+(check-catch 'type-error (person :name 123 :age 25))
+
+;; 测试带有默认值的 typed-define
+(typed-define (greet (message string? "Hello") (times integer? 1))
+  (apply string-append (make-list times message)))
+
+(check (greet) => "Hello")
+(check (greet :message "Hi" :times 3) => "HiHiHi")
+(check-catch 'type-error (greet :times "not-a-number"))
+

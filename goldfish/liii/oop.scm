@@ -15,7 +15,7 @@
 ;
 
 (define-library (liii oop)
-  (import (srfi srfi-2) (srfi srfi-1) (liii string))
+  (import (srfi srfi-2) (srfi srfi-1) (liii string) (liii error))
   (export
     @ typed-define define-case-class define-object define-class
     case-class? chained-define display* object->string
