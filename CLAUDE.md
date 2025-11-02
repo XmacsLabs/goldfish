@@ -71,6 +71,8 @@
 | 207 | (liii sort) |
 | 208 | (liii unicode) | 
 | 209 | (liii oop) |
+| 210 | S7内置的函数 |
+| 211 | (liii timeit) |
 
 固定的任务编号:
 1. `200_0`: 更新Goldfish Scheme的AUTHORS文件
