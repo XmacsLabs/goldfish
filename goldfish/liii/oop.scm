@@ -544,9 +544,22 @@
                                                                (if (= (length conflicts-names) 1) "" "s"))))))
          
              (instance-methods
-              (filter (lambda (method) (string-starts? (symbol->string (caadr method)) "%"))
+              (filter (lambda (method)
+                        (let ((method-name (symbol->string (caadr method))))
+                          (and (string-starts? method-name "%")
+                               (not (equal? method-name "%equals"))
+                               (not (equal? method-name "%apply")))))
                       methods))
              (instance-method-symbols (map caadr instance-methods))
+
+             ;; 筛选出 %equals 和 %apply 方法
+             (equals-methods
+              (filter (lambda (method) (equal? (symbol->string (caadr method)) "%equals"))
+                      methods))
+             (apply-methods
+              (filter (lambda (method) (equal? (symbol->string (caadr method)) "%apply"))
+                      methods))
+
              (instance-messages
               (map (lambda (method)
                      (let ((name (string-remove-prefix (symbol->string method) "%")))
@@ -669,16 +682,19 @@
              (define (%apply . args)
                (cond ((null? args)
                       (value-error ,class-name "Apply on zero args is not implemented"))
-                     ((equal? ((symbol->string (car args)) 0) #\:)
+                     ((keyword? (car args))
                       (value-error ,class-name "No such method: " (car args)))
                      (else (value-error ,class-name "No such field: " (car args)))))
          
+             ,@equals-methods
+             ,@apply-methods
 
              (define (instance-dispatcher)
                (lambda (msg . args)
                  (cond
                    ((eq? msg :is-instance-of) (apply %is-instance-of args))
                    ((eq? msg :equals) (apply %equals args))
+                   ((eq? msg :apply) (apply %apply args))
                    ((eq? msg :to-string) (apply (,object-name :to-string ,@field-names)))
                    ,@(map (lambda (field key-field)
                             `((eq? msg ,key-field)

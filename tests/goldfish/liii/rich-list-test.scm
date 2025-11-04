@@ -2186,4 +2186,9 @@ step : integer (可选)
   (lst :sliding 2)
   (check (lst :collect) => '(1 2 3 4 5)))
 
+(check ($ '(1 2 3) :apply 0) => 1)
+(check ($ '(1 2 3) 0) => 1)
+
+(check ($ (list ($ 1) ($ 2) ($ 3))) => (($ 1 :to 3) :map $))
+
 (check-report)
