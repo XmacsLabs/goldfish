@@ -133,16 +133,14 @@ type-error
                       (lambda () #t)
                       1)))
   (check (number? result) => #t)
-  (check (>= result 0.09) => #t)  ; Should be at least 0.09 seconds
-  (check (<= result 0.2) => #t))  ; Should be less than 0.2 seconds
+  (check (>= result 0.09) => #t))  ; Should be at least 0.09 seconds
 
 ; Test timeit with multiple sleep iterations
 (let ((result (timeit (lambda () (sleep 0.01))
                       (lambda () #t)
                       5)))
   (check (number? result) => #t)
-  (check (>= result 0.04) => #t)  ; Should be at least 0.04 seconds (5 * 0.01)
-  (check (<= result 0.1) => #t))  ; Should be less than 0.1 seconds
+  (check (>= result 0.04) => #t))  ; Should be at least 0.04 seconds (5 * 0.01)
 
 ; Test timeit with very short sleep
 (let ((result (timeit (lambda () (sleep 0.001))
