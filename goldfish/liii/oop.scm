@@ -177,9 +177,6 @@
    
            ,@static-methods
 
-           (define (is-normal-function? msg)
-             (and  (symbol? msg) 
-                   (char=? (string-ref (symbol->string msg) 0) #\:)))
 
            (define (static-dispatcher msg . args)
              (cond
@@ -241,7 +238,7 @@
              (define (%apply . args)
                (cond ((null? args)
                       (value-error ,class-name "Apply on zero args is not implemented"))
-                     ((equal? ((symbol->string (car args)) 0) #\:)
+                     ((keyword? (car args))
                       (value-error ,class-name "No such method: " (car args)))
                      (else (value-error ,class-name "No such field: " (car args)))))
          
@@ -278,7 +275,7 @@
                                 ,@(map (lambda (f) (if (eq? (car f) (car field)) '(car args) (car f)))
                                     fields))))
                        fields key-fields)
-                   ((is-normal-function? msg)
+                   ((keyword? msg)
                     (case msg
                       ,@(map (lambda (method expected)
                                `((,expected) (apply ,method args)))
@@ -624,9 +621,6 @@
    
            ,@static-methods
 
-           (define (is-normal-function? msg)
-             (and  (symbol? msg) 
-                   (char=? (string-ref (symbol->string msg) 0) #\:)))
 
            (define (static-dispatcher msg . args)
              (cond
@@ -702,7 +696,7 @@
                                 ,@(map (lambda (f) (if (eq? (car f) (car field)) '(car args) (car f)))
                                     fields))))
                        fields key-fields)
-                   ((is-normal-function? msg)
+                   ((keyword? msg)
                     (case msg
                       ,@(map (lambda (method expected)
                                `((,expected) (apply (,object-name ,expected ,@field-names) args)))
