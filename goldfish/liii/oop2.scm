@@ -1,7 +1,52 @@
 (define-library (liii oop2)
   (import (liii oop) (liii list) (liii string))
-  (export define-case-class2)
+  (export define-case-class2 transform-instance-methods)
   (begin
+    ;; 转换 instance-methods 中的方法调用
+    ;; 将 (%method-name args...) 转换为 ((object-name :method-name field-names) args...)
+    (define (transform-instance-methods methods object-name field-names)
+
+      ;; 转换方法体中的方法调用
+      (define (transform-method-body body object-name field-names)
+        ;; 转换表达式中的方法调用
+        (define (transform-expr expr object-name field-names)
+          (cond
+            ;; 处理 (%method-name args...) 形式
+            ((and (list? expr)
+                  (>= (length expr) 1)
+                  (symbol? (car expr))
+                  (string-starts? (symbol->string (car expr)) "%"))
+             (let* ((method-sym (car expr))
+                    (method-name (string-remove-prefix (symbol->string method-sym) "%"))
+                    (method-keyword (string->symbol (string-append ":" method-name)))
+                    (args (cdr expr)))
+               `((,object-name ,method-keyword ,@field-names) ,@args)))
+
+            ;; 递归处理嵌套表达式
+            ((list? expr)
+             (map (lambda (sub-expr)
+                    (transform-expr sub-expr object-name field-names))
+                  expr))
+
+            ;; 其他情况直接返回
+            (else expr)))
+        (map (lambda (expr)
+               (if (list? expr)
+                   (transform-expr expr object-name field-names)
+                   expr))
+             body))
+
+      (map (lambda (method)
+             (let* ((method-def (cadr method))
+                    (method-name (car method-def))
+                    (method-params (cdr method-def))
+                    (method-body (cddr method))
+                    (transformed-body (transform-method-body method-body object-name field-names)))
+               `(define ,method-def
+                  ,@transformed-body)))
+           methods))
+
+
     (define-macro (define-case-class2 class-name fields . private-fields-and-methods)
       (let* ((key-fields
                (map (lambda (field) (string->symbol (string-append ":" (symbol->string (car field)))))
@@ -9,12 +54,6 @@
         
              (field-names (map car fields))
              (field-count (length field-names))
-
-             (private-fields (filter (lambda (x)
-                                       (and (list? x)
-                                            (>= (length x) 2)
-                                            (symbol? (x 1))))
-                                     private-fields-and-methods))
 
              (methods (filter (lambda (x)
                                 (and (list? x)
@@ -80,6 +119,8 @@
 
         `(begin
            (define-object ,object-name
+             ,@internal-methods
+
              (define (@to-string ,@field-names)
                (define (%to-string)
                  (let ((field-strings
@@ -98,6 +139,7 @@
                                    (string-append acc " " (car strings))))))))
                %to-string)
 
+
              ,@(map (lambda (method)
                       (let* ((method-def (cadr method))
                              (method-name (car method-def))
@@ -107,7 +149,7 @@
                         `(define (,external-method-name ,@field-names)
                            ,method
                            ,method-name)))
-                    instance-methods))
+                    (transform-instance-methods instance-methods object-name field-names)))
 
            (define (,class-name . args)
 
@@ -179,8 +221,6 @@
                       (value-error ,class-name "No such method: " (car args)))
                      (else (value-error ,class-name "No such field: " (car args)))))
          
-             ,@private-fields
-             ,@internal-methods
 
              (define (instance-dispatcher)
                (lambda (msg . args)

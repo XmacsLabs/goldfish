@@ -16,6 +16,7 @@
 
 (import (liii list))
 (import (scheme time))
+(import (liii rich-char))
 
 (define (timing msg thunk)
   (let* ((start (current-jiffy))

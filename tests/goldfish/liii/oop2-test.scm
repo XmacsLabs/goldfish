@@ -1,4 +1,29 @@
-(import (liii oop2) (liii check) (liii case) (liii rich-string))
+(import (liii oop2) (liii check) (liii case) (liii rich-string) (liii oop) (liii base) (liii error))
+
+;; 测试转换函数
+(let* ((object-name 'person-object)
+       (field-names '(name age))
+       (methods '((define (%to-string)
+                    (string-append "I am " name ", " (number->string age) " years old!"))
+                  (define (%greet other-name)
+                    (string-append "Hi " other-name ", " (%to-string)))))
+       (transformed (transform-instance-methods methods object-name field-names)))
+
+  ;; 检查转换后的方法定义
+  (check (length transformed) => 2)
+
+  ;; 检查第一个方法 (%to-string)
+  (let ((to-string-method (car transformed)))
+    (check (car to-string-method) => 'define)
+    (check (cadr to-string-method) => '(%to-string))
+    (check (caddr to-string-method) => '(string-append "I am " name ", " (number->string age) " years old!")))
+
+  ;; 检查第二个方法 (%greet) - 应该将 (%to-string) 转换为 ((person-object :to-string name age))
+  (let ((greet-method (cadr transformed)))
+    (check (car greet-method) => 'define)
+    (check (cadr greet-method) => '(%greet other-name))
+    (check (caddr greet-method) => '(string-append "Hi " other-name ", " ((person-object :to-string name age))))))
+
 
 (define-case-class2 person
   ((name string? "Bob")
@@ -31,11 +56,18 @@
   (define (%to-string)
     (string-append "I am " name " " (number->string age) " years old!"))
   (define (%greet x)
-    (string-append "Hi " x ", " ((jerson-object :to-string name age)))))
+    (string-append "Hi " x ", " (%to-string)))
+  (define (%i-greet x)
+    (string-append name ": " (%greet x))) 
+)
+
+(check-true (procedure? (jerson-object :to-string "name" 21)))
 
 (let1 bob (jerson "Bob" 21)
   (check (bob :to-string) => "I am Bob 21 years old!")
-  (check (bob :greet "Alice") => "Hi Alice, I am Bob 21 years old!"))
+  (check (bob :greet "Alice") => "Hi Alice, I am Bob 21 years old!")
+  (check (bob :i-greet "Alice") => "Bob: Hi Alice, I am Bob 21 years old!"))
+
 
 
 (define-case-class2 test-case-class

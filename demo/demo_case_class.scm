@@ -1,49 +1,9 @@
-(import (liii oop) (liii option) (liii error) (liii check))
+(import (liii oop) (liii option2) (liii option) (liii error) (liii check))
 
 (check-true ((option 1) :defined?))
 (check ((option 1) :get) => 1)
 (check-false ((option '()) :defined?))
 (check ((option '()) :get-or-else 1) => 1)
-
-(define-object option2-object
-               (define (@get value)
-                 (define (%get)
-                   (if (null? value)
-                       (value-error "option is empty, cannot get value")
-                       value))
-                 %get)
-
-               (define (@defined? value)
-                 (define (%defined?)
-                   (not (null? value)))
-                 %defined?)
-
-               (define (@get-or-else value)
-                 (define (%get-or-else default)
-                   (cond ((not (null? value)) value)
-                         ((and (procedure? default)
-                               (not (case-class? default)))
-                          (default))
-                         (else default)))
-                 %get-or-else)
-                 
-  (define (@map value)
-      (define (%map f . args)
-        (chain-apply args
-          (if (null? value)
-              (option2 '())
-              (option2 (f value)))))
-    %map)
-                 
-)
-
-(define (option2 value)
-  (lambda (message . args)
-    (case message
-      ((:get) (apply (option2-object :get value) args))
-      ((:defined?) (apply (option2-object :defined? value) args))
-      ((:get-or-else) (apply (option2-object :get-or-else value) args))
-      ((:map) (apply (option2-object :map value) args)))))
 
 ; ; 测试 option2 与 option 的等价性
 (check-true ((option2 1) :defined?))

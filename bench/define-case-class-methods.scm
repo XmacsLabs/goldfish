@@ -15,14 +15,14 @@
 ;
 
 (import (liii timeit)
-        (liii oop)
+        (liii oop2)
         (liii base))
 
 (define (benchmark-define-case-class)
   (display "=== Define-Case-Class Construction Performance Test ===\n\n")
 
   ; Test with 1 instance method
-  (define-case-class class-1-method
+  (define-case-class2 class-1-method
     ((value any?))
     (define (%method1) value))
 
@@ -30,7 +30,7 @@
     (display* "1 instance method:\t\t" (number->string time) " seconds\n"))
 
   ; Test with 2 instance methods
-  (define-case-class class-2-methods
+  (define-case-class2 class-2-methods
     ((value any?))
     (define (%method1) value)
     (define (%method2) (+ value 1)))
@@ -39,7 +39,7 @@
     (display* "2 instance methods:\t\t" (number->string time) " seconds\n"))
 
   ; Test with 4 instance methods
-  (define-case-class class-4-methods
+  (define-case-class2 class-4-methods
     ((value any?))
     (define (%method1) value)
     (define (%method2) (+ value 1))
@@ -50,7 +50,7 @@
     (display* "4 instance methods:\t\t" (number->string time) " seconds\n"))
 
   ; Test with 8 instance methods
-  (define-case-class class-8-methods
+  (define-case-class2 class-8-methods
     ((value any?))
     (define (%method1) value)
     (define (%method2) (+ value 1))
@@ -65,7 +65,7 @@
     (display* "8 instance methods:\t\t" (number->string time) " seconds\n"))
 
   ; Test with 16 instance methods
-  (define-case-class class-16-methods
+  (define-case-class2 class-16-methods
     ((value any?))
     (define (%method1) value)
     (define (%method2) (+ value 1))
@@ -88,7 +88,7 @@
     (display* "16 instance methods:\t\t" (number->string time) " seconds\n"))
 
   ; Test with 32 instance methods
-  (define-case-class class-32-methods
+  (define-case-class2 class-32-methods
     ((value any?))
     (define (%method1) value)
     (define (%method2) (+ value 1))
