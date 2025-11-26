@@ -198,8 +198,8 @@ goldfish_exe () {
   GetModuleFileName (NULL, buffer, GOLDFISH_PATH_MAXN);
   return string (buffer);
 #elif TB_CONFIG_OS_MACOSX
-  char        buffer[PATH_MAX];
-  uint32_t    size= sizeof (buffer);
+  char     buffer[PATH_MAX];
+  uint32_t size= sizeof (buffer);
   if (_NSGetExecutablePath (buffer, &size) == 0) {
     char real_path[GOLDFISH_PATH_MAXN];
     if (realpath (buffer, real_path) != NULL) {
@@ -391,6 +391,137 @@ glue_mkdir (s7_scheme* sc) {
   glue_define (sc, name, desc, f_mkdir, 1, 0);
 }
 
+// 协程上下文结构，保存 Scheme 解释器、函数和 GC 保护位置
+struct coroutine_ctx {
+  s7_scheme* sc;     // Scheme 解释器实例
+  s7_pointer f;      // 要执行的 Scheme 函数
+  s7_int     gc_loc; // GC 保护位置索引
+};
+
+// 协程运行函数，在协程中执行 Scheme 函数
+static void
+coroutine_run (tb_cpointer_t priv) {
+  coroutine_ctx* ctx= (coroutine_ctx*) priv;
+  // 执行 Scheme 函数
+  s7_apply_function (ctx->sc, ctx->f, s7_nil (ctx->sc));
+  // 执行完毕后取消 GC 保护，平衡保护计数
+  if (ctx->gc_loc != -1) s7_gc_unprotect_at (ctx->sc, ctx->gc_loc);
+  delete ctx;
+}
+
+// 协程调度器函数：创建调度器并运行传入的函数及其派生的所有协程
+static s7_pointer
+coroutine_dispatch (s7_scheme* sc, s7_pointer args) {
+  s7_pointer            f        = s7_car (args);
+  coroutine_ctx*        ctx      = new coroutine_ctx{sc, f, -1};
+  tb_co_scheduler_ref_t scheduler= tb_co_scheduler_init ();
+  if (scheduler == nullptr) {
+    const char* err_type= "coroutine";
+    const char* err_desc= "failed to init coroutine scheduler";
+    return s7_error (sc, s7_make_symbol (sc, err_type), s7_list (sc, 2, s7_make_string (sc, err_desc), f));
+  }
+
+  // 启动协程
+  // 保护闭包免于被 GC 回收，直到协程执行完毕
+  ctx->gc_loc= s7_gc_protect (sc, f);
+  if (!tb_coroutine_start (scheduler, coroutine_run, ctx, 0)) {
+    const char* err_type= "coroutine";
+    const char* err_desc= "failed to start coroutine";
+    // 启动失败时取消保护并清理资源
+    if (ctx->gc_loc != -1) s7_gc_unprotect_at (sc, ctx->gc_loc);
+    delete ctx;
+    // 退出调度器以避免泄漏，然后返回错误
+    tb_co_scheduler_exit (scheduler);
+    return s7_error (sc, s7_make_symbol (sc, err_type), s7_list (sc, 2, s7_make_string (sc, err_desc), f));
+  }
+
+  // 以非独占模式运行调度器
+  tb_co_scheduler_loop (scheduler, false);
+
+  // 退出调度器
+  tb_co_scheduler_exit (scheduler);
+
+  return s7_nil (sc);
+}
+
+// 绑定 coroutine-dispatch 函数到 Scheme 环境
+inline void
+glue_coroutine_dispatch (s7_scheme* sc) {
+  const char* name= "g_coroutine-dispatch";
+  const char* desc= "(g_coroutine-dispatch function) => nil, dispatch the passed-in funtion and all its derived "
+                    "coroutines until all are completed";
+  s7_define_function (sc, name, coroutine_dispatch, 1, 0, false, desc);
+}
+
+// 创建协程函数：在当前调度器中创建并启动一个新协程
+static s7_pointer
+coroutine_create (s7_scheme* sc, s7_pointer args) {
+  const tb_size_t stacksize= 32 * 1024; // 32KB 栈大小
+
+  s7_pointer     f  = s7_car (args);
+  coroutine_ctx* ctx= new coroutine_ctx{sc, f, -1};
+  // 保护闭包免于被 GC 回收，直到协程执行完毕
+  ctx->gc_loc= s7_gc_protect (sc, f);
+  if (!tb_coroutine_start (tb_null, coroutine_run, ctx, stacksize)) {
+    const char* err_type= "coroutine";
+    const char* err_desc= "failed to start coroutine";
+    // 启动失败时取消保护并清理资源
+    if (ctx->gc_loc != -1) s7_gc_unprotect_at (sc, ctx->gc_loc);
+    delete ctx;
+    return s7_error (sc, s7_make_symbol (sc, err_type), s7_list (sc, 2, s7_make_string (sc, err_desc), f));
+  }
+  return s7_nil (sc);
+}
+
+// 绑定 coroutine-create 函数到 Scheme 环境
+inline void
+glue_coroutine_create (s7_scheme* sc) {
+  const char* name= "g_coroutine-create";
+  const char* desc= "(g_coroutine-create function) => nil, create coroutine";
+  s7_define_function (sc, name, coroutine_create, 1, 0, false, desc);
+}
+
+// 协程让出函数：让出当前协程的执行权
+static s7_pointer
+f_coroutine_yield (s7_scheme* sc, s7_pointer args) {
+  tb_bool_t ok= tb_coroutine_yield ();
+  return s7_make_boolean (sc, ok);
+}
+
+// 绑定 coroutine-yield 函数到 Scheme 环境
+inline void
+glue_coroutine_yield (s7_scheme* sc) {
+  const char* name= "g_coroutine-yield";
+  const char* desc= "(g_coroutine-yield) => boolean, yield current coroutine";
+  glue_define (sc, name, desc, f_coroutine_yield, 0, 0);
+}
+
+// 协程休眠函数：让当前协程休眠指定秒数（非阻塞）
+static s7_pointer
+f_coroutine_sleep (s7_scheme* sc, s7_pointer args) {
+  s7_double seconds= s7_real (s7_car (args));
+  // 将秒转换为毫秒传给 TBOX
+  tb_coroutine_sleep ((tb_long_t) (seconds * 1000));
+  return s7_nil (sc);
+}
+
+// 绑定 coroutine-sleep 函数到 Scheme 环境
+inline void
+glue_coroutine_sleep (s7_scheme* sc) {
+  const char* name= "g_coroutine-sleep";
+  const char* desc= "(g_coroutine-sleep seconds) => nil, non-blocking sleep for coroutine";
+  glue_define (sc, name, desc, f_coroutine_sleep, 1, 0);
+}
+
+// 注册所有协程相关函数到 Scheme 环境
+inline void
+glue_liii_coroutine (s7_scheme* sc) {
+  glue_coroutine_dispatch (sc);
+  glue_coroutine_create (sc);
+  glue_coroutine_yield (sc);
+  glue_coroutine_sleep (sc);
+}
+
 static s7_pointer
 f_rmdir (s7_scheme* sc, s7_pointer args) {
   const char* dir_c= s7_string (s7_car (args));
@@ -524,23 +655,21 @@ glue_getpid (s7_scheme* sc) {
 }
 
 static s7_pointer
-f_sleep(s7_scheme* sc, s7_pointer args) {
-  s7_double seconds = s7_real(s7_car(args));
-  
-  // 使用 tbox 的 tb_sleep 函数，参数是毫秒
-  tb_msleep((tb_long_t)(seconds * 1000));
+f_sleep (s7_scheme* sc, s7_pointer args) {
+  s7_double seconds= s7_real (s7_car (args));
 
-  return s7_nil(sc);
+  // 使用 tbox 的 tb_sleep 函数，参数是毫秒
+  tb_msleep ((tb_long_t) (seconds * 1000));
+
+  return s7_nil (sc);
 }
 
 inline void
-glue_sleep(s7_scheme* sc) {
-  const char* name = "g_sleep";
-  const char* desc = "(g_sleep seconds) => nil, sleep for the specified number of seconds";
-  glue_define(sc, name, desc, f_sleep, 1, 0);
+glue_sleep (s7_scheme* sc) {
+  const char* name= "g_sleep";
+  const char* desc= "(g_sleep seconds) => nil, sleep for the specified number of seconds";
+  glue_define (sc, name, desc, f_sleep, 1, 0);
 }
-
-
 
 inline void
 glue_liii_os (s7_scheme* sc) {
@@ -1023,6 +1152,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_time (sc);
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
+  glue_liii_coroutine (sc);
 }
 
 static void
