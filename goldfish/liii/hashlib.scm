@@ -14,10 +14,12 @@
 ; under the License.
 ;
 (define-library (liii hashlib)
-  (export md5)
+  (export md5 sha1 sha256)
   (begin
 
     (define (md5 str) (g_md5 str))
+    (define (sha1 str) (g_sha1 str))
+    (define (sha256 str) (g_sha256 str))
 
     ) ; end of begin
   ) ; end of define-library
