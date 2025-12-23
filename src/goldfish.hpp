@@ -581,6 +581,37 @@ glue_liii_uuid (s7_scheme* sc) {
   glue_uuid4 (sc);
 }
 
+static s7_pointer f_md5(s7_scheme* sc, s7_pointer args) {
+    const char* searchString = s7_string(s7_car(args));
+    tb_size_t len = tb_strlen(searchString);
+    tb_byte_t ob[16];
+    tb_char_t hex_output[33] = {0};
+    tb_md5_t md5;
+    tb_md5_init(&md5, 0); 
+    if (len > 0) {
+        tb_md5_spak(&md5, (tb_byte_t const*)searchString, len);
+    }
+    tb_md5_exit(&md5, ob, 16);
+    for (tb_size_t i = 0; i < 16; ++i) {
+        tb_snprintf(hex_output + (i << 1), 3, "%02x", ob[i]);
+    }
+    return s7_make_string(sc, hex_output);
+}
+
+inline void 
+glue_md5(s7_scheme* sc) {
+  const char* name = "g_md5";
+  const char* desc = "(g_md5 str) => string";
+  glue_define(sc, name, desc, f_md5, 1, 0);
+}
+
+inline void
+glue_liii_md5 (s7_scheme* sc) {
+  glue_md5 (sc);
+}
+
+
+
 static s7_pointer
 f_isdir (s7_scheme* sc, s7_pointer args) {
   const char*    dir_c= s7_string (s7_car (args));
@@ -1023,6 +1054,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_time (sc);
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
+  glue_liii_md5(sc);
 }
 
 static void
