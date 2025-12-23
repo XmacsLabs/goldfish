@@ -582,6 +582,44 @@ glue_liii_uuid (s7_scheme* sc) {
 }
 
 static s7_pointer
+f_md5 (s7_scheme* sc, s7_pointer args) {
+  // 1. 获取输入字符串
+    const char* searchString = s7_string(s7_car(args));
+    if (!searchString) return s7_nil(sc);
+
+    // 2. 准备 MD5 输出缓冲区 (16 字节二进制)
+    tb_byte_t digest[16];
+    
+    // 3. 调用 TBOOX API 计算 MD5
+    // 直接使用 tb_md5_make 处理完整的字符串
+    tb_md5_make((tb_byte_t const*)searchString, (tb_size_t)strlen(searchString), digest, sizeof(digest));
+
+    // 4. 将 16 字节的二进制转为 32 位的十六进制字符串
+    char hex_output[33]; 
+    for (int i = 0; i < 16; i++) {
+        // 使用 sprintf 将每个字节格式化为两个十六进制字符
+        sprintf(&hex_output[i * 2], "%02x", digest[i]);
+    }
+
+    // 5. 返回给 s7 scheme
+    return s7_make_string(sc, hex_output);
+}
+
+inline void 
+glue_md5(s7_scheme* sc) {
+  const char* name = "g_md5";
+  const char* desc = "(g_md5 str) => string";
+  glue_define(sc, name, desc, f_md5, 1, 0);
+}
+
+inline void
+glue_liii_md5 (s7_scheme* sc) {
+  glue_md5 (sc);
+}
+
+
+
+static s7_pointer
 f_isdir (s7_scheme* sc, s7_pointer args) {
   const char*    dir_c= s7_string (s7_car (args));
   tb_file_info_t info;
@@ -1023,6 +1061,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_time (sc);
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
+  glue_liii_md5(sc);
 }
 
 static void
