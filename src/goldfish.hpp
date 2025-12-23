@@ -581,27 +581,20 @@ glue_liii_uuid (s7_scheme* sc) {
   glue_uuid4 (sc);
 }
 
-static s7_pointer
-f_md5 (s7_scheme* sc, s7_pointer args) {
-  // 1. 获取输入字符串
+static s7_pointer f_md5(s7_scheme* sc, s7_pointer args) {
     const char* searchString = s7_string(s7_car(args));
-    if (!searchString) return s7_nil(sc);
-
-    // 2. 准备 MD5 输出缓冲区 (16 字节二进制)
-    tb_byte_t digest[16];
-    
-    // 3. 调用 TBOOX API 计算 MD5
-    // 直接使用 tb_md5_make 处理完整的字符串
-    tb_md5_make((tb_byte_t const*)searchString, (tb_size_t)strlen(searchString), digest, sizeof(digest));
-
-    // 4. 将 16 字节的二进制转为 32 位的十六进制字符串
-    char hex_output[33]; 
-    for (int i = 0; i < 16; i++) {
-        // 使用 sprintf 将每个字节格式化为两个十六进制字符
-        sprintf(&hex_output[i * 2], "%02x", digest[i]);
+    tb_size_t len = tb_strlen(searchString);
+    tb_byte_t ob[16];
+    tb_char_t hex_output[33] = {0};
+    tb_md5_t md5;
+    tb_md5_init(&md5, 0); 
+    if (len > 0) {
+        tb_md5_spak(&md5, (tb_byte_t const*)searchString, len);
     }
-
-    // 5. 返回给 s7 scheme
+    tb_md5_exit(&md5, ob, 16);
+    for (tb_size_t i = 0; i < 16; ++i) {
+        tb_snprintf(hex_output + (i << 1), 3, "%02x", ob[i]);
+    }
     return s7_make_string(sc, hex_output);
 }
 
