@@ -605,11 +605,6 @@ glue_md5(s7_scheme* sc) {
   glue_define(sc, name, desc, f_md5, 1, 0);
 }
 
-inline void
-glue_liii_md5 (s7_scheme* sc) {
-  glue_md5 (sc);
-}
-
 static s7_pointer f_sha1(s7_scheme* sc, s7_pointer args) {
     const char* searchString = s7_string(s7_car(args));
     tb_size_t len = tb_strlen(searchString);
@@ -659,12 +654,9 @@ glue_sha256(s7_scheme* sc) {
 }
 
 inline void
-glue_liii_sha1 (s7_scheme* sc) {
+glue_liii_hashlib (s7_scheme* sc) {
+  glue_md5 (sc);
   glue_sha1 (sc);
-}
-
-inline void
-glue_liii_sha256 (s7_scheme* sc) {
   glue_sha256 (sc);
 }
 
@@ -1112,9 +1104,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_time (sc);
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
-  glue_liii_md5(sc);
-  glue_liii_sha1(sc);
-  glue_liii_sha256(sc);
+  glue_liii_hashlib (sc);
 }
 
 static void
