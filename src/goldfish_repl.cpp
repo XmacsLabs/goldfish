@@ -74,6 +74,7 @@ eval_string (const char* code) {
     s7_eval_c_string (wasm_sc, "(load \"liii/comparator.scm\")");
     s7_eval_c_string (wasm_sc, "(load \"liii/cut.scm\")");
     s7_eval_c_string (wasm_sc, "(load \"liii/datetime.scm\")");
+    s7_eval_c_string (wasm_sc, "(load \"liii/either.scm\")");
     s7_eval_c_string (wasm_sc, "(load \"liii/rich-either.scm\")");
     s7_eval_c_string (wasm_sc, "(load \"liii/error.scm\")");
     s7_eval_c_string (wasm_sc, "(load \"liii/hash-table.scm\")");
