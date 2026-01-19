@@ -33,7 +33,7 @@
         value)
 
       (define (%or-else default)
-        (when (not (either :is-type-of default))
+        (when (not (rich-either :is-type-of default))
           (type-error "The first parameter of either%or-else must be a either case class"))
 
         (if (%right?)
@@ -108,10 +108,13 @@
       )
 
     (define (left v)
-      (either 'left v))
+      (rich-either 'left v))
 
     (define (right v)
-      (either 'right v))
+      (rich-either 'right v))
+
+    ; Define either as an alias for rich-either for backward compatibility
+    (define either rich-either)
 
     ) ; end of begin
   ) ; end of define-library
