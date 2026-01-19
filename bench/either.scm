@@ -15,7 +15,7 @@
 ;
 
 (import (liii timeit)
-        (liii either)
+        (liii rich-either)
         (liii lang)
         (liii base))
 
