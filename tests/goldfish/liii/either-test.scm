@@ -87,5 +87,4 @@
   (check-true (either-left? mapped-error))
   (check (to-left mapped-error) => "network error"))
 
-(display "=== Either module tests completed ===\n")
-(display "All tests passed!\n")
+(check-report)
