@@ -19,7 +19,7 @@
   (export either left right)
   (begin
 
-    (define-case-class either
+    (define-case-class rich-either
       ((type symbol?)
        (value any?))
 
