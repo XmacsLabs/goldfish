@@ -14,7 +14,7 @@
 ; under the License.
 ;
 
-(define-library (liii either)
+(define-library (liii rich-either)
   (import (liii option) (liii oop) (liii base))
   (export either left right)
   (begin
