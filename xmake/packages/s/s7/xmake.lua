@@ -28,8 +28,6 @@ package("s7")
     set_sourcedir(path.join(os.scriptdir(), "../../../../3rdparty/s7"))
 
     add_versions("20250922", "20250922")
-    add_patches("20250922", path.join(os.scriptdir(), "patches", "0001-setlocale-UTF8-for-fopen.patch"),
-                "e0486e491d898bacc833c7f39fe91eeb49b7085b079ac1361a5302264bf4ff96")
 
     add_configs("gmp", {description = "enable gmp support", default = false, type = "boolean"})
 
