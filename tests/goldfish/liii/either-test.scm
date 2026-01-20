@@ -60,10 +60,6 @@ either : either
 ------
 any
     存储在 Left 内部的值。
-
-注意
-----
-如果传入的是 Right 类型的 Either，该函数的行为取决于具体实现（通常会抛出错误）。
 |#
 (check (to-left (from-left "error message")) => "error message")
 (check (to-left (from-left 42)) => 42)
@@ -105,10 +101,6 @@ either : either
 ------
 any
     存储在 Right 内部的值。
-
-注意
-----
-如果传入的是 Left 类型的 Either，该函数的行为取决于具体实现（通常会抛出错误）。
 |#
 (check (to-right (from-right "success data")) => "success data")
 (check (to-right (from-right 100)) => 100)
@@ -137,11 +129,6 @@ either : either
 ------
 boolean
     如果符合对应类型返回 #t，否则返回 #f。
-
-描述
-----
-- `either-left?`: 检查值是否为 Left 类型（错误）。
-- `either-right?`: 检查值是否为 Right 类型（成功）。
 |#
 (let ((left-val (from-left "error"))
       (right-val (from-right "success")))
@@ -150,15 +137,14 @@ boolean
   (check-true (either-right? right-val))
   (check-false (either-left? right-val)))
 
-;; 注意：新版实现不再将 '() 视为有效的 Either 类型
-;; 以下测试用于确认非 Either 类型不会被误判
+;; 边界情况测试：非 Pair 不是 Either
 (check-false (either-left? '()))
 (check-false (either-right? '()))
 (check-false (either-left? "string"))
 
 
 ;; ==========================================
-;; 3. Monad 操作测试 (Map / FlatMap / For-Each)
+;; 3. 高阶函数操作测试 (Map / For-Each)
 ;; ==========================================
 
 #|
@@ -180,44 +166,14 @@ either : either
 ------
 either
     - Right: 返回包含 (func value) 的新 Right。
-    - Left: 原样返回 Left，不执行函数。
+    - Left: 原样返回 Left。
 |#
 (let ((left-val (from-left "error"))
       (right-val (from-right 5)))
-  ;; 对左值应用 map 应该返回原值 (且仍然是左值)
+  ;; 对左值应用 map 应该返回原值
   (check (to-left (either-map (lambda (x) (* x 2)) left-val)) => "error")
   ;; 对右值应用 map 应该应用函数
   (let ((result (either-map (lambda (x) (* x 2)) right-val)))
-    (check-true (either-right? result))
-    (check (to-right result) => 10)))
-
-#|
-either-flat-map
-Monad 绑定操作（即 bind 或 >>=）。
-
-语法
-----
-(either-flat-map func either)
-
-参数
-----
-func : procedure (any -> either)
-    应用于 Right 值的函数，该函数必须返回一个新的 Either。
-either : either
-    输入的 Either 值。
-
-返回值
-------
-either
-    - Right: 返回 func 执行后的结果（这是一个 Either）。
-    - Left: 原样返回 Left，不执行函数。
-|#
-(let ((left-val (from-left "error"))
-      (right-val (from-right 5)))
-  ;; 对左值应用 flat-map 应该返回原值
-  (check (to-left (either-flat-map (lambda (x) (from-right (* x 2))) left-val)) => "error")
-  ;; 对右值应用 flat-map 应该应用函数
-  (let ((result (either-flat-map (lambda (x) (from-right (* x 2))) right-val)))
     (check-true (either-right? result))
     (check (to-right result) => 10)))
 
@@ -244,10 +200,10 @@ either : either
 (let ((counter 0)
       (left-val (from-left "error"))
       (right-val (from-right 5)))
-  ;; 对左值应用 for-each 不应该执行副作用
+  ;; 对左值应用 for-each 不执行
   (either-for-each (lambda (x) (set! counter (+ counter x))) left-val)
   (check counter => 0)
-  ;; 对右值应用 for-each 应该执行副作用
+  ;; 对右值应用 for-each 执行
   (either-for-each (lambda (x) (set! counter (+ counter x))) right-val)
   (check counter => 5))
 
@@ -258,55 +214,69 @@ either : either
 
 #|
 either-get-or-else
-安全提取值。
+简单获取值或默认值。
 
 语法
 ----
-(either-get-or-else default either)
+(either-get-or-else either default)
 
 参数
 ----
-default : any
-    当 either 为 Left 时返回的备用值。
 either : either
-    目标 Either。
+    目标 Either 对象。
+default : any
+    备用值。
 
 返回值
 ------
 any
-    Right 的内部值或 default。
+    Right 的值或 default。
 |#
-(check (either-get-or-else 0 (from-right 42)) => 42)
-(check (either-get-or-else 0 (from-left "error")) => 0)
+(check (either-get-or-else (from-right 42) 0) => 42)
+(check (either-get-or-else (from-left "error") 0) => 0)
 
 #|
 either-fold
-模式匹配/折叠操作。
+提取值或计算默认值（支持惰性求值）。
 
 语法
 ----
-(either-fold left-proc right-proc either)
+(either-fold default either)
 
 参数
 ----
-left-proc : procedure (any -> any)
-    当 either 为 Left 时调用的函数。
-right-proc : procedure (any -> any)
-    当 either 为 Right 时调用的函数。
+default : any | procedure
+    当 either 为 Left 时返回的值。
+    如果是无参过程（thunk），则调用该过程并返回结果（惰性求值）。
 either : either
-    目标 Either。
+    要提取值的 Either 对象。
 
 返回值
 ------
 any
-    根据 either 的类型，返回 left-proc 或 right-proc 的执行结果。
+    Right 的内部值，或 default 处理后的结果。
+
+描述
+----
+在当前实现中，此函数行为类似于支持惰性求值的 get-or-else。
+如果 default 是一个过程（且不是 case-class），它将被调用以生成返回值。
 |#
-(check (either-fold string-length (lambda (x) (* x 2)) (from-right 10)) => 20)
-(check (either-fold string-length (lambda (x) (* x 2)) (from-left "err")) => 3)
+;; 1. 测试基础值返回
+(check (either-fold 0 (from-right 42)) => 42)
+(check (either-fold 0 (from-left "err")) => 0)
+
+;; 2. 测试惰性求值 (Lazy Evaluation)
+;; 当 default 是一个 lambda 时，应该调用它
+(check (either-fold (lambda () 99) (from-left "err")) => 99)
+
+;; 3. 验证 Right 情况下不会调用 default 函数 (短路)
+(let ((called #f))
+  (either-fold (lambda () (set! called #t)) (from-right 10))
+  (check-false called))
 
 #|
 either-or-else
-Either 级别的备选方案（Alternative）。
+Either 级别的备选方案。
 
 语法
 ----
@@ -336,14 +306,14 @@ either
 ;; 5. 综合流程测试
 ;; ==========================================
 
-;; 测试嵌套使用：Map 接着 FlatMap
+;; 测试 Map 的连续使用
 (let* ((val1 (from-right 10))
-       (val2 (either-map (lambda (x) (+ x 5)) val1))                 ;; Right 15
-       (val3 (either-flat-map (lambda (x) (from-right (* x 2))) val2))) ;; Right 30
+       (val2 (either-map (lambda (x) (+ x 5)) val1))     ;; Right 15
+       (val3 (either-map (lambda (x) (* x 2)) val2)))    ;; Right 30
   (check-true (either-right? val3))
   (check (to-right val3) => 30))
 
-;; 测试错误处理流程 (Short-circuiting 短路特性)
+;; 测试错误处理流程 (验证短路特性)
 (let* ((error-val (from-left "network error"))
        ;; 下面的 map 不应执行，因为输入已经是 Left
        (mapped-error (either-map (lambda (x) (string-append "Error: " x)) error-val)))

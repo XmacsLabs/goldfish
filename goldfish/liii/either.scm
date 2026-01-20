@@ -19,7 +19,7 @@
   (export from-left to-left
           from-right to-right
           either-left? either-right?
-          either-map either-flat-map either-for-each
+          either-map either-for-each
           either-get-or-else
           either-fold
           either-or-else
@@ -84,12 +84,6 @@
           (from-right (f (car either)))
           either))
 
-    ;; 扁平映射函数：如果 either 是右值，则应用函数 f (f 必须返回 Either)
-    (define (either-flat-map f either)
-      (if (either-right? either)
-          (f (car either))
-          either))
-
     ;; 遍历函数：如果 either 是右值，则应用函数 f (执行副作用)
     (define (either-for-each f either)
       (when (either-right? either)
@@ -100,17 +94,20 @@
     ;; ======================
 
     ;; 获取值或默认值
-    (define (either-get-or-else default either)
+    (define (either-get-or-else either default)
       (if (either-right? either)
           (car either)
           default))
 
 
-    ;; fold操作：根据类型分别调用 left-func 或 right-func
-    (define (either-fold left-func right-func either)
+    ;; fold操作：
+    (define (either-fold default either)
       (if (either-right? either)
-          (right-func (car either))
-          (left-func (car either))))
+          (car either)
+          (if (and (procedure? default)
+                   (not (case-class? default)))
+              (default)
+              default)))
 
     ;; 组合器：如果是 Left 则返回 alternative，否则返回自身
     (define (either-or-else alternative either)
