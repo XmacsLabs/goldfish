@@ -15,8 +15,7 @@
 ;
 
 (define-library (liii either)
-  (import (liii base)
-          (scheme base))
+  (import (liii base))
   (export from-left to-left
           from-right to-right
           either-left? either-right?
