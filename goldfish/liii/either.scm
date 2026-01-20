@@ -15,59 +15,130 @@
 ;
 
 (define-library (liii either)
-  (import (liii base))
+  (import (liii base)
+          (scheme base))
   (export from-left to-left
           from-right to-right
           either-left? either-right?
-          either-map either-flat-map either-for-each)
+          either-map either-flat-map either-for-each
+          either-get-or-else
+          either-swap
+          either-fold
+          either-or-else
+          either-match)
   (begin
 
+    ;; ======================
+    ;; 构造函数
+    ;; ======================
+    
     ;; 创建左值（错误情况）
-    (define (from-left message)
-      (cons message 'empty-right))
-
-    ;; 从 either 中提取左值
-    (define (to-left either)
-      (if (pair? either)
-          (car either)
-          '()))
+    (define (from-left value)
+      (cons value 'left))
 
     ;; 创建右值（成功情况）
-    (define (from-right x)
-      (let ((ret (cons 'empty-left 'empty-right)))
-        (set-cdr! ret x)
-        ret))
+    (define (from-right value)
+      (cons value 'right))
 
-    ;; 从 either 中提取右值
-    (define (to-right either)
-      (if (pair? either)
-          (cdr either)
-          '()))
-
-    ;; 检查是否是右值
-    (define (either-right? either)
-      (and (pair? either) (eq? (car either) 'empty-left)))
+    ;; ======================
+    ;; 类型判断函数
+    ;; ======================
 
     ;; 检查是否是左值
     (define (either-left? either)
-      (and (pair? either) (eq? (cdr either) 'empty-right)))
+      (and (pair? either) (eq? (cdr either) 'left)))
+
+    ;; 检查是否是右值
+    (define (either-right? either)
+      (and (pair? either) (eq? (cdr either) 'right)))
+
+    ;; ======================
+    ;; 提取函数
+    ;; ======================
+
+    ;; 从 either 中提取左值
+    (define (to-left either)
+      (cond
+        ((not (pair? either))
+         (error "Invalid Either value"))
+        ((eq? (cdr either) 'left)
+         (car either))
+        (else
+         (error "Cannot extract left from Right" either))))
+
+    ;; 从 either 中提取右值
+    (define (to-right either)
+      (cond
+        ((not (pair? either))
+         (error "Invalid Either value"))
+        ((eq? (cdr either) 'right)
+         (car either))
+        (else
+         (error "Cannot extract right from Left" either))))
+
+    ;; ======================
+    ;; 高阶函数操作
+    ;; ======================
 
     ;; 映射函数：如果 either 是右值，则应用函数 f
     (define (either-map f either)
       (if (either-right? either)
-          (from-right (f (to-right either)))
+          (from-right (f (car either)))
           either))
 
-    ;; 扁平映射函数：如果 either 是右值，则应用函数 f
+    ;; 扁平映射函数：如果 either 是右值，则应用函数 f (f 必须返回 Either)
     (define (either-flat-map f either)
       (if (either-right? either)
-          (f (to-right either))
+          (f (car either))
           either))
 
-    ;; 遍历函数：如果 either 是右值，则应用函数 f
+    ;; 遍历函数：如果 either 是右值，则应用函数 f (执行副作用)
     (define (either-for-each f either)
       (when (either-right? either)
-            (f (to-right either))))
+        (f (car either))))
 
-    ) ; end of begin
-  ) ; end of define-library
+    ;; ======================
+    ;; 附加实用函数
+    ;; ======================
+
+    ;; 获取值或默认值
+    (define (either-get-or-else default either)
+      (if (either-right? either)
+          (car either)
+          default))
+
+    ;; 交换Left和Right
+    (define (either-swap either)
+      (if (either-right? either)
+          (from-left (car either))
+          (from-right (car either))))
+
+    ;; fold操作：根据类型分别调用 left-func 或 right-func
+    (define (either-fold left-func right-func either)
+      (if (either-right? either)
+          (right-func (car either))
+          (left-func (car either))))
+
+    ;; 组合器：如果是 Left 则返回 alternative，否则返回自身
+    (define (either-or-else alternative either)
+      (if (either-right? either)
+          either
+          alternative))
+
+    ;; ======================
+    ;; 模式匹配宏
+    ;; ======================
+    (define-macro (either-match either left-clause right-clause)
+      (let ((e (gensym)))
+        `(let ((,e ,either)) ;; 避免重复求值
+           (cond
+             ((either-left? ,e)
+              (let ((,(car left-clause) (car ,e)))
+                ,@(cdr left-clause)))
+             ((either-right? ,e)
+              (let ((,(car right-clause) (car ,e)))
+                ,@(cdr right-clause)))
+             (else (error "Invalid Either value in match"))))))
+
+  ) ; end of begin
+) ; end of define-library
