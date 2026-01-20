@@ -94,15 +94,6 @@
 (check (either-get-or-else 0 (from-right 42)) => 42)
 (check (either-get-or-else 0 (from-left "error")) => 0)
 
-;; 测试 either-swap
-(let ((r (from-right 1))
-      (l (from-left 2)))
-  ;; Right 变 Left
-  (check-true (either-left? (either-swap r)))
-  (check (to-left (either-swap r)) => 1)
-  ;; Left 变 Right
-  (check-true (either-right? (either-swap l)))
-  (check (to-right (either-swap l)) => 2))
 
 ;; 测试 either-fold
 ;; 右值应走第二个函数 (* x 2)，左值应走第一个函数 string-length

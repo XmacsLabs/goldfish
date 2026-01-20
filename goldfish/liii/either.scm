@@ -21,7 +21,6 @@
           either-left? either-right?
           either-map either-flat-map either-for-each
           either-get-or-else
-          either-swap
           either-fold
           either-or-else
           either-match)
@@ -106,11 +105,6 @@
           (car either)
           default))
 
-    ;; 交换Left和Right
-    (define (either-swap either)
-      (if (either-right? either)
-          (from-left (car either))
-          (from-right (car either))))
 
     ;; fold操作：根据类型分别调用 left-func 或 right-func
     (define (either-fold left-func right-func either)
