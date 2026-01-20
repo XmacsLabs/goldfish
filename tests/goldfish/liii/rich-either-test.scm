@@ -23,9 +23,50 @@
 (check-set-mode! 'report-failed)
 
 ;; ==========================================
-;; 基础构造与类型判断测试
+;; 1. 基础构造与类型判断测试
 ;; ==========================================
 
+#|
+left / right
+构造函数：创建 Rich Either 实例。
+
+语法
+----
+(left value)
+(right value)
+
+描述
+----
+- `left`: 创建一个表示失败或错误的 Either 实例。
+- `right`: 创建一个表示成功或有效值的 Either 实例。
+|#
+
+#|
+:left? / :right?
+成员方法：判断 Either 的类型。
+
+语法
+----
+(obj :left?)
+(obj :right?)
+
+返回值
+------
+boolean
+|#
+
+#|
+:get
+成员方法：提取内部值。
+
+语法
+----
+(obj :get)
+
+描述
+----
+无论对象是 Left 还是 Right，直接返回其内部存储的值。
+|#
 ;; 测试 left 和 right 构造函数
 (check-true ((left "error") :left?))
 (check-false ((left "error") :right?))
@@ -38,9 +79,48 @@
 (check ((right 42) :get) => 42)
 
 ;; ==========================================
-;; or-else 和 get-or-else 测试
+;; 2. or-else 和 get-or-else 测试
 ;; ==========================================
 
+#|
+:or-else
+成员方法：对象级别的备选方案。
+
+语法
+----
+(obj :or-else alternative)
+
+参数
+----
+alternative : rich-either
+    当 obj 为 Left 时返回的备用 Either 对象。
+
+返回值
+------
+rich-either
+    - 如果 obj 为 Right，返回 obj 自身。
+    - 如果 obj 为 Left，返回 alternative。
+|#
+
+#|
+:get-or-else
+成员方法：值级别的安全提取。
+
+语法
+----
+(obj :get-or-else default)
+
+参数
+----
+default : any | procedure
+    当 obj 为 Left 时返回的默认值，或者一个无参函数（Thunk）。
+
+返回值
+------
+any
+    - 如果 obj 为 Right，返回内部值。
+    - 如果 obj 为 Left，且 default 是函数，返回 (default) 的结果；否则返回 default。
+|#
 ;; 测试 %or-else
 (let ((right-val (right 1))
       (left-val (left 0))
@@ -57,9 +137,30 @@
 (check ((left "error") :get-or-else (lambda () 99)) => 99)
 
 ;; ==========================================
-;; filter-or-else 测试
+;; 3. filter-or-else 测试
 ;; ==========================================
 
+#|
+:filter-or-else
+成员方法：条件过滤。
+
+语法
+----
+(obj :filter-or-else predicate zero)
+
+参数
+----
+predicate : procedure (any -> boolean)
+    用于测试 Right 值的谓词函数。
+zero : any
+    当过滤失败（即谓词返回 false）时，用于构建新 Left 的值。
+
+描述
+----
+- 如果 obj 是 Right 且 (predicate value) 为真：返回 obj 自身。
+- 如果 obj 是 Right 且 (predicate value) 为假：返回 (left zero)。
+- 如果 obj 是 Left：返回 obj 自身。
+|#
 ;; Right 且满足条件时返回自身
 (let ((r (right 10)))
   (check ((r :filter-or-else (lambda (x) (> x 5)) 0) :get) => 10))
@@ -74,18 +175,44 @@
   (check ((l :filter-or-else (lambda (x) #t) 0) :get) => "error"))
 
 ;; ==========================================
-;; contains 测试
+;; 4. contains 测试
 ;; ==========================================
 
+#|
+:contains
+成员方法：检查是否包含特定值。
+
+语法
+----
+(obj :contains target)
+
+描述
+----
+仅当 obj 是 Right 类型，且其内部值与 target 相等（使用 class=? 比较）时，返回 #t。
+Left 类型总是返回 #f。
+|#
 (check-true ((right 42) :contains 42))
 (check-false ((right 42) :contains 43))
 (check-false ((left "error") :contains "error"))
 
 
 ;; ==========================================
-;; for-each 测试
+;; 5. for-each 测试
 ;; ==========================================
 
+#|
+:for-each
+成员方法：副作用遍历。
+
+语法
+----
+(obj :for-each proc)
+
+描述
+----
+如果 obj 是 Right，则对其值执行 proc。
+如果 obj 是 Left，不执行任何操作。
+|#
 (let ((counter 0)
       (right-val (right 5))
       (left-val (left "error")))
@@ -99,9 +226,23 @@
     (check counter => 5)))
 
 ;; ==========================================
-;; to-option 测试
+;; 6. to-option 测试
 ;; ==========================================
 
+#|
+:to-option
+成员方法：类型转换。
+
+语法
+----
+(obj :to-option)
+
+返回值
+------
+option
+    - Right 值转换为 (option value)。
+    - Left 值转换为 (none)。
+|#
 ;; Right 转换为 defined option
 (let ((opt ((right 42) :to-option)))
   (check-true (opt :defined?))
@@ -112,9 +253,23 @@
   (check-true (opt :empty?)))
 
 ;; ==========================================
-;; map 测试
+;; 7. map 测试
 ;; ==========================================
 
+#|
+:map
+成员方法：Functor 映射。
+
+语法
+----
+(obj :map func . args)
+
+描述
+----
+如果 obj 是 Right，应用 func 到其值上，并返回包装了新值的 Right。
+如果 obj 是 Left，直接返回自身。
+支持链式调用参数 args。
+|#
 ;; 对 Right 应用 map
 (let ((result ((right 5) :map (lambda (x) (* x 2)))))
   (check-true (result :right?))
@@ -125,9 +280,22 @@
   (check ((l :map (lambda (x) (string-append "Mapped: " x))) :get) => "error"))
 
 ;; ==========================================
-;; flat-map 测试
+;; 8. flat-map 测试
 ;; ==========================================
 
+#|
+:flat-map
+成员方法：Monad 绑定。
+
+语法
+----
+(obj :flat-map func . args)
+
+描述
+----
+如果 obj 是 Right，应用 func（必须返回 Either）到其值上，并返回该结果。
+如果 obj 是 Left，直接返回自身。
+|#
 ;; 对 Right 应用 flat-map
 (let ((result ((right 5) :flat-map (lambda (x) (right (* x 2))))))
   (check-true (result :right?))
@@ -138,9 +306,36 @@
   (check ((l :flat-map (lambda (x) (right (string-length x)))) :get) => "error"))
 
 ;; ==========================================
-;; forall 和 exists 测试
+;; 9. forall 和 exists 测试
 ;; ==========================================
 
+#|
+:forall
+成员方法：全称量词检查。
+
+语法
+----
+(obj :forall predicate)
+
+描述
+----
+- 如果 obj 是 Right，返回 (predicate value)。
+- 如果 obj 是 Left，返回 #t (真空真)。
+|#
+
+#|
+:exists
+成员方法：存在量词检查。
+
+语法
+----
+(obj :exists predicate)
+
+描述
+----
+- 如果 obj 是 Right，返回 (predicate value)。
+- 如果 obj 是 Left，返回 #f。
+|#
 ;; forall: Right 且满足条件时为真
 (check-true ((right 10) :forall (lambda (x) (> x 5))))
 (check-false ((right 3) :forall (lambda (x) (> x 5))))
@@ -154,7 +349,7 @@
 (check-false ((left "error") :exists (lambda (x) #t)))
 
 ;; ==========================================
-;; 类型兼容性测试
+;; 10. 类型兼容性测试
 ;; ==========================================
 
 ;; 测试 either 是 rich-either 的别名
@@ -162,8 +357,13 @@
 (check-true (either :is-type-of (right "test")))
 
 ;; ==========================================
-;; 错误处理测试
+;; 11. 错误处理测试
 ;; ==========================================
+
+#|
+错误处理
+检查非法参数是否能正确抛出 type-error。
+|#
 
 ;; 测试 %or-else 参数类型检查
 (check-catch 'type-error ((right 1) :or-else "not-an-either"))
@@ -178,7 +378,7 @@
 (check-catch 'type-error ((right 1) :exists "not-a-procedure"))
 
 ;; ==========================================
-;; 综合流程测试
+;; 12. 综合流程测试
 ;; ==========================================
 
 ;; 测试链式操作
