@@ -22,8 +22,7 @@
           either-map either-for-each
           either-get-or-else
           either-fold
-          either-or-else
-          either-match)
+          either-or-else)
   (begin
 
     ;; ======================
