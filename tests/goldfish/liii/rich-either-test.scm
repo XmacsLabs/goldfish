@@ -17,7 +17,8 @@
 (import (liii check)
         (liii rich-either)
         (liii option)
-        (liii lang))
+        (liii lang)
+        (liii error))
 
 (check-set-mode! 'report-failed)
 
