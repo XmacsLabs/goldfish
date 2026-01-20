@@ -108,21 +108,6 @@
   (check (to-right (either-or-else backup main)) => 1)
   (check (to-right (either-or-else backup fail)) => 2))
 
-;; ==========================================
-;; 模式匹配宏测试
-;; ==========================================
-
-;; 测试 either-match 处理 Right
-(check (either-match (from-right 100)
-         (err 'error-branch)
-         (val (+ val 1))) 
-       => 101)
-
-;; 测试 either-match 处理 Left
-(check (either-match (from-left "fail")
-         (err (string-append "Capture: " err))
-         (val 'success-branch)) 
-       => "Capture: fail")
 
 ;; ==========================================
 ;; 综合流程测试

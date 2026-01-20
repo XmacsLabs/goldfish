@@ -118,20 +118,6 @@
           either
           alternative))
 
-    ;; ======================
-    ;; 模式匹配宏
-    ;; ======================
-    (define-macro (either-match either left-clause right-clause)
-      (let ((e (gensym)))
-        `(let ((,e ,either)) ;; 避免重复求值
-           (cond
-             ((either-left? ,e)
-              (let ((,(car left-clause) (car ,e)))
-                ,@(cdr left-clause)))
-             ((either-right? ,e)
-              (let ((,(car right-clause) (car ,e)))
-                ,@(cdr right-clause)))
-             (else (error "Invalid Either value in match"))))))
 
   ) ; end of begin
 ) ; end of define-library
