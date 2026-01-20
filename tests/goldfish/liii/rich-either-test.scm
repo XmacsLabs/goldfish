@@ -76,7 +76,6 @@
 ;; contains 测试
 ;; ==========================================
 
-
 (check-true ((right 42) :contains 42))
 (check-false ((right 42) :contains 43))
 (check-false ((left "error") :contains "error"))
