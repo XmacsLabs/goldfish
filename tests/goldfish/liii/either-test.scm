@@ -27,39 +27,6 @@
 #|
 from-left
 创建 Left 值（通常代表错误或异常情况）。
-
-语法
-----
-(from-left value)
-
-参数
-----
-value : any
-    要存储在 Left 中的值，可以是任意类型。
-
-返回值
-------
-either
-    返回一个 Left 类型的 Either 值。
-|#
-
-#|
-to-left
-从 Left 类型的 Either 中提取值。
-
-语法
-----
-(to-left either)
-
-参数
-----
-either : either
-    一个 Left 类型的 Either 值。
-
-返回值
-------
-any
-    存储在 Left 内部的值。
 |#
 (check (to-left (from-left "error message")) => "error message")
 (check (to-left (from-left 42)) => 42)
@@ -68,39 +35,6 @@ any
 #|
 from-right
 创建 Right 值（通常代表成功或有效数据）。
-
-语法
-----
-(from-right value)
-
-参数
-----
-value : any
-    要存储在 Right 中的值，可以是任意类型。
-
-返回值
-------
-either
-    返回一个 Right 类型的 Either 值。
-|#
-
-#|
-to-right
-从 Right 类型的 Either 中提取值。
-
-语法
-----
-(to-right either)
-
-参数
-----
-either : either
-    一个 Right 类型的 Either 值。
-
-返回值
-------
-any
-    存储在 Right 内部的值。
 |#
 (check (to-right (from-right "success data")) => "success data")
 (check (to-right (from-right 100)) => 100)
@@ -114,21 +48,6 @@ any
 #|
 either-left? / either-right?
 类型判断函数。
-
-语法
-----
-(either-left? either)
-(either-right? either)
-
-参数
-----
-either : either
-    要检查的 Either 对象。
-
-返回值
-------
-boolean
-    如果符合对应类型返回 #t，否则返回 #f。
 |#
 (let ((left-val (from-left "error"))
       (right-val (from-right "success")))
@@ -150,23 +69,6 @@ boolean
 #|
 either-map
 Functor 映射操作。
-
-语法
-----
-(either-map func either)
-
-参数
-----
-func : procedure (any -> any)
-    应用于 Right 值的函数。
-either : either
-    输入的 Either 值。
-
-返回值
-------
-either
-    - Right: 返回包含 (func value) 的新 Right。
-    - Left: 原样返回 Left。
 |#
 (let ((left-val (from-left "error"))
       (right-val (from-right 5)))
@@ -180,22 +82,6 @@ either
 #|
 either-for-each
 副作用遍历操作。
-
-语法
-----
-(either-for-each proc either)
-
-参数
-----
-proc : procedure (any -> void)
-    需要执行副作用的函数。
-either : either
-    输入的 Either 值。
-
-描述
-----
-如果 either 是 Right，则对内部值执行 proc。
-如果 either 是 Left，则什么也不做。
 |#
 (let ((counter 0)
       (left-val (from-left "error"))
@@ -215,85 +101,13 @@ either : either
 #|
 either-get-or-else
 简单获取值或默认值。
-
-语法
-----
-(either-get-or-else either default)
-
-参数
-----
-either : either
-    目标 Either 对象。
-default : any
-    备用值。
-
-返回值
-------
-any
-    Right 的值或 default。
 |#
 (check (either-get-or-else (from-right 42) 0) => 42)
 (check (either-get-or-else (from-left "error") 0) => 0)
 
 #|
-either-fold
-提取值或计算默认值（支持惰性求值）。
-
-语法
-----
-(either-fold default either)
-
-参数
-----
-default : any | procedure
-    当 either 为 Left 时返回的值。
-    如果是无参过程（thunk），则调用该过程并返回结果（惰性求值）。
-either : either
-    要提取值的 Either 对象。
-
-返回值
-------
-any
-    Right 的内部值，或 default 处理后的结果。
-
-描述
-----
-在当前实现中，此函数行为类似于支持惰性求值的 get-or-else。
-如果 default 是一个过程（且不是 case-class），它将被调用以生成返回值。
-|#
-;; 1. 测试基础值返回
-(check (either-fold 0 (from-right 42)) => 42)
-(check (either-fold 0 (from-left "err")) => 0)
-
-;; 2. 测试惰性求值 (Lazy Evaluation)
-;; 当 default 是一个 lambda 时，应该调用它
-(check (either-fold (lambda () 99) (from-left "err")) => 99)
-
-;; 3. 验证 Right 情况下不会调用 default 函数 (短路)
-(let ((called #f))
-  (either-fold (lambda () (set! called #t)) (from-right 10))
-  (check-false called))
-
-#|
 either-or-else
 Either 级别的备选方案。
-
-语法
-----
-(either-or-else alternative either)
-
-参数
-----
-alternative : either
-    备用的 Either 值。
-either : either
-    主 Either 值。
-
-返回值
-------
-either
-    如果主 either 是 Right，返回主 either。
-    如果主 either 是 Left，返回 alternative。
 |#
 (let ((main (from-right 1))
       (backup (from-right 2))
@@ -303,7 +117,89 @@ either
 
 
 ;; ==========================================
-;; 5. 综合流程测试
+;; 5. 逻辑判断与过滤测试
+;; ==========================================
+
+#|
+either-filter-or-else
+条件过滤。
+
+语法
+----
+(either-filter-or-else pred zero either)
+
+描述
+----
+- 如果是 Right 且满足 pred -> 保持 Right
+- 如果是 Right 且不满足 pred -> 变为 Left(zero)
+- 如果是 Left -> 保持 Left
+|#
+(let ((r10 (from-right 10))   ; 偶数
+      (r11 (from-right 11))   ; 奇数
+      (l (from-left "orig"))) ; 原始错误
+
+  ;; 1. Right 且满足条件 -> 保持原样
+  (check (to-right (either-filter-or-else even? "err" r10)) => 10)
+  
+  ;; 2. Right 但不满足条件 -> 变为 Left("err")
+  (let ((res (either-filter-or-else even? "Must be even" r11)))
+    (check-true (either-left? res))
+    (check (to-left res) => "Must be even"))
+  
+  ;; 3. Left -> 保持原样 (忽略条件)
+  (let ((res-l (either-filter-or-else even? "Must be even" l)))
+    (check-true (either-left? res-l))
+    (check (to-left res-l) => "orig")))
+
+#|
+either-contains
+包含判断。
+
+语法
+----
+(either-contains x either)
+|#
+(check-true (either-contains 10 (from-right 10)))
+(check-false (either-contains 10 (from-right 11))) ; 值不同
+(check-false (either-contains 10 (from-left 10)))  ; 状态不对
+
+#|
+either-forall
+全称量词 (空真性测试)。
+
+语法
+----
+(either-forall pred either)
+
+描述
+----
+Right 必须满足 pred。
+Left 总是返回 #t。
+|#
+(check-true (either-forall even? (from-right 10)))
+(check-false (either-forall even? (from-right 11)))
+(check-true (either-forall even? (from-left "error"))) ; Left 总是 #t
+
+#|
+either-exists
+存在量词。
+
+语法
+----
+(either-exists pred either)
+
+描述
+----
+Right 必须满足 pred。
+Left 总是返回 #f。
+|#
+(check-true (either-exists even? (from-right 10)))
+(check-false (either-exists even? (from-right 11)))
+(check-false (either-exists even? (from-left "error"))) ; Left 总是 #f
+
+
+;; ==========================================
+;; 6. 综合流程测试
 ;; ==========================================
 
 ;; 测试 Map 的连续使用

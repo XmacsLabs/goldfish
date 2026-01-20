@@ -21,8 +21,11 @@
           either-left? either-right?
           either-map either-for-each
           either-get-or-else
-          either-fold
-          either-or-else)
+          either-or-else
+          either-filter-or-else
+          either-contains
+          either-forall
+          either-exists)
   (begin
 
     ;; ======================
@@ -89,6 +92,55 @@
         (f (car either))))
 
     ;; ======================
+    ;; 逻辑判断与过滤函数 
+    ;; ======================
+
+    ;; 过滤：如果是右值且不满足 pred，则转换为 (from-left zero)
+    (define (either-filter-or-else pred zero either)
+      (unless (procedure? pred) 
+        (type-error 
+          (format #f "In function either-filter-or-else: argument *pred* must be *procedure*! **Got ~a**" 
+            (object->string pred))))
+      
+      (unless (any? zero) 
+        (type-error 
+          (format #f "In function either-filter-or-else: argument *zero* must be *any*! **Got ~a**" 
+            (object->string zero))))
+
+      (if (either-right? either)
+          (if (pred (car either))
+              either
+              (from-left zero))
+          either))
+
+    ;; 包含：如果是右值且内部值等于 x
+    (define (either-contains x either)
+      (and (either-right? either)
+           (equal? x (car either))))
+
+    ;; 全称量词：如果是右值则判断 pred，如果是左值默认为 #t
+    (define (either-forall pred either)
+      (unless (procedure? pred) 
+        (type-error 
+          (format #f "In function either-forall: argument *pred* must be *procedure*! **Got ~a**" 
+            (object->string pred))))
+
+      (if (either-right? either)
+          (pred (car either))
+          #t))
+
+    ;; 存在量词：如果是右值则判断 pred，如果是左值默认为 #f
+    (define (either-exists pred either)
+      (unless (procedure? pred) 
+        (type-error 
+          (format #f "In function either-exists: argument *pred* must be *procedure*! **Got ~a**" 
+            (object->string pred))))
+
+      (if (either-right? either)
+          (pred (car either))
+          #f))
+
+    ;; ======================
     ;; 附加实用函数
     ;; ======================
 
@@ -99,14 +151,6 @@
           default))
 
 
-    ;; fold操作：
-    (define (either-fold default either)
-      (if (either-right? either)
-          (car either)
-          (if (and (procedure? default)
-                   (not (case-class? default)))
-              (default)
-              default)))
 
     ;; 组合器：如果是 Left 则返回 alternative，否则返回自身
     (define (either-or-else alternative either)

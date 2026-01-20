@@ -16,7 +16,7 @@
 
 (define-library (liii rich-either)
   (import (liii option) (liii oop) (liii base))
-  (export either left right)
+  (export rich-either left right)
   (begin
 
     (define-case-class rich-either
@@ -113,8 +113,6 @@
     (define (right v)
       (rich-either 'right v))
 
-    ; Define either as an alias for rich-either for backward compatibility
-    (define either rich-either)
 
     ) ; end of begin
   ) ; end of define-library
