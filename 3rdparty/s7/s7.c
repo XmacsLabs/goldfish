@@ -308,7 +308,6 @@
   #include <sys/param.h>
   #include <strings.h>
   #include <errno.h>
-  #include <locale.h>
 #else
   /* in Snd these are in mus-config.h */
   #ifndef MUS_CONFIG_H_LOADED
@@ -376,6 +375,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <setjmp.h>
+#include <locale.h>
 
 #ifdef _MSC_VER
   #define MS_WINDOWS 1
@@ -1516,6 +1516,13 @@ static s7_pointer wrap_string(s7_scheme *sc, const char *str, s7_int len);
 #endif
 
 static s7_pointer set_elist_1(s7_scheme *sc, s7_pointer x1);
+
+static inline FILE *xfopen(const char *path, const char *mode)
+{
+  setlocale(LC_ALL, ".UTF8");
+  return fopen(path, mode);
+}
+#define fopen(path, mode) xfopen(path, mode)
 
 #if DISABLE_FILE_OUTPUT
 static FILE *old_fopen(const char *pathname, const char *mode) {return(fopen(pathname, mode));}
