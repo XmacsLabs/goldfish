@@ -25,6 +25,7 @@
           either-filter-or-else
           either-contains
           either-every
+          either?
           either-any)
   (begin
 
@@ -52,6 +53,10 @@
     (define (either-right? either)
       (and (pair? either) (eq? (cdr either) 'right)))
 
+    (define (either? x)
+      (or (either-left? x) 
+          (either-right? x)))
+
     ;; ======================
     ;; 提取函数
     ;; ======================
@@ -59,22 +64,22 @@
     ;; 从 either 中提取左值
     (define (to-left either)
       (cond
-        ((not (pair? either))
-         (error "Invalid Either value"))
+        ((not (either? either))
+         (type-error "Invalid Either value"))
         ((eq? (cdr either) 'left)
          (car either))
         (else
-         (error "Cannot extract left from Right" either))))
+         (value-error "Cannot extract left from Right" either))))
 
     ;; 从 either 中提取右值
     (define (to-right either)
       (cond
-        ((not (pair? either))
-         (error "Invalid Either value"))
+        ((not (either? either))
+         (type-error "Invalid Either value"))
         ((eq? (cdr either) 'right)
          (car either))
         (else
-         (error "Cannot extract right from Left" either))))
+         (value-error "Cannot extract right from Left" either))))
 
     ;; ======================
     ;; 高阶函数操作
@@ -82,9 +87,11 @@
 
     ;; 映射函数：如果 either 是右值，则应用函数 f
     (define (either-map f either)
-      (if (either-right? either)
-          (from-right (f (car either)))
-          either))
+      (if (not (either? either))
+          (type-error "Invalid Either value")
+          (if (either-right? either)
+              (from-right (f (car either)))
+              either)))
 
     ;; 遍历函数：如果 either 是右值，则应用函数 f (执行副作用)
     (define (either-for-each f either)
