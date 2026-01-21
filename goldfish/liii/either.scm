@@ -24,8 +24,8 @@
           either-or-else
           either-filter-or-else
           either-contains
-          either-forall
-          either-exists)
+          either-every
+          either-any)
   (begin
 
     ;; ======================
@@ -114,15 +114,15 @@
           either))
 
     ;; 包含：如果是右值且内部值等于 x
-    (define (either-contains x either)
+    (define (either-contains either x)
       (and (either-right? either)
            (equal? x (car either))))
 
     ;; 全称量词：如果是右值则判断 pred，如果是左值默认为 #t
-    (define (either-forall pred either)
+    (define (either-every pred either)
       (unless (procedure? pred) 
         (type-error 
-          (format #f "In function either-forall: argument *pred* must be *procedure*! **Got ~a**" 
+          (format #f "In function either-every: argument *pred* must be *procedure*! **Got ~a**" 
             (object->string pred))))
 
       (if (either-right? either)
@@ -130,10 +130,10 @@
           #t))
 
     ;; 存在量词：如果是右值则判断 pred，如果是左值默认为 #f
-    (define (either-exists pred either)
+    (define (either-any pred either)
       (unless (procedure? pred) 
         (type-error 
-          (format #f "In function either-exists: argument *pred* must be *procedure*! **Got ~a**" 
+          (format #f "In function either-any: argument *pred* must be *procedure*! **Got ~a**" 
             (object->string pred))))
 
       (if (either-right? either)
@@ -153,7 +153,7 @@
 
 
     ;; 组合器：如果是 Left 则返回 alternative，否则返回自身
-    (define (either-or-else alternative either)
+    (define (either-or-else either alternative)
       (if (either-right? either)
           either
           alternative))

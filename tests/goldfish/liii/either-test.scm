@@ -112,8 +112,8 @@ Either 级别的备选方案。
 (let ((main (from-right 1))
       (backup (from-right 2))
       (fail (from-left 0)))
-  (check (to-right (either-or-else backup main)) => 1)
-  (check (to-right (either-or-else backup fail)) => 2))
+  (check (to-right (either-or-else main backup)) => 1)
+  (check (to-right (either-or-else fail backup)) => 2))
 
 
 ;; ==========================================
@@ -157,45 +157,45 @@ either-contains
 
 语法
 ----
-(either-contains x either)
+(either-contains either x)
 |#
-(check-true (either-contains 10 (from-right 10)))
-(check-false (either-contains 10 (from-right 11))) ; 值不同
-(check-false (either-contains 10 (from-left 10)))  ; 状态不对
+(check-true (either-contains (from-right 10) 10))
+(check-false (either-contains (from-right 11) 10)) ; 值不同
+(check-false (either-contains (from-left 10) 10))  ; 状态不对
 
 #|
-either-forall
+either-every
 全称量词 (空真性测试)。
 
 语法
 ----
-(either-forall pred either)
+(either-every pred either)
 
 描述
 ----
 Right 必须满足 pred。
 Left 总是返回 #t。
 |#
-(check-true (either-forall even? (from-right 10)))
-(check-false (either-forall even? (from-right 11)))
-(check-true (either-forall even? (from-left "error"))) ; Left 总是 #t
+(check-true (either-every even? (from-right 10)))
+(check-false (either-every even? (from-right 11)))
+(check-true (either-every even? (from-left "error"))) ; Left 总是 #t
 
 #|
-either-exists
+either-any
 存在量词。
 
 语法
 ----
-(either-exists pred either)
+(either-any pred either)
 
 描述
 ----
 Right 必须满足 pred。
 Left 总是返回 #f。
 |#
-(check-true (either-exists even? (from-right 10)))
-(check-false (either-exists even? (from-right 11)))
-(check-false (either-exists even? (from-left "error"))) ; Left 总是 #f
+(check-true (either-any even? (from-right 10)))
+(check-false (either-any even? (from-right 11)))
+(check-false (either-any even? (from-left "error"))) ; Left 总是 #f
 
 
 ;; ==========================================
