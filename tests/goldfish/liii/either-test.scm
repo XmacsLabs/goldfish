@@ -15,6 +15,7 @@
 ;
 
 (import (liii check)
+        (liii error)
         (liii either))
 
 (check-set-mode! 'report-failed)
