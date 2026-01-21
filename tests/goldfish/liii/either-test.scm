@@ -216,4 +216,58 @@ Left 总是返回 #f。
   (check-true (either-left? mapped-error))
   (check (to-left mapped-error) => "network error"))
 
+
+
+;; ==========================================
+;; 7. 异常与边界测试 (Check-Catch)
+;; ==========================================
+
+;; ------------------------------------------
+;; A. 测试 check-either 类型守卫
+;; 预期：所有函数接收非 Either 类型时，抛出 'type-error
+;; ------------------------------------------
+
+;; 提取函数防卫
+(check-catch 'type-error (to-left "not-either"))
+(check-catch 'type-error (to-left 123))
+(check-catch 'type-error (to-right '()))
+
+;; 高阶函数防卫
+(check-catch 'type-error (either-map (lambda (x) x) "not-either"))
+(check-catch 'type-error (either-for-each (lambda (x) x) "not-either"))
+
+;; 逻辑函数防卫
+(check-catch 'type-error (either-filter-or-else even? 0 "not-either"))
+(check-catch 'type-error (either-contains "not-either" 1))
+(check-catch 'type-error (either-every even? "not-either"))
+(check-catch 'type-error (either-any even? "not-either"))
+
+;; 实用函数防卫
+(check-catch 'type-error (either-get-or-else "not-either" 0))
+(check-catch 'type-error (either-or-else "not-either" (from-right 1)))
+
+;; ------------------------------------------
+;; B. 测试参数类型检查 (procedure?)
+;; 预期：传入非函数参数时，抛出 'type-error
+;; ------------------------------------------
+
+(define valid-right (from-right 10))
+
+(check-catch 'type-error (either-map "not-a-proc" valid-right))
+(check-catch 'type-error (either-for-each "not-a-proc" valid-right))
+(check-catch 'type-error (either-filter-or-else "not-a-proc" 0 valid-right))
+(check-catch 'type-error (either-every "not-a-proc" valid-right))
+(check-catch 'type-error (either-any "not-a-proc" valid-right))
+
+;; ------------------------------------------
+;; C. 测试逻辑错误 (Value Error)
+;; 预期：违反 Either 语义的操作，抛出 'value-error
+;; ------------------------------------------
+
+;; 试图从 Right 中提取 Left
+(check-catch 'value-error (to-left (from-right "I am Right")))
+
+;; 试图从 Left 中提取 Right
+(check-catch 'value-error (to-right (from-left "I am Left")))
+
 (check-report)
