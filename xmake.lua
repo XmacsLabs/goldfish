@@ -102,24 +102,24 @@ target ("goldfish") do
     add_installfiles("$(projectdir)/goldfish/(liii/*.scm)", {prefixdir = "share/goldfish"})
 end
 
+if is_plat("wasm") then
 target("goldfish_repl_wasm")
     set_kind("binary")
     set_languages("c++11")
     set_targetdir("$(projectdir)/repl/")
     add_files("src/goldfish_repl.cpp")
-    add_packages("s7", "tbox")
-    if is_plat("wasm") then
-        add_defines("GOLDFISH_ENABLE_REPL")
-        add_ldflags("--preload-file goldfish@/goldfish")
-        -- 导出 REPL 相关函数
-        add_ldflags("-sEXPORTED_FUNCTIONS=['_eval_string','_get_out','_get_err','_malloc','_free']", {force = true})
-        add_ldflags("-sEXPORTED_RUNTIME_METHODS=['UTF8ToString','allocateUTF8']", {force = true})
-        add_ldflags("-sINITIAL_MEMORY=134217728", {force = true})
-        add_ldflags("-sALLOW_MEMORY_GROWTH=1", {force = true})
-        add_ldflags("-sASSERTIONS=1", {force = true})
-        -- 生成 js glue code
-        set_extension(".js")
-    end
+    add_packages("s7", "tbox", "argh")
+    add_defines("GOLDFISH_ENABLE_REPL")
+    add_ldflags("--preload-file goldfish@/goldfish")
+    -- 导出 REPL 相关函数
+    add_ldflags("-sEXPORTED_FUNCTIONS=['_eval_string','_get_out','_get_err','_malloc','_free']", {force = true})
+    add_ldflags("-sEXPORTED_RUNTIME_METHODS=['UTF8ToString','allocateUTF8']", {force = true})
+    add_ldflags("-sINITIAL_MEMORY=134217728", {force = true})
+    add_ldflags("-sALLOW_MEMORY_GROWTH=1", {force = true})
+    add_ldflags("-sASSERTIONS=1", {force = true})
+    -- 生成 js glue code
+    set_extension(".js")
+end
 
 includes("@builtin/xpack")
 
