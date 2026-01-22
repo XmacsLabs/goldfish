@@ -1022,5 +1022,152 @@
   (check ((comparator-equality-predicate set-comparator) s1 s2) => #t)
   (check ((comparator-equality-predicate set-comparator) s1 s3) => #f))
 
+;;; ============================================================
+;;; Advanced Tests: Different Types, Performance, Error Cases
+;;; ============================================================
+
+;;; ----- Different Element Types -----
+
+;; Set with strings
+(let1 s (set (make-equal-comparator) "apple" "banana" "cherry")
+  (check (set-size s) => 3)
+  (check (set-contains? s "banana") => #t)
+  (check (set-contains? s "date") => #f))
+
+;; Set with symbols
+(let1 s (set (make-eq-comparator) 'foo 'bar 'baz)
+  (check (set-size s) => 3)
+  (check (set-contains? s 'bar) => #t))
+
+;; Set with mixed numbers (integers and reals)
+(let1 s (set (make-equal-comparator) 1 2.5 3 4.7 5)
+  (check (set-size s) => 5)
+  (check (set-contains? s 2.5) => #t))
+
+;; Set with pairs/lists
+(let1 s (set (make-equal-comparator) '(1 2) '(3 4) '(5 6))
+  (check (set-size s) => 3)
+  (check (set-contains? s '(3 4)) => #t))
+
+;; Bag with strings (with duplicates)
+(let1 b (bag (make-equal-comparator) "a" "a" "b" "b" "b" "c")
+  (check (bag-size b) => 6)
+  (check (bag-element-count b "a") => 2)
+  (check (bag-element-count b "b") => 3))
+
+;; Bag with symbols
+(let1 b (bag (make-eq-comparator) 'x 'x 'y 'z 'z 'z)
+  (check (bag-unique-size b) => 3)
+  (check (bag-element-count b 'x) => 2)
+  (check (bag-element-count b 'z) => 3))
+
+;; Set operations with string elements
+(let ((s1 (set (make-equal-comparator) "a" "b" "c"))
+      (s2 (set (make-equal-comparator) "b" "c" "d")))
+  (check (set-size (set-union s1 s2)) => 4)
+  (check (set-size (set-intersection s1 s2)) => 2)
+  (check (set-contains? (set-difference s1 s2) "a") => #t))
+
+;; Bag operations with symbol elements
+(let ((b1 (bag (make-eq-comparator) 'a 'a 'b))
+      (b2 (bag (make-eq-comparator) 'b 'b 'c)))
+  (check (bag-element-count (bag-union b1 b2) 'a) => 2)
+  (check (bag-element-count (bag-union b1 b2) 'b) => 2)  ; max(1,2)
+  (check (bag-element-count (bag-sum b1 b2) 'b) => 3))   ; 1+2
+
+;;; ----- Performance Tests (Large Sets/Bags) -----
+
+;; Large set creation and operations
+(let1 large-s (apply set (make-equal-comparator) (iota 1000))
+  (check (set-size large-s) => 1000)
+  (check (set-contains? large-s 500) => #t)
+  (check (set-contains? large-s 1000) => #f)
+  ;; Test operations on large set
+  (let1 filtered (set-filter (lambda (x) (< x 100)) large-s)
+    (check (set-size filtered) => 100))
+  (let1 sum (set-fold + 0 large-s)
+    (check sum => 499500)))  ; sum of 0..999
+
+;; Large bag with many duplicates
+(let1 large-b (apply bag (make-equal-comparator) 
+                    (append (iota 100) (iota 100) (iota 100)))
+  (check (bag-size large-b) => 300)
+  (check (bag-unique-size large-b) => 100)
+  (check (bag-element-count large-b 50) => 3))
+
+;; Large set union
+(let ((s1 (apply set (make-equal-comparator) (iota 500)))       ; 0..499
+      (s2 (apply set (make-equal-comparator) (iota 500 400))))  ; 400..899
+  (let1 union-s (set-union s1 s2)
+    (check (set-size union-s) => 900)))
+
+;; Large set intersection
+(let ((s1 (apply set (make-equal-comparator) (iota 500 100)))  ; 100..599
+      (s2 (apply set (make-equal-comparator) (iota 200))))     ; 0..199
+  (let1 inter-s (set-intersection s1 s2)
+    (check (set-size inter-s) => 100)))  ; 100..199 overlap
+
+;; Large bag operations
+(let ((b1 (apply bag (make-equal-comparator) (append (iota 50) (iota 50))))  ; 2x (0..49) = 100 elements
+      (b2 (apply bag (make-equal-comparator) (iota 50 25))))  ; 25..74 = 50 elements
+  (check (bag-size (bag-sum b1 b2)) => 150))  ; 100 + 50
+
+;; Performance: map over large set
+(let* ((large-s (apply set (make-equal-comparator) (iota 500)))
+       (mapped-s (set-map (make-equal-comparator) (lambda (x) (* x 2)) large-s)))
+  (check (set-size mapped-s) => 500)
+  (check (set-contains? mapped-s 998) => #t))
+
+;; Performance: fold over large bag
+(let1 large-b (apply bag (make-equal-comparator) (iota 1000))
+  (let1 sum (bag-fold + 0 large-b)
+    (check sum => 499500)))
+
+;;; ----- Complex Data Types -----
+
+;; Set with nested lists
+(let1 s (set (make-equal-comparator) 
+             '((a 1) (b 2)) 
+             '((c 3) (d 4))
+             '((a 1) (b 2)))  ; duplicate
+  (check (set-size s) => 2))  ; duplicates removed
+
+;; Bag with vector-like lists
+(let1 b (bag (make-equal-comparator)
+             '(1 2 3) '(1 2 3) '(4 5 6))
+  (check (bag-element-count b '(1 2 3)) => 2)
+  (check (bag-element-count b '(4 5 6)) => 1))
+
+;; Set operations with complex elements
+(let ((s1 (set (make-equal-comparator) '(a . 1) '(b . 2)))
+      (s2 (set (make-equal-comparator) '(b . 2) '(c . 3))))
+  (check (set-size (set-union s1 s2)) => 3)
+  (check (set-contains? (set-intersection s1 s2) '(b . 2)) => #t))
+
+;; Bag with mixed complex types
+(let1 b (bag (make-equal-comparator)
+             "string" 'symbol 123 '(a b c) '(a b c))
+  (check (bag-unique-size b) => 4)
+  (check (bag-element-count b '(a b c)) => 2))
+
+;; Set-map transforming types (numbers to strings)
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (let1 s2 (set-map (make-equal-comparator) number->string s)
+    (check (set-size s2) => 3)
+    (check (set-contains? s2 "2") => #t)))
+
+;; Bag-map transforming types
+(let1 b (bag (make-equal-comparator) 'a 'a 'b 'b 'b)
+  (let1 b2 (bag-map (make-equal-comparator) symbol->string b)
+    (check (bag-element-count b2 "a") => 2)
+    (check (bag-element-count b2 "b") => 3)))
+
+;; Case-insensitive string comparator test
+(let1 ci-comp (make-comparator string? string-ci=? #f string-ci-hash)
+  (let1 s (set ci-comp "Apple" "BANANA" "cherry")
+    (check (set-size s) => 3)
+    (check (set-contains? s "CHERRY") => #t)
+    (check (set-contains? s "apple") => #t)))  ; case-insensitive
+
 (check-report)
 
