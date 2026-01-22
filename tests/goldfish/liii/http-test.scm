@@ -9,16 +9,20 @@
   (check (r 'status-code) => 200)
   (check (r 'url) => "https://httpbin.org/")
   (check-true (real? (r 'elapsed)))
-  (check (r 'reason) => "OK")
+  ;; NOTE: httpbin.org's LB routes to different backends.
+  ;;       Some return "OK", others empty string for reason.
+  ;;       HTTP/2+ allows omitting reason phrases.
+  (check-true (or (equal? (r 'reason) "OK")
+                  (equal? (r 'reason) "")))
   (check (r 'text) => "")
-  (check ((r 'headers) "Content-Type") => "text/html; charset=utf-8")
-  (check ((r 'headers) "Content-Length") => "9593")
+  (check ((r 'headers) "content-type") => "text/html; charset=utf-8")
+  (check ((r 'headers) "content-length") => "9593")
   (check-true (http-ok? r)))
 
 (let1 r (http-get "https://httpbin.org")
   (check (r 'status-code) => 200)
   (check-true (> (string-length (r 'text)) 0))
-  (check ((r 'headers) "Content-Type") => "text/html; charset=utf-8"))
+  (check ((r 'headers) "content-type") => "text/html; charset=utf-8"))
 
 (let1 r (http-get "https://httpbin.org/get"
                   :params '(("key1" . "value1") ("key2" . "value2")))
