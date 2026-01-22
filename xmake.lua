@@ -45,17 +45,6 @@ option("http")
 option_end()
 
 if has_config("http") then
-    add_requires("pkgconfig::libcurl", {
-        alias = "libcurl",
-        -- optional = true,
-        system = system
-    })
-    -- if not has_package("pkgconfig::libcurl") then
-    --     add_requires("apt::libcurl4-openssl-dev", {
-    --         alias = "libcurl",
-    --         system = system
-    --     })
-    -- end
     add_requires("cpr")
 end
 
