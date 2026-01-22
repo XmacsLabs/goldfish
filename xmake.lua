@@ -38,6 +38,27 @@ option("pin-deps")
     set_values(false, true)
 option_end()
 
+option("http")
+    set_description("Enable http")
+    set_default(true)
+    set_values(false, true)
+option_end()
+
+if has_config("http") then
+    add_requires("pkgconfig::libcurl", {
+        alias = "libcurl",
+        -- optional = true,
+        system = system
+    })
+    -- if not has_package("pkgconfig::libcurl") then
+    --     add_requires("apt::libcurl4-openssl-dev", {
+    --         alias = "libcurl",
+    --         system = system
+    --     })
+    -- end
+    add_requires("cpr")
+end
+
 local S7_VERSION = "20250922"
 if has_config("pin-deps") then
     add_requires("s7 "..S7_VERSION, {system=system})
@@ -77,7 +98,7 @@ end
 add_requires("argh v1.3.2")
 
 target ("goldfish") do
-    set_languages("c++11")
+    set_languages("c++17")
     set_targetdir("$(projectdir)/bin/")
     if is_plat("linux") then
         add_syslinks("stdc++")
@@ -90,6 +111,7 @@ target ("goldfish") do
     add_packages("s7")
     add_packages("tbox")
     add_packages("argh")
+    add_packages("cpr")
 
     -- only enable REPL if repl option is enabled
     if has_config("repl") then
@@ -105,7 +127,7 @@ end
 if is_plat("wasm") then
 target("goldfish_repl_wasm")
     set_kind("binary")
-    set_languages("c++11")
+    set_languages("c++17")
     set_targetdir("$(projectdir)/repl/")
     add_files("src/goldfish_repl.cpp")
     add_packages("s7", "tbox", "argh")

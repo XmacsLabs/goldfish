@@ -101,7 +101,18 @@
               {italic}🐟 {220}Goldfish{reset} 👾
               $(type -p menu &>/dev/null && menu)
             '';
-            packages = with pkgs; [ xmake ];
+            imports = [ "${inputs.devshell}/extra/language/c.nix" ];
+            language.c.compiler = pkgs.gcc;
+            language.c.includes = [ pkgs.curl.dev ];
+            language.c.libraries = [ ];
+            packages = with pkgs; [
+              xmake
+              clang-tools
+              pkg-config
+              gnumake
+              cmake
+              unzip
+            ];
           };
 
           treefmt.config = {
