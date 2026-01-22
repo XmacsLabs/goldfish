@@ -20,8 +20,35 @@
 ;
 
 (define-library (srfi srfi-113)
-  (import (scheme base))
-  (export set?)
+  (import (liii set))
+  (export
+    ; Constructors
+    set set-unfold
+    ; Predicates
+    set? set-contains? set-empty? set-disjoint?
+    ; Accessors
+    set-member set-element-comparator
+    ; Updaters
+    set-adjoin set-adjoin!
+    set-replace set-replace!
+    set-delete set-delete! set-delete-all set-delete-all!
+    set-search!
+    ; The whole set
+    set-size set-find set-count set-any? set-every?
+    ; Mapping and folding
+    set-map set-for-each set-fold
+    set-filter set-filter! set-remove set-remove!
+    set-partition set-partition!
+    ; Copying and conversion
+    set-copy set->list list->set list->set!
+    ; Subsets
+    set=? set<? set>? set<=? set>=?
+    ; Set theory operations
+    set-union set-intersection set-difference set-xor
+    set-union! set-intersection! set-difference! set-xor!
+    ; Comparator
+    set-comparator
+    )
   (begin
 
     ) ; end of begin
