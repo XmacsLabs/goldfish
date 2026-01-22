@@ -35,14 +35,14 @@
   (begin
 
     ;;; ---------------------------------------------------------
-    ;;; 1. 类型谓词 (Type Predicates)
+    ;;; 1. 类型谓词 
     ;;; ---------------------------------------------------------
 
     (define (json-null? x)
       (eq? x 'null))
 
     (define (json-object? x)
-      ;; rich-json 定义 object 为非空列表 (Alist)
+      ;; rich-json 定义 object 为非空列表 
       (and (list? x) (not (null? x))))
 
     (define (json-array? x)
@@ -74,7 +74,7 @@
           (if (assoc key json) #t #f)))
 
     ;;; ---------------------------------------------------------
-    ;;; 3. 安全获取器 (Safe Accessors)
+    ;;; 3. 安全获取器
     ;;; ---------------------------------------------------------
 
     (define (json-get-or-else json default)
