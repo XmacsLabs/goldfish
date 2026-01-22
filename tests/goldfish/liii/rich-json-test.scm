@@ -896,7 +896,7 @@ predicate-fn : function (lambda (key) ...)
 ;; 路径删除：删除 person 下 address 里的 zip 字段
 (j :drop 'person 'address 'zip)
 
-;; 谓词删除（对象）：删除所有键名为 string 类型（极少见）或特定名称的键
+;; 谓词删除（对象）：删除所有键名为 string 类型或特定名称的键
 (j :drop (lambda (k) (eq? k 'age))) 
 
 ;; 谓词删除（数组）：删除所有索引为偶数的元素（即删除第 0, 2, 4... 项）
