@@ -20,7 +20,6 @@
         (liii base)
         (liii error))
 
-(check-set-mode! 'report-failed)
 ; comment this line to show detailed check reports
 ; (check-set-mode! 'report-failed)
 
@@ -851,34 +850,58 @@ predicate-fn : function
 
 #|
 rich-json%drop
-从JSON对象中删除指定的键。
+从 JSON 数据结构中删除指定的元素。
 
 语法
 ----
-(rich-json-instance :drop key1 key2 ...)
-(rich-json-instance :drop predicate-fn)
+1. 路径删除模式（Deep Delete）：
+   (rich-json-instance :drop key1 key2 ... target-key)
+
+2. 谓词删除模式（Shallow Filter）：
+   (rich-json-instance :drop predicate-fn)
 
 参数
 ----
 key1, key2, ... : symbol | string | number | boolean
-要删除的键路径。
+    用于定位要删除元素的层级路径。
+    - 最后一个参数是要删除的目标键（对象）或索引（数组）。
+    - 前面的参数是导航路径。
 
-predicate-fn : function
-用于选择要删除的键的谓词函数。
+predicate-fn : function (lambda (key) ...)
+    用于筛选要删除项的谓词函数。
+    - 接收参数：
+      * 对于对象 (Object)：接收 **键名 (Key)** (通常是 Symbol)。
+      * 对于数组 (Array)：接收 **索引 (Index)** (整数)。
+    - 返回值：如果不希望保留该项（即希望删除），返回 #t；否则返回 #f。
+    - 注意：此函数**不接收**元素的值 (Value)。
 
 返回值
 -----
-返回新的JSON对象，不包含被删除的键。
+返回一个新的 rich-json 对象，其中指定的元素已被移除。
 
 功能
 ----
-- 支持多层嵌套删除
-- 支持谓词函数选择要删除的键
-- 如果键不存在，返回原始JSON对象
-- 支持符号、字符串、数字和布尔值作为键
+1. **路径删除**：
+   - 支持多层嵌套定位。
+   - 就像文件系统路径一样，精准打击并删除路径末端的一个元素。
+   - 如果路径不存在，操作无效，返回原对象。
 
+2. **谓词删除**：
+   - 仅作用于**当前层级**（浅层）。
+   - 批量删除所有满足条件的项。
+   - **陷阱提示**：对于数组，它判断的是下标（0, 1, 2...）而不是数组里的内容。
+
+示例
+----
+;; 路径删除：删除 person 下 address 里的 zip 字段
+(j :drop 'person 'address 'zip)
+
+;; 谓词删除（对象）：删除所有键名为 string 类型（极少见）或特定名称的键
+(j :drop (lambda (k) (eq? k 'age))) 
+
+;; 谓词删除（数组）：删除所有索引为偶数的元素（即删除第 0, 2, 4... 项）
+(j :drop even?) 
 |#
-; Additional test cases for rich-json%drop
 (let* ((j0 (rich-json '((name . "Alice") (age . 25) (city . "Wonderland"))))
        (j1 (j0 :drop 'age)))
   (check (j1 'age) => (rich-json :null))
