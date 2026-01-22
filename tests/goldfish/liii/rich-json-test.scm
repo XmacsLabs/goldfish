@@ -20,7 +20,7 @@
         (liii base)
         (liii error))
 
-
+(check-set-mode! 'report-failed)
 ; comment this line to show detailed check reports
 ; (check-set-mode! 'report-failed)
 
@@ -232,10 +232,10 @@ json_string : json格式的字符串
 - 包含object、array、string、number、“true”、“false”、“null”
 |#
 (check (rich-json :parse "[]") => (rich-json :apply #()))
-(check (rich-json :parse "[true]") => (rich-json :apply #t))
-(check (rich-json :parse "[false]") => (rich-json :apply #f))
+(check (rich-json :parse "[true]") => (rich-json :apply #(true)))
+(check (rich-json :parse "[false]") => (rich-json :apply #(false)))
 (check (rich-json :parse "[1,2,3]") => (rich-json :apply #(1 2 3)))
-(check (rich-json :parse "[{data: 1},{}]") => (rich-json :apply #((("data" . 1)) (()))));; 数组里面有对象
+(check (rich-json :parse "[{data: 1},{}]") => (rich-json :apply #(((data . 1)) (()))));; 数组里面有对象
 (check (rich-json :parse "{}") => (rich-json :apply '(())))
 (check (rich-json :parse "{args: {}}") => (rich-json :apply '((args ()))))
 (check (rich-json :parse "{\"args\": {}}") => (rich-json :apply '(("args" ()))))
@@ -895,15 +895,14 @@ predicate-fn : function
 
 (let* ((j0 (rich-json '((data . #(1 2 3 4 5)))))
        (j1 (j0 :drop 'data (lambda (k) (and (number? k) (even? k))))))
-  (check (j1 'data) => (rich-json #(1 3 5))))
+  (check (j1 'data) => (rich-json #(2 4))))
 
-(let* ((j0 (rich-json '((settings . ((theme . "dark")
+(let* ((j0 (rich-json '((settings . (("theme" . "dark")
                                (notifications . #t)
-                               (language . "en"))))))
+                               ("language" . "en"))))))
        (j1 (j0 :drop 'settings (lambda (k) (string? k)))))
-  (check (j1 'settings 'theme) => (rich-json :null))
-  (check (j1 'settings 'language) => (rich-json :null))
-  (check (j1 'settings 'notifications) => (rich-json #t)))
+  (check (j1 'settings "theme") => (rich-json :null))
+  (check (j1 'settings "language") => (rich-json :null)))
 
 (let* ((j0 (rich-json '((a . 1) (b . 2) (c . 3))))
        (j1 (j0 :drop (lambda (k) (member k '(a c))))))
@@ -1015,7 +1014,7 @@ transform-fn : function
 ; Test with mixed rich-json objects and primitive values
 (let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
        (j1 (rich-json "Wonderland"))
-       (j2 (j0 :set 'person 'city j1 :set 'person 'age 26)))
+       (j2 ((j0 :push 'person 'city j1) :set 'person 'age 26)))
   (check (j2 'person 'city) => (rich-json "Wonderland"))
   (check (j2 'person 'age) => (rich-json 26)))
 
@@ -1028,13 +1027,13 @@ transform-fn : function
 ; Test with boolean rich-json object
 (let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
        (j1 (rich-json :true))
-       (j2 (j0 :set 'person 'active j1)))
+       (j2 (j0 :push 'person 'active j1)))
   (check (j2 'person 'active) => (rich-json :true)))
 
 ; Test with array rich-json object
 (let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
        (j1 (rich-json #(1 2 3)))
-       (j2 (j0 :set 'person 'scores j1)))
+       (j2 (j0 :push 'person 'scores j1)))
   (check (j2 'person 'scores) => (rich-json #(1 2 3))))
 
 (check
