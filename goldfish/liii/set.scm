@@ -1197,9 +1197,10 @@
     ;; Multiply all counts by n
     (define (bag-product n b)
       (%make-bag (%bag-comparator b)
-                 (map (lambda (pair)
-                        (cons (car pair) (* n (cdr pair))))
-                      (%bag-alist b))))
+                 (filter (lambda (pair) (> (cdr pair) 0))
+                         (map (lambda (pair)
+                                (cons (car pair) (* n (cdr pair))))
+                              (%bag-alist b)))))
 
     ;; (bag-product! n bag)
     (define (bag-product! n b)

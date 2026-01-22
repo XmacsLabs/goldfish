@@ -700,5 +700,327 @@
   (check ((comparator-equality-predicate bag-comparator) b1 b2) => #t)
   (check ((comparator-equality-predicate bag-comparator) b1 b3) => #f))
 
+;;; ============================================================
+;;; Edge Cases / Boundary Tests
+;;; ============================================================
+
+;;; ----- Set Edge Cases -----
+
+;; Empty set operations
+(let1 empty-s (set (make-equal-comparator))
+  (check (set-size empty-s) => 0)
+  (check (set-empty? empty-s) => #t)
+  (check (set-contains? empty-s 1) => #f)
+  (check (set->list empty-s) => '())
+  (check (set-count (lambda (x) #t) empty-s) => 0)
+  (check (set-any? (lambda (x) #t) empty-s) => #f)
+  (check (set-every? (lambda (x) #t) empty-s) => #t)  ; vacuously true
+  (check (set-find (lambda (x) #t) empty-s (lambda () 'not-found)) => 'not-found))
+
+;; Empty set theory operations
+(let ((empty-s (set (make-equal-comparator)))
+      (s (set (make-equal-comparator) 1 2 3)))
+  (check (set-size (set-union empty-s s)) => 3)
+  (check (set-size (set-union s empty-s)) => 3)
+  (check (set-size (set-intersection empty-s s)) => 0)
+  (check (set-size (set-difference s empty-s)) => 3)
+  (check (set-size (set-difference empty-s s)) => 0)
+  (check (set-size (set-xor empty-s s)) => 3))
+
+;; Single element set
+(let1 single-s (set (make-equal-comparator) 42)
+  (check (set-size single-s) => 1)
+  (check (set-contains? single-s 42) => #t)
+  (check (set-size (set-delete single-s 42)) => 0)
+  (check (set-empty? (set-delete single-s 42)) => #t))
+
+;; Self operations
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (check (set=? s s) => #t)
+  (check (set<? s s) => #f)
+  (check (set<=? s s) => #t)
+  (check (set-size (set-union s s)) => 3)
+  (check (set-size (set-intersection s s)) => 3)
+  (check (set-size (set-difference s s)) => 0)
+  (check (set-size (set-xor s s)) => 0))
+
+;; Delete non-existent element
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (let1 s2 (set-delete s 999)
+    (check (set-size s2) => 3)
+    (check (set=? s s2) => #t)))
+
+;; Adjoin already-existing element (no change)
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (let1 s2 (set-adjoin s 2)
+    (check (set-size s2) => 3)))
+
+;; Empty list->set
+(let1 s (list->set (make-equal-comparator) '())
+  (check (set-empty? s) => #t))
+
+;; set-delete-all with empty list
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (check (set-size (set-delete-all s '())) => 3))
+
+;; set-delete-all with non-existent elements
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (check (set-size (set-delete-all s '(99 100))) => 3))
+
+;; set-filter/remove returning empty or full
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (check (set-empty? (set-filter (lambda (x) #f) s)) => #t)
+  (check (set-size (set-filter (lambda (x) #t) s)) => 3)
+  (check (set-size (set-remove (lambda (x) #f) s)) => 3)
+  (check (set-empty? (set-remove (lambda (x) #t) s)) => #t))
+
+;; Single argument comparisons (should return #t)
+(let1 s (set (make-equal-comparator) 1 2)
+  (check (set=? s) => #t)
+  (check (set<? s) => #t)
+  (check (set>? s) => #t)
+  (check (set<=? s) => #t)
+  (check (set>=? s) => #t))
+
+;; set-disjoint? with empty set
+(let ((empty-s (set (make-equal-comparator)))
+      (s (set (make-equal-comparator) 1 2 3)))
+  (check (set-disjoint? empty-s s) => #t)
+  (check (set-disjoint? s empty-s) => #t)
+  (check (set-disjoint? empty-s empty-s) => #t))
+
+;; set-unfold with immediate stop (empty result)
+(let1 s (set-unfold (make-equal-comparator)
+                    (lambda (x) #t)  ; stop immediately
+                    (lambda (x) x)
+                    (lambda (x) (+ x 1))
+                    0)
+  (check (set-empty? s) => #t))
+
+;; set-map on empty set
+(let1 empty-s (set (make-equal-comparator))
+  (let1 s2 (set-map (make-equal-comparator) (lambda (x) (* x 2)) empty-s)
+    (check (set-empty? s2) => #t)))
+
+;; set-map causing duplicates (should collapse)
+(let1 s (set (make-equal-comparator) 1 2 3 4)
+  (let1 s2 (set-map (make-equal-comparator) (lambda (x) (quotient x 2)) s)
+    (check (set-size s2) => 3)))  ; 0, 1, 2
+
+;; set-for-each on empty set (should do nothing)
+(let* ((empty-s (set (make-equal-comparator)))
+       (count 0))
+  (set-for-each (lambda (x) (set! count (+ count 1))) empty-s)
+  (check count => 0))
+
+;; set-fold on empty set
+(let1 empty-s (set (make-equal-comparator))
+  (check (set-fold + 0 empty-s) => 0)
+  (check (set-fold cons '() empty-s) => '()))
+
+;; set-partition on empty set
+(let1 empty-s (set (make-equal-comparator))
+  (let-values (((yes no) (set-partition even? empty-s)))
+    (check (set-empty? yes) => #t)
+    (check (set-empty? no) => #t)))
+
+;; set-partition all pass/fail
+(let1 s (set (make-equal-comparator) 2 4 6)
+  (let-values (((yes no) (set-partition even? s)))
+    (check (set-size yes) => 3)
+    (check (set-empty? no) => #t)))
+
+(let1 s (set (make-equal-comparator) 1 3 5)
+  (let-values (((yes no) (set-partition even? s)))
+    (check (set-empty? yes) => #t)
+    (check (set-size no) => 3)))
+
+;; set-copy on empty set
+(let* ((empty-s (set (make-equal-comparator)))
+       (copy-s (set-copy empty-s)))
+  (check (set-empty? copy-s) => #t))
+
+;; set-member edge cases
+(let1 empty-s (set (make-equal-comparator))
+  (check (set-member empty-s 1 'not-found) => 'not-found))
+
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (check (set-member s 2 'not-found) => 2)
+  (check (set-member s 99 'default) => 'default))
+
+;; Multiple set comparisons (3+ sets)
+(let ((s1 (set (make-equal-comparator) 1))
+      (s2 (set (make-equal-comparator) 1 2))
+      (s3 (set (make-equal-comparator) 1 2 3)))
+  (check (set<? s1 s2 s3) => #t)
+  (check (set<? s1 s3 s2) => #f)
+  (check (set>? s3 s2 s1) => #t)
+  (check (set<=? s1 s2 s3) => #t)
+  (check (set<=? s1 s1 s2) => #t)
+  (check (set>=? s3 s2 s1) => #t)
+  (check (set=? s1 s1 s1) => #t))
+
+;; set-replace on empty set
+(let1 empty-s (set (make-equal-comparator))
+  (let1 s2 (set-replace empty-s 1)
+    (check (set-empty? s2) => #t)))
+
+;; set-search! on empty set
+(let1 empty-s (set (make-equal-comparator))
+  (let-values (((new-set obj) 
+                (set-search! empty-s 1
+                  (lambda (insert ignore) (insert 'inserted))
+                  (lambda (elem update remove) (remove 'removed)))))
+    (check (set-contains? new-set 1) => #t)
+    (check obj => 'inserted)))
+
+;; set-adjoin multiple same elements (should still be 1)
+(let1 s (set (make-equal-comparator))
+  (let1 s2 (set-adjoin s 1 1 1 1 1)
+    (check (set-size s2) => 1)))
+
+;; set-delete multiple times
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (let1 s2 (set-delete s 1 1 1)  ; deleting same element multiple times
+    (check (set-size s2) => 2)
+    (check (set-contains? s2 1) => #f)))
+
+;; set-xor with identical sets
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (check (set-empty? (set-xor s s)) => #t))
+
+;; list->set with duplicates (should remove them)
+(let1 s (list->set (make-equal-comparator) '(1 1 2 2 3 3 3))
+  (check (set-size s) => 3))
+
+;; set-union/intersection/difference with multiple sets
+(let ((s1 (set (make-equal-comparator) 1 2))
+      (s2 (set (make-equal-comparator) 2 3))
+      (s3 (set (make-equal-comparator) 3 4)))
+  (check (set-size (set-union s1 s2 s3)) => 4)
+  (check (set-size (set-intersection s1 s2)) => 1)
+  (check (set-contains? (set-intersection s1 s2) 2) => #t)
+  (check (set-size (set-difference s1 s2 s3)) => 1)  ; {1}
+  (check (set-contains? (set-difference s1 s2 s3) 1) => #t))
+
+;;; ----- Bag Edge Cases -----
+
+;; Empty bag operations
+(let1 empty-b (bag (make-equal-comparator))
+  (check (bag-size empty-b) => 0)
+  (check (bag-unique-size empty-b) => 0)
+  (check (bag-empty? empty-b) => #t)
+  (check (bag-contains? empty-b 1) => #f)
+  (check (bag-element-count empty-b 1) => 0)
+  (check (bag->list empty-b) => '())
+  (check (bag->alist empty-b) => '())
+  (check (bag-count (lambda (x) #t) empty-b) => 0)
+  (check (bag-any? (lambda (x) #t) empty-b) => #f)
+  (check (bag-every? (lambda (x) #t) empty-b) => #t))
+
+;; Empty bag theory operations
+(let ((empty-b (bag (make-equal-comparator)))
+      (b (bag (make-equal-comparator) 1 1 2)))
+  (check (bag-size (bag-union empty-b b)) => 3)
+  (check (bag-size (bag-intersection empty-b b)) => 0)
+  (check (bag-size (bag-difference b empty-b)) => 3)
+  (check (bag-size (bag-difference empty-b b)) => 0)
+  (check (bag-size (bag-sum empty-b b)) => 3))
+
+;; Single element bag
+(let1 single-b (bag (make-equal-comparator) 42)
+  (check (bag-size single-b) => 1)
+  (check (bag-unique-size single-b) => 1)
+  (check (bag-element-count single-b 42) => 1))
+
+;; Self operations
+(let1 b (bag (make-equal-comparator) 1 1 2)
+  (check (bag=? b b) => #t)
+  (check (bag<? b b) => #f)
+  (check (bag<=? b b) => #t)
+  (check (bag-size (bag-union b b)) => 3)  ; max(2,2)=2, max(1,1)=1
+  (check (bag-size (bag-intersection b b)) => 3)
+  (check (bag-size (bag-difference b b)) => 0)
+  (check (bag-size (bag-xor b b)) => 0)
+  (check (bag-size (bag-sum b b)) => 6))  ; sum doubles
+
+;; bag-decrement to zero
+(let1 b (bag (make-equal-comparator) 1 1)
+  (let1 b2 (bag-decrement! b 1 2)
+    (check (bag-element-count b2 1) => 0)
+    (check (bag-contains? b2 1) => #f)))
+
+;; bag-decrement beyond zero (should clamp at 0)
+(let1 b (bag (make-equal-comparator) 1 1)
+  (let1 b2 (bag-decrement! b 1 100)
+    (check (bag-element-count b2 1) => 0)))
+
+;; bag-increment non-existent element
+(let1 b (bag (make-equal-comparator) 1)
+  (let1 b2 (bag-increment! b 999 5)
+    (check (bag-element-count b2 999) => 5)))
+
+;; bag-product with 0
+(let1 b (bag (make-equal-comparator) 1 2 2)
+  (let1 b2 (bag-product 0 b)
+    (check (bag-empty? b2) => #t)))
+
+;; bag-product with 1 (identity)
+(let1 b (bag (make-equal-comparator) 1 2 2)
+  (let1 b2 (bag-product 1 b)
+    (check (bag=? b b2) => #t)))
+
+;; alist->bag with zero count (should be ignored)
+(let1 b (alist->bag (make-equal-comparator) '((a . 2) (b . 0) (c . 3)))
+  (check (bag-element-count b 'a) => 2)
+  (check (bag-element-count b 'b) => 0)  ; zero count = not present
+  (check (bag-element-count b 'c) => 3)
+  (check (bag-unique-size b) => 2))  ; only a and c
+
+;; Empty list->bag
+(let1 b (list->bag (make-equal-comparator) '())
+  (check (bag-empty? b) => #t))
+
+;; bag-delete non-existent element
+(let1 b (bag (make-equal-comparator) 1 2)
+  (let1 b2 (bag-delete b 999)
+    (check (bag-size b2) => 2)))
+
+;; bag-delete-all with empty list
+(let1 b (bag (make-equal-comparator) 1 1 2)
+  (check (bag-size (bag-delete-all b '())) => 3))
+
+;; bag->set and set->bag roundtrip
+(let1 b (bag (make-equal-comparator) 1 1 2 2 2 3)
+  (let* ((s (bag->set b))
+         (b2 (set->bag s)))
+    (check (set-size s) => 3)
+    (check (bag-unique-size b2) => 3)
+    (check (bag-element-count b2 1) => 1)  ; counts reset to 1
+    (check (bag-element-count b2 2) => 1)))
+
+;; Single argument bag comparisons
+(let1 b (bag (make-equal-comparator) 1 2)
+  (check (bag=? b) => #t)
+  (check (bag<? b) => #t)
+  (check (bag>? b) => #t)
+  (check (bag<=? b) => #t)
+  (check (bag>=? b) => #t))
+
+;; bag-disjoint? with empty bag
+(let ((empty-b (bag (make-equal-comparator)))
+      (b (bag (make-equal-comparator) 1 2)))
+  (check (bag-disjoint? empty-b b) => #t)
+  (check (bag-disjoint? b empty-b) => #t)
+  (check (bag-disjoint? empty-b empty-b) => #t))
+
+;; set-comparator basic test
+(check (comparator? set-comparator) => #t)
+(let ((s1 (set (make-equal-comparator) 1 2))
+      (s2 (set (make-equal-comparator) 1 2))
+      (s3 (set (make-equal-comparator) 1 2 3)))
+  (check ((comparator-equality-predicate set-comparator) s1 s2) => #t)
+  (check ((comparator-equality-predicate set-comparator) s1 s3) => #f))
+
 (check-report)
 
