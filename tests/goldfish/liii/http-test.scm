@@ -1,7 +1,9 @@
 (import (liii check)
         (liii http)
         (liii string)
-        (liii rich-json))
+        (liii rich-json)
+        (only (liii lang) display*)
+        (only (liii base) let1))
 
 (check-set-mode! 'report-failed)
 
