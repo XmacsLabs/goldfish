@@ -15,7 +15,7 @@
 ;
 
 (import (liii check)
-        (liii json)
+        (liii rich-json)
         (liii rich-char)
         (liii base)
         (liii error))
@@ -25,19 +25,19 @@
 ; (check-set-mode! 'report-failed)
 
 ; shared test data
-(define bob-j (json
+(define bob-j (rich-json
                     '((bob . ((age . 18)
                               (sex . male)
                               (name . "Bob"))))))
 
 
 #|
-json%get
+rich-json%get
 获取JSON对象的值。
 
 语法
 ----
-(json-instance :get)
+(rich-json-instance :get)
 
 参数
 ----
@@ -59,24 +59,24 @@ json%get
 |#
 
 ;; null
-(check (json :apply '() :get) => 'null)
+(check (rich-json :apply '() :get) => 'null)
 ;; 布尔值
-(check (json :apply #t :get) => 'true)
-(check (json :apply #f :get) => 'false)
+(check (rich-json :apply #t :get) => 'true)
+(check (rich-json :apply #f :get) => 'false)
 ;; 数字
-(check (json :apply 2 :get) => '2)
+(check (rich-json :apply 2 :get) => '2)
 ;; 字典。
-(check (json :apply `(("name" . "Bob") ("age" . 21)) :get) => `(("name" . "Bob") ("age" . 21)))
+(check (rich-json :apply `(("name" . "Bob") ("age" . 21)) :get) => `(("name" . "Bob") ("age" . 21)))
 ;; 数组
-(check (json :apply #(1 2 3) :get) => #(1 2 3))
+(check (rich-json :apply #(1 2 3) :get) => #(1 2 3))
 
 #|
-json%get-or-else
+rich-json%get-or-else
 获取JSON对象的值，如果为null则返回默认值。
 
 语法
 ----
-(json-instance :get-or-else default-value)
+(rich-json-instance :get-or-else default-value)
 
 参数
 ----
@@ -93,15 +93,15 @@ default-value : any
 提供安全的默认值机制，避免处理null值时出错。
 |#
 
-(check (json :null :get-or-else bob-j) => bob-j)
+(check (rich-json :null :get-or-else bob-j) => bob-j)
 
 #|
-json%keys
+rich-json%keys
 获取JSON对象的所有键名。
 
 语法
 ----
-(json-instance :keys)
+(rich-json-instance :keys)
 
 参数
 ----
@@ -119,22 +119,22 @@ json%keys
 
 
 
-(let1 j (json '((bob . ((age . 18) (sex . male)))))
+(let1 j (rich-json '((bob . ((age . 18) (sex . male)))))
   (check (j :keys) => '(bob))
   (check ((j 'bob) :keys) => '(age sex)))
 
-(check ((json :null) :keys) => '())
-(check ((json :true) :keys) => '())
-(check ((json :false) :keys) => '())
-(check ((json :parse "[1,2,3]") :keys) => '())
+(check ((rich-json :null) :keys) => '())
+(check ((rich-json :true) :keys) => '())
+(check ((rich-json :false) :keys) => '())
+(check ((rich-json :parse "[1,2,3]") :keys) => '())
 
 #|
-json%apply
+rich-json%apply
 通过键路径访问JSON对象的嵌套值。
 
 语法
 ----
-(json-instance key1 key2 ...)
+(rich-json-instance key1 key2 ...)
 
 参数
 ----
@@ -151,27 +151,27 @@ key1, key2, ... : symbol | string | number | boolean
 - 如果键不存在，返回null类型的JSON对象
 - 支持符号、字符串、数字和布尔值作为键
 |#
-(check (bob-j 'bob 'age) => (json 18))
-(check (bob-j 'bob 'sex) => (json 'male))
-(check (bob-j 'alice) => (json :null))
-(check (bob-j 'alice 'age) => (json :null))
-(check (bob-j 'bob 'name) => (json "Bob"))
+(check (bob-j 'bob 'age) => (rich-json 18))
+(check (bob-j 'bob 'sex) => (rich-json 'male))
+(check (bob-j 'alice) => (rich-json :null))
+(check (bob-j 'alice 'age) => (rich-json :null))
+(check (bob-j 'bob 'name) => (rich-json "Bob"))
 
-(let1 j (json '((bob . ((age . 18) (sex . male)))))
+(let1 j (rich-json '((bob . ((age . 18) (sex . male)))))
   (check ((j 'alice) :null?) => #t)
   (check ((j 'bob) :null?) => #f))
-(let1 j (json '((alice . ((age . 18) (sex . male)))))
+(let1 j (rich-json '((alice . ((age . 18) (sex . male)))))
   (check ((j 'alice) :null?) => #f)
   (check ((j 'bob) :null?) => #t))
 
 
 #|
-json%contains-key?
+rich-json%contains-key?
 检查JSON对象是否包含指定的键。
 
 语法
 ----
-(json-instance :contains-key? key)
+(rich-json-instance :contains-key? key)
 
 参数
 ----
@@ -191,31 +191,31 @@ key : symbol | string | number | boolean
 - 对于非对象类型JSON，总是返回#f
 |#
 
-(let1 j (json '((bob . ((age . 18) (sex . male)))))
+(let1 j (rich-json '((bob . ((age . 18) (sex . male)))))
   (check-false (j :contains-key? 'alice))
   (check-true (j :contains-key? 'bob))
   (check-false (j :contains-key? 'age))
   (check-false (j :contains-key? 'sex)))
 
-(let1 j (json #(1 2 3))
+(let1 j (rich-json #(1 2 3))
   (check (j :to-string) => "[1,2,3]"))
 
-(check (json '((a (b . 1) (c . 2)))) => (json :parse "{a:{b:1,c:2}}"))
-(check (json '((a . ((b . 1) (c . 2))))) => (json :parse "{a:{b:1,c:2}}"))
+(check (rich-json '((a (b . 1) (c . 2)))) => (rich-json :parse "{a:{b:1,c:2}}"))
+(check (rich-json '((a . ((b . 1) (c . 2))))) => (rich-json :parse "{a:{b:1,c:2}}"))
 (check '((a . ((b . 1) (c . 2)))) => '((a (b . 1) (c . 2))))
 
 (check-catch 'value-error (json->string '((a))))
 
-(check (json 'null)=> (json :null))
+(check (rich-json 'null)=> (rich-json :null))
 
 
 #|
-json@parse
+rich-json@parse
 将json格式的字符串的转化成JSON对象。
 
 语法
 ----
-(json :parse json_string)
+(rich-json :parse json_string)
 
 参数
 ----
@@ -231,24 +231,24 @@ json_string : json格式的字符串
 - 将json格式的字符串的转化成JSON对象。
 - 包含object、array、string、number、“true”、“false”、“null”
 |#
-(check (json :parse "[]") => (json :apply #()))
-(check (json :parse "[true]") => (json :apply #t))
-(check (json :parse "[false]") => (json :apply #f))
-(check (json :parse "[1,2,3]") => (json :apply #(1 2 3)))
-(check (json :parse "[{data: 1},{}]") => (json :apply #(("data" . 1) (()))));; 数组里面有对象
-(check (json :parse "{}") => (json :apply '(())))
-(check (json :parse "{args: {}}") => (json :apply '((args ()))))
-(check (json :parse "{\"args\": {}}") => (json :apply '(("args" ()))))
-(check (json :parse "{\"args\": {}, data: 1}") => (json :apply '(("args" ()) (data . 1))))
-(check (json :parse "{\"args\": {}, data: [1,2,3]}") => (json :apply '(("args" ()) (data . (1 2 3))))) ;;JSON对象的值是数组
-(check (json :parse "{\"args\": {}, data: true}") => (json :apply '(("args" ()) (data . #t))))
-(check (json :parse "{\"args\": {}, data: null}") => (json :apply '(("args" ()) (data . '()))))
+(check (rich-json :parse "[]") => (rich-json :apply #()))
+(check (rich-json :parse "[true]") => (rich-json :apply #t))
+(check (rich-json :parse "[false]") => (rich-json :apply #f))
+(check (rich-json :parse "[1,2,3]") => (rich-json :apply #(1 2 3)))
+(check (rich-json :parse "[{data: 1},{}]") => (rich-json :apply #((("data" . 1)) (()))));; 数组里面有对象
+(check (rich-json :parse "{}") => (rich-json :apply '(())))
+(check (rich-json :parse "{args: {}}") => (rich-json :apply '((args ()))))
+(check (rich-json :parse "{\"args\": {}}") => (rich-json :apply '(("args" ()))))
+(check (rich-json :parse "{\"args\": {}, data: 1}") => (rich-json :apply '(("args" ()) (data . 1))))
+(check (rich-json :parse "{\"args\": {}, data: [1,2,3]}") => (rich-json :apply '(("args" ()) (data . #(1 2 3))))) ;;JSON对象的值是数组
+(check (rich-json :parse "{\"args\": {}, data: true}") => (rich-json :apply '(("args" ()) (data . true))))
+(check (rich-json :parse "{\"args\": {}, data: null}") => (rich-json :apply '(("args" ()) (data . null))))
 
 ;; todo bug需要修复
-(check (json :parse "[null]") => (json :apply #()))
-(check (json :parse "[true],[true]") => (json :apply #t))
-(check (json :parse "{\"args\": {}, data: [true]}") => (json :apply '(("args" ()) (data . #t))))
-(check (json :parse "{\"args\": {}, data: [null]}") => (json :apply '(("args" ()) (data . '()))))
+; (check (rich-json :parse "[null]") => (rich-json :apply #()))
+; (check (rich-json :parse "[true],[true]") => (rich-json :apply #t))
+; (check (rich-json :parse "{\"args\": {}, data: [true]}") => (rich-json :apply '(("args" ()) (data . #t))))
+; (check (rich-json :parse "{\"args\": {}, data: [null]}") => (rich-json :apply '(("args" ()) (data . '()))))
 
 
 #|
@@ -496,12 +496,12 @@ data : any
 (check (json->string #(0 1 2 3)) => "[0,1,2,3]")
 
 #|
-json%set
+rich-json%set
 设置JSON对象中指定键的值。
 
 语法
 ----
-(json-instance :set key1 key2 ... value)
+(rich-json-instance :set key1 key2 ... value)
 
 参数
 ----
@@ -537,29 +537,29 @@ value : any | function
 ------
 - 支持链式调用
 |#
-; json%set
+; rich-json%set
 ; 单层，键为符号
-(let* ((j0 (json `((age . 18) (sex . male))))
+(let* ((j0 (rich-json `((age . 18) (sex . male))))
        (j1 (j0 :set 'age 19))
        (j2 (j0 :set 'age 'null)))
-  (check (j0 'age) => (json 18))
-  (check (j1 'age) => (json 19))
-  (check (j2 'age) => (json :null)))
+  (check (j0 'age) => (rich-json 18))
+  (check (j1 'age) => (rich-json 19))
+  (check (j2 'age) => (rich-json :null)))
 
 ; 单层，键为字符串
 (let* ((j0-raw `(("age" . 18) ("sex" . male)))
-       (j0 (json j0-raw))
+       (j0 (rich-json j0-raw))
        (j1 (j0 :set "age" 19)))
   (check (j1 :get-number "age" 0) => 19)
-  (check (j0 "age") => (json 18)))
+  (check (j0 "age") => (rich-json 18)))
 
 #|
-json%get-boolean
+rich-json%get-boolean
 获取JSON对象中的布尔值，如果值不是布尔类型则返回默认值。
 
 语法
 ----
-(json-instance :get-boolean key default-value)
+(rich-json-instance :get-boolean key default-value)
 
 参数
 ----
@@ -580,77 +580,77 @@ default-value : boolean
 - 安全地获取布尔值，避免类型错误
 - 支持符号、字符串、数字和布尔值作为键
 |#
-; json%get-boolean
-(let* ((j0 (json '((active . #t) (verified . #f) (name . "Alice")))))
+; rich-json%get-boolean
+(let* ((j0 (rich-json '((active . #t) (verified . #f) (name . "Alice")))))
   (check (j0 :get-boolean 'active #f) => #t)
   (check (j0 :get-boolean 'verified #t) => #f)
   (check (j0 :get-boolean 'name #f) => #f)
   (check (j0 :get-boolean 'nonexistent #t) => #t))
 
 ; 单层，键为整数
-(let* ((j0 (json #(red green blue)))
+(let* ((j0 (rich-json #(red green blue)))
        (j1 (j0 :set 0 'black)))
   (check (j0 :get) => #(red green blue))
   (check (j1 :get) => #(black green blue)))
 
 ; 单层，键为布尔值
-(let* ((j0 (json '((bob . 18) (jack . 16))))
+(let* ((j0 (rich-json '((bob . 18) (jack . 16))))
        (j1 (j0 :set #t 3))
        (j2 (j0 :set #t (lambda (x) (+ x 1)))))
   (check (j1 :get) => '((bob . 3) (jack . 3)))
   (check (j2 :get) => '((bob . 19) (jack . 17))))
 
 ; 多层，键为符号
-(let* ((j0 (json '((person . ((name . "Alice") (age . 25))))))
+(let* ((j0 (rich-json '((person . ((name . "Alice") (age . 25))))))
        (j1 (j0 :set 'person 'age 26)))
-  (check (j1 'person 'age) => (json 26)))
+  (check (j1 'person 'age) => (rich-json 26)))
 
 ; 多层，键为字符串
-(let* ((j0 (json
+(let* ((j0 (rich-json
                  '((person . ((name . "Alice")
                               (age . 25)
                               (address . ((city . "Wonderland")
                                           (zip . "12345"))))))))
        (j1 (j0 :set 'person 'address 'city "Newland")))
-  (check (j1 'person 'address 'city) => (json "Newland")))
+  (check (j1 'person 'address 'city) => (rich-json "Newland")))
 
 ; 单层，最后一个参数不是值，而是一个函数
-(let* ((j0 (json '((name . "Alice") (age . 25))))
+(let* ((j0 (rich-json '((name . "Alice") (age . 25))))
        (j1 (j0 :set 'age (lambda (x) (+ x 1)))))
-  (check (j1 'age) => (json 26)))
+  (check (j1 'age) => (rich-json 26)))
 
 ; 多层，最后一个参数不是值，而是一个函数
-(let* ((j0 (json '((person . ((name . "Alice") (age . 25))))))
+(let* ((j0 (rich-json '((person . ((name . "Alice") (age . 25))))))
        (j1 (j0 :set 'person 'age (lambda (x) (+ x 1)))))
-  (check (j1 'person 'age) => (json 26)))
+  (check (j1 'person 'age) => (rich-json 26)))
 
-; json%set with json object
-(let* ((j0 (json `((age . 18) (sex . male))))
-       (j1 (json 20))
+; rich-json%set with rich-json object
+(let* ((j0 (rich-json `((age . 18) (sex . male))))
+       (j1 (rich-json 20))
        (j2 (j0 :set 'age j1)))
-  (check (j2 'age) => (json 20)))
+  (check (j2 'age) => (rich-json 20)))
 
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json 26))
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json 26))
        (j2 (j0 :set 'person 'age j1)))
-  (check (j2 'person 'age) => (json 26)))
+  (check (j2 'person 'age) => (rich-json 26)))
 
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json `((name . "Bob") (age . 30))))
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json `((name . "Bob") (age . 30))))
        (j2 (j0 :set 'person j1)))
-  (check (j2 'person 'name) => (json "Bob"))
-  (check (j2 'person 'age) => (json 30)))
+  (check (j2 'person 'name) => (rich-json "Bob"))
+  (check (j2 'person 'age) => (rich-json 30)))
 
 #|
-json%transform
+rich-json%transform
 转换JSON对象中指定键的值。
 
 语法
 ----
-(json-instance :transform key1 key2 ... transform-fn)
-(json-instance  :transform predicate-fn transform-fn)
-(json-instance  :transform #t transform-fn)
-(json-instance  :transform #f transform-fn)
+(rich-json-instance :transform key1 key2 ... transform-fn)
+(rich-json-instance  :transform predicate-fn transform-fn)
+(rich-json-instance  :transform #t transform-fn)
+(rich-json-instance  :transform #f transform-fn)
 
 参数
 ----
@@ -674,69 +674,69 @@ transform-fn : function
 - 支持#t转换所有键，#f不转换任何键
 - 转换函数接收键和值作为参数
 |#
-; json%transform instance method
-(let* ((j0 (json '((name . "Alice") (age . 25))))
+; rich-json%transform instance method
+(let* ((j0 (rich-json '((name . "Alice") (age . 25))))
        (j1 (j0 :transform 'name (lambda (k v) (string-upcase v)))))
-  (check (j1 'name) => (json "ALICE"))
-  (check (j1 'age) => (json 25)))
+  (check (j1 'name) => (rich-json "ALICE"))
+  (check (j1 'age) => (rich-json 25)))
   
-(let* ((j0 (json '((person . ((name . "Alice") (age . 25))))))
+(let* ((j0 (rich-json '((person . ((name . "Alice") (age . 25))))))
        (j1 (j0 :transform 'person (lambda (k v) v))))
-  (check (j1 'person) => (json '((name . "Alice") (age . 25)))))
+  (check (j1 'person) => (rich-json '((name . "Alice") (age . 25)))))
   
-(let* ((j0 (json '((name . "Alice") (age . 25))))
+(let* ((j0 (rich-json '((name . "Alice") (age . 25))))
        (j1 (j0 :transform (lambda (k) (equal? k 'age)) (lambda (k v) (+ v 1)))))
-  (check (j1 'age) => (json 26))
-  (check (j1 'name) => (json "Alice")))
+  (check (j1 'age) => (rich-json 26))
+  (check (j1 'name) => (rich-json "Alice")))
   
-(let* ((j0 (json '((name . "Alice") (age . 25))))
+(let* ((j0 (rich-json '((name . "Alice") (age . 25))))
        (j1 (j0 :transform #t (lambda (k v) (if (string? v) (string-upcase v) v)))))
-  (check (j1 'name) => (json "ALICE"))
-  (check (j1 'age) => (json 25)))
+  (check (j1 'name) => (rich-json "ALICE"))
+  (check (j1 'age) => (rich-json 25)))
   
-(let* ((j0 (json '((name . "Alice") (age . 25))))
+(let* ((j0 (rich-json '((name . "Alice") (age . 25))))
        (j1 (j0 :transform #f (lambda (k v) v))))
-  (check (j1 'name) => (json "Alice"))
-  (check (j1 'age) => (json 25)))
+  (check (j1 'name) => (rich-json "Alice"))
+  (check (j1 'age) => (rich-json 25)))
   
   
-; Test json%transform with multiple nested levels
-(let* ((j0 (json '((user . ((profile . ((contact . ((email . "alice@example.com")
+; Test rich-json%transform with multiple nested levels
+(let* ((j0 (rich-json '((user . ((profile . ((contact . ((email . "alice@example.com")
                                                      (phone . "123-456-7890"))))))))))
        (j1 (j0 :transform 'user 'profile 'contact 'email (lambda (k v) (string-append v ".verified")))))
-  (check (j1 'user 'profile 'contact 'email) => (json "alice@example.com.verified")))
+  (check (j1 'user 'profile 'contact 'email) => (rich-json "alice@example.com.verified")))
   
-; Test json%transform for conditional transformation with predicate function
-(let* ((j0 (json '((user . ((data . ((scores . #(85 90 78 92 88))
+; Test rich-json%transform for conditional transformation with predicate function
+(let* ((j0 (rich-json '((user . ((data . ((scores . #(85 90 78 92 88))
                                       (settings . ((notifications . #t)
                                                    (theme . "dark"))))))))))
        (j1 (j0 :transform 'user 'data (lambda (k) (equal? k 'scores)) (lambda (k v) 
                                                          (vector-map (lambda (score) (+ score 5)) v)))))
-  (check (j1 'user 'data 'scores) => (json #(90 95 83 97 93)))
-  (check (j1 'user 'data 'settings 'theme) => (json "dark")))
+  (check (j1 'user 'data 'scores) => (rich-json #(90 95 83 97 93)))
+  (check (j1 'user 'data 'settings 'theme) => (rich-json "dark")))
 
 
 ; Compare transform and set
-(let* ((j0 (json '((user . ((profile . ((name . "Alice")
+(let* ((j0 (rich-json '((user . ((profile . ((name . "Alice")
                                        (age . 25)
                                        (scores . #(85 90 78)))))))))
        (j1 (j0 :transform 'user 'profile 'scores (lambda (k v) 
                                                   (vector-map (lambda (score) (+ score 5)) v))))
        (j2 (j0 :set 'user 'profile 'scores #(90 95 83))))
-  (check (j1 'user 'profile 'scores) => (json #(90 95 83)))
-  (check (j2 'user 'profile 'scores) => (json #(90 95 83)))
-  (check (j1 'user 'profile 'name) => (json "Alice"))
-  (check (j2 'user 'profile 'name) => (json "Alice")))
+  (check (j1 'user 'profile 'scores) => (rich-json #(90 95 83)))
+  (check (j2 'user 'profile 'scores) => (rich-json #(90 95 83)))
+  (check (j1 'user 'profile 'name) => (rich-json "Alice"))
+  (check (j2 'user 'profile 'name) => (rich-json "Alice")))
 
 
 
 #|
-json%push
+rich-json%push
 向JSON对象中添加新的键值对。
 
 语法
 ----
-(json-instance :push key1 key2 ... value)
+(rich-json-instance :push key1 key2 ... value)
 
 参数
 ----
@@ -757,44 +757,44 @@ value : any
 - 如果键不存在，会创建新的键值对
 - 支持符号、字符串、数字和布尔值作为键
 |#
-; json%push
+; rich-json%push
 ; 多层，键为符号
-(let* ((j0 (json '((person . ((name . "Alice") (age . 25))))))
+(let* ((j0 (rich-json '((person . ((name . "Alice") (age . 25))))))
        (j1 (j0 :push 'person 'city "Wonderland")))
-  (check (j1 'person 'city) => (json "Wonderland")))
+  (check (j1 'person 'city) => (rich-json "Wonderland")))
 
 ; 多层，键为字符串
-(let* ((j0 (json '(("person" . (("name" . "Alice") ("age" . 25))))))
+(let* ((j0 (rich-json '(("person" . (("name" . "Alice") ("age" . 25))))))
        (j1 (j0 :push "person" "city" "Wonderland")))
-  (check (j1 "person" "city") => (json "Wonderland")))
+  (check (j1 "person" "city") => (rich-json "Wonderland")))
 
 ; 多层，键为符号
-(let* ((j0 (json '((person . ((name . "Alice")
+(let* ((j0 (rich-json '((person . ((name . "Alice")
                               (age . 25)
                               (address . ((city . "Oldland")
                                           (zip . "12345"))))))))
        (j1 (j0 :push 'person 'address 'street "Main St")))
-  (check (j1 'person 'address 'street) => (json "Main St")))
+  (check (j1 'person 'address 'street) => (rich-json "Main St")))
 
 ; 多层，JSON是向量
-(let* ((j0 (json '((data . #(1 2 3)))))
+(let* ((j0 (rich-json '((data . #(1 2 3)))))
        (j1 (j0 :push 'data 3 4)))
   (check (j1 :get) => '((data . #(1 2 3 4)))))
 
 ; 多层，JSON是二维向量
-(let* ((j0 (json '((data . #(#(1 2) #(3 4))))))
+(let* ((j0 (rich-json '((data . #(#(1 2) #(3 4))))))
        (j1 (j0 :push 'data 1 2 5)))
   (check (j1 :get) => '((data . #(#(1 2) #(3 4 5))))))
 
 ; 多层，JSON的Key是数字
-; (let* ((j0 (json '((data . ((0 . "zero") (1 . "one"))))))
+; (let* ((j0 (rich-json '((data . ((0 . "zero") (1 . "one"))))))
 ;        (j1 (j0 :push 'data 2 "two")))
-;   (check (j1 'data 2) => (json "two")))
-; 因为 (j1 'data) 实际上是 json 的主体，所以这里是错误的，暂时不修复
+;   (check (j1 'data 2) => (rich-json "two")))
+; 因为 (j1 'data) 实际上是 rich-json 的主体，所以这里是错误的，暂时不修复
 
-(let* ((j0 (json '((flags . ((#t . "true") (#f . "false"))))))
+(let* ((j0 (rich-json '((flags . ((#t . "true") (#f . "false"))))))
        (j1 (j0 :push 'flags #t "yes")))
-  (check (j1 'flags #t) => (json "yes")))
+  (check (j1 'flags #t) => (rich-json "yes")))
 
 #|
 json-drop
@@ -850,13 +850,13 @@ predicate-fn : function
     (check (json-ref* j3 'address 'city) => '())))
 
 #|
-json%drop
+rich-json%drop
 从JSON对象中删除指定的键。
 
 语法
 ----
-(json-instance :drop key1 key2 ...)
-(json-instance :drop predicate-fn)
+(rich-json-instance :drop key1 key2 ...)
+(rich-json-instance :drop predicate-fn)
 
 参数
 ----
@@ -878,41 +878,41 @@ predicate-fn : function
 - 支持符号、字符串、数字和布尔值作为键
 
 |#
-; Additional test cases for json%drop
-(let* ((j0 (json '((name . "Alice") (age . 25) (city . "Wonderland"))))
+; Additional test cases for rich-json%drop
+(let* ((j0 (rich-json '((name . "Alice") (age . 25) (city . "Wonderland"))))
        (j1 (j0 :drop 'age)))
-  (check (j1 'age) => (json :null))
-  (check (j1 'name) => (json "Alice"))
-  (check (j1 'city) => (json "Wonderland")))
+  (check (j1 'age) => (rich-json :null))
+  (check (j1 'name) => (rich-json "Alice"))
+  (check (j1 'city) => (rich-json "Wonderland")))
 
-(let* ((j0 (json '((user . ((profile . ((name . "Alice")
+(let* ((j0 (rich-json '((user . ((profile . ((name . "Alice")
                                        (age . 25)
                                        (scores . #(85 90 78)))))))))
        (j1 (j0 :drop 'user 'profile 'scores)))
-  (check (j1 'user 'profile 'scores) => (json :null))
-  (check (j1 'user 'profile 'name) => (json "Alice"))
-  (check (j1 'user 'profile 'age) => (json 25)))
+  (check (j1 'user 'profile 'scores) => (rich-json :null))
+  (check (j1 'user 'profile 'name) => (rich-json "Alice"))
+  (check (j1 'user 'profile 'age) => (rich-json 25)))
 
-(let* ((j0 (json '((data . #(1 2 3 4 5)))))
+(let* ((j0 (rich-json '((data . #(1 2 3 4 5)))))
        (j1 (j0 :drop 'data (lambda (k) (and (number? k) (even? k))))))
-  (check (j1 'data) => (json #(1 3 5))))
+  (check (j1 'data) => (rich-json #(1 3 5))))
 
-(let* ((j0 (json '((settings . ((theme . "dark")
+(let* ((j0 (rich-json '((settings . ((theme . "dark")
                                (notifications . #t)
                                (language . "en"))))))
        (j1 (j0 :drop 'settings (lambda (k) (string? k)))))
-  (check (j1 'settings 'theme) => (json :null))
-  (check (j1 'settings 'language) => (json :null))
-  (check (j1 'settings 'notifications) => (json #t)))
+  (check (j1 'settings 'theme) => (rich-json :null))
+  (check (j1 'settings 'language) => (rich-json :null))
+  (check (j1 'settings 'notifications) => (rich-json #t)))
 
-(let* ((j0 (json '((a . 1) (b . 2) (c . 3))))
+(let* ((j0 (rich-json '((a . 1) (b . 2) (c . 3))))
        (j1 (j0 :drop (lambda (k) (member k '(a c))))))
-  (check (j1 'a) => (json :null))
-  (check (j1 'b) => (json 2))
-  (check (j1 'c) => (json :null)))
+  (check (j1 'a) => (rich-json :null))
+  (check (j1 'b) => (rich-json 2))
+  (check (j1 'c) => (rich-json :null)))
 
 
-(let* ((j0 (json #()))
+(let* ((j0 (rich-json #()))
        (j1 (j0 :drop 0)))
   (check (j1 :get) => #()))
 
@@ -991,51 +991,51 @@ transform-fn : function
     (check (json-ref* updated-json 'person 'address 'city) => "WONDERLAND")))
 
 
-; json%push with json object
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json "Wonderland"))
+; rich-json%push with rich-json object
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json "Wonderland"))
        (j2 (j0 :push 'person 'city j1)))
-  (check (j2 'person 'city) => (json "Wonderland")))
+  (check (j2 'person 'city) => (rich-json "Wonderland")))
 
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json `((city . "Wonderland") (zip . "12345"))))
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json `((city . "Wonderland") (zip . "12345"))))
        (j2 (j0 :push 'person 'address j1)))
-  (check (j2 'person 'address 'city) => (json "Wonderland"))
-  (check (j2 'person 'address 'zip) => (json "12345")))
+  (check (j2 'person 'address 'city) => (rich-json "Wonderland"))
+  (check (j2 'person 'address 'zip) => (rich-json "12345")))
 
 
 
-; Test with nested json objects
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json `((address . ((city . "Wonderland") (zip . "12345"))))))
+; Test with nested rich-json objects
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json `((address . ((city . "Wonderland") (zip . "12345"))))))
        (j2 (j0 :set 'person j1)))
-  (check (j2 'person 'address 'city) => (json "Wonderland"))
-  (check (j2 'person 'address 'zip) => (json "12345")))
+  (check (j2 'person 'address 'city) => (rich-json "Wonderland"))
+  (check (j2 'person 'address 'zip) => (rich-json "12345")))
 
-; Test with mixed json objects and primitive values
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json "Wonderland"))
+; Test with mixed rich-json objects and primitive values
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json "Wonderland"))
        (j2 (j0 :set 'person 'city j1 :set 'person 'age 26)))
-  (check (j2 'person 'city) => (json "Wonderland"))
-  (check (j2 'person 'age) => (json 26)))
+  (check (j2 'person 'city) => (rich-json "Wonderland"))
+  (check (j2 'person 'age) => (rich-json 26)))
 
-; Test with null json object
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json :null))
+; Test with null rich-json object
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json :null))
        (j2 (j0 :set 'person 'age j1)))
-  (check (j2 'person 'age) => (json :null)))
+  (check (j2 'person 'age) => (rich-json :null)))
 
-; Test with boolean json object
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json :true))
+; Test with boolean rich-json object
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json :true))
        (j2 (j0 :set 'person 'active j1)))
-  (check (j2 'person 'active) => (json :true)))
+  (check (j2 'person 'active) => (rich-json :true)))
 
-; Test with array json object
-(let* ((j0 (json `((person . ((name . "Alice") (age . 25))))))
-       (j1 (json #(1 2 3)))
+; Test with array rich-json object
+(let* ((j0 (rich-json `((person . ((name . "Alice") (age . 25))))))
+       (j1 (rich-json #(1 2 3)))
        (j2 (j0 :set 'person 'scores j1)))
-  (check (j2 'person 'scores) => (json #(1 2 3))))
+  (check (j2 'person 'scores) => (rich-json #(1 2 3))))
 
 (check
   (json->string

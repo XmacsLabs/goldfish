@@ -14,16 +14,16 @@
 ; under the License.
 ;
 
-(define-library (liii json)
+(define-library (liii rich-json)
 (import (liii base) (liii lang) (guenchi json))
 (export
-  json
+  rich-json
   json-string-escape json-string-unescape string->json json->string
   json-ref json-ref*
   json-set json-set* json-push json-push* json-drop json-drop* json-reduce json-reduce*)
 (begin
 
-(define-class json
+(define-class rich-json
   ((data any? #f))
 
   (define (%get)
@@ -60,7 +60,7 @@
                                   (arg :get)
                                   arg))
                             xs)))
-      (json (apply json-set* (cons data (cons x processed-xs))))))
+      (rich-json (apply json-set* (cons data (cons x processed-xs))))))
   
   (define (%transform key . args)
     (if (null? args)
@@ -68,13 +68,13 @@
         (let ((more-keys ($ args :drop-right 1 :collect))
               (all-args (append (list data key) args)))
           (if (null? more-keys)
-              (json (apply json-reduce all-args))
-              (json (apply json-reduce* all-args))))))
+              (rich-json (apply json-reduce all-args))
+              (rich-json (apply json-reduce* all-args))))))
 
   (define (%drop key . args)
     (if (null? args)
-        (json (json-drop data key))
-        (json (apply json-drop* (append (list data key) args)))))
+        (rich-json (json-drop data key))
+        (rich-json (apply json-drop* (append (list data key) args)))))
 
   (define (%push x . xs)
     (let ((processed-xs (map (lambda (arg)
@@ -122,26 +122,26 @@
           (else (json->string data))))
   
   (chained-define (@null)
-    (json 'null))
+    (rich-json 'null))
   
   (chained-define (@true)
-    (json 'true))
+    (rich-json 'true))
   
   (chained-define (@false)
-    (json 'false))
+    (rich-json 'false))
   
   (chained-define (@parse s)
     (@apply (string->json s)))
 
   (chained-define (@apply x)
-    (let ((j (json)))
+    (let ((j (rich-json)))
       (cond
         ((string? x) (j :set-data! x))
         ((null? x) (j :set-data! 'null))
         ((boolean? x) (if x (j :set-data! 'true) (j :set-data! 'false)))
         ((number? x) (j :set-data! x))
         ((procedure? x)
-         (type-error "json: a procedure could not be converted to json case class"))
+         (type-error "rich-json: a procedure could not be converted to rich-json case class"))
         (else (j :set-data! x)))
       j))
 
