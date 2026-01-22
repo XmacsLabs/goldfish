@@ -157,6 +157,7 @@ xpack ("goldfish")
     add_sourcefiles("xmake.lua")
     add_sourcefiles("(src/**)")
     add_sourcefiles("(goldfish/**)")
+    add_sourcefiles("(3rdparty/**)")
     on_load(function (package)
         if package:with_source() then
             package:set("basename", "goldfish-$(plat)-src-v$(version)")
