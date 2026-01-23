@@ -79,11 +79,16 @@ response2hashtable (s7_scheme* sc, cpr::Response r) {
   s7_hash_table_set (sc, ht, s7_make_symbol(sc, "elapsed"), s7_make_real (sc, r.elapsed));
   s7_hash_table_set (sc, ht, s7_make_symbol (sc, "text"), s7_make_string (sc, r.text.c_str ()));
   s7_hash_table_set (sc, ht, s7_make_symbol (sc, "reason"), s7_make_string (sc, r.reason.c_str ()));
-  s7_pointer headers= s7_make_hash_table(sc, 8);
+  s7_pointer headers= s7_make_hash_table(sc, r.header.size());
   for (const auto &header : r.header) {
     const auto key= header.first.c_str ();
+    std::string key_lower = header.first;
+    std::transform(key_lower.begin(), key_lower.end(),
+                   key_lower.begin(), ::tolower);
     const auto value= header.second.c_str ();
-    s7_hash_table_set (sc, headers, s7_make_string (sc, key), s7_make_string (sc, value));
+    s7_hash_table_set(sc, headers,
+                      s7_make_string(sc, key_lower.c_str()),
+                      s7_make_string(sc, value));
   }
   s7_hash_table_set (sc, ht, s7_make_symbol(sc, "headers"), headers);
 
