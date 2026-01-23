@@ -539,8 +539,25 @@ data : any
 - 符合JSON标准
 - 支持所有标准JSON数据类型
 |#
-(check (json->string '(("age" . 18))) => "{\"age\":18}")
-(check (json->string #(0 1 2 3)) => "[0,1,2,3]")
+
+(check (json->string #()) => "[]")
+(check (json->string #(1 2 3)) => "[1,2,3]")
+(check (json->string #("a" "b")) => "[\"a\",\"b\"]")
+(check (json->string #(1 "a" true null)) => "[1,\"a\",true,null]")
+(check (json->string '(("name" . "Alice"))) => "{\"name\":\"Alice\"}")
+;; 多个键值对
+(check (json->string '(("id" . 1) ("active" . true))) => "{\"id\":1,\"active\":true}")
+(check (json->string '((name . "Bob"))) => "{name:\"Bob\"}")
+(check (json->string '((x . 10) (y . 20))) => "{x:10,y:20}")
+(check (json->string #((("id" . 1)) (("id" . 2)))) => "[{\"id\":1},{\"id\":2}]")
+(check (json->string '(("scores" . #(85 90 95)))) => "{\"scores\":[85,90,95]}")
+(check (json->string 
+         '(("user" . (("name" . "Dave") 
+                      ("tags" . #("admin" "editor")))))) 
+       => "{\"user\":{\"name\":\"Dave\",\"tags\":[\"admin\",\"editor\"]}}")
+(check (json->string '(("text" . "Line1\nLine2"))) => "{\"text\":\"Line1\\nLine2\"}")
+(check (json->string #( "He said \"Hello\"" )) => "[\"He said \\\"Hello\\\"\"]")
+
 
 #|
 json-set*
