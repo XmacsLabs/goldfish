@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo dnf update -y
-          sudo dnf install -y gcc g++ xmake git unzip curl
+          sudo dnf install -y gcc g++ xmake git unzip curl perl
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
