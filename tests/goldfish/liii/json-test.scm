@@ -48,9 +48,9 @@
 ;; 在 guenchi json 中，非空列表 (alist) 表示对象
 (check-true (json-object? '((name . "Alice"))))
 (check-true (json-object? '((a . 1) (b . 2))))
-(check-false (json-object? '()))    ; 空列表视为 missing 或空结构，通常不是有效的“对象”数据载体（视具体实现，但在谓词定义中 (not (null? x))）
-(check-false (json-object? #(1 2))) ; 向量是数组，不是对象
-(check-false (json-object? "{}"))   ; 字符串不是对象
+(check-false (json-object? '()))    
+(check-false (json-object? #(1 2))) 
+(check-false (json-object? "{}"))   
 
 ;; 3. json-array?
 ;; 向量 (vector) 表示数组
@@ -79,7 +79,7 @@
 (check-true (json-integer? 0))
 (check-true (json-integer? -5))
 (check-false (json-integer? 3.14))
-(check-false (json-integer? 1.0))   ; 视 Scheme 实现，通常带小数点的算 float
+(check-false (json-integer? 1.0))  
 
 ;; 7. json-float?
 (check-true (json-float? 3.14))
