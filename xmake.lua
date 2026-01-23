@@ -21,7 +21,7 @@ option_end()
 
 option("repl")
     set_description("Enable REPL (isocline) support")
-    set_default(false)
+    set_default(false) -- repl-anchor
     set_values(false, true)
 option_end()
 
