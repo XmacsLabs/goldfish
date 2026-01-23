@@ -24,7 +24,7 @@
     
     json-ref  json-ref* json-set  json-set* json-push json-push* json-drop json-drop* json-reduce json-reduce* 
 
-    json-null? json-object? json-array? json-string? json-number? json-integer? json-float? json-boolean?
+    json-null? json-object? json-array? json-string? json-number? json-integer? json-boolean?
     
     json-contains-key? 
     
@@ -56,8 +56,6 @@
     (define (json-integer? x)
       (integer? x))
 
-    (define (json-float? x)
-      (flonum? x)) 
 
     (define (json-boolean? x)
       (boolean? x))
