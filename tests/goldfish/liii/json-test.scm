@@ -20,7 +20,7 @@
         (liii error))
 
 ; comment this line to show detailed check reports
-(check-set-mode! 'report-failed)
+;(check-set-mode! 'report-failed)
 
 ; shared test data
 (define bob-j '((bob . ((age . 18)
