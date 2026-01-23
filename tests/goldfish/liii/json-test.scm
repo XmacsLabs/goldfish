@@ -28,6 +28,71 @@
                         (name . "Bob")))))
 
 
+
+
+
+
+#|
+类型谓词测试 (Type Predicates)
+检查 JSON 数据类型的判断函数。
+包含：json-null?, json-object?, json-array?, json-string?, 
+      json-number?, json-integer?, json-float?, json-boolean?
+|#
+
+;; 1. json-null?
+;; 只有符号 'null 才是 JSON 的 null
+(check-true (json-null? 'null))
+(check-false (json-null? '((name . "Alice"))))      
+
+;; 2. json-object?
+;; 在 guenchi json 中，非空列表 (alist) 表示对象
+(check-true (json-object? '((name . "Alice"))))
+(check-true (json-object? '((a . 1) (b . 2))))
+(check-false (json-object? '()))    ; 空列表视为 missing 或空结构，通常不是有效的“对象”数据载体（视具体实现，但在谓词定义中 (not (null? x))）
+(check-false (json-object? #(1 2))) ; 向量是数组，不是对象
+(check-false (json-object? "{}"))   ; 字符串不是对象
+
+;; 3. json-array?
+;; 向量 (vector) 表示数组
+(check-true (json-array? #(1 2 3)))
+(check-true (json-array? #()))      ; 空向量是空数组
+(check-true (json-array? #("a" "b")))
+(check-false (json-array? '(1 2 3))); 列表不是数组
+(check-false (json-array? "[]"))
+
+;; 4. json-string?
+(check-true (json-string? "hello"))
+(check-true (json-string? ""))
+(check-false (json-string? 'hello)) ; 符号不是字符串
+(check-false (json-string? 123))
+
+;; 5. json-number?
+;; 包含整数和浮点数
+(check-true (json-number? 123))
+(check-true (json-number? 3.14))
+(check-true (json-number? -10))
+(check-true (json-number? 0))
+(check-false (json-number? "123"))
+
+;; 6. json-integer?
+(check-true (json-integer? 100))
+(check-true (json-integer? 0))
+(check-true (json-integer? -5))
+(check-false (json-integer? 3.14))
+(check-false (json-integer? 1.0))   ; 视 Scheme 实现，通常带小数点的算 float
+
+;; 7. json-float?
+(check-true (json-float? 3.14))
+(check-true (json-float? -0.01))
+(check-false (json-float? 100))
+
+;; 8. json-boolean?
+;; Scheme 的 #t 和 #f
+(check-true (json-boolean? #t))
+(check-true (json-boolean? #f))
+(check-false (json-boolean? 0))
+(check-false (json-boolean? "true"))
+
 #|
 json-ref (Basic)
 获取JSON对象的值。
