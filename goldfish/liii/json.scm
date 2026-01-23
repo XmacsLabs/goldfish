@@ -1,35 +1,35 @@
+;
+; Copyright (C) 2026 The Goldfish Scheme Authors
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+; http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+; WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+; License for the specific language governing permissions and limitations
+; under the License.
+;
+
 (define-library (liii json)
   (import (liii base) 
-          (guenchi json)) ; 复用底层逻辑
+          (guenchi json))
   (export
-    ;;; --- 基础 IO 与 转换 ---
     json-string-escape 
     string->json 
     json->string
     
-    ;;; --- 核心操作 (增删改查) ---
     json-ref  json-ref* json-set  json-set* json-push json-push* json-drop json-drop* json-reduce json-reduce* 
-    ;; 类型谓词
-    json-null? 
-    json-object? 
-    json-array? 
-    json-string? 
-    json-number?
-    json-integer?
-    json-float?      
-    json-boolean?
+
+    json-null? json-object? json-array? json-string? json-number? json-integer? json-float? json-boolean?
     
-    ;; 状态检查
     json-contains-key? 
     
-    ;; 带类型检查与默认值的获取器
-    json-ref-string
-    json-ref-number
-    json-ref-integer
-    json-ref-boolean
-    json-get-or-else   
+    json-ref-string json-ref-number json-ref-integer json-ref-boolean json-get-or-else   
     
-    ;; 辅助工具
     json-keys)
   
   (begin
@@ -42,7 +42,6 @@
       (eq? x 'null))
 
     (define (json-object? x)
-      ;; rich-json 定义 object 为非空列表 
       (and (list? x) (not (null? x))))
 
     (define (json-array? x)
@@ -70,7 +69,6 @@
     (define (json-contains-key? json key)
       (if (not (json-object? json))
           #f
-          ;; JSON Object 是 Alist，直接查找 key
           (if (assoc key json) #t #f)))
 
     ;;; ---------------------------------------------------------
