@@ -807,8 +807,16 @@
                     (%bag-increment (car elems) 1 alist comparator))))))
 
     ;; (bag-adjoin! bag element ...)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-adjoin! b . elements)
-      (apply bag-adjoin b elements))
+      (let ((comparator (%bag-comparator b)))
+        (let loop ((elems elements) (alist (%bag-alist b)))
+          (if (null? elems)
+              (begin
+                (set-cdr! (cdr b) alist)
+                b)
+              (loop (cdr elems)
+                    (%bag-increment (car elems) 1 alist comparator))))))
 
     ;; (bag-replace bag element)
     ;; Replace an element equal to element with element itself
@@ -821,8 +829,14 @@
             b)))
 
     ;; (bag-replace! bag element)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-replace! b element)
-      (bag-replace b element))
+      (let* ((comparator (%bag-comparator b))
+             (count (%bag-get-count element (%bag-alist b) comparator)))
+        (when (> count 0)
+          (set-cdr! (cdr b)
+                    (%bag-set-count element count (%bag-alist b) comparator)))
+        b))
 
     ;; (bag-delete bag element ...)
     ;; Returns a new bag with one occurrence of each element removed
@@ -835,8 +849,16 @@
                     (%bag-decrement (car elems) 1 alist comparator))))))
 
     ;; (bag-delete! bag element ...)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-delete! b . elements)
-      (apply bag-delete b elements))
+      (let ((comparator (%bag-comparator b)))
+        (let loop ((elems elements) (alist (%bag-alist b)))
+          (if (null? elems)
+              (begin
+                (set-cdr! (cdr b) alist)
+                b)
+              (loop (cdr elems)
+                    (%bag-decrement (car elems) 1 alist comparator))))))
 
     ;; (bag-delete-all bag element-list)
     ;; Remove all occurrences of elements in list
@@ -853,32 +875,44 @@
                          element-list))))
 
     ;; (bag-delete-all! bag element-list)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-delete-all! b element-list)
-      (bag-delete-all b element-list))
+      (let ((comparator (%bag-comparator b)))
+        (set-cdr! (cdr b)
+                  (fold (lambda (elem alist)
+                          (%bag-set-count elem 0 alist comparator))
+                        (%bag-alist b)
+                        element-list))
+        b))
 
     ;; (bag-search! bag element failure success)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-search! b element failure success)
       (let* ((comparator (%bag-comparator b))
              (count (%bag-get-count element (%bag-alist b) comparator)))
         (if (> count 0)
             ;; Element found
             (success (bag-member b element #f)
+                     ;; update continuation: mutates in place
                      (lambda (new-element obj)
-                       (values (%make-bag comparator
-                                          (%bag-set-count new-element count
-                                                          (%bag-set-count element 0 (%bag-alist b) comparator)
-                                                          comparator))
-                               obj))
+                       (set-cdr! (cdr b)
+                                 (%bag-set-count new-element count
+                                                 (%bag-set-count element 0 (%bag-alist b) comparator)
+                                                 comparator))
+                       (values b obj))
+                     ;; remove continuation: mutates in place
                      (lambda (obj)
-                       (values (%make-bag comparator
-                                          (%bag-set-count element 0 (%bag-alist b) comparator))
-                               obj)))
+                       (set-cdr! (cdr b)
+                                 (%bag-set-count element 0 (%bag-alist b) comparator))
+                       (values b obj)))
             ;; Element not found
             (failure
+             ;; insert continuation: mutates in place
              (lambda (obj)
-               (values (%make-bag comparator
-                                  (%bag-increment element 1 (%bag-alist b) comparator))
-                       obj))
+               (set-cdr! (cdr b)
+                         (%bag-increment element 1 (%bag-alist b) comparator))
+               (values b obj))
+             ;; ignore continuation
              (lambda (obj)
                (values b obj))))))
 
@@ -962,8 +996,12 @@
                          (%bag-alist b))))
 
     ;; (bag-filter! predicate bag)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-filter! predicate b)
-      (bag-filter predicate b))
+      (set-cdr! (cdr b)
+                (filter (lambda (pair) (predicate (car pair)))
+                        (%bag-alist b)))
+      b)
 
     ;; (bag-remove predicate bag)
     (define (bag-remove predicate b)
@@ -972,8 +1010,12 @@
                          (%bag-alist b))))
 
     ;; (bag-remove! predicate bag)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-remove! predicate b)
-      (bag-remove predicate b))
+      (set-cdr! (cdr b)
+                (filter (lambda (pair) (not (predicate (car pair))))
+                        (%bag-alist b)))
+      b)
 
     ;; (bag-partition predicate bag)
     (define (bag-partition predicate b)
@@ -989,8 +1031,20 @@
              (loop (cdr alist) yes (cons (car alist) no)))))))
 
     ;; (bag-partition! predicate bag)
+    ;; Linear update version: permitted to mutate and return the bag argument
+    ;; Returns two bags: first is mutated from b, second is newly allocated
     (define (bag-partition! predicate b)
-      (bag-partition predicate b))
+      (let ((comparator (%bag-comparator b)))
+        (let loop ((alist (%bag-alist b)) (yes '()) (no '()))
+          (cond
+            ((null? alist)
+             ;; Mutate b to contain elements satisfying predicate
+             (set-cdr! (cdr b) yes)
+             (values b (%make-bag comparator no)))
+            ((predicate (caar alist))
+             (loop (cdr alist) (cons (car alist) yes) no))
+            (else
+             (loop (cdr alist) yes (cons (car alist) no)))))))
 
     ;;; ========== Bag Copying and conversion ==========
 
@@ -1018,8 +1072,9 @@
       (apply bag comparator lst))
 
     ;; (list->bag! bag list)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (list->bag! b lst)
-      (apply bag-adjoin b lst))
+      (apply bag-adjoin! b lst))
 
     ;;; ========== Subbags ==========
 
@@ -1098,8 +1153,23 @@
               bags)))
 
     ;; (bag-union! bag1 bag2 ...)
+    ;; Linear update version: permitted to mutate and return bag1
     (define (bag-union! b1 . bags)
-      (apply bag-union b1 bags))
+      (let ((comparator (%bag-comparator b1)))
+        (let ((new-alist
+               (fold (lambda (b result-alist)
+                       (let loop ((alist (%bag-alist b)) (acc result-alist))
+                         (if (null? alist)
+                             acc
+                             (let* ((elem (caar alist))
+                                    (count (cdar alist))
+                                    (current (%bag-get-count elem acc comparator)))
+                               (loop (cdr alist)
+                                     (%bag-set-count elem (max count current) acc comparator))))))
+                     (%bag-alist b1)
+                     bags)))
+          (set-cdr! (cdr b1) new-alist)
+          b1)))
 
     ;; (bag-intersection bag1 bag2 ...)
     ;; Count = min of counts
@@ -1122,8 +1192,26 @@
                               result))))))))
 
     ;; (bag-intersection! bag1 bag2 ...)
+    ;; Linear update version: permitted to mutate and return bag1
     (define (bag-intersection! b1 . bags)
-      (apply bag-intersection b1 bags))
+      (if (null? bags)
+          b1
+          (let ((comparator (%bag-comparator b1)))
+            (let loop ((alist (%bag-alist b1)) (result '()))
+              (if (null? alist)
+                  (begin
+                    (set-cdr! (cdr b1) result)
+                    b1)
+                  (let* ((elem (caar alist))
+                         (count (cdar alist))
+                         (min-count (fold (lambda (b acc)
+                                            (min acc (%bag-get-count elem (%bag-alist b) comparator)))
+                                          count
+                                          bags)))
+                    (loop (cdr alist)
+                          (if (> min-count 0)
+                              (cons (cons elem min-count) result)
+                              result))))))))
 
     ;; (bag-difference bag1 bag2 ...)
     ;; Count = count in b1 minus sum of counts in others
@@ -1147,8 +1235,27 @@
                               result))))))))
 
     ;; (bag-difference! bag1 bag2 ...)
+    ;; Linear update version: permitted to mutate and return bag1
     (define (bag-difference! b1 . bags)
-      (apply bag-difference b1 bags))
+      (if (null? bags)
+          b1
+          (let ((comparator (%bag-comparator b1)))
+            (let loop ((alist (%bag-alist b1)) (result '()))
+              (if (null? alist)
+                  (begin
+                    (set-cdr! (cdr b1) result)
+                    b1)
+                  (let* ((elem (caar alist))
+                         (count (cdar alist))
+                         (subtract (fold (lambda (b acc)
+                                           (+ acc (%bag-get-count elem (%bag-alist b) comparator)))
+                                         0
+                                         bags))
+                         (new-count (max 0 (- count subtract))))
+                    (loop (cdr alist)
+                          (if (> new-count 0)
+                              (cons (cons elem new-count) result)
+                              result))))))))
 
     ;; (bag-xor bag1 bag2)
     ;; Count = |count1 - count2|
@@ -1172,8 +1279,26 @@
           (%make-bag comparator result-alist))))
 
     ;; (bag-xor! bag1 bag2)
+    ;; Linear update version: permitted to mutate and return bag1
     (define (bag-xor! b1 b2)
-      (bag-xor b1 b2))
+      (let ((comparator (%bag-comparator b1)))
+        ;; Collect all unique elements from both bags
+        (let* ((all-elems (append (map car (%bag-alist b1))
+                                  (filter (lambda (e)
+                                            (not (bag-contains? b1 e)))
+                                          (map car (%bag-alist b2)))))
+               (result-alist
+                (fold (lambda (elem alist)
+                        (let* ((c1 (%bag-get-count elem (%bag-alist b1) comparator))
+                               (c2 (%bag-get-count elem (%bag-alist b2) comparator))
+                               (diff (abs (- c1 c2))))
+                          (if (> diff 0)
+                              (%bag-set-count elem diff alist comparator)
+                              alist)))
+                      '()
+                      all-elems)))
+          (set-cdr! (cdr b1) result-alist)
+          b1)))
 
     ;;; ========== Additional bag procedures ==========
 
@@ -1190,8 +1315,19 @@
               bags)))
 
     ;; (bag-sum! bag1 bag2 ...)
+    ;; Linear update version: permitted to mutate and return bag1
     (define (bag-sum! b1 . bags)
-      (apply bag-sum b1 bags))
+      (let ((comparator (%bag-comparator b1)))
+        (let ((new-alist
+               (fold (lambda (b result-alist)
+                       (bag-fold (lambda (elem acc)
+                                   (%bag-increment elem 1 acc comparator))
+                                 result-alist
+                                 b))
+                     (%bag-alist b1)
+                     bags)))
+          (set-cdr! (cdr b1) new-alist)
+          b1)))
 
     ;; (bag-product n bag)
     ;; Multiply all counts by n
@@ -1203,8 +1339,14 @@
                               (%bag-alist b)))))
 
     ;; (bag-product! n bag)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-product! n b)
-      (bag-product n b))
+      (set-cdr! (cdr b)
+                (filter (lambda (pair) (> (cdr pair) 0))
+                        (map (lambda (pair)
+                               (cons (car pair) (* n (cdr pair))))
+                             (%bag-alist b))))
+      b)
 
     ;; (bag-unique-size bag)
     ;; Number of unique elements
@@ -1231,14 +1373,18 @@
             (%bag-alist b)))
 
     ;; (bag-increment! bag element count)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-increment! b element count)
-      (%make-bag (%bag-comparator b)
-                 (%bag-increment element count (%bag-alist b) (%bag-comparator b))))
+      (set-cdr! (cdr b)
+                (%bag-increment element count (%bag-alist b) (%bag-comparator b)))
+      b)
 
     ;; (bag-decrement! bag element count)
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (bag-decrement! b element count)
-      (%make-bag (%bag-comparator b)
-                 (%bag-decrement element count (%bag-alist b) (%bag-comparator b))))
+      (set-cdr! (cdr b)
+                (%bag-decrement element count (%bag-alist b) (%bag-comparator b)))
+      b)
 
     ;; (bag->set bag)
     ;; Convert bag to set (unique elements only)
@@ -1252,8 +1398,9 @@
 
     ;; (set->bag! bag set)
     ;; Add set elements to bag
+    ;; Linear update version: permitted to mutate and return the bag argument
     (define (set->bag! b s)
-      (apply bag-adjoin b (set->list s)))
+      (apply bag-adjoin! b (set->list s)))
 
     ;; (bag->alist bag)
     ;; Return alist of (element . count) pairs

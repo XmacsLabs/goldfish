@@ -459,11 +459,29 @@
     (check (bag-element-count b2 3) => 1)
     (check (bag-size b2) => 4)))
 
+;; Test bag-adjoin! (linear update - mutates in place)
+(let1 b (bag (make-equal-comparator) 1 2)
+  (let1 b2 (bag-adjoin! b 2 3)
+    (check (bag-element-count b2 2) => 2)
+    (check (bag-element-count b2 3) => 1)
+    ;; Verify bag-adjoin! mutates in place (b and b2 are eq?)
+    (check (eq? b b2) => #t)
+    (check (bag-element-count b 2) => 2)))
+
 ;; Test bag-delete
 (let1 b (bag (make-equal-comparator) 1 1 1 2)
   (let1 b2 (bag-delete b 1)
     (check (bag-element-count b2 1) => 2)  ; deleted one 1
     (check (bag-size b2) => 3)))
+
+;; Test bag-delete! (linear update - mutates in place)
+(let1 b (bag (make-equal-comparator) 1 1 1 2)
+  (let1 b2 (bag-delete! b 1)
+    (check (bag-element-count b2 1) => 2)
+    (check (bag-size b2) => 3)
+    ;; Verify bag-delete! mutates in place
+    (check (eq? b b2) => #t)
+    (check (bag-element-count b 1) => 2)))
 
 ;; Test bag-delete-all
 (let1 b (bag (make-equal-comparator) 1 1 2 2 3)
@@ -471,6 +489,14 @@
     (check (bag-element-count b2 1) => 0)
     (check (bag-element-count b2 2) => 0)
     (check (bag-element-count b2 3) => 1)))
+
+;; Test bag-delete-all! (linear update - mutates in place)
+(let1 b (bag (make-equal-comparator) 1 1 2 2 3)
+  (let1 b2 (bag-delete-all! b '(1 2))
+    (check (bag-element-count b2 1) => 0)
+    (check (bag-element-count b2 2) => 0)
+    ;; Verify bag-delete-all! mutates in place
+    (check (eq? b b2) => #t)))
 
 ;; Test bag-size
 (check (bag-size (bag (make-equal-comparator))) => 0)
@@ -639,12 +665,18 @@
 ;; Test bag-increment!
 (let1 b (bag (make-equal-comparator) 1 2)
   (let1 b2 (bag-increment! b 1 5)
-    (check (bag-element-count b2 1) => 6)))
+    (check (bag-element-count b2 1) => 6)
+    ;; Verify bag-increment! mutates in place
+    (check (eq? b b2) => #t)
+    (check (bag-element-count b 1) => 6)))
 
 ;; Test bag-decrement!
 (let1 b (bag (make-equal-comparator) 1 1 1 1 1)
   (let1 b2 (bag-decrement! b 1 3)
-    (check (bag-element-count b2 1) => 2)))
+    (check (bag-element-count b2 1) => 2)
+    ;; Verify bag-decrement! mutates in place
+    (check (eq? b b2) => #t)
+    (check (bag-element-count b 1) => 2)))
 
 ;; Test bag->set
 (let1 b (bag (make-equal-comparator) 1 1 2 2 2 3)
@@ -669,7 +701,9 @@
   (let1 b2 (set->bag! b s)
     (check (bag-element-count b2 1) => 2)
     (check (bag-element-count b2 2) => 1)
-    (check (bag-element-count b2 3) => 1)))
+    (check (bag-element-count b2 3) => 1)
+    ;; Verify set->bag! mutates in place
+    (check (eq? b b2) => #t)))
 
 ;; Test bag->alist
 (let1 b (bag (make-equal-comparator) 1 1 2 2 2)
