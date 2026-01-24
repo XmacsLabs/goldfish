@@ -153,6 +153,17 @@
     ;; Original set unchanged
     (check (set-size s) => 3)))
 
+;; Test set-delete! (linear update - mutates in place)
+(let1 s (set (make-equal-comparator) 1 2 3)
+  (let1 s2 (set-delete! s 2)
+    (check (set-size s2) => 2)
+    (check (set-contains? s2 2) => #f)
+    ;; set-delete! is permitted to mutate s, verify s and s2 are eq?
+    (check (eq? s s2) => #t)
+    ;; Verify original set was mutated
+    (check (set-size s) => 2)
+    (check (set-contains? s 2) => #f)))
+
 ;; Test set->list and list->set
 (let1 s (set (make-equal-comparator) 'a 'b 'c)
   (check (length (set->list s)) => 3))
@@ -277,7 +288,13 @@
                              (lambda (elem update remove) (update 20 'updated)))))
     (check (set-contains? new-set 20) => #t)
     (check (set-contains? new-set 2) => #f)
-    (check obj => 'updated))
+    (check obj => 'updated)
+    ;; Verify set-search! mutates in place (s and new-set are eq?)
+    (check (eq? s new-set) => #t)
+    (check (set-contains? s 20) => #t)))
+
+;; Test set-search! with element found - remove continuation
+(let1 s (set (make-equal-comparator) 1 2 3)
   ;; Test remove continuation
   (let-values (((new-set obj)
                 (set-search! s 2
@@ -285,7 +302,10 @@
                              (lambda (elem update remove) (remove 'removed)))))
     (check (set-size new-set) => 2)
     (check (set-contains? new-set 2) => #f)
-    (check obj => 'removed)))
+    (check obj => 'removed)
+    ;; Verify set-search! mutates in place
+    (check (eq? s new-set) => #t)
+    (check (set-size s) => 2)))
 
 ;; Test set-search! with element not found
 (let1 s (set (make-equal-comparator) 1 2 3)
@@ -296,7 +316,13 @@
                              (lambda (elem update remove) (update 'not-called 'x)))))
     (check (set-contains? new-set 5) => #t)
     (check (set-size new-set) => 4)
-    (check obj => 'inserted))
+    (check obj => 'inserted)
+    ;; Verify set-search! mutates in place
+    (check (eq? s new-set) => #t)
+    (check (set-contains? s 5) => #t)))
+
+;; Test set-search! with element not found - ignore continuation  
+(let1 s (set (make-equal-comparator) 1 2 3)
   ;; Test ignore continuation
   (let-values (((new-set obj)
                 (set-search! s 5
@@ -304,7 +330,9 @@
                              (lambda (elem update remove) (update 'not-called 'x)))))
     (check (set-size new-set) => 3)
     (check (set-contains? new-set 5) => #f)
-    (check obj => 'ignored)))
+    (check obj => 'ignored)
+    ;; Verify set is unchanged and returned as-is
+    (check (eq? s new-set) => #t)))
 
 ;; Test set-member
 (let1 s (set (make-equal-comparator) 1 2 3)

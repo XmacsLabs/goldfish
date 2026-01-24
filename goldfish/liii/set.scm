@@ -224,9 +224,16 @@
                     (%adjoin-one (car elems) result comparator))))))
 
     ;; (set-adjoin! set element ...)
-    ;; Linear update version of set-adjoin
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-adjoin! s . elements)
-      (apply set-adjoin s elements))
+      (let ((comparator (%set-comparator s)))
+        (let loop ((elems elements) (result (%set-elements s)))
+          (if (null? elems)
+              (begin
+                (set-cdr! (cdr s) result)
+                s)
+              (loop (cdr elems)
+                    (%adjoin-one (car elems) result comparator))))))
 
     ;; (set-replace set element)
     ;; Replace an element equal to element with element itself
@@ -244,9 +251,20 @@
             s)))
 
     ;; (set-replace! set element)
-    ;; Linear update version of set-replace
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-replace! s element)
-      (set-replace s element))
+      (let* ((comparator (%set-comparator s))
+             (elem=? (comparator-equality-predicate comparator)))
+        (if (%member element (%set-elements s) comparator)
+            ;; Element exists, replace it in place
+            (begin
+              (set-cdr! (cdr s)
+                        (cons element
+                              (filter (lambda (x) (not (elem=? x element)))
+                                      (%set-elements s))))
+              s)
+            ;; Element doesn't exist, return unchanged
+            s)))
 
     ;; (set-delete set element ...)
     ;; Returns a new set with elements removed
@@ -261,20 +279,32 @@
           (%make-set comparator new-elements))))
 
     ;; (set-delete! set element ...)
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-delete! s . elements)
-      (apply set-delete s elements))
+      (let* ((comparator (%set-comparator s))
+             (elem=? (comparator-equality-predicate comparator)))
+        (let ((new-elements
+               (fold (lambda (to-remove result)
+                       (filter (lambda (x) (not (elem=? x to-remove))) result))
+                     (%set-elements s)
+                     elements)))
+          ;; Mutate the set in place by updating the elements
+          (set-cdr! (cdr s) new-elements)
+          s)))
 
     ;; (set-delete-all set element-list)
     (define (set-delete-all s element-list)
       (apply set-delete s element-list))
 
     ;; (set-delete-all! set element-list)
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-delete-all! s element-list)
-      (apply set-delete s element-list))
+      (apply set-delete! s element-list))
 
     ;; (set-search! set element failure success)
     ;; Search for element in set, calling failure or success continuation
     ;; Returns two values: the (possibly updated) set and an additional value
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-search! s element failure success)
       (let* ((comparator (%set-comparator s))
              (elem=? (comparator-equality-predicate comparator))
@@ -282,25 +312,30 @@
         (if found
             ;; Element found: call success with element and update/remove continuations
             (success found
-                     ;; update continuation: (update new-element obj) 
+                     ;; update continuation: (update new-element obj)
+                     ;; Mutates the set in place
                      (lambda (new-element obj)
-                       (values (%make-set comparator
-                                          (cons new-element
-                                                (filter (lambda (x) (not (elem=? x found)))
-                                                        (%set-elements s))))
-                               obj))
+                       (let ((new-elements
+                              (cons new-element
+                                    (filter (lambda (x) (not (elem=? x found)))
+                                            (%set-elements s)))))
+                         (set-cdr! (cdr s) new-elements)
+                         (values s obj)))
                      ;; remove continuation: (remove obj)
+                     ;; Mutates the set in place
                      (lambda (obj)
-                       (values (%make-set comparator
-                                          (filter (lambda (x) (not (elem=? x found)))
-                                                  (%set-elements s)))
-                               obj)))
+                       (let ((new-elements
+                              (filter (lambda (x) (not (elem=? x found)))
+                                      (%set-elements s))))
+                         (set-cdr! (cdr s) new-elements)
+                         (values s obj))))
             ;; Element not found: call failure with insert/ignore continuations
             (failure
              ;; insert continuation: (insert obj)
+             ;; Mutates the set in place
              (lambda (obj)
-               (values (%make-set comparator (cons element (%set-elements s)))
-                       obj))
+               (set-cdr! (cdr s) (cons element (%set-elements s)))
+               (values s obj))
              ;; ignore continuation: (ignore obj)
              (lambda (obj)
                (values s obj))))))
@@ -369,8 +404,10 @@
                  (filter predicate (%set-elements s))))
 
     ;; (set-filter! predicate set)
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-filter! predicate s)
-      (set-filter predicate s))
+      (set-cdr! (cdr s) (filter predicate (%set-elements s)))
+      s)
 
     ;; (set-remove predicate set)
     (define (set-remove predicate s)
@@ -378,8 +415,11 @@
                  (filter (lambda (x) (not (predicate x))) (%set-elements s))))
 
     ;; (set-remove! predicate set)
+    ;; Linear update version: permitted to mutate and return the set argument
     (define (set-remove! predicate s)
-      (set-remove predicate s))
+      (set-cdr! (cdr s)
+                (filter (lambda (x) (not (predicate x))) (%set-elements s)))
+      s)
 
     ;; (set-partition predicate set)
     ;; Returns two values: elements satisfying and not satisfying predicate
@@ -396,8 +436,20 @@
              (loop (cdr elems) yes (cons (car elems) no)))))))
 
     ;; (set-partition! predicate set)
+    ;; Linear update version: permitted to mutate and return the set argument
+    ;; Returns two sets: first is mutated from s, second is newly allocated
     (define (set-partition! predicate s)
-      (set-partition predicate s))
+      (let ((comparator (%set-comparator s)))
+        (let loop ((elems (%set-elements s)) (yes '()) (no '()))
+          (cond
+            ((null? elems)
+             ;; Mutate s to contain elements satisfying predicate
+             (set-cdr! (cdr s) yes)
+             (values s (%make-set comparator no)))
+            ((predicate (car elems))
+             (loop (cdr elems) (cons (car elems) yes) no))
+            (else
+             (loop (cdr elems) yes (cons (car elems) no)))))))
 
     ;;; ========== Copying and conversion ==========
 
@@ -493,8 +545,19 @@
               sets)))
 
     ;; (set-union! set1 set2 ...)
+    ;; Linear update version: permitted to mutate and return set1
     (define (set-union! s1 . sets)
-      (apply set-union s1 sets))
+      (let ((comparator (%set-comparator s1)))
+        (let ((new-elements
+               (fold (lambda (s result)
+                       (set-fold (lambda (elem acc)
+                                   (%adjoin-one elem acc comparator))
+                                 result
+                                 s))
+                     (%set-elements s1)
+                     sets)))
+          (set-cdr! (cdr s1) new-elements)
+          s1)))
 
     ;; (set-intersection set1 set2 ...)
     (define (set-intersection s1 . sets)
@@ -505,8 +568,16 @@
                       s1)))
 
     ;; (set-intersection! set1 set2 ...)
+    ;; Linear update version: permitted to mutate and return set1
     (define (set-intersection! s1 . sets)
-      (apply set-intersection s1 sets))
+      (if (null? sets)
+          s1
+          (begin
+            (set-cdr! (cdr s1)
+                      (filter (lambda (elem)
+                                (every (lambda (s) (set-contains? s elem)) sets))
+                              (%set-elements s1)))
+            s1)))
 
     ;; (set-difference set1 set2 ...)
     (define (set-difference s1 . sets)
@@ -517,8 +588,16 @@
                       s1)))
 
     ;; (set-difference! set1 set2 ...)
+    ;; Linear update version: permitted to mutate and return set1
     (define (set-difference! s1 . sets)
-      (apply set-difference s1 sets))
+      (if (null? sets)
+          s1
+          (begin
+            (set-cdr! (cdr s1)
+                      (filter (lambda (elem)
+                                (not (any (lambda (s) (set-contains? s elem)) sets)))
+                              (%set-elements s1)))
+            s1)))
 
     ;; (set-xor set1 set2)
     (define (set-xor s1 s2)
@@ -526,8 +605,19 @@
                  (set-difference s2 s1)))
 
     ;; (set-xor! set1 set2)
+    ;; Linear update version: permitted to mutate and return set1
     (define (set-xor! s1 s2)
-      (set-xor s1 s2))
+      (let* ((comparator (%set-comparator s1))
+             (diff1 (filter (lambda (elem) (not (set-contains? s2 elem)))
+                            (%set-elements s1)))
+             (diff2 (filter (lambda (elem) (not (set-contains? s1 elem)))
+                            (%set-elements s2))))
+        ;; Note: compute diff2 before mutating s1
+        (set-cdr! (cdr s1)
+                  (fold (lambda (elem acc) (%adjoin-one elem acc comparator))
+                        diff1
+                        diff2))
+        s1))
 
     ;;; ========== Comparator ==========
 
