@@ -53,7 +53,7 @@
   (begin
 
     ;;; ============================================================
-    ;;; Goldfish hash-set (OOP style, existing implementation)
+    ;;; Goldfish hash-set (OOP style)
     ;;; ============================================================
 
     (define-case-class hash-set ((data hash-table?))
