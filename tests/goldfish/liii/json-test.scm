@@ -1140,3 +1140,27 @@ transform-fn : function
 )
 
 (check-report)
+
+#|
+Error Handling Tests
+|#
+
+;; json-ref invalid structure
+(check-catch 'type-error (json-ref "not-a-json" 'key))
+(check-catch 'type-error (json-ref 123 'key))
+
+;; json-set invalid structure
+(check-catch 'type-error (json-set "not-a-json" 'key "val"))
+(check-catch 'type-error (json-set 123 'key "val"))
+
+;; json-push invalid structure
+(check-catch 'type-error (json-push "not-a-json" 'key "val"))
+(check-catch 'type-error (json-push 123 'key "val"))
+
+;; json-drop invalid structure
+(check-catch 'type-error (json-drop "not-a-json" 'key))
+(check-catch 'type-error (json-drop 123 'key))
+
+;; json-reduce invalid structure
+(check-catch 'type-error (json-reduce "not-a-json" 'key (lambda (k v) v)))
+(check-catch 'type-error (json-reduce 123 'key (lambda (k v) v)))

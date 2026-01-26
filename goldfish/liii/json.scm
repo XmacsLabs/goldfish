@@ -15,7 +15,8 @@
 ;
 
 (define-library (liii json)
-  (import (liii base) 
+  (import (liii base)
+          (liii list)
           (rename (guenchi json)
             (json-ref g:json-ref) (json-ref* g:json-ref*)
             (json-set g:json-set) (json-set* g:json-set*)
@@ -40,33 +41,76 @@
   (begin
 
     ;;; ---------------------------------------------------------
-    ;;; 0. 统一接口 
+    ;;; 0. 统一接口 (Unify Interfaces)
     ;;; ---------------------------------------------------------
 
+    (define (ensure-json-structure x)
+      (unless (or (json-object? x) (json-array? x))
+        (type-error "Value is not a JSON object or array" x)))
+
     (define (json-ref json key . args)
-      (if (null? args)
-          (g:json-ref json key)
-          (apply g:json-ref* (cons json (cons key args)))))
+      (if (null? json) ; Allow () to pass through as "not found" to support safe navigation
+          '()
+          (begin
+            (ensure-json-structure json)
+            (let ((val (if (and (json-object? json) (equal? json '(())))
+                           '()
+                           (g:json-ref json key))))
+              (if (null? args)
+                  val
+                  (apply json-ref (cons val args)))))))
 
     (define (json-set json key val . args)
+      (ensure-json-structure json)
       (if (null? args)
-          (g:json-set json key val)
-          (apply g:json-set* (cons json (cons key (cons val args))))))
+          (if (and (json-object? json) (equal? json '(())))
+              json
+              (g:json-set json key val))
+          (json-set json key 
+                    (lambda (x)
+                      (apply json-set (cons x (cons val args)))))))
 
     (define (json-push json key val . args)
+      (ensure-json-structure json)
       (if (null? args)
-          (g:json-push json key val)
-          (apply g:json-push* (cons json (cons key (cons val args))))))
+          (if (and (json-object? json) (equal? json '(())))
+              (g:json-push '() key val)
+              (g:json-push json key val))
+          (json-set json key
+                    (lambda (x)
+                      (apply json-push (cons x (cons val args)))))))
 
     (define (json-drop json key . args)
+      (ensure-json-structure json)
       (if (null? args)
-          (g:json-drop json key)
-          (apply g:json-drop* (cons json (cons key args)))))
+          (if (and (json-object? json) (equal? json '(())))
+              json
+              (g:json-drop json key))
+          (json-set json key
+                    (lambda (x)
+                      (apply json-drop (cons x args))))))
 
-    (define (json-reduce json key val . args)
-      (if (null? args)
-          (g:json-reduce json key val)
-          (apply g:json-reduce* (cons json (cons key (cons val args))))))
+    (define (json-reduce json key . args)
+      (if (null? json)
+          '()
+          (begin
+            (ensure-json-structure json)
+            (if (null? args)
+                (value-error "json-reduce: missing arguments")
+                (if (null? (cdr args))
+                    ;; Single level: (json-reduce json key proc)
+                    (let ((proc (car args)))
+                      (if (and (json-object? json) (equal? json '(())))
+                          json
+                          (g:json-reduce json key proc)))
+                    ;; Multi level
+                    (let* ((keys (cons key (drop-right args 1)))
+                           (proc (last args))
+                           (top-key (car keys))
+                           (rest-keys (cdr keys)))
+                      (json-reduce json top-key 
+                                   (lambda (k v)
+                                     (apply json-reduce (append (list v) rest-keys (list proc)))))))))))
 
     ;;; ---------------------------------------------------------
     ;;; 1. 类型谓词 
