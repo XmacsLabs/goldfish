@@ -50,7 +50,8 @@
 (check-true (json-object? '((a . 1) (b . 2))))
 (check-false (json-object? '()))    
 (check-false (json-object? #(1 2))) 
-(check-false (json-object? "{}"))   
+(check-false (json-object? "{}"))
+(check-false (json-object? '(1 2 3)))   
 
 ;; 3. json-array?
 ;; 向量 (vector) 表示数组
@@ -117,7 +118,7 @@ json-ref (Basic)
 
 #|
 json-get-or-else
-获取JSON对象的值，如果为null则返回默认值。
+如果 JSON 对象为 null，则返回默认值；否则返回 JSON 对象本身。
 
 语法
 ----
@@ -126,19 +127,19 @@ json-get-or-else
 参数
 ----
 json : any
-JSON数据对象。
+JSON 数据对象。
 
 default-value : any
-当JSON对象为null时返回的默认值。
+当 JSON 对象为 null 时返回的默认值。
 
 返回值
 -----
-- 如果JSON对象不为null，返回其值
-- 如果JSON对象为null，返回default-value
+- 如果 JSON 对象不为 null，返回该对象本身
+- 如果 JSON 对象为 null，返回 default-value
 
 功能
 ----
-提供安全的默认值机制，避免处理null值时出错。
+提供安全的 null 值处理机制，当遇到 JSON null 时使用默认值替代。
 |#
 
 (check (json-get-or-else 'null bob-j) => bob-j)
@@ -530,7 +531,7 @@ data : any
 
 边界条件
 --------
-- 无效数据结构抛出value-error异常
+- 无效数据结构（非法 JSON 数据，如循环引用、不支持的类型等）抛出 value-error 异常
 - 空对象转换为{}
 - 空数组转换为[]
 
@@ -562,6 +563,8 @@ data : any
        => "{\"user\":{\"name\":\"Dave\",\"tags\":[\"admin\",\"editor\"]}}")
 (check (json->string '(("text" . "Line1\nLine2"))) => "{\"text\":\"Line1\\nLine2\"}")
 (check (json->string #( "He said \"Hello\"" )) => "[\"He said \\\"Hello\\\"\"]")
+
+(check-catch 'value-error (json->string '((a))))
 
 
 #|
@@ -622,40 +625,6 @@ value : any | function
   (check (json-ref-number j1 "age" 0) => 19)
   (check (json-ref j0 "age") => 18))
 
-#|
-json-ref-boolean
-获取JSON对象中的布尔值，如果值不是布尔类型则返回默认值。
-
-语法
-----
-(json-ref-boolean json key default-value)
-
-参数
-----
-key : symbol | string | number | boolean
-要获取的键名。
-
-default-value : boolean
-当值不是布尔类型或键不存在时返回的默认值。
-
-返回值
------
-返回布尔值：
-- 如果键存在且值为布尔类型，返回该值
-- 否则返回default-value
-
-功能
-----
-- 安全地获取布尔值，避免类型错误
-- 支持符号、字符串、数字和布尔值作为键
-|#
-; json-ref-boolean
-(let* ((j0 '((active . #t) (verified . #f) (name . "Alice"))))
-  (check (json-ref-boolean j0 'active #f) => #t)
-  (check (json-ref-boolean j0 'verified #t) => #f)
-  (check (json-ref-boolean j0 'name #f) => #f)
-  (check (json-ref-boolean j0 'nonexistent #t) => #t))
-
 ; 单层，键为整数 (Array set)
 (let* ((j0 #(red green blue))
        (j1 (json-set j0 0 'black)))
@@ -708,6 +677,40 @@ default-value : boolean
        (j2 (json-set j0 'person j1)))
   (check (json-ref j2 'person 'name) => "Bob")
   (check (json-ref j2 'person 'age) => 30))
+
+#|
+json-ref-boolean
+获取JSON对象中的布尔值，如果值不是布尔类型则返回默认值。
+
+语法
+----
+(json-ref-boolean json key default-value)
+
+参数
+----
+key : symbol | string | number | boolean
+要获取的键名。
+
+default-value : boolean
+当值不是布尔类型或键不存在时返回的默认值。
+
+返回值
+-----
+返回布尔值：
+- 如果键存在且值为布尔类型，返回该值
+- 否则返回default-value
+
+功能
+----
+- 安全地获取布尔值，避免类型错误
+- 支持符号、字符串、数字和布尔值作为键
+|#
+; json-ref-boolean
+(let* ((j0 '((active . #t) (verified . #f) (name . "Alice"))))
+  (check (json-ref-boolean j0 'active #f) => #t)
+  (check (json-ref-boolean j0 'verified #t) => #f)
+  (check (json-ref-boolean j0 'name #f) => #f)
+  (check (json-ref-boolean j0 'nonexistent #t) => #t))
 
 #|
 json-reduce (Transform)
@@ -797,6 +800,21 @@ transform-fn : function
   (check (json-ref j1 'user 'profile 'name) => "Alice")
   (check (json-ref j2 'user 'profile 'name) => "Alice"))
 
+(let ((json '()))
+  (check (json-reduce json 'name (lambda (k v) v))
+         => '()))
+
+(let ((json #()))
+  (check (json-reduce json 'name (lambda (k v) v))
+         => #()))
+
+(let1 json '((person . ((name . "Alice")
+                        (age . 25)
+                        (address . ((city . "Wonderland")
+                                    (zip . "12345"))))))
+  (let1 updated-json (json-reduce json 'person 'address 'city (lambda (x y) (string-upcase y)))
+    (check (json-ref updated-json 'person 'address 'city) => "WONDERLAND")))
+
 
 
 #|
@@ -860,58 +878,7 @@ value : any
        (j1 (json-push j0 'flags #t "yes")))
   (check (json-ref j1 'flags #t) => "yes"))
 
-#|
-json-drop
-从JSON数据结构中删除指定的键。
 
-语法
-----
-(json-drop json key)
-(json-drop json predicate-fn)
-
-参数
-----
-json : list | vector
-JSON数据结构。
-
-key : symbol | string | number | boolean
-要删除的键名。
-
-predicate-fn : function
-用于选择要删除的键的谓词函数。
-
-返回值
------
-返回新的JSON数据结构，不包含被删除的键。
-
-功能
-----
-- 从JSON对象中删除指定键
-- 支持谓词函数选择要删除的键
-- 如果键不存在，返回原始数据结构
-|#
-; json-drop
-(let* ((json '((name . "Alice") (age . 25))))
-  (let ((updated-json (json-drop json 'age)))
-    (check (json-ref updated-json 'age) => '())))
-
-(let* ((json '((name . "Alice")
-               (age . 25)
-               (address . ((city . "Wonderland")
-                           (zip . "12345"))))))
-  (let ((updated-json (json-drop json 'address 'city)))
-    (check (json-ref updated-json 'address 'city) => '())))
-
-(let* ((json '((name . "Alice")
-               (age . 25)
-               (address . ((city . "Wonderland")
-                           (zip . "12345"))))))
-  (let1 j1 (json-drop json (lambda (k) (equal? k 'city)))
-    (check (json-ref j1 'address 'city) => "Wonderland")) ; city在address下，顶层drop不影响
-  (let1 j2 (json-drop json (lambda (k) (equal? k 'name)))
-    (check (json-ref j2 'name) => '()))
-  (let1 j3 (json-drop json 'address (lambda (k) (equal? k 'city)))
-    (check (json-ref j3 'address 'city) => '())))
 
 #|
 json-drop (Deep Drop)
@@ -963,6 +930,31 @@ predicate-fn : function (lambda (key) ...)
 ;; 谓词删除（对象）：删除所有键名为 string 类型或特定名称的键
 (json-drop j (lambda (k) (eq? k 'age))) 
 |#
+
+
+
+(let* ((json '((name . "Alice") (age . 25))))
+  (let ((updated-json (json-drop json 'age)))
+    (check (json-ref updated-json 'age) => '())))
+
+(let* ((json '((name . "Alice")
+               (age . 25)
+               (address . ((city . "Wonderland")
+                           (zip . "12345"))))))
+  (let ((updated-json (json-drop json 'address 'city)))
+    (check (json-ref updated-json 'address 'city) => '())))
+
+(let* ((json '((name . "Alice")
+               (age . 25)
+               (address . ((city . "Wonderland")
+                           (zip . "12345"))))))
+  (let1 j1 (json-drop json (lambda (k) (equal? k 'city)))
+    (check (json-ref j1 'address 'city) => "Wonderland")) ; city在address下，顶层drop不影响
+  (let1 j2 (json-drop json (lambda (k) (equal? k 'name)))
+    (check (json-ref j2 'name) => '()))
+  (let1 j3 (json-drop json 'address (lambda (k) (equal? k 'city)))
+    (check (json-ref j3 'address 'city) => '())))
+
 (let* ((j0 '((name . "Alice") (age . 25) (city . "Wonderland")))
        (j1 (json-drop j0 'age)))
   (check (json-ref j1 'age) => '())
@@ -1000,72 +992,7 @@ predicate-fn : function (lambda (key) ...)
        (j1 (json-drop j0 0)))
   (check j1 => #()))
 
-#|
-json-reduce
-转换JSON数据结构中指定键的值。
 
-语法
-----
-(json-reduce json key transform-fn)
-(json-reduce json predicate-fn transform-fn)
-
-参数
-----
-json : list | vector
-JSON数据结构。
-
-key : symbol | string | number | boolean
-要转换的键名。
-
-predicate-fn : function
-用于选择要转换的键的谓词函数。
-
-transform-fn : function
-转换函数，接收键和值，返回新值。
-
-返回值
------
-返回新的JSON数据结构，包含转换后的值。
-
-功能
-----
-- 转换JSON对象中指定键的值
-- 支持谓词函数选择要转换的键
-- 转换函数接收键和值作为参数
-- 支持多层嵌套转换
-|#
-; json-reduce
-(let ((json '((name . "Alice") (age . 25))))
-  (check (json-reduce json 'name (lambda (k v) (string-upcase v)))
-         => '((name . "ALICE") (age . 25))))
-
-(let ((json '((person . ((name . "Alice") (age . 25))))))
-  (check (json-reduce json 'person (lambda (k v) v))
-         => '((person . ((name . "Alice") (age . 25))))))
-
-(let ((json '((name . "Alice") (age . 25))))
-  (check (json-reduce json (lambda (k) (equal? k 'age)) (lambda (k v) (+ v 1)))
-         => '((name . "Alice") (age . 26))))
-
-(let ((json '((person . ((name . "Alice") (age . 25))))))
-  (check (json-reduce json (lambda (k) (equal? k 'person)) (lambda (k v) v))
-         => '((person . ((name . "Alice") (age . 25))))))
-
-(let ((json '((name . "Alice") (age . 25))))
-  (check (json-reduce json #t (lambda (k v) (if (string? v) (string-upcase v) v)))
-         => '((name . "ALICE") (age . 25))))
-
-(let ((json '((name . "Alice") (age . 25))))
-  (check (json-reduce json #f (lambda (k v) v))
-         => '((name . "Alice") (age . 25))))
-
-(let ((json '()))
-  (check (json-reduce json 'name (lambda (k v) v))
-         => '()))
-
-(let ((json #()))
-  (check (json-reduce json 'name (lambda (k v) v))
-         => #()))
 
 (let1 json '((person . ((name . "Alice")
                         (age . 25)

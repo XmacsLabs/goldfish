@@ -120,7 +120,10 @@
       (eq? x 'null))
 
     (define (json-object? x)
-      (and (list? x) (not (null? x))))
+      (and (list? x)
+           (not (null? x))
+           (or (equal? x '(()))
+               (every pair? x))))
 
     (define (json-array? x)
       (vector? x))
