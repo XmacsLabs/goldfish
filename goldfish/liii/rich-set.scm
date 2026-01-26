@@ -14,17 +14,17 @@
 ; under the License.
 ;
 
-(define-library (liii set)
+(define-library (liii rich-set)
   (import (liii lang)(liii hash-table)(srfi srfi-128))
-  (export hash-set)
+  (export rich-hash-set)
   (begin
 
 
-    (define-case-class hash-set ((data hash-table?))
+    (define-case-class rich-hash-set ((data hash-table?))
 
       ;; Factory methods
       (chained-define (@empty) 
-        (hash-set (make-hash-table)))
+        (rich-hash-set (make-hash-table)))
                    
       ;; Basic operations
       (define (%size) (hash-table-size data))
@@ -49,7 +49,7 @@
             (lambda (k v) (hash-table-set! ht k v))
             data)
           (hash-table-set! ht element #t)
-          (hash-set ht)))
+          (rich-hash-set ht)))
 
       (chained-define (%remove element)
         (let ((ht (make-hash-table)))
@@ -57,7 +57,7 @@
             (lambda (k v) (hash-table-set! ht k v))
             data)
           (hash-table-delete! ht element)
-          (hash-set ht)))
+          (rich-hash-set ht)))
 
       (chained-define (%clear!)
         (hash-table-clear! data)
