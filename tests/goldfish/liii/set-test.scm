@@ -21,15 +21,14 @@
 
 (check-set-mode! 'report-failed)
 
-(define comp (make-default-comparator))
-
 ;; --- Data Setup ---
-(define s-empty (set comp))
-(define s-1 (set comp 1))
-(define s-1-2 (set comp 1 2))
-(define s-1-2-3 (set comp 1 2 3))
-(define s-2-3-4 (set comp 2 3 4))
-(define s-4-5 (set comp 4 5))
+(define s-empty (set))
+(define comp (set-element-comparator s-empty))
+(define s-1 (set 1))
+(define s-1-2 (set 1 2))
+(define s-1-2-3 (set 1 2 3))
+(define s-2-3-4 (set 2 3 4))
+(define s-4-5 (set 4 5))
 
 #|
 set?
@@ -61,13 +60,10 @@ set
 
 语法
 ----
-(set comparator element ...)
+(set element ...)
 
 参数
 ----
-comparator : comparator
-元素比较器。
-
 element ... : any
 初始元素。
 
@@ -75,8 +71,8 @@ element ... : any
 -----
 返回包含指定元素的 set。
 |#
-(check-true (set? (set comp 1 2 3)))
-(check-true (set-contains? (set comp 1) 1))
+(check-true (set? (set 1 2 3)))
+(check-true (set-contains? (set 1) 1))
 
 #|
 list->set
@@ -84,12 +80,10 @@ list->set
 
 语法
 ----
-(list->set comparator list)
+(list->set  list)
 
 参数
 ----
-comparator : comparator
-元素比较器。
 
 list : list
 要转换的列表。
@@ -98,10 +92,10 @@ list : list
 -----
 返回包含列表中所有元素的 set。
 |#
-(check-true (set=? s-1-2-3 (list->set comp '(1 2 3))))
-(check-true (set=? s-empty (list->set comp '())))
+(check-true (set=? s-1-2-3 (list->set '(1 2 3))))
+(check-true (set=? s-empty (list->set '())))
 ;; Duplicates in list should be handled
-(check-true (set=? s-1-2 (list->set comp '(1 2 2 1))))
+(check-true (set=? s-1-2 (list->set '(1 2 2 1))))
 
 #|
 set-copy
@@ -252,11 +246,11 @@ set1, set2, ... : set
 |#
 (check-true (set=? s-empty s-empty))
 (check-true (set=? s-1 s-1))
-(check-true (set=? s-1 (set comp 1)))
+(check-true (set=? s-1 (set 1)))
 (check-false (set=? s-1 s-empty))
 (check-false (set=? s-1 s-1-2))
 ;; Multiple arguments
-(check-true (set=? s-1 (set comp 1) (list->set comp '(1))))
+(check-true (set=? s-1 (set 1) (list->set '(1))))
 (check-false (set=? s-1 s-1 s-empty))
 
 #|
@@ -358,14 +352,13 @@ set1, set2, ... : set
 (check-true (set>? s-1-2 s-1 s-empty))
 
 ;; --- Different Data Types ---
-(define sym-comp (make-default-comparator))
-(define s-sym (set sym-comp 'a 'b 'c))
+(define s-sym (set 'a 'b 'c))
 (check-true (set-contains? s-sym 'a))
 (check-false (set-contains? s-sym 'd))
-(check-true (set=? s-sym (list->set sym-comp '(c b a))))
+(check-true (set=? s-sym (list->set '(c b a))))
 
-(define str-comp (make-comparator string? string=? string<? string-hash))
-(define s-str (set str-comp "apple" "banana"))
+;(define str-comp (make-comparator string? string=? string<? string-hash))
+(define s-str (list->set '("apple" "banana")))
 (check-true (set-contains? s-str "apple"))
 (check-false (set-contains? s-str "pear"))
 
@@ -387,7 +380,7 @@ set1, set2, ... : set
 
 (define big-n 100)
 (define big-list (range big-n))
-(define s-big (list->set comp big-list))
+(define s-big (list->set big-list))
 ;; Check basic existence
 (check-true (set-contains? s-big 0))
 (check-true (set-contains? s-big (- big-n 1)))
@@ -395,8 +388,8 @@ set1, set2, ... : set
 ;; Check subset logic on large sets
 (define s-big-minus-one (set-copy s-big))
 ;; (We can't easily remove elements with current API, so let's build a smaller one)
-(define s-small-big (list->set comp (range (- big-n 1))))
+(define s-small-big (list->set (range (- big-n 1))))
 (check-true (set<? s-small-big s-big))
-(check-true (set=? s-big (list->set comp big-list)))
+(check-true (set=? s-big (list->set big-list)))
 
 (check-report)

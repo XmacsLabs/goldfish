@@ -23,6 +23,7 @@
   (import (scheme base)
           (scheme case-lambda)
           (liii hash-table)
+          (liii error)
           (srfi srfi-128))
   (export set set-unfold list->set set-copy
           set? set-contains? set-empty? set-disjoint?
@@ -41,7 +42,7 @@
 
     (define (check-same-comparator a b)
       (if (not (eq? (set-element-comparator a) (set-element-comparator b)))
-          (error "different comparators" a b)))
+          (value-error "different comparators" a b)))
 
     (define (make-set/comparator comparator)
       (%make-set (make-hash-table comparator) comparator))

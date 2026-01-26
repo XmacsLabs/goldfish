@@ -15,9 +15,21 @@
 ;
 
 (define-library (liii set)
-  (import (srfi srfi-113))
+  (import (rename (srfi srfi-113)
+                  (set make-set-with-comparator)
+                  (list->set list->set-with-comparator))
+          (srfi srfi-128))
   (export set set-unfold list->set set-copy
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator
           set=? set<? set>? set<=? set>=?)
+  
+  (define comp (make-default-comparator))
+
+  (define (set . elements)
+    (apply make-set-with-comparator comp elements))
+
+  (define (list->set elements)
+    (list->set-with-comparator comp elements))
+  
 ) ; end of define-library
