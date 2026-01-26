@@ -16,13 +16,18 @@
 
 (define-library (liii json)
   (import (liii base) 
-          (guenchi json))
+          (rename (guenchi json)
+            (json-ref g:json-ref) (json-ref* g:json-ref*)
+            (json-set g:json-set) (json-set* g:json-set*)
+            (json-push g:json-push) (json-push* g:json-push*)
+            (json-drop g:json-drop) (json-drop* g:json-drop*)
+            (json-reduce g:json-reduce) (json-reduce* g:json-reduce*)))
   (export
     json-string-escape 
     string->json 
     json->string
     
-    json-ref  json-ref* json-set  json-set* json-push json-push* json-drop json-drop* json-reduce json-reduce* 
+    json-ref json-set json-push json-drop json-reduce
 
     json-null? json-object? json-array? json-string? json-float? json-number? json-integer? json-boolean?
     
@@ -33,6 +38,35 @@
     json-keys)
   
   (begin
+
+    ;;; ---------------------------------------------------------
+    ;;; 0. 统一接口 
+    ;;; ---------------------------------------------------------
+
+    (define (json-ref json key . args)
+      (if (null? args)
+          (g:json-ref json key)
+          (apply g:json-ref* (cons json (cons key args)))))
+
+    (define (json-set json key val . args)
+      (if (null? args)
+          (g:json-set json key val)
+          (apply g:json-set* (cons json (cons key (cons val args))))))
+
+    (define (json-push json key val . args)
+      (if (null? args)
+          (g:json-push json key val)
+          (apply g:json-push* (cons json (cons key (cons val args))))))
+
+    (define (json-drop json key . args)
+      (if (null? args)
+          (g:json-drop json key)
+          (apply g:json-drop* (cons json (cons key args)))))
+
+    (define (json-reduce json key val . args)
+      (if (null? args)
+          (g:json-reduce json key val)
+          (apply g:json-reduce* (cons json (cons key (cons val args))))))
 
     ;;; ---------------------------------------------------------
     ;;; 1. 类型谓词 

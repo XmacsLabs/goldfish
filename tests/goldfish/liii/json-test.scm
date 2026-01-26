@@ -178,12 +178,12 @@ JSON数据对象。
 (check (json-keys (string->json "{}")) => '())
 
 #|
-json-ref* (Nested)
+json-ref (Nested)
 通过键路径访问JSON对象的嵌套值。
 
 语法
 ----
-(json-ref* json key1 key2 ...)
+(json-ref json key1 key2 ...)
 
 参数
 ----
@@ -200,20 +200,20 @@ key1, key2, ... : symbol | string | number | boolean
 - 如果键不存在，返回空列表 '() (相当于 missing/nil)
 - 支持符号、字符串、数字和布尔值作为键
 |#
-(check (json-ref* bob-j 'bob 'age) => 18)
-(check (json-ref* bob-j 'bob 'sex) => 'male)
-(check (json-ref* bob-j 'alice) => '())
-(check (json-ref* bob-j 'alice 'age) => '())
-(check (json-ref* bob-j 'bob 'name) => "Bob")
+(check (json-ref bob-j 'bob 'age) => 18)
+(check (json-ref bob-j 'bob 'sex) => 'male)
+(check (json-ref bob-j 'alice) => '())
+(check (json-ref bob-j 'alice 'age) => '())
+(check (json-ref bob-j 'bob 'name) => "Bob")
 
 (let1 j '((bob . ((age . 18) (sex . male))))
-  (check (json-null? (json-ref* j 'alice)) => #f) ; 这里的 '() 视为 missing，不是 'null
-  (check (null? (json-ref* j 'alice)) => #t)      ; 确认为 Scheme 空列表
-  (check (json-null? (json-ref* j 'bob)) => #f))
+  (check (json-null? (json-ref j 'alice)) => #f) ; 这里的 '() 视为 missing，不是 'null
+  (check (null? (json-ref j 'alice)) => #t)      ; 确认为 Scheme 空列表
+  (check (json-null? (json-ref j 'bob)) => #f))
 
 (let1 j '((alice . ((age . 18) (sex . male))))
-  (check (json-null? (json-ref* j 'alice)) => #f)
-  (check (null? (json-ref* j 'bob)) => #t))
+  (check (json-null? (json-ref j 'alice)) => #f)
+  (check (null? (json-ref j 'bob)) => #t))
 
 
 #|
@@ -565,12 +565,12 @@ data : any
 
 
 #|
-json-set*
+json-set
 设置JSON对象中指定键的值。
 
 语法
 ----
-(json-set* json key1 key2 ... value)
+(json-set json key1 key2 ... value)
 
 参数
 ----
@@ -606,11 +606,11 @@ value : any | function
 ------
 - 支持链式调用 (通过嵌套函数调用)
 |#
-; json-set*
+; json-set
 ; 单层，键为符号
 (let* ((j0 `((age . 18) (sex . male)))
-       (j1 (json-set* j0 'age 19))
-       (j2 (json-set* j0 'age 'null)))
+       (j1 (json-set j0 'age 19))
+       (j2 (json-set j0 'age 'null)))
   (check (json-ref j0 'age) => 18)
   (check (json-ref j1 'age) => 19)
   ;; 注意：json-ref 获取 'null 时会返回 '()
@@ -618,7 +618,7 @@ value : any | function
 
 ; 单层，键为字符串
 (let* ((j0 `(("age" . 18) ("sex" . male)))
-       (j1 (json-set* j0 "age" 19)))
+       (j1 (json-set j0 "age" 19)))
   (check (json-ref-number j1 "age" 0) => 19)
   (check (json-ref j0 "age") => 18))
 
@@ -658,67 +658,67 @@ default-value : boolean
 
 ; 单层，键为整数 (Array set)
 (let* ((j0 #(red green blue))
-       (j1 (json-set* j0 0 'black)))
+       (j1 (json-set j0 0 'black)))
   (check j0 => #(red green blue))
   (check j1 => #(black green blue)))
 
 ; 单层，键为布尔值 (不常见，但测试覆盖)
 (let* ((j0 '((bob . 18) (jack . 16)))
-       (j1 (json-set* j0 #t 3))
-       (j2 (json-set* j0 #t (lambda (x) (+ x 1)))))
+       (j1 (json-set j0 #t 3))
+       (j2 (json-set j0 #t (lambda (x) (+ x 1)))))
   (check j1 => '((bob . 3) (jack . 3)))
   (check j2 => '((bob . 19) (jack . 17))))
 
 ; 多层，键为符号
 (let* ((j0 '((person . ((name . "Alice") (age . 25)))))
-       (j1 (json-set* j0 'person 'age 26)))
-  (check (json-ref* j1 'person 'age) => 26))
+       (j1 (json-set j0 'person 'age 26)))
+  (check (json-ref j1 'person 'age) => 26))
 
 ; 多层，键为字符串
 (let* ((j0 '((person . ((name . "Alice")
                         (age . 25)
                         (address . ((city . "Wonderland")
                                     (zip . "12345")))))))
-       (j1 (json-set* j0 'person 'address 'city "Newland")))
-  (check (json-ref* j1 'person 'address 'city) => "Newland"))
+       (j1 (json-set j0 'person 'address 'city "Newland")))
+  (check (json-ref j1 'person 'address 'city) => "Newland"))
 
 ; 单层，最后一个参数不是值，而是一个函数
 (let* ((j0 '((name . "Alice") (age . 25)))
-       (j1 (json-set* j0 'age (lambda (x) (+ x 1)))))
+       (j1 (json-set j0 'age (lambda (x) (+ x 1)))))
   (check (json-ref j1 'age) => 26))
 
 ; 多层，最后一个参数不是值，而是一个函数
 (let* ((j0 '((person . ((name . "Alice") (age . 25)))))
-       (j1 (json-set* j0 'person 'age (lambda (x) (+ x 1)))))
-  (check (json-ref* j1 'person 'age) => 26))
+       (j1 (json-set j0 'person 'age (lambda (x) (+ x 1)))))
+  (check (json-ref j1 'person 'age) => 26))
 
 ; set with nested structure
 (let* ((j0 `((age . 18) (sex . male)))
        (j1 20)
-       (j2 (json-set* j0 'age j1)))
+       (j2 (json-set j0 'age j1)))
   (check (json-ref j2 'age) => 20))
 
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 26)
-       (j2 (json-set* j0 'person 'age j1)))
-  (check (json-ref* j2 'person 'age) => 26))
+       (j2 (json-set j0 'person 'age j1)))
+  (check (json-ref j2 'person 'age) => 26))
 
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 `((name . "Bob") (age . 30)))
-       (j2 (json-set* j0 'person j1)))
-  (check (json-ref* j2 'person 'name) => "Bob")
-  (check (json-ref* j2 'person 'age) => 30))
+       (j2 (json-set j0 'person j1)))
+  (check (json-ref j2 'person 'name) => "Bob")
+  (check (json-ref j2 'person 'age) => 30))
 
 #|
-json-reduce* (Transform)
+json-reduce (Transform)
 转换JSON对象中指定键的值。
 
 语法
 ----
-(json-reduce* json key1 key2 ... transform-fn)
-(json-reduce* json predicate-fn transform-fn)
-(json-reduce* json #t transform-fn)
-(json-reduce* json #f transform-fn)
+(json-reduce json key1 key2 ... transform-fn)
+(json-reduce json predicate-fn transform-fn)
+(json-reduce json #t transform-fn)
+(json-reduce json #f transform-fn)
 
 参数
 ----
@@ -742,70 +742,70 @@ transform-fn : function
 - 支持#t转换所有键，#f不转换任何键
 - 转换函数接收键和值作为参数
 |#
-; json-reduce*
+; json-reduce
 (let* ((j0 '((name . "Alice") (age . 25)))
-       (j1 (json-reduce* j0 'name (lambda (k v) (string-upcase v)))))
+       (j1 (json-reduce j0 'name (lambda (k v) (string-upcase v)))))
   (check (json-ref j1 'name) => "ALICE")
   (check (json-ref j1 'age) => 25))
   
 (let* ((j0 '((person . ((name . "Alice") (age . 25)))))
-       (j1 (json-reduce* j0 'person (lambda (k v) v))))
+       (j1 (json-reduce j0 'person (lambda (k v) v))))
   (check (json-ref j1 'person) => '((name . "Alice") (age . 25))))
   
 (let* ((j0 '((name . "Alice") (age . 25)))
-       (j1 (json-reduce* j0 (lambda (k) (equal? k 'age)) (lambda (k v) (+ v 1)))))
+       (j1 (json-reduce j0 (lambda (k) (equal? k 'age)) (lambda (k v) (+ v 1)))))
   (check (json-ref j1 'age) => 26)
   (check (json-ref j1 'name) => "Alice"))
   
 (let* ((j0 '((name . "Alice") (age . 25)))
-       (j1 (json-reduce* j0 #t (lambda (k v) (if (string? v) (string-upcase v) v)))))
+       (j1 (json-reduce j0 #t (lambda (k v) (if (string? v) (string-upcase v) v)))))
   (check (json-ref j1 'name) => "ALICE")
   (check (json-ref j1 'age) => 25))
   
 (let* ((j0 '((name . "Alice") (age . 25)))
-       (j1 (json-reduce* j0 #f (lambda (k v) v))))
+       (j1 (json-reduce j0 #f (lambda (k v) v))))
   (check (json-ref j1 'name) => "Alice")
   (check (json-ref j1 'age) => 25))
   
 
-; Test json-reduce* with multiple nested levels
+; Test json-reduce with multiple nested levels
 (let* ((j0 '((user . ((profile . ((contact . ((email . "alice@example.com")
                                               (phone . "123-456-7890")))))))))
-       (j1 (json-reduce* j0 'user 'profile 'contact 'email 
+       (j1 (json-reduce j0 'user 'profile 'contact 'email 
                          (lambda (k v) (string-append v ".verified")))))
-  (check (json-ref* j1 'user 'profile 'contact 'email) => "alice@example.com.verified"))
+  (check (json-ref j1 'user 'profile 'contact 'email) => "alice@example.com.verified"))
 
-; Test json-reduce* for conditional transformation with predicate function
+; Test json-reduce for conditional transformation with predicate function
 (let* ((j0 '((user . ((data . ((scores . #(85 90 78 92 88))
                                (settings . ((notifications . #t)
                                             (theme . "dark")))))))))
-       (j1 (json-reduce* j0 'user 'data 
+       (j1 (json-reduce j0 'user 'data 
                          (lambda (k) (equal? k 'scores)) 
                          (lambda (k v) (vector-map (lambda (score) (+ score 5)) v)))))
-  (check (json-ref* j1 'user 'data 'scores) => #(90 95 83 97 93))
-  (check (json-ref* j1 'user 'data 'settings 'theme) => "dark"))
+  (check (json-ref j1 'user 'data 'scores) => #(90 95 83 97 93))
+  (check (json-ref j1 'user 'data 'settings 'theme) => "dark"))
 
 ; Compare transform (reduce) and set
 (let* ((j0 '((user . ((profile . ((name . "Alice")
                                   (age . 25)
                                   (scores . #(85 90 78))))))))
-       (j1 (json-reduce* j0 'user 'profile 'scores (lambda (k v) 
+       (j1 (json-reduce j0 'user 'profile 'scores (lambda (k v) 
                                                   (vector-map (lambda (score) (+ score 5)) v))))
-       (j2 (json-set* j0 'user 'profile 'scores #(90 95 83))))
-  (check (json-ref* j1 'user 'profile 'scores) => #(90 95 83))
-  (check (json-ref* j2 'user 'profile 'scores) => #(90 95 83))
-  (check (json-ref* j1 'user 'profile 'name) => "Alice")
-  (check (json-ref* j2 'user 'profile 'name) => "Alice"))
+       (j2 (json-set j0 'user 'profile 'scores #(90 95 83))))
+  (check (json-ref j1 'user 'profile 'scores) => #(90 95 83))
+  (check (json-ref j2 'user 'profile 'scores) => #(90 95 83))
+  (check (json-ref j1 'user 'profile 'name) => "Alice")
+  (check (json-ref j2 'user 'profile 'name) => "Alice"))
 
 
 
 #|
-json-push*
+json-push
 向JSON对象中添加新的键值对。
 
 语法
 ----
-(json-push* json key1 key2 ... value)
+(json-push json key1 key2 ... value)
 
 参数
 ----
@@ -826,39 +826,39 @@ value : any
 - 如果键不存在，会创建新的键值对
 - 支持符号、字符串、数字和布尔值作为键
 |#
-; json-push*
+; json-push
 ; 多层，键为符号
 (let* ((j0 '((person . ((name . "Alice") (age . 25)))))
-       (j1 (json-push* j0 'person 'city "Wonderland")))
-  (check (json-ref* j1 'person 'city) => "Wonderland"))
+       (j1 (json-push j0 'person 'city "Wonderland")))
+  (check (json-ref j1 'person 'city) => "Wonderland"))
 
 ; 多层，键为字符串
 (let* ((j0 '(("person" . (("name" . "Alice") ("age" . 25)))))
-       (j1 (json-push* j0 "person" "city" "Wonderland")))
-  (check (json-ref* j1 "person" "city") => "Wonderland"))
+       (j1 (json-push j0 "person" "city" "Wonderland")))
+  (check (json-ref j1 "person" "city") => "Wonderland"))
 
 ; 多层，键为符号
 (let* ((j0 '((person . ((name . "Alice")
                         (age . 25)
                         (address . ((city . "Oldland")
                                     (zip . "12345")))))))
-       (j1 (json-push* j0 'person 'address 'street "Main St")))
-  (check (json-ref* j1 'person 'address 'street) => "Main St"))
+       (j1 (json-push j0 'person 'address 'street "Main St")))
+  (check (json-ref j1 'person 'address 'street) => "Main St"))
 
 ; 多层，JSON是向量
 (let* ((j0 '((data . #(1 2 3))))
-       (j1 (json-push* j0 'data 3 4)))
+       (j1 (json-push j0 'data 3 4)))
   (check (json-ref j1 'data) => #(1 2 3 4)))
 
 ; 多层，JSON是二维向量
 (let* ((j0 '((data . #(#(1 2) #(3 4)))))
-       (j1 (json-push* j0 'data 1 2 5)))
+       (j1 (json-push j0 'data 1 2 5)))
   ;; 索引1是 #(3 4)，push key 2 val 5 -> #(3 4 5)
   (check (json-ref j1 'data) => #(#(1 2) #(3 4 5))))
 
 (let* ((j0 '((flags . ((#t . "true") (#f . "false")))))
-       (j1 (json-push* j0 'flags #t "yes")))
-  (check (json-ref* j1 'flags #t) => "yes"))
+       (j1 (json-push j0 'flags #t "yes")))
+  (check (json-ref j1 'flags #t) => "yes"))
 
 #|
 json-drop
@@ -899,31 +899,31 @@ predicate-fn : function
                (age . 25)
                (address . ((city . "Wonderland")
                            (zip . "12345"))))))
-  (let ((updated-json (json-drop* json 'address 'city)))
-    (check (json-ref* updated-json 'address 'city) => '())))
+  (let ((updated-json (json-drop json 'address 'city)))
+    (check (json-ref updated-json 'address 'city) => '())))
 
 (let* ((json '((name . "Alice")
                (age . 25)
                (address . ((city . "Wonderland")
                            (zip . "12345"))))))
   (let1 j1 (json-drop json (lambda (k) (equal? k 'city)))
-    (check (json-ref* j1 'address 'city) => "Wonderland")) ; city在address下，顶层drop不影响
+    (check (json-ref j1 'address 'city) => "Wonderland")) ; city在address下，顶层drop不影响
   (let1 j2 (json-drop json (lambda (k) (equal? k 'name)))
-    (check (json-ref* j2 'name) => '()))
-  (let1 j3 (json-drop* json 'address (lambda (k) (equal? k 'city)))
-    (check (json-ref* j3 'address 'city) => '())))
+    (check (json-ref j2 'name) => '()))
+  (let1 j3 (json-drop json 'address (lambda (k) (equal? k 'city)))
+    (check (json-ref j3 'address 'city) => '())))
 
 #|
-json-drop* (Deep Drop)
+json-drop (Deep Drop)
 从 JSON 数据结构中删除指定的元素。
 
 语法
 ----
 1. 路径删除模式（Deep Delete）：
-   (json-drop* json key1 key2 ... target-key)
+   (json-drop json key1 key2 ... target-key)
 
 2. 谓词删除模式（Shallow Filter）：
-   (json-drop* json predicate-fn)
+   (json-drop json predicate-fn)
 
 参数
 ----
@@ -958,13 +958,13 @@ predicate-fn : function (lambda (key) ...)
 示例
 ----
 ;; 路径删除：删除 person 下 address 里的 zip 字段
-(json-drop* j 'person 'address 'zip)
+(json-drop j 'person 'address 'zip)
 
 ;; 谓词删除（对象）：删除所有键名为 string 类型或特定名称的键
 (json-drop j (lambda (k) (eq? k 'age))) 
 |#
 (let* ((j0 '((name . "Alice") (age . 25) (city . "Wonderland")))
-       (j1 (json-drop* j0 'age)))
+       (j1 (json-drop j0 'age)))
   (check (json-ref j1 'age) => '())
   (check (json-ref j1 'name) => "Alice")
   (check (json-ref j1 'city) => "Wonderland"))
@@ -972,32 +972,32 @@ predicate-fn : function (lambda (key) ...)
 (let* ((j0 '((user . ((profile . ((name . "Alice")
                                   (age . 25)
                                   (scores . #(85 90 78))))))))
-       (j1 (json-drop* j0 'user 'profile 'scores)))
-  (check (json-ref* j1 'user 'profile 'scores) => '())
-  (check (json-ref* j1 'user 'profile 'name) => "Alice")
-  (check (json-ref* j1 'user 'profile 'age) => 25))
+       (j1 (json-drop j0 'user 'profile 'scores)))
+  (check (json-ref j1 'user 'profile 'scores) => '())
+  (check (json-ref j1 'user 'profile 'name) => "Alice")
+  (check (json-ref j1 'user 'profile 'age) => 25))
 
 (let* ((j0 '((data . #(1 2 3 4 5))))
-       (j1 (json-drop* j0 'data (lambda (k) (and (number? k) (even? k))))))
+       (j1 (json-drop j0 'data (lambda (k) (and (number? k) (even? k))))))
   ;; 删除偶数索引: 0(1), 2(3), 4(5). 剩下索引 1(2), 3(4).
   (check (json-ref j1 'data) => #(2 4)))
 
 (let* ((j0 '((settings . (("theme" . "dark")
                           (notifications . #t)
                           ("language" . "en")))))
-       (j1 (json-drop* j0 'settings (lambda (k) (string? k)))))
-  (check (json-ref* j1 'settings "theme") => '())
-  (check (json-ref* j1 'settings "language") => '()))
+       (j1 (json-drop j0 'settings (lambda (k) (string? k)))))
+  (check (json-ref j1 'settings "theme") => '())
+  (check (json-ref j1 'settings "language") => '()))
 
 (let* ((j0 '((a . 1) (b . 2) (c . 3)))
-       (j1 (json-drop* j0 (lambda (k) (member k '(a c))))))
+       (j1 (json-drop j0 (lambda (k) (member k '(a c))))))
   (check (json-ref j1 'a) => '())
   (check (json-ref j1 'b) => 2)
   (check (json-ref j1 'c) => '()))
 
 
 (let* ((j0 #())
-       (j1 (json-drop* j0 0)))
+       (j1 (json-drop j0 0)))
   (check j1 => #()))
 
 #|
@@ -1071,55 +1071,55 @@ transform-fn : function
                         (age . 25)
                         (address . ((city . "Wonderland")
                                     (zip . "12345"))))))
-  (let1 updated-json (json-reduce* json 'person 'address 'city (lambda (x y) (string-upcase y)))
-    (check (json-ref* updated-json 'person 'address 'city) => "WONDERLAND")))
+  (let1 updated-json (json-reduce json 'person 'address 'city (lambda (x y) (string-upcase y)))
+    (check (json-ref updated-json 'person 'address 'city) => "WONDERLAND")))
 
 
-; json-push* with objects
+; json-push with objects
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 "Wonderland")
-       (j2 (json-push* j0 'person 'city j1)))
-  (check (json-ref* j2 'person 'city) => "Wonderland"))
+       (j2 (json-push j0 'person 'city j1)))
+  (check (json-ref j2 'person 'city) => "Wonderland"))
 
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 `((city . "Wonderland") (zip . "12345")))
-       (j2 (json-push* j0 'person 'address j1)))
-  (check (json-ref* j2 'person 'address 'city) => "Wonderland")
-  (check (json-ref* j2 'person 'address 'zip) => "12345"))
+       (j2 (json-push j0 'person 'address j1)))
+  (check (json-ref j2 'person 'address 'city) => "Wonderland")
+  (check (json-ref j2 'person 'address 'zip) => "12345"))
 
 
 
 ; Test with nested objects
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 `((address . ((city . "Wonderland") (zip . "12345")))))
-       (j2 (json-set* j0 'person j1)))
-  (check (json-ref* j2 'person 'address 'city) => "Wonderland")
-  (check (json-ref* j2 'person 'address 'zip) => "12345"))
+       (j2 (json-set j0 'person j1)))
+  (check (json-ref j2 'person 'address 'city) => "Wonderland")
+  (check (json-ref j2 'person 'address 'zip) => "12345"))
 
 ; Test with mixed objects and primitive values
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 "Wonderland")
-       (j2 (json-set* (json-push* j0 'person 'city j1) 'person 'age 26)))
-  (check (json-ref* j2 'person 'city) => "Wonderland")
-  (check (json-ref* j2 'person 'age) => 26))
+       (j2 (json-set (json-push j0 'person 'city j1) 'person 'age 26)))
+  (check (json-ref j2 'person 'city) => "Wonderland")
+  (check (json-ref j2 'person 'age) => 26))
 
 ; Test with null
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 'null)
-       (j2 (json-set* j0 'person 'age j1)))
-  (check (json-ref* j2 'person 'age) => '()))
+       (j2 (json-set j0 'person 'age j1)))
+  (check (json-ref j2 'person 'age) => '()))
 
 ; Test with boolean
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 'true)
-       (j2 (json-push* j0 'person 'active j1)))
-  (check (json-ref* j2 'person 'active) => #t))
+       (j2 (json-push j0 'person 'active j1)))
+  (check (json-ref j2 'person 'active) => #t))
 
 ; Test with array
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 #(1 2 3))
-       (j2 (json-push* j0 'person 'scores j1)))
-  (check (json-ref* j2 'person 'scores) => #(1 2 3)))
+       (j2 (json-push j0 'person 'scores j1)))
+  (check (json-ref j2 'person 'scores) => #(1 2 3)))
 
 (check
   (json->string
