@@ -504,6 +504,9 @@ json-string : string
 
 (check-catch 'parse-error (string->json "[\"\\u004G\"]"))  ; \u 后包含非十六进制字符
 (check-catch 'parse-error (string->json "[\"\\a\"]"))
+(check (string->json "") => (eof-object))
+(check (string->json ".") => (eof-object))
+(check-catch 'read-error (string->json "["))
 
 #|
 json->string
