@@ -69,7 +69,9 @@
     (define (json-contains-key? json key)
       (if (not (json-object? json))
           #f
-          (if (assoc key json) #t #f)))
+          (if (equal? json '(()))
+              #f
+              (if (assoc key json) #t #f))))
 
     ;;; ---------------------------------------------------------
     ;;; 3. 安全获取器
@@ -102,7 +104,9 @@
 
     (define (json-keys json)
       (if (json-object? json)
-          (map car json)
+          (if (equal? json '(()))
+              '()
+              (map car json))
           '()))
 
   ) ; end of begin

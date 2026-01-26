@@ -170,10 +170,12 @@ JSON数据对象。
   (check (json-keys j) => '(bob))
   (check (json-keys (json-ref j 'bob)) => '(age sex)))
 
+
 (check (json-keys 'null) => '())
 (check (json-keys 'true) => '())
 (check (json-keys 'false) => '())
 (check (json-keys (string->json "[1,2,3]")) => '())
+(check (json-keys (string->json "{}")) => '())
 
 #|
 json-ref* (Nested)
@@ -245,6 +247,9 @@ key : symbol | string | number | boolean
   (check-true (json-contains-key? j 'bob))
   (check-false (json-contains-key? j 'age))
   (check-false (json-contains-key? j 'sex)))
+
+
+(check-false (json-contains-key? (string->json "{}") "a"))
 
 (let1 j #(1 2 3)
   (check (json->string j) => "[1,2,3]"))
