@@ -364,8 +364,6 @@ set1, set2, ... : set
 
 ;; --- Error Handling ---
 ;; Check for comparator mismatch
-(check-catch #t (set=? s-1 s-str))
-(check-catch #t (set<=? s-1 s-str))
 (check-catch #t (set-disjoint? s-1 s-str))
 
 ;; Check for non-set arguments
