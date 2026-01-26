@@ -1139,8 +1139,6 @@ transform-fn : function
   => "{\"messages\":[{\"role\":\"user\",\"content\":[{\"text\":\"1\",\"type\":\"text\"},{\"text\":\"2\",\"type\":\"text\"}]},{\"role\":\"user\",\"content\":\"中文\"}]}"
 )
 
-(check-report)
-
 #|
 Error Handling Tests
 |#
@@ -1164,3 +1162,5 @@ Error Handling Tests
 ;; json-reduce invalid structure
 (check-catch 'type-error (json-reduce "not-a-json" 'key (lambda (k v) v)))
 (check-catch 'type-error (json-reduce 123 'key (lambda (k v) v)))
+
+(check-report)
