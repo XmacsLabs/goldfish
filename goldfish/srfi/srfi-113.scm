@@ -31,7 +31,7 @@
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
-          set-any? set-every? set-find)
+          set-any? set-every? set-find set-count)
   (begin
 
     (define-record-type set-impl
@@ -227,6 +227,16 @@
               (if (predicate k) (return k)))
             ht)
            (failure)))))
+
+    (define (set-count predicate set)
+      (check-set set)
+      (let ((ht (set-hash-table set))
+            (count 0))
+        (hash-table-for-each
+         (lambda (k v)
+           (if (predicate k) (set! count (+ count 1))))
+         ht)
+        count))
 
     ) ; end of begin
   ) ; end of define-library
