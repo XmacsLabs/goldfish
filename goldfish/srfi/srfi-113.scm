@@ -32,7 +32,7 @@
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member
-          set-adjoin)
+          set-adjoin set-adjoin!)
   (begin
 
     (define-record-type set-impl
@@ -248,6 +248,11 @@
       (let ((new-set (set-copy set)))
         (for-each (lambda (x) (set-add! new-set x)) elements)
         new-set))
+
+    (define (set-adjoin! set . elements)
+      (check-set set)
+      (for-each (lambda (x) (set-add! set x)) elements)
+      set)
 
     ) ; end of begin
   ) ; end of define-library
