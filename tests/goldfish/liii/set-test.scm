@@ -465,14 +465,14 @@ set : set
 ----
 如果参数不是 set，抛出 error。
 |#
-(check-true (= (set-size s-empty) 0))
-(check-true (= (set-size s-1) 1))
-(check-true (= (set-size s-1-2) 2))
-(check-true (= (set-size s-1-2-3) 3))
-(check-true (= (set-size s-2-3-4) 3))
-(check-true (= (set-size s-4-5) 2))
-(check-true (= (set-size s-big) big-n))
-(check-true (= (set-size s-small-big) (- big-n 1)))
+(check (set-size s-empty) => 0)
+(check (set-size s-1) => 1)
+(check (set-size s-1-2) => 2)
+(check (set-size s-1-2-3) => 3)
+(check (set-size s-2-3-4) => 3)
+(check (set-size s-4-5) => 2)
+(check (set-size s-big) => big-n)
+(check (set-size s-small-big) => (- big-n 1))
 (check-catch 'type-error (set-size "not a set"))
 
 (check-report)
