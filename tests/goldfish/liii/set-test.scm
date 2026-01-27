@@ -807,4 +807,52 @@ element ... : any
 ;; 测试类型错误
 (check-catch 'type-error (set-adjoin! "not a set" 1))
 
+#|
+set-replace
+返回一个新的 set，其中指定的元素被替换。
+
+语法
+----
+(set-replace set element)
+
+参数
+----
+set : set
+初始 set。
+
+element : any
+用来替换的元素。
+
+返回值
+------
+返回一个新的 set。
+如果 set 中包含与 element 相等的元素（根据比较器），则该元素被 element 替换（对于 equals 但 not eq? 的情况很有用）。
+如果 set 中不包含 element，则返回原 set（不做任何修改）。
+
+注意
+----
+此函数不修改原 set。
+|#
+
+;; 测试 set-replace 函数
+(define s-replace-1 (set-replace s-1 1))
+(check (set-size s-replace-1) => 1)
+(check-true (set-contains? s-replace-1 1))
+(check-true (set=? s-replace-1 s-1)) ; 内容相同
+(check-false (eq? s-replace-1 s-1)) ; 但应该是新分配的 set (因为确实发生了替换逻辑)
+
+(define s-replace-2 (set-replace s-1 2))
+(check-true (eq? s-replace-2 s-1)) ; 不包含 2，返回原 set
+
+;; 测试替换 equals 但 not eq? 的元素
+(define s-str-ci-2 (list->set-with-comparator string-ci-comparator '("Apple" "Banana")))
+(check (set-member s-str-ci-2 "apple" 'not-found) => "Apple")
+
+(define s-replace-3 (set-replace s-str-ci-2 "apple"))
+(check (set-member s-replace-3 "apple" 'not-found) => "apple") ; 应该被替换为 "apple"
+(check-false (eq? s-replace-3 s-str-ci-2)) ; 应该是新 set
+
+;; 测试类型错误
+(check-catch 'type-error (set-replace "not a set" 1))
+
 (check-report)
