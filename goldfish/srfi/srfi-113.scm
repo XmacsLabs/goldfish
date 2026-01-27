@@ -271,27 +271,19 @@
         (set-add! set element))
       set)
 
-    (define (set-delete set . elements)
-      (check-set set)
-      (let ((new-set (set-copy set)))
-        (for-each (lambda (x) (hash-table-delete! (set-hash-table new-set) x)) elements)
-        new-set))
-
     (define (set-delete! set . elements)
       (check-set set)
       (for-each (lambda (x) (hash-table-delete! (set-hash-table set) x)) elements)
       set)
 
-    (define (set-delete-all set element-list)
-      (check-set set)
-      (let ((new-set (set-copy set)))
-        (for-each (lambda (x) (hash-table-delete! (set-hash-table new-set) x)) element-list)
-        new-set))
+    (define (set-delete set . elements)
+      (apply set-delete! (set-copy set) elements))
 
     (define (set-delete-all! set element-list)
-      (check-set set)
-      (for-each (lambda (x) (hash-table-delete! (set-hash-table set) x)) element-list)
-      set)
+      (apply set-delete! set element-list))
+
+    (define (set-delete-all set element-list)
+      (apply set-delete set element-list))
 
     ) ; end of begin
   ) ; end of define-library
