@@ -265,10 +265,9 @@
 
     (define (set-replace! set element)
       (check-set set)
-      (if (set-contains? set element)
-          (begin
-            (hash-table-delete! (set-hash-table set) element)
-            (set-add! set element)))
+      (when (set-contains? set element)
+        (hash-table-delete! (set-hash-table set) element)
+        (set-add! set element))
       set)
 
     ) ; end of begin
