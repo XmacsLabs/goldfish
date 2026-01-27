@@ -31,7 +31,8 @@
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
-          set-any? set-every? set-find set-count set-member)
+          set-any? set-every? set-find set-count set-member
+          set-adjoin)
   (begin
 
     (define-record-type set-impl
@@ -241,6 +242,12 @@
     (define (set-member set element default)
       (check-set set)
       (hash-table-ref/default (set-hash-table set) element default))
+
+    (define (set-adjoin set . elements)
+      (check-set set)
+      (let ((new-set (set-copy set)))
+        (for-each (lambda (x) (set-add! new-set x)) elements)
+        new-set))
 
     ) ; end of begin
   ) ; end of define-library

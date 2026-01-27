@@ -718,4 +718,49 @@ default : any
 ;; 测试类型错误
 (check-catch 'type-error (set-member "not a set" 1 'default))
 
+#|
+set-adjoin
+返回一个新的 set，包含原 set 的所有元素以及新增的元素。
+
+语法
+----
+(set-adjoin set element ...)
+
+参数
+----
+set : set
+初始 set。
+
+element ... : any
+要添加的元素。
+
+返回值
+------
+返回一个新的 set。
+
+注意
+----
+此函数不修改原 set。
+|#
+
+;; 测试 set-adjoin 函数
+(define s-adjoin-1 (set-adjoin s-empty 1))
+(check (set-size s-adjoin-1) => 1)
+(check-true (set-contains? s-adjoin-1 1))
+(check-true (set-empty? s-empty)) ; 原 set 不变
+
+(define s-adjoin-2 (set-adjoin s-1 2 3))
+(check (set-size s-adjoin-2) => 3)
+(check-true (set-contains? s-adjoin-2 1))
+(check-true (set-contains? s-adjoin-2 2))
+(check-true (set-contains? s-adjoin-2 3))
+
+;; 测试添加已存在的元素
+(define s-adjoin-3 (set-adjoin s-1 1))
+(check (set-size s-adjoin-3) => 1)
+(check-true (set-contains? s-adjoin-3 1))
+
+;; 测试类型错误
+(check-catch 'type-error (set-adjoin "not a set" 1))
+
 (check-report)
