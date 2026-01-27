@@ -529,4 +529,54 @@ set : set
 ;; 测试类型错误
 (check-catch 'type-error (set-any? (lambda (x) #t) "not a set"))
 
+#|
+set-every?
+检查 set 中是否所有元素都满足谓词。
+
+语法
+----
+(set-every? predicate set)
+
+参数
+----
+predicate : procedure
+一个接受一个参数并返回布尔值的函数。
+
+set : set
+要检查的 set。
+
+返回值
+------
+如果 set 中所有元素都满足 predicate，返回 #t；否则返回 #f。
+
+注意
+----
+与 SRFI 1 的 every 函数不同，此函数不返回满足谓词的元素，只返回布尔值。
+空 set 返回 #t。
+
+异常
+----
+如果 set 参数不是 set，抛出 error。
+|#
+
+;; 测试 set-every? 函数
+(check-true (set-every? (lambda (x) (> x 0)) s-empty))
+(check-true (set-every? (lambda (x) (> x 0)) s-1))
+(check-true (set-every? (lambda (x) (> x 0)) s-1-2))
+(check-true (set-every? (lambda (x) (> x 0)) s-1-2-3))
+
+(check-false (set-every? (lambda (x) (> x 1)) s-1))
+(check-false (set-every? (lambda (x) (> x 1)) s-1-2))
+(check-false (set-every? (lambda (x) (> x 1)) s-1-2-3))
+
+(check-true (set-every? (lambda (x) (number? x)) s-1-2-3))
+
+;; 测试边界情况
+(check-true (set-every? (lambda (x) (odd? x)) s-1))
+(check-false (set-every? (lambda (x) (odd? x)) s-1-2)) ; 2 is even
+(check-false (set-every? (lambda (x) (even? x)) s-1-2)) ; 1 is odd
+
+;; 测试类型错误
+(check-catch 'type-error (set-every? (lambda (x) #t) "not a set"))
+
 (check-report)
