@@ -15,6 +15,7 @@
 ;
 
 (import (scheme base)
+        (scheme char)
         (liii check)
         (liii set)
         (srfi srfi-128)
@@ -666,5 +667,55 @@ set : set
 
 ;; 测试类型错误
 (check-catch 'type-error (set-count (lambda (x) #t) "not a set"))
+
+#|
+set-member
+查找 set 中与指定元素相等的元素。
+
+语法
+----
+(set-member set element default)
+
+参数
+----
+set : set
+要检查的 set。
+
+element : any
+要查找的元素。
+
+default : any
+如果 element 不在 set 中，返回的值。
+
+返回值
+------
+如果 element 在 set 中，返回 set 中存储的那个元素（可能与 element 并不是同一个对象，但比较结果相等）。
+如果 element 不在 set 中，返回 default。
+
+异常
+----
+如果 set 参数不是 set，抛出 error。
+|#
+
+;; 测试 set-member 函数
+(check (set-member s-1 1 'not-found) => 1)
+(check (set-member s-1 2 'not-found) => 'not-found)
+(check (set-member s-empty 1 'not-found) => 'not-found)
+
+;; 测试通过比较器相等但对象不同的情况
+;; 构造一个大小写不敏感的字符串集合
+(define (my-string-ci-hash s)
+  (string-hash (string-map char-downcase s)))
+(define string-ci-comparator (make-comparator string? string-ci=? string-ci<? my-string-ci-hash))
+(define s-str-ci (list->set-with-comparator string-ci-comparator '("Apple" "Banana")))
+
+(check (set-contains? s-str-ci "apple") => #t)
+;; set-member 应该返回集合中存储的 "Apple"，而不是查询用的 "apple"
+(check (set-member s-str-ci "apple" 'not-found) => "Apple")
+(check (set-member s-str-ci "banana" 'not-found) => "Banana")
+(check (set-member s-str-ci "pear" 'not-found) => 'not-found)
+
+;; 测试类型错误
+(check-catch 'type-error (set-member "not a set" 1 'default))
 
 (check-report)
