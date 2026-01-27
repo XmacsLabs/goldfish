@@ -900,4 +900,139 @@ element : any
 ;; 测试类型错误
 (check-catch 'type-error (set-replace! "not a set" 1))
 
+#|
+set-delete
+返回一个新的 set，其中指定的元素被移除。
+
+语法
+----
+(set-delete set element ...)
+
+参数
+----
+set : set
+初始 set。
+
+element ... : any
+要移除的元素。
+
+返回值
+------
+返回一个新的 set。
+如果元素不存在，则忽略。
+
+注意
+----
+此函数不修改原 set。
+|#
+
+;; 测试 set-delete 函数
+(define s-del-1 (set-delete s-1-2-3 1))
+(check (set-size s-del-1) => 2)
+(check-false (set-contains? s-del-1 1))
+(check-true (set-contains? s-del-1 2))
+(check-true (set-contains? s-del-1 3))
+
+(define s-del-2 (set-delete s-1-2-3 4)) ; 移除不存在的元素
+(check (set-size s-del-2) => 3)
+(check-true (set=? s-del-2 s-1-2-3))
+
+(define s-del-3 (set-delete s-1-2-3 1 2))
+(check (set-size s-del-3) => 1)
+(check-false (set-contains? s-del-3 1))
+(check-false (set-contains? s-del-3 2))
+(check-true (set-contains? s-del-3 3))
+
+#|
+set-delete!
+从 set 中移除指定的元素（可变操作）。
+
+语法
+----
+(set-delete! set element ...)
+
+参数
+----
+set : set
+目标 set。
+
+element ... : any
+要移除的元素。
+
+返回值
+------
+返回修改后的 set（与传入的 set 是同一个对象）。
+
+注意
+----
+此函数会修改原 set。
+|#
+
+;; 测试 set-delete! 函数
+(define s-mut-del (set-copy s-1-2-3))
+(set-delete! s-mut-del 1)
+(check (set-size s-mut-del) => 2)
+(check-false (set-contains? s-mut-del 1))
+
+(set-delete! s-mut-del 2 3)
+(check (set-size s-mut-del) => 0)
+(check-true (set-empty? s-mut-del))
+
+#|
+set-delete-all
+返回一个新的 set，其中指定列表中的元素被移除。
+
+语法
+----
+(set-delete-all set element-list)
+
+参数
+----
+set : set
+初始 set。
+
+element-list : list
+要移除的元素列表。
+
+返回值
+------
+返回一个新的 set。
+|#
+
+;; 测试 set-delete-all 函数
+(define s-del-all (set-delete-all s-1-2-3 '(1 2)))
+(check (set-size s-del-all) => 1)
+(check-false (set-contains? s-del-all 1))
+(check-false (set-contains? s-del-all 2))
+(check-true (set-contains? s-del-all 3))
+
+#|
+set-delete-all!
+从 set 中移除指定列表中的元素（可变操作）。
+
+语法
+----
+(set-delete-all! set element-list)
+
+参数
+----
+set : set
+目标 set。
+
+element-list : list
+要移除的元素列表。
+
+返回值
+------
+返回修改后的 set。
+|#
+
+;; 测试 set-delete-all! 函数
+(define s-mut-del-all (set-copy s-1-2-3))
+(set-delete-all! s-mut-del-all '(1 2))
+(check (set-size s-mut-del-all) => 1)
+(check-false (set-contains? s-mut-del-all 1))
+(check-false (set-contains? s-mut-del-all 2))
+(check-true (set-contains? s-mut-del-all 3))
+
 (check-report)
