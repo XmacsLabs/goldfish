@@ -626,4 +626,45 @@ failure : procedure
 ;; 测试类型错误
 (check-catch 'type-error (set-find (lambda (x) #t) "not a set" (lambda () #f)))
 
+#|
+set-count
+计算 set 中满足谓词的元素个数。
+
+语法
+----
+(set-count predicate set)
+
+参数
+----
+predicate : procedure
+一个接受一个参数并返回布尔值的函数。
+
+set : set
+要检查的 set。
+
+返回值
+------
+返回满足 predicate 的元素个数（精确整数）。
+
+异常
+----
+如果 set 参数不是 set，抛出 error。
+|#
+
+;; 测试 set-count 函数
+(check (set-count (lambda (x) (> x 0)) s-empty) => 0)
+(check (set-count (lambda (x) (> x 0)) s-1) => 1)
+(check (set-count (lambda (x) (> x 0)) s-1-2) => 2)
+(check (set-count (lambda (x) (> x 0)) s-1-2-3) => 3)
+
+(check (set-count (lambda (x) (> x 1)) s-1) => 0)
+(check (set-count (lambda (x) (> x 1)) s-1-2) => 1)
+(check (set-count (lambda (x) (> x 1)) s-1-2-3) => 2)
+
+(check (set-count (lambda (x) (even? x)) s-1-2-3) => 1) ; only 2
+(check (set-count (lambda (x) (odd? x)) s-1-2-3) => 2)  ; 1 and 3
+
+;; 测试类型错误
+(check-catch 'type-error (set-count (lambda (x) #t) "not a set"))
+
 (check-report)
