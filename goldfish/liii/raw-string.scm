@@ -48,8 +48,8 @@
       (let* ((lines (string-split-lines (substring str 1 (string-length str))))
              (closing-line (last lines))
              (ref-indent (if (string-null? closing-line)
-                             (value-error "Raw string delimiter must be on its own line"
-                               (string-count closing-line #\space))))
+                             (value-error "Raw string delimiter must be on its own line")
+                             (string-count closing-line #\space)))
              (content-lines (drop-right lines 1)))
 
         ;; check indentation
