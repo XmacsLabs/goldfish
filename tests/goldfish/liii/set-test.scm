@@ -444,4 +444,35 @@ set1, set2, ... : set
 (check-true (set<? s-small-big s-big))
 (check-true (set=? s-big (list->set big-list)))
 
+#|
+set-size
+获取 set 中元素的数量。
+
+语法
+----
+(set-size set)
+
+参数
+----
+set : set
+要获取大小的 set。
+
+返回值
+-----
+返回 set 中元素的数量（整数）。
+
+异常
+----
+如果参数不是 set，抛出 error。
+|#
+(check (set-size s-empty) => 0)
+(check (set-size s-1) => 1)
+(check (set-size s-1-2) => 2)
+(check (set-size s-1-2-3) => 3)
+(check (set-size s-2-3-4) => 3)
+(check (set-size s-4-5) => 2)
+(check (set-size s-big) => big-n)
+(check (set-size s-small-big) => (- big-n 1))
+(check-catch 'type-error (set-size "not a set"))
+
 (check-report)
