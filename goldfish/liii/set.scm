@@ -23,7 +23,8 @@
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
-          set-any? set-every? set-find set-count set-member)
+          set-any? set-every? set-find set-count set-member
+          set-adjoin)
   
   (define comp (make-default-comparator))
 
