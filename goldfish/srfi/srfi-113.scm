@@ -32,7 +32,8 @@
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member
-          set-adjoin set-adjoin! set-replace set-replace!)
+          set-adjoin set-adjoin! set-replace set-replace!
+          set-delete set-delete! set-delete-all set-delete-all!)
   (begin
 
     (define-record-type set-impl
@@ -269,6 +270,20 @@
         (hash-table-delete! (set-hash-table set) element)
         (set-add! set element))
       set)
+
+    (define (set-delete! set . elements)
+      (check-set set)
+      (for-each (lambda (x) (hash-table-delete! (set-hash-table set) x)) elements)
+      set)
+
+    (define (set-delete set . elements)
+      (apply set-delete! (set-copy set) elements))
+
+    (define (set-delete-all! set element-list)
+      (apply set-delete! set element-list))
+
+    (define (set-delete-all set element-list)
+      (apply set-delete set element-list))
 
     ) ; end of begin
   ) ; end of define-library
