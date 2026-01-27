@@ -32,7 +32,7 @@
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member
-          set-adjoin set-adjoin! set-replace)
+          set-adjoin set-adjoin! set-replace set-replace!)
   (begin
 
     (define-record-type set-impl
@@ -262,6 +262,14 @@
             (set-add! new-set element)
             new-set)
           set))
+
+    (define (set-replace! set element)
+      (check-set set)
+      (if (set-contains? set element)
+          (begin
+            (hash-table-delete! (set-hash-table set) element)
+            (set-add! set element)))
+      set)
 
     ) ; end of begin
   ) ; end of define-library

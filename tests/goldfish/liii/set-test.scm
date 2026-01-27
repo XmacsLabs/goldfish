@@ -855,4 +855,49 @@ element : any
 ;; 测试类型错误
 (check-catch 'type-error (set-replace "not a set" 1))
 
+#|
+set-replace!
+修改 set，将其中指定的元素替换（可变操作）。
+
+语法
+----
+(set-replace! set element)
+
+参数
+----
+set : set
+目标 set。
+
+element : any
+用来替换的元素。
+
+返回值
+------
+返回修改后的 set（与传入的 set 是同一个对象）。
+
+注意
+----
+此函数会修改原 set。
+|#
+
+;; 测试 set-replace! 函数
+(define s-mut-replace (set-copy s-1))
+(set-replace! s-mut-replace 1)
+(check (set-size s-mut-replace) => 1)
+(check-true (set-contains? s-mut-replace 1))
+
+;; 测试替换 equals 但 not eq? 的元素
+(define s-str-ci-mut (list->set-with-comparator string-ci-comparator '("Apple" "Banana")))
+(check (set-member s-str-ci-mut "apple" 'not-found) => "Apple")
+
+(set-replace! s-str-ci-mut "apple")
+(check (set-member s-str-ci-mut "apple" 'not-found) => "apple") ; 应该被替换为 "apple"
+
+;; 测试不存在的元素
+(set-replace! s-str-ci-mut "Pear")
+(check (set-size s-str-ci-mut) => 2) ; 不变
+
+;; 测试类型错误
+(check-catch 'type-error (set-replace! "not a set" 1))
+
 (check-report)
