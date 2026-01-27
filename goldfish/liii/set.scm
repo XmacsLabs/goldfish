@@ -22,7 +22,8 @@
   (export set set-unfold list->set set-copy list->set-with-comparator make-set-with-comparator
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
-          set=? set<? set>? set<=? set>=?)
+          set=? set<? set>? set<=? set>=?
+          set-any?)
   
   (define comp (make-default-comparator))
 
