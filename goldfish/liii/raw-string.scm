@@ -28,7 +28,8 @@
 (define-library (liii raw-string)
   (import (srfi srfi-267)
           (srfi srfi-1)
-          (srfi srfi-13))
+          (srfi srfi-13)
+          (liii error))
   (export deindent &-)
   (begin
     (define (string-split-lines str)
