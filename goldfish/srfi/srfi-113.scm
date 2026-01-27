@@ -1,4 +1,6 @@
-; Copyright (C) John Cowan (2015). All Rights Reserved.
+;;;; SPDX-FileCopyrightText: 2013 John Cowan <cowan@ccil.org>
+;;;;
+;;;; SPDX-License-Identifier: MIT
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining a copy of
 ; this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +40,7 @@
       (comparator set-element-comparator)) 
 
     (define (check-set obj)
-      (if (not (set? obj)) (error "not a set" obj)))
+      (if (not (set? obj)) (type-error "not a set" obj)))
 
     (define (check-same-comparator a b)
       (if (not (eq? (set-element-comparator a) (set-element-comparator b)))
@@ -47,12 +49,12 @@
     (define (make-set/comparator comparator)
       (%make-set (make-hash-table comparator) comparator))
 
-    (define (set-increment! s element)
+    (define (set-add! s element)
       (hash-table-set! (set-hash-table s) element 1))
 
     (define (set comparator . elements)
       (let ((result (make-set/comparator comparator)))
-        (for-each (lambda (x) (set-increment! result x)) elements)
+        (for-each (lambda (x) (set-add! result x)) elements)
         result))
     
     (define (list->set comparator elements)
@@ -64,7 +66,7 @@
           (if (stop? seed)
               result
               (begin
-                (set-increment! result (mapper seed))
+                (set-add! result (mapper seed))
                 (loop (successor seed)))))))
     
     (define (set-copy s)

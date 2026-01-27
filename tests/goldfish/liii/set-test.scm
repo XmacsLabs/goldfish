@@ -17,7 +17,8 @@
 (import (scheme base)
         (liii check)
         (liii set)
-        (srfi srfi-128))
+        (srfi srfi-128)
+        (liii error))
 
 (check-set-mode! 'report-failed)
 
@@ -113,11 +114,16 @@ set : set
 返回值
 -----
 返回一个新的 set，包含原 set 的所有元素，且比较器相同。
+
+异常
+----
+如果参数不是 set，抛出 error。
 |#
 (let ((copy (set-copy s-1-2)))
   (check-true (set=? s-1-2 copy))
   (check-false (eq? s-1-2 copy))) ; Ensure new instance
 (check-true (set-empty? (set-copy s-empty)))
+(check-catch 'type-error (set-copy "not a set"))
 
 #|
 set-unfold
@@ -178,10 +184,15 @@ element : any
 返回值
 -----
 如果 set 包含 element，返回 #t；否则返回 #f。
+
+异常
+----
+如果参数不是 set，抛出 error。
 |#
 (check-true (set-contains? s-1 1))
 (check-false (set-contains? s-1 2))
 (check-false (set-contains? s-empty 1))
+(check-catch 'type-error (set-contains? "not a set" 1))
 
 #|
 set-empty?
@@ -199,9 +210,14 @@ set : set
 返回值
 -----
 如果 set 为空，返回 #t；否则返回 #f。
+
+异常
+----
+如果参数不是 set，抛出 error。
 |#
 (check-true (set-empty? s-empty))
 (check-false (set-empty? s-1))
+(check-catch 'type-error (set-empty? "not a set"))
 
 #|
 set-disjoint?
@@ -219,12 +235,23 @@ set1, set2 : set
 返回值
 -----
 如果两个 set 没有共同元素，返回 #t；否则返回 #f。
+
+异常
+----
+如果任一参数不是 set，抛出 error。
+如果两个 set 的比较器不同，抛出 value-error。
 |#
 (check-true (set-disjoint? s-1-2-3 s-4-5))
 (check-false (set-disjoint? s-1-2-3 s-2-3-4)) ; share 2, 3
 (check-true (set-disjoint? s-empty s-1))
 (check-true (set-disjoint? s-1 s-empty))
 (check-true (set-disjoint? s-empty s-empty))
+(check-catch 'type-error (set-disjoint? "not a set" s-1))
+(check-catch 'type-error (set-disjoint? s-1 "not a set"))
+;; Note: Comparator mismatch test is at the end of the file, but we should verify it here too or move it.
+(define str-comp (make-comparator string? string=? string<? string-hash))
+(define s-str (list->set-with-comparator str-comp '("apple" "banana")))
+(check-catch 'value-error (set-disjoint? s-1 s-str))
 
 #|
 set=?
@@ -243,6 +270,11 @@ set1, set2, ... : set
 -----
 如果所有 set 都包含相同的元素，返回 #t；否则返回 #f。
 注意：比较器必须相同。
+
+异常
+----
+如果任一参数不是 set，抛出 error。
+如果 set 的比较器不同，抛出 value-error。
 |#
 (check-true (set=? s-empty s-empty))
 (check-true (set=? s-1 s-1))
@@ -252,6 +284,8 @@ set1, set2, ... : set
 ;; Multiple arguments
 (check-true (set=? s-1 (set 1) (list->set '(1))))
 (check-false (set=? s-1 s-1 s-empty))
+(check-catch 'type-error (set=? "not a set" s-1))
+(check-catch 'value-error (set=? s-1 s-str))
 
 #|
 set<=?
@@ -269,6 +303,11 @@ set1, set2, ... : set
 返回值
 -----
 如果每个 set 都是其后一个 set 的子集，返回 #t；否则返回 #f。
+
+异常
+----
+如果任一参数不是 set，抛出 error。
+如果 set 的比较器不同，抛出 value-error。
 |#
 (check-true (set<=? s-empty s-1))
 (check-true (set<=? s-1 s-1-2))
@@ -278,6 +317,8 @@ set1, set2, ... : set
 ;; Chain
 (check-true (set<=? s-empty s-1 s-1-2 s-1-2-3))
 (check-false (set<=? s-empty s-1-2 s-1)) ; Broken chain
+(check-catch 'type-error (set<=? "not a set" s-1))
+(check-catch 'value-error (set<=? s-1 s-str))
 
 #|
 set<?
@@ -295,6 +336,11 @@ set1, set2, ... : set
 返回值
 -----
 如果每个 set 都是其后一个 set 的真子集，返回 #t；否则返回 #f。
+
+异常
+----
+如果任一参数不是 set，抛出 error。
+如果 set 的比较器不同，抛出 value-error。
 |#
 (check-true (set<? s-empty s-1))
 (check-true (set<? s-1 s-1-2))
@@ -302,6 +348,8 @@ set1, set2, ... : set
 (check-false (set<? s-1-2 s-1))
 ;; Chain
 (check-true (set<? s-empty s-1 s-1-2))
+(check-catch 'type-error (set<? "not a set" s-1))
+(check-catch 'value-error (set<? s-1 s-str))
 
 #|
 set>=?
@@ -319,6 +367,11 @@ set1, set2, ... : set
 返回值
 -----
 如果每个 set 都是其后一个 set 的超集，返回 #t；否则返回 #f。
+
+异常
+----
+如果任一参数不是 set，抛出 error。
+如果 set 的比较器不同，抛出 value-error。
 |#
 (check-true (set>=? s-1 s-empty))
 (check-true (set>=? s-1-2 s-1))
@@ -326,6 +379,8 @@ set1, set2, ... : set
 (check-false (set>=? s-1 s-1-2))
 ;; Chain
 (check-true (set>=? s-1-2-3 s-1-2 s-1 s-empty))
+(check-catch 'type-error (set>=? "not a set" s-1))
+(check-catch 'value-error (set>=? s-1 s-str))
 
 #|
 set>?
@@ -343,6 +398,11 @@ set1, set2, ... : set
 返回值
 -----
 如果每个 set 都是其后一个 set 的真超集，返回 #t；否则返回 #f。
+
+异常
+----
+如果任一参数不是 set，抛出 error。
+如果 set 的比较器不同，抛出 value-error。
 |#
 (check-true (set>? s-1 s-empty))
 (check-true (set>? s-1-2 s-1))
@@ -350,6 +410,8 @@ set1, set2, ... : set
 (check-false (set>? s-1 s-1-2))
 ;; Chain
 (check-true (set>? s-1-2 s-1 s-empty))
+(check-catch 'type-error (set>? "not a set" s-1))
+(check-catch 'value-error (set>? s-1 s-str))
 
 ;; --- Different Data Types ---
 (define s-sym (set 'a 'b 'c))
@@ -362,21 +424,13 @@ set1, set2, ... : set
 (check-true (set-contains? s-str "apple"))
 (check-false (set-contains? s-str "pear"))
 
-;; --- Error Handling ---
-;; Check for comparator mismatch
-(check-catch #t (set-disjoint? s-1 s-str))
-
-;; Check for non-set arguments
-; (check-catch #t (set-size "not a set")) ; set-size is not exported
-(check-catch #t (set-contains? "not a set" 1))
-
 ;; --- Large Set Test ---
 (define (range n)
   (let loop ((i 0) (acc '()))
     (if (= i n) (reverse acc)
         (loop (+ i 1) (cons i acc)))))
 
-(define big-n 100)
+(define big-n 1000000)
 (define big-list (range big-n))
 (define s-big (list->set big-list))
 ;; Check basic existence
