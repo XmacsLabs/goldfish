@@ -23,22 +23,12 @@
 ;;    Copyright © 2025-2026 Peter McGoron
 ;;    Permission granted under the MIT-style license
 ;;
-;; 2. Implementation ideas from guile-raw-strings by François Joulaud
-;;    https://codeberg.org/avalenn/guile-raw-strings
-;;    SPDX-License-Identifier: 0BSD
-;;
-;; 3. Syntax #"" proposed by John Cowan
+;; 2. Syntax #"" proposed by John Cowan
 ;;    https://codeberg.org/scheme/r7rs/issues/32#issuecomment-8863095
 ;;    in Scheme raw string discussions
-;;
-;; The deindentation follows C# raw string literal rules:
-;; https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/raw-string
 
 (define-library (srfi srfi-267)
-  (import (srfi srfi-1)
-          (srfi srfi-13))
-  (export read-raw-string
-          deindent &-)
+  (export read-raw-string)
   (begin
 
    (define (read-raw-string S)
@@ -79,49 +69,5 @@
        (cons (cons #\" read-raw-string)
              *#readers*))
 
-     (define (string-split-lines str)
-       (let ((len (string-length str)))
-         (let loop ((start 0) (result '()))
-           (let ((nl-pos (string-index str #\newline start len)))
-             (if (not nl-pos)
-               (reverse (cons (substring str start len) result))
-               (loop (+ nl-pos 1)
-                     (cons (substring str start nl-pos) result)))))))
-
-     (define (f-deindent str)
-       (when (or (string-null? str)
-                 (not (char=? #\newline (string-ref str 0))))
-           (value-error "Raw string must start on a new line after the opening delimiter"))
-
-       (let* ((lines (string-split-lines (substring str 1 (string-length str))))
-              (closing-line (last lines))
-              (ref-indent (if (string-null? closing-line)
-                              (value-error "Raw string delimiter must be on its own line")
-                              (string-count closing-line #\space)))
-              (content-lines (drop-right lines 1)))
-
-         (for-each (lambda (line idx)
-                     (unless (string-null? line)
-                       (let ((indent (or (string-skip line #\space) 0)))
-                         (when (< indent ref-indent)
-                           (value-error "Line ~a does not start with the same whitespace as the closing line of the raw string" (+ idx 1))))))
-                   content-lines
-                   (iota (length content-lines)))
-
-         (string-join
-          (map (lambda (line)
-                 (if (string-null? line)
-                     ""
-                     (substring line ref-indent)))
-               content-lines)
-          "\n")))
-
-     (define-macro (stx-deindent v)
-       (if (string? v)
-           `(quote ,(f-deindent v))
-           `(quote ,v)))
-
-     (define deindent stx-deindent)
-     (define &-       stx-deindent)
     ) ; end of begin
   ) ; end of library
