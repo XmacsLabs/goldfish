@@ -31,7 +31,7 @@
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
-          set-any? set-every? set-find set-count)
+          set-any? set-every? set-find set-count set-member)
   (begin
 
     (define-record-type set-impl
@@ -51,7 +51,7 @@
       (%make-set (make-hash-table comparator) comparator))
 
     (define (set-add! s element)
-      (hash-table-set! (set-hash-table s) element 1))
+      (hash-table-set! (set-hash-table s) element element))
 
     (define (set comparator . elements)
       (let ((result (make-set/comparator comparator)))
@@ -237,6 +237,10 @@
            (if (predicate k) (set! count (+ count 1))))
          ht)
         count))
+
+    (define (set-member set element default)
+      (check-set set)
+      (hash-table-ref/default (set-hash-table set) element default))
 
     ) ; end of begin
   ) ; end of define-library
