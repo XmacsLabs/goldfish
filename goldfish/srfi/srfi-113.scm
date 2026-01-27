@@ -30,7 +30,8 @@
   (export set set-unfold list->set set-copy
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
-          set=? set<? set>? set<=? set>=?)
+          set=? set<? set>? set<=? set>=?
+          set-any?)
   (begin
 
     (define-record-type set-impl
@@ -193,6 +194,17 @@
                 (let ((next (car tail)))
                   (and (binary-set<? next head)
                        (loop next (cdr tail))))))))
+
+    (define (set-any? predicate set)
+      (check-set set)
+      (let ((ht (set-hash-table set)))
+        (call/cc
+         (lambda (return)
+           (hash-table-for-each
+            (lambda (k v)
+              (if (predicate k) (return #t)))
+            ht)
+           #f))))
 
     ) ; end of begin
   ) ; end of define-library
