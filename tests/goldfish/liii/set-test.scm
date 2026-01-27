@@ -579,4 +579,51 @@ set : set
 ;; 测试类型错误
 (check-catch 'type-error (set-every? (lambda (x) #t) "not a set"))
 
+#|
+set-find
+查找 set 中满足谓词的元素。
+
+语法
+----
+(set-find predicate set failure)
+
+参数
+----
+predicate : procedure
+一个接受一个参数并返回布尔值的函数。
+
+set : set
+要检查的 set。
+
+failure : procedure
+一个无参函数，当没有找到满足谓词的元素时调用。
+
+返回值
+------
+如果找到满足 predicate 的元素，返回该元素；否则返回 failure 的调用结果。
+
+注意
+----
+如果有多个元素满足谓词，返回其中任意一个。
+
+异常
+----
+如果 set 参数不是 set，抛出 error。
+|#
+
+;; 测试 set-find 函数
+(check (set-find (lambda (x) (= x 1)) s-1 (lambda () 'not-found)) => 1)
+(check (set-find (lambda (x) (= x 1)) s-1-2 (lambda () 'not-found)) => 1)
+(check (set-find (lambda (x) (= x 2)) s-1-2 (lambda () 'not-found)) => 2)
+
+(check (set-find (lambda (x) (> x 10)) s-1 (lambda () 'not-found)) => 'not-found)
+(check (set-find (lambda (x) (> x 10)) s-empty (lambda () 'not-found)) => 'not-found)
+
+;; 测试多个元素满足谓词的情况（返回任意一个）
+(let ((res (set-find (lambda (x) (> x 0)) s-1-2 (lambda () 'not-found))))
+  (check-true (or (= res 1) (= res 2))))
+
+;; 测试类型错误
+(check-catch 'type-error (set-find (lambda (x) #t) "not a set" (lambda () #f)))
+
 (check-report)
