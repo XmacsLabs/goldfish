@@ -31,7 +31,7 @@
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
-          set-any? set-every? set-find set-count set-member set-search!
+          set-any? set-every? set-find set-count set-member set-search! set-map
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -263,6 +263,16 @@
                      (lambda (obj)
                        (hash-table-delete! ht found)
                        (values set obj))))))
+
+    (define (set-map comparator proc set)
+      (check-set set)
+      (let ((result (make-set/comparator comparator))
+            (ht (set-hash-table set)))
+        (hash-table-for-each
+         (lambda (k v)
+           (set-add! result (proc k)))
+         ht)
+        result))
 
     (define (set-adjoin set . elements)
       (check-set set)
