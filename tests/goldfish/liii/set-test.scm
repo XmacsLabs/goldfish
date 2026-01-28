@@ -879,6 +879,77 @@ set : set
 (check-catch 'type-error (set-map comp (lambda (x) x) "not a set"))
 
 #|
+set-for-each
+对 set 中的每个元素应用 proc，忽略返回值。
+
+语法
+----
+(set-for-each proc set)
+
+参数
+----
+proc : procedure
+要应用的函数。
+
+set : set
+目标 set。
+
+返回值
+------
+返回值未指定。
+|#
+
+;; 测试 set-for-each 基本行为
+(define s-foreach (set 1 2 3))
+(define foreach-collected '())
+(set-for-each (lambda (x) (set! foreach-collected (cons x foreach-collected))) s-foreach)
+(check-true (set=? (list->set foreach-collected) s-foreach))
+
+;; 测试空集合不触发调用
+(define foreach-count 0)
+(set-for-each (lambda (x) (set! foreach-count (+ foreach-count 1))) s-empty)
+(check (set-size s-empty) => 0)
+(check foreach-count => 0)
+
+;; 测试类型错误
+(check-catch 'type-error (set-for-each (lambda (x) x) "not a set"))
+
+#|
+set-fold
+对 set 中的每个元素应用 proc，累积结果并返回。
+
+语法
+----
+(set-fold proc nil set)
+
+参数
+----
+proc : procedure
+接收元素与累积值。
+
+nil : any
+初始累积值。
+
+set : set
+目标 set。
+
+返回值
+------
+返回最后一次调用的结果，若 set 为空则返回 nil。
+|#
+
+;; 测试 set-fold 求和
+(check (set-fold (lambda (x acc) (+ x acc)) 0 s-1-2-3) => 6)
+(check (set-fold (lambda (x acc) (+ x acc)) 0 s-empty) => 0)
+
+;; 测试 set-fold 累积为列表（顺序不保证）
+(define fold-list (set-fold (lambda (x acc) (cons x acc)) '() s-1-2))
+(check-true (set=? (list->set fold-list) s-1-2))
+
+;; 测试类型错误
+(check-catch 'type-error (set-fold (lambda (x acc) acc) '() "not a set"))
+
+#|
 set-adjoin
 返回一个新的 set，包含原 set 的所有元素以及新增的元素。
 

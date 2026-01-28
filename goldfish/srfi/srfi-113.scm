@@ -32,6 +32,7 @@
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member set-search! set-map
+          set-for-each set-fold
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -272,6 +273,23 @@
          (lambda (k v)
            (set-add! result (proc k)))
          ht)
+        result))
+
+    (define (set-for-each proc set)
+      (check-set set)
+      (hash-table-for-each
+       (lambda (k v)
+         (proc k))
+       (set-hash-table set))
+      (if #f #f))
+
+    (define (set-fold proc nil set)
+      (check-set set)
+      (let ((result nil))
+        (hash-table-for-each
+         (lambda (k v)
+           (set! result (proc k result)))
+         (set-hash-table set))
         result))
 
     (define (set-adjoin set . elements)
