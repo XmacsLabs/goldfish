@@ -27,7 +27,7 @@
           (liii hash-table)
           (liii error)
           (srfi srfi-128))
-  (export set set-unfold list->set set-copy
+  (export set set-unfold list->set list->set! set-copy set->list
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
@@ -65,6 +65,11 @@
     (define (list->set comparator elements)
       (apply set comparator elements))
 
+    (define (list->set! s elements)
+      (check-set s)
+      (for-each (lambda (x) (set-add! s x)) elements)
+      s)
+
     (define (set-unfold stop? mapper successor seed comparator)
       (let ((result (make-set/comparator comparator)))
         (let loop ((seed seed))
@@ -77,6 +82,10 @@
     (define (set-copy s)
       (check-set s)
       (list->set (set-element-comparator s) (hash-table-keys (set-hash-table s))))
+
+    (define (set->list s)
+      (check-set s)
+      (hash-table-keys (set-hash-table s)))
 
     
     (define (set-size s)
