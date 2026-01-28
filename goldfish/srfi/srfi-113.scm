@@ -35,6 +35,7 @@
           set-any? set-every? set-find set-count set-member set-search! set-map
           set-for-each set-fold set-filter set-filter! set-remove set-remove!
           set-partition set-partition! set-union set-intersection set-difference set-xor
+          set-union! set-intersection! set-difference! set-xor!
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -442,6 +443,71 @@
              (set-add! result k)))
          ht2)
         result))
+
+    (define (set-union! set1 . sets)
+      (check-set set1)
+      (let ((ht1 (set-hash-table set1)))
+        (for-each
+         (lambda (s)
+           (check-set s)
+           (check-same-comparator set1 s)
+           (hash-table-for-each
+            (lambda (k v)
+              (unless (hash-table-contains? ht1 k)
+                (set-add! set1 k)))
+            (set-hash-table s)))
+         sets)
+        set1))
+
+    (define (set-intersection! set1 . sets)
+      (check-set set1)
+      (for-each
+       (lambda (s)
+         (check-set s)
+         (check-same-comparator set1 s))
+       sets)
+      (let ((ht1 (set-hash-table set1))
+            (other-hts (map set-hash-table sets)))
+        (define (all-contains? key)
+          (every (lambda (ht) (hash-table-contains? ht key)) other-hts))
+        (hash-table-for-each
+         (lambda (k v)
+           (unless (all-contains? k)
+             (hash-table-delete! ht1 k)))
+         ht1)
+        set1))
+
+    (define (set-difference! set1 . sets)
+      (check-set set1)
+      (for-each
+       (lambda (s)
+         (check-set s)
+         (check-same-comparator set1 s))
+       sets)
+      (let ((ht1 (set-hash-table set1))
+            (other-hts (map set-hash-table sets)))
+        (define (any-contains? key)
+          (any (lambda (ht) (hash-table-contains? ht key)) other-hts))
+        (hash-table-for-each
+         (lambda (k v)
+           (when (any-contains? k)
+             (hash-table-delete! ht1 k)))
+         ht1)
+        set1))
+
+    (define (set-xor! set1 set2)
+      (check-set set1)
+      (check-set set2)
+      (check-same-comparator set1 set2)
+      (let ((ht1 (set-hash-table set1))
+            (ht2 (set-hash-table set2)))
+        (hash-table-for-each
+         (lambda (k v)
+           (if (hash-table-contains? ht1 k)
+               (hash-table-delete! ht1 k)
+               (set-add! set1 k)))
+         ht2)
+        set1))
 
     (define (set-adjoin set . elements)
       (check-set set)
