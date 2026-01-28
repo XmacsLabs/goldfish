@@ -32,7 +32,7 @@
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member set-search! set-map
-          set-for-each set-fold
+          set-for-each set-fold set-filter set-filter!
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -291,6 +291,27 @@
            (set! result (proc k result)))
          (set-hash-table set))
         result))
+
+    (define (set-filter predicate set)
+      (check-set set)
+      (let ((result (make-set/comparator (set-element-comparator set)))
+            (ht (set-hash-table set)))
+        (hash-table-for-each
+         (lambda (k v)
+           (when (predicate k)
+             (set-add! result k)))
+         ht)
+        result))
+
+    (define (set-filter! predicate set)
+      (check-set set)
+      (let ((ht (set-hash-table set)))
+        (hash-table-for-each
+          (lambda (k v)
+           (unless (predicate k)
+             (hash-table-delete! ht k)))
+          ht)
+        set))
 
     (define (set-adjoin set . elements)
       (check-set set)
