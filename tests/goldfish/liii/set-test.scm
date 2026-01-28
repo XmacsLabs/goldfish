@@ -950,6 +950,84 @@ set : set
 (check-catch 'type-error (set-fold (lambda (x acc) acc) '() "not a set"))
 
 #|
+set-filter
+返回一个新的 set，仅包含满足 predicate 的元素。
+
+语法
+----
+(set-filter predicate set)
+
+参数
+----
+predicate : procedure
+筛选条件。
+
+set : set
+源 set。
+
+返回值
+------
+返回新的 set，比较器与原 set 相同。
+|#
+
+;; 测试 set-filter 基本筛选
+(define s-filter-1 (set 1 2 3 4))
+(define s-filter-2 (set-filter even? s-filter-1))
+(check-true (set? s-filter-2))
+(check-true (eq? (set-element-comparator s-filter-2) (set-element-comparator s-filter-1)))
+(check (set-size s-filter-2) => 2)
+(check-true (set-contains? s-filter-2 2))
+(check-true (set-contains? s-filter-2 4))
+(check-true (set-contains? s-filter-1 1)) ; 原 set 不变
+(check-true (set-contains? s-filter-1 3))
+
+;; 测试空集合
+(define s-filter-empty (set-filter even? s-empty))
+(check (set-size s-filter-empty) => 0)
+
+;; 测试类型错误
+(check-catch 'type-error (set-filter even? "not a set"))
+
+#|
+set-filter!
+可变筛选，返回仅包含满足 predicate 的元素的 set。
+
+语法
+----
+(set-filter! predicate set)
+
+参数
+----
+predicate : procedure
+筛选条件。
+
+set : set
+目标 set。
+
+返回值
+------
+返回修改后的 set（与传入的 set 是同一个对象）。
+|#
+
+;; 测试 set-filter! 基本行为
+(define s-filter-mut (set 1 2 3 4))
+(define s-filter-mut-result (set-filter! odd? s-filter-mut))
+(check-true (eq? s-filter-mut-result s-filter-mut))
+(check (set-size s-filter-mut) => 2)
+(check-true (set-contains? s-filter-mut 1))
+(check-true (set-contains? s-filter-mut 3))
+(check-false (set-contains? s-filter-mut 2))
+(check-false (set-contains? s-filter-mut 4))
+
+;; 测试空集合
+(define s-filter-mut-empty (set-copy s-empty))
+(set-filter! even? s-filter-mut-empty)
+(check (set-size s-filter-mut-empty) => 0)
+
+;; 测试类型错误
+(check-catch 'type-error (set-filter! even? "not a set"))
+
+#|
 set-adjoin
 返回一个新的 set，包含原 set 的所有元素以及新增的元素。
 
