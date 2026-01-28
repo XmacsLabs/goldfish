@@ -82,7 +82,7 @@ list->set
 
 语法
 ----
-(list->set  list)
+(list->set list)
 
 参数
 ----
@@ -92,12 +92,64 @@ list : list
 
 返回值
 -----
-返回包含列表中所有元素的 set。
+返回包含列表中所有元素的新 set（使用默认比较器，重复元素会被去重）。
 |#
-(check-true (set=? s-1-2-3 (list->set '(1 2 3))))
-(check-true (set=? s-empty (list->set '())))
+(define s-list-1 (list->set '(1 2 3)))
+(check-true (set? s-list-1))
+(check-true (eq? (set-element-comparator s-list-1) comp))
+(check-true (set=? s-1-2-3 s-list-1))
+(check-false (eq? s-1-2-3 s-list-1))
+
+(define s-list-empty (list->set '()))
+(check-true (set=? s-empty s-list-empty))
+(check (set-size s-list-empty) => 0)
+
 ;; Duplicates in list should be handled
-(check-true (set=? s-1-2 (list->set '(1 2 2 1))))
+(define s-list-dup (list->set '(1 2 2 1)))
+(check-true (set=? s-1-2 s-list-dup))
+(check (set-size s-list-dup) => 2)
+
+
+#|
+list->set!
+将列表元素并入 set（可变操作）。
+
+语法
+----
+(list->set! set list)
+
+参数
+----
+set : set
+目标 set。
+
+list : list
+要并入的元素列表。
+
+返回值
+------
+返回修改后的 set（与传入的 set 是同一个对象）。
+|#
+
+;; 测试 list->set! 基本行为
+(define s-list-merge (set 1 2))
+(define s-list-merge-result (list->set! s-list-merge '(2 3 4)))
+(check-true (eq? s-list-merge-result s-list-merge))
+(check (set-size s-list-merge) => 4)
+(check-true (set-contains? s-list-merge 1))
+(check-true (set-contains? s-list-merge 2))
+(check-true (set-contains? s-list-merge 3))
+(check-true (set-contains? s-list-merge 4))
+
+;; 测试空列表
+(define s-list-empty (set 1 2))
+(list->set! s-list-empty '())
+(check (set-size s-list-empty) => 2)
+
+;; 测试类型错误
+(check-catch 'type-error (list->set! "not a set" '(1 2)))
+
+
 
 #|
 set-copy
@@ -1228,44 +1280,6 @@ set : set
 ;; 测试类型错误
 (check-catch 'type-error (set->list "not a set"))
 
-#|
-list->set!
-将列表元素并入 set（可变操作）。
-
-语法
-----
-(list->set! set list)
-
-参数
-----
-set : set
-目标 set。
-
-list : list
-要并入的元素列表。
-
-返回值
-------
-返回修改后的 set（与传入的 set 是同一个对象）。
-|#
-
-;; 测试 list->set! 基本行为
-(define s-list-merge (set 1 2))
-(define s-list-merge-result (list->set! s-list-merge '(2 3 4)))
-(check-true (eq? s-list-merge-result s-list-merge))
-(check (set-size s-list-merge) => 4)
-(check-true (set-contains? s-list-merge 1))
-(check-true (set-contains? s-list-merge 2))
-(check-true (set-contains? s-list-merge 3))
-(check-true (set-contains? s-list-merge 4))
-
-;; 测试空列表
-(define s-list-empty (set 1 2))
-(list->set! s-list-empty '())
-(check (set-size s-list-empty) => 2)
-
-;; 测试类型错误
-(check-catch 'type-error (list->set! "not a set" '(1 2)))
 
 #|
 set-adjoin
