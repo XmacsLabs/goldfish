@@ -31,7 +31,7 @@
           set? set-contains? set-empty? set-disjoint?
           set-element-comparator set-size
           set=? set<? set>? set<=? set>=?
-          set-any? set-every? set-find set-count set-member
+          set-any? set-every? set-find set-count set-member set-search!
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -243,6 +243,26 @@
     (define (set-member set element default)
       (check-set set)
       (hash-table-ref/default (set-hash-table set) element default))
+
+    (define (set-search! set element failure success)
+      (check-set set)
+      (let* ((ht (set-hash-table set))
+             (not-found (list 'not-found))
+             (found (hash-table-ref/default ht element not-found)))
+        (if (eq? found not-found)
+            (failure (lambda (obj)
+                       (set-add! set element)
+                       (values set obj))
+                     (lambda (obj)
+                       (values set obj)))
+            (success found
+                     (lambda (new-element obj)
+                       (hash-table-delete! ht found)
+                       (set-add! set new-element)
+                       (values set obj))
+                     (lambda (obj)
+                       (hash-table-delete! ht found)
+                       (values set obj))))))
 
     (define (set-adjoin set . elements)
       (check-set set)
