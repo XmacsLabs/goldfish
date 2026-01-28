@@ -719,6 +719,109 @@ default : any
 (check-catch 'type-error (set-member "not a set" 1 'default))
 
 #|
+set-search!
+在 set 中搜索指定元素，并通过 continuation 决定更新方式（可变操作）。
+
+语法
+----
+(set-search! set element failure success)
+
+参数
+----
+set : set
+目标 set。
+
+element : any
+要搜索的元素。
+
+failure : procedure
+当元素不存在时调用，接收两个 continuation：insert 与 ignore。
+
+success : procedure
+当元素存在时调用，接收 matching-element、update 与 remove。
+
+返回值
+------
+返回两个值：可能更新后的 set 和 obj。
+
+注意
+----
+continuation 的效果：
+(insert obj) 插入 element。
+(ignore obj) 不修改 set。
+(update new-element obj) 用 new-element 替换匹配元素。
+(remove obj) 移除匹配元素。
+|#
+
+;; 测试 set-search! 插入
+(define s-search-1 (set 1 2))
+(call-with-values
+  (lambda ()
+    (set-search! s-search-1 3
+      (lambda (insert ignore)
+        (insert 'payload))
+      (lambda (found update remove)
+        (error "unexpected success"))))
+  (lambda (result obj)
+    (check-true (eq? result s-search-1))
+    (check (set-size s-search-1) => 3)
+    (check-true (set-contains? s-search-1 3))
+    (check-false (set-contains? s-search-1 'payload))
+    (check obj => 'payload)))
+
+;; 测试 set-search! 忽略
+(define s-search-2 (set 1 2))
+(call-with-values
+  (lambda ()
+    (set-search! s-search-2 3
+      (lambda (insert ignore)
+        (ignore 'ignored))
+      (lambda (found update remove)
+        (error "unexpected success"))))
+  (lambda (result obj)
+    (check-true (eq? result s-search-2))
+    (check (set-size s-search-2) => 2)
+    (check-false (set-contains? s-search-2 3))
+    (check obj => 'ignored)))
+
+;; 测试 set-search! 更新（equals 但 not eq?）
+(define s-search-ci (list->set-with-comparator string-ci-comparator '("Apple" "Banana")))
+(call-with-values
+  (lambda ()
+    (set-search! s-search-ci "apple"
+      (lambda (insert ignore)
+        (error "unexpected failure"))
+      (lambda (found update remove)
+        (check found => "Apple")
+        (update "apple" 'updated))))
+  (lambda (result obj)
+    (check-true (eq? result s-search-ci))
+    (check (set-size s-search-ci) => 2)
+    (check (set-member s-search-ci "apple" 'not-found) => "apple")
+    (check obj => 'updated)))
+
+;; 测试 set-search! 删除
+(define s-search-3 (set 1 2 3))
+(call-with-values
+  (lambda ()
+    (set-search! s-search-3 2
+      (lambda (insert ignore)
+        (error "unexpected failure"))
+      (lambda (found update remove)
+        (remove 'removed))))
+  (lambda (result obj)
+    (check-true (eq? result s-search-3))
+    (check (set-size s-search-3) => 2)
+    (check-false (set-contains? s-search-3 2))
+    (check obj => 'removed)))
+
+;; 测试类型错误
+(check-catch 'type-error
+  (set-search! "not a set" 1
+    (lambda (insert ignore) (ignore 'x))
+    (lambda (found update remove) (remove 'x))))
+
+#|
 set-adjoin
 返回一个新的 set，包含原 set 的所有元素以及新增的元素。
 
