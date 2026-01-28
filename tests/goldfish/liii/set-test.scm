@@ -1254,6 +1254,167 @@ set : set
 (check-catch 'type-error (set-partition! even? "not a set"))
 
 #|
+set-union
+返回多个 set 的并集。
+
+语法
+----
+(set-union set1 set2 ...)
+
+参数
+----
+set1, set2 ... : set
+参与并集的 set。
+
+返回值
+------
+返回新的 set，元素来自它们首次出现的 set。
+|#
+
+;; 测试 set-union 基本行为
+(define s-union-1 (set-union s-1-2-3 s-2-3-4))
+(check (set-size s-union-1) => 4)
+(check-true (set-contains? s-union-1 1))
+(check-true (set-contains? s-union-1 2))
+(check-true (set-contains? s-union-1 3))
+(check-true (set-contains? s-union-1 4))
+(check-true (eq? (set-element-comparator s-union-1) comp))
+
+;; 测试多集合并集
+(define s-union-2 (set-union s-1 s-2-3-4 s-4-5))
+(check (set-size s-union-2) => 5)
+(check-true (set-contains? s-union-2 1))
+(check-true (set-contains? s-union-2 5))
+
+;; 测试元素来源（使用大小写不敏感比较器）
+(define s-union-ci-1 (list->set-with-comparator string-ci-comparator '("Apple")))
+(define s-union-ci-2 (list->set-with-comparator string-ci-comparator '("apple" "Banana")))
+(define s-union-ci (set-union s-union-ci-1 s-union-ci-2))
+(check (set-member s-union-ci "apple" 'not-found) => "Apple")
+(check (set-member s-union-ci "banana" 'not-found) => "Banana")
+
+;; 测试类型与比较器错误
+(check-catch 'type-error (set-union "not a set" s-1))
+(check-catch 'value-error (set-union s-1 s-str-ci))
+
+#|
+set-intersection
+返回多个 set 的交集。
+
+语法
+----
+(set-intersection set1 set2 ...)
+
+参数
+----
+set1, set2 ... : set
+参与交集的 set。
+
+返回值
+------
+返回新的 set，元素来自第一个 set。
+|#
+
+;; 测试 set-intersection 基本行为
+(define s-inter-1 (set-intersection s-1-2-3 s-2-3-4))
+(check (set-size s-inter-1) => 2)
+(check-true (set-contains? s-inter-1 2))
+(check-true (set-contains? s-inter-1 3))
+
+;; 测试多集合交集
+(define s-inter-2 (set-intersection s-1-2-3 s-2-3-4 (set 2 3)))
+(check (set-size s-inter-2) => 2)
+(check-true (set-contains? s-inter-2 2))
+(check-true (set-contains? s-inter-2 3))
+
+;; 测试元素来源（使用大小写不敏感比较器）
+(define s-inter-ci-1 (list->set-with-comparator string-ci-comparator '("Apple" "Banana")))
+(define s-inter-ci-2 (list->set-with-comparator string-ci-comparator '("apple" "Pear")))
+(define s-inter-ci (set-intersection s-inter-ci-1 s-inter-ci-2))
+(check (set-member s-inter-ci "apple" 'not-found) => "Apple")
+(check (set-size s-inter-ci) => 1)
+
+;; 测试类型与比较器错误
+(check-catch 'type-error (set-intersection "not a set" s-1))
+(check-catch 'value-error (set-intersection s-1 s-str-ci))
+
+#|
+set-difference
+返回第一个 set 与其余 set 的差集。
+
+语法
+----
+(set-difference set1 set2 ...)
+
+参数
+----
+set1, set2 ... : set
+参与差集的 set。
+
+返回值
+------
+返回新的 set，元素来自第一个 set。
+|#
+
+;; 测试 set-difference 基本行为
+(define s-diff-1 (set-difference s-1-2-3 s-2-3-4))
+(check (set-size s-diff-1) => 1)
+(check-true (set-contains? s-diff-1 1))
+(check-false (set-contains? s-diff-1 2))
+(check-false (set-contains? s-diff-1 3))
+
+;; 测试多集合差集
+(define s-diff-2 (set-difference s-1-2-3 s-2-3-4 s-4-5))
+(check (set-size s-diff-2) => 1)
+(check-true (set-contains? s-diff-2 1))
+
+;; 测试元素来源（使用大小写不敏感比较器）
+(define s-diff-ci-1 (list->set-with-comparator string-ci-comparator '("Apple" "Banana")))
+(define s-diff-ci-2 (list->set-with-comparator string-ci-comparator '("apple")))
+(define s-diff-ci (set-difference s-diff-ci-1 s-diff-ci-2))
+(check (set-size s-diff-ci) => 1)
+(check (set-member s-diff-ci "banana" 'not-found) => "Banana")
+
+;; 测试类型与比较器错误
+(check-catch 'type-error (set-difference "not a set" s-1))
+(check-catch 'value-error (set-difference s-1 s-str-ci))
+
+#|
+set-xor
+返回两个 set 的对称差集。
+
+语法
+----
+(set-xor set1 set2)
+
+参数
+----
+set1, set2 : set
+参与对称差集的 set。
+
+返回值
+------
+返回新的 set。
+|#
+
+;; 测试 set-xor 基本行为
+(define s-xor-1 (set-xor s-1-2-3 s-2-3-4))
+(check (set-size s-xor-1) => 2)
+(check-true (set-contains? s-xor-1 1))
+(check-true (set-contains? s-xor-1 4))
+
+;; 测试元素来源（使用大小写不敏感比较器）
+(define s-xor-ci (set-xor s-union-ci-1 s-union-ci-2))
+(check (set-size s-xor-ci) => 1)
+(check (set-member s-xor-ci "banana" 'not-found) => "Banana")
+(check-true (set-contains? s-xor-ci "banana"))
+(check-false (set-contains? s-xor-ci "apple"))
+
+;; 测试类型与比较器错误
+(check-catch 'type-error (set-xor "not a set" s-1))
+(check-catch 'value-error (set-xor s-1 s-str-ci))
+
+#|
 set->list
 将 set 转换为列表（顺序未指定）。
 

@@ -33,7 +33,7 @@
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member set-search! set-map
           set-for-each set-fold set-filter set-filter! set-remove set-remove!
-          set-partition set-partition!
+          set-partition set-partition! set-union set-intersection set-difference set-xor
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -368,6 +368,87 @@
              (hash-table-delete! ht k)))
          ht)
         (values set removed)))
+
+    (define (set-union set1 . sets)
+      (check-set set1)
+      (let* ((result (set-copy set1))
+             (ht-result (set-hash-table result)))
+        (for-each
+         (lambda (s)
+           (check-set s)
+           (check-same-comparator set1 s)
+           (hash-table-for-each
+            (lambda (k v)
+              (unless (hash-table-contains? ht-result k)
+                (set-add! result k)))
+            (set-hash-table s)))
+         sets)
+        result))
+
+    (define (set-intersection set1 . sets)
+      (check-set set1)
+      (for-each
+       (lambda (s)
+         (check-set s)
+         (check-same-comparator set1 s))
+       sets)
+      (let ((result (make-set/comparator (set-element-comparator set1)))
+            (ht1 (set-hash-table set1))
+            (other-hts (map set-hash-table sets)))
+        (define (all-contains? key)
+          (let loop ((rest other-hts))
+            (if (null? rest)
+                #t
+                (and (hash-table-contains? (car rest) key)
+                     (loop (cdr rest))))))
+        (hash-table-for-each
+         (lambda (k v)
+           (when (all-contains? k)
+             (set-add! result k)))
+         ht1)
+        result))
+
+    (define (set-difference set1 . sets)
+      (check-set set1)
+      (for-each
+       (lambda (s)
+         (check-set s)
+         (check-same-comparator set1 s))
+       sets)
+      (let ((result (make-set/comparator (set-element-comparator set1)))
+            (ht1 (set-hash-table set1))
+            (other-hts (map set-hash-table sets)))
+        (define (any-contains? key)
+          (let loop ((rest other-hts))
+            (if (null? rest)
+                #f
+                (or (hash-table-contains? (car rest) key)
+                    (loop (cdr rest))))))
+        (hash-table-for-each
+         (lambda (k v)
+           (unless (any-contains? k)
+             (set-add! result k)))
+         ht1)
+        result))
+
+    (define (set-xor set1 set2)
+      (check-set set1)
+      (check-set set2)
+      (check-same-comparator set1 set2)
+      (let ((result (make-set/comparator (set-element-comparator set1)))
+            (ht1 (set-hash-table set1))
+            (ht2 (set-hash-table set2)))
+        (hash-table-for-each
+         (lambda (k v)
+           (unless (hash-table-contains? ht2 k)
+             (set-add! result k)))
+         ht1)
+        (hash-table-for-each
+         (lambda (k v)
+           (unless (hash-table-contains? ht1 k)
+             (set-add! result k)))
+         ht2)
+        result))
 
     (define (set-adjoin set . elements)
       (check-set set)
