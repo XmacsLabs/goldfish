@@ -1028,6 +1028,86 @@ set : set
 (check-catch 'type-error (set-filter! even? "not a set"))
 
 #|
+set-remove
+返回一个新的 set，仅包含不满足 predicate 的元素。
+
+语法
+----
+(set-remove predicate set)
+
+参数
+----
+predicate : procedure
+筛选条件。
+
+set : set
+源 set。
+
+返回值
+------
+返回新的 set，比较器与原 set 相同。
+|#
+
+;; 测试 set-remove 基本筛选
+(define s-remove-1 (set 1 2 3 4))
+(define s-remove-2 (set-remove even? s-remove-1))
+(check-true (set? s-remove-2))
+(check-true (eq? (set-element-comparator s-remove-2) (set-element-comparator s-remove-1)))
+(check (set-size s-remove-2) => 2)
+(check-true (set-contains? s-remove-2 1))
+(check-true (set-contains? s-remove-2 3))
+(check-false (set-contains? s-remove-2 2))
+(check-false (set-contains? s-remove-2 4))
+(check-true (set-contains? s-remove-1 2)) ; 原 set 不变
+(check-true (set-contains? s-remove-1 4))
+
+;; 测试空集合
+(define s-remove-empty (set-remove even? s-empty))
+(check (set-size s-remove-empty) => 0)
+
+;; 测试类型错误
+(check-catch 'type-error (set-remove even? "not a set"))
+
+#|
+set-remove!
+可变筛选，返回仅包含不满足 predicate 的元素的 set。
+
+语法
+----
+(set-remove! predicate set)
+
+参数
+----
+predicate : procedure
+筛选条件。
+
+set : set
+目标 set。
+
+返回值
+------
+返回修改后的 set（与传入的 set 是同一个对象）。
+|#
+
+;; 测试 set-remove! 基本行为
+(define s-remove-mut (set 1 2 3 4))
+(define s-remove-mut-result (set-remove! even? s-remove-mut))
+(check-true (eq? s-remove-mut-result s-remove-mut))
+(check (set-size s-remove-mut) => 2)
+(check-true (set-contains? s-remove-mut 1))
+(check-true (set-contains? s-remove-mut 3))
+(check-false (set-contains? s-remove-mut 2))
+(check-false (set-contains? s-remove-mut 4))
+
+;; 测试空集合
+(define s-remove-mut-empty (set-copy s-empty))
+(set-remove! even? s-remove-mut-empty)
+(check (set-size s-remove-mut-empty) => 0)
+
+;; 测试类型错误
+(check-catch 'type-error (set-remove! even? "not a set"))
+
+#|
 set-adjoin
 返回一个新的 set，包含原 set 的所有元素以及新增的元素。
 
