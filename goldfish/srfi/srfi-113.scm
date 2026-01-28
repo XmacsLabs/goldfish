@@ -351,15 +351,13 @@
     (define (set-partition! predicate set)
       (check-set set)
       (let ((ht (set-hash-table set))
-            (removed (make-set/comparator (set-element-comparator set)))
-            (to-remove '()))
+            (removed (make-set/comparator (set-element-comparator set))))
         (hash-table-for-each
          (lambda (k v)
            (unless (predicate k)
              (set-add! removed k)
-             (set! to-remove (cons k to-remove))))
+             (hash-table-delete! ht k)))
          ht)
-        (for-each (lambda (k) (hash-table-delete! ht k)) to-remove)
         (values set removed)))
 
     (define (set-adjoin set . elements)
