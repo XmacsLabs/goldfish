@@ -1202,6 +1202,72 @@ set : set
 (check-catch 'type-error (set-partition! even? "not a set"))
 
 #|
+set->list
+将 set 转换为列表（顺序未指定）。
+
+语法
+----
+(set->list set)
+
+参数
+----
+set : set
+源 set。
+
+返回值
+------
+返回包含 set 元素的新列表。
+|#
+
+;; 测试 set->list 基本行为
+(define s-to-list (set 1 2 3))
+(define l-to-list (set->list s-to-list))
+(check (length l-to-list) => 3)
+(check-true (set=? (list->set l-to-list) s-to-list))
+
+;; 测试类型错误
+(check-catch 'type-error (set->list "not a set"))
+
+#|
+list->set!
+将列表元素并入 set（可变操作）。
+
+语法
+----
+(list->set! set list)
+
+参数
+----
+set : set
+目标 set。
+
+list : list
+要并入的元素列表。
+
+返回值
+------
+返回修改后的 set（与传入的 set 是同一个对象）。
+|#
+
+;; 测试 list->set! 基本行为
+(define s-list-merge (set 1 2))
+(define s-list-merge-result (list->set! s-list-merge '(2 3 4)))
+(check-true (eq? s-list-merge-result s-list-merge))
+(check (set-size s-list-merge) => 4)
+(check-true (set-contains? s-list-merge 1))
+(check-true (set-contains? s-list-merge 2))
+(check-true (set-contains? s-list-merge 3))
+(check-true (set-contains? s-list-merge 4))
+
+;; 测试空列表
+(define s-list-empty (set 1 2))
+(list->set! s-list-empty '())
+(check (set-size s-list-empty) => 2)
+
+;; 测试类型错误
+(check-catch 'type-error (list->set! "not a set" '(1 2)))
+
+#|
 set-adjoin
 返回一个新的 set，包含原 set 的所有元素以及新增的元素。
 
