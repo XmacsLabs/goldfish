@@ -305,14 +305,12 @@
 
     (define (set-filter! predicate set)
       (check-set set)
-      (let ((ht (set-hash-table set))
-            (to-remove '()))
+      (let ((ht (set-hash-table set)))
         (hash-table-for-each
-         (lambda (k v)
+          (lambda (k v)
            (unless (predicate k)
-             (set! to-remove (cons k to-remove))))
-         ht)
-        (for-each (lambda (k) (hash-table-delete! ht k)) to-remove)
+             (hash-table-delete! ht k)))
+          ht)
         set))
 
     (define (set-adjoin set . elements)
