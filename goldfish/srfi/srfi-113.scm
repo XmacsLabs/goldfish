@@ -26,6 +26,7 @@
           (scheme case-lambda)
           (liii hash-table)
           (liii error)
+          (srfi srfi-1)
           (srfi srfi-128))
   (export set set-unfold list->set list->set! set-copy set->list
           set? set-contains? set-empty? set-disjoint?
@@ -396,11 +397,7 @@
             (ht1 (set-hash-table set1))
             (other-hts (map set-hash-table sets)))
         (define (all-contains? key)
-          (let loop ((rest other-hts))
-            (if (null? rest)
-                #t
-                (and (hash-table-contains? (car rest) key)
-                     (loop (cdr rest))))))
+          (every (lambda (ht) (hash-table-contains? ht key)) other-hts))
         (hash-table-for-each
          (lambda (k v)
            (when (all-contains? k)
@@ -419,11 +416,7 @@
             (ht1 (set-hash-table set1))
             (other-hts (map set-hash-table sets)))
         (define (any-contains? key)
-          (let loop ((rest other-hts))
-            (if (null? rest)
-                #f
-                (or (hash-table-contains? (car rest) key)
-                    (loop (cdr rest))))))
+          (any (lambda (ht) (hash-table-contains? ht key)) other-hts))
         (hash-table-for-each
          (lambda (k v)
            (unless (any-contains? k)
