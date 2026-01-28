@@ -33,6 +33,7 @@
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member set-search! set-map
           set-for-each set-fold set-filter set-filter! set-remove set-remove!
+          set-partition set-partition!
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   (begin
@@ -333,6 +334,31 @@
              (hash-table-delete! ht k)))
          ht)
         set))
+
+    (define (set-partition predicate set)
+      (check-set set)
+      (let ((yes (make-set/comparator (set-element-comparator set)))
+            (no (make-set/comparator (set-element-comparator set)))
+            (ht (set-hash-table set)))
+        (hash-table-for-each
+         (lambda (k v)
+           (if (predicate k)
+               (set-add! yes k)
+               (set-add! no k)))
+         ht)
+        (values yes no)))
+
+    (define (set-partition! predicate set)
+      (check-set set)
+      (let ((ht (set-hash-table set))
+            (removed (make-set/comparator (set-element-comparator set))))
+        (hash-table-for-each
+         (lambda (k v)
+           (unless (predicate k)
+             (set-add! removed k)
+             (hash-table-delete! ht k)))
+         ht)
+        (values set removed)))
 
     (define (set-adjoin set . elements)
       (check-set set)

@@ -1108,6 +1108,100 @@ set : set
 (check-catch 'type-error (set-remove! even? "not a set"))
 
 #|
+set-partition
+将 set 划分为满足 predicate 与不满足 predicate 的两个新 set。
+
+语法
+----
+(set-partition predicate set)
+
+参数
+----
+predicate : procedure
+划分条件。
+
+set : set
+源 set。
+
+返回值
+------
+返回两个值：满足 predicate 的新 set 与不满足 predicate 的新 set。
+|#
+
+;; 测试 set-partition 基本行为
+(define s-partition-1 (set 1 2 3 4))
+(call-with-values
+  (lambda () (set-partition even? s-partition-1))
+  (lambda (yes no)
+    (check-true (set? yes))
+    (check-true (set? no))
+    (check-true (eq? (set-element-comparator yes) (set-element-comparator s-partition-1)))
+    (check-true (eq? (set-element-comparator no) (set-element-comparator s-partition-1)))
+    (check (set-size yes) => 2)
+    (check (set-size no) => 2)
+    (check-true (set-contains? yes 2))
+    (check-true (set-contains? yes 4))
+    (check-true (set-contains? no 1))
+    (check-true (set-contains? no 3))
+    (check-true (set-contains? s-partition-1 2)) ; 原 set 不变
+    (check-true (set-contains? s-partition-1 4))))
+
+;; 测试空集合
+(call-with-values
+  (lambda () (set-partition even? s-empty))
+  (lambda (yes no)
+    (check (set-size yes) => 0)
+    (check (set-size no) => 0)))
+
+;; 测试类型错误
+(check-catch 'type-error (set-partition even? "not a set"))
+
+#|
+set-partition!
+可变划分，返回满足 predicate 的 set（原 set）与不满足 predicate 的新 set。
+
+语法
+----
+(set-partition! predicate set)
+
+参数
+----
+predicate : procedure
+划分条件。
+
+set : set
+目标 set。
+
+返回值
+------
+返回两个值：修改后的 set 与不满足 predicate 的新 set。
+|#
+
+;; 测试 set-partition! 基本行为
+(define s-partition-mut (set 1 2 3 4))
+(call-with-values
+  (lambda () (set-partition! even? s-partition-mut))
+  (lambda (yes no)
+    (check-true (eq? yes s-partition-mut))
+    (check (set-size yes) => 2)
+    (check (set-size no) => 2)
+    (check-true (set-contains? yes 2))
+    (check-true (set-contains? yes 4))
+    (check-true (set-contains? no 1))
+    (check-true (set-contains? no 3))))
+
+;; 测试空集合
+(define s-partition-empty (set-copy s-empty))
+(call-with-values
+  (lambda () (set-partition! even? s-partition-empty))
+  (lambda (yes no)
+    (check (set-size yes) => 0)
+    (check (set-size no) => 0)))
+
+;; 测试类型错误
+(check-catch 'type-error (set-partition! even? "not a set"))
+
+#|
 set-adjoin
 返回一个新的 set，包含原 set 的所有元素以及新增的元素。
 

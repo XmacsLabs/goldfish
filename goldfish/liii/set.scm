@@ -25,6 +25,7 @@
           set=? set<? set>? set<=? set>=?
           set-any? set-every? set-find set-count set-member set-search! set-map
           set-for-each set-fold set-filter set-filter! set-remove set-remove!
+          set-partition set-partition!
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!)
   
