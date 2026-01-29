@@ -38,7 +38,7 @@
           set-union! set-intersection! set-difference! set-xor!
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!
-          bag bag-unfold bag-member bag-element-comparator bag->list
+          bag bag-unfold bag-member bag-comparator bag->list
           bag? bag-contains? bag-empty? bag-disjoint?)
   (begin
 
@@ -556,42 +556,28 @@
       (%make-bag entries comparator)
       bag?
       (entries bag-entries set-bag-entries!)
-      (comparator bag-element-comparator))
+      (comparator bag-comparator))
 
     (define (check-bag obj)
-      (if (not (bag? obj)) (type-error "not a bag" obj)))
+      (when (not (bag? obj)) (type-error "not a bag" obj)))
 
     (define (make-bag/comparator comparator)
       (if (comparator? comparator)
-          (%make-bag '() comparator)
+          (%make-bag (make-hash-table comparator) comparator)
           (type-error "make-bag/comparator")))
 
-    (define (bag-entry element count)
-      (cons element count))
-
-    (define (bag-entry-element entry)
-      (car entry))
-
     (define (bag-entry-count entry)
-      (cdr entry))
+      entry)
 
     (define (bag-increment! bag element count)
       (check-bag bag)
-      (if (not (and (exact-integer? count) (>= count 0)))
+      (unless (and (exact-integer? count) (>= count 0))
           (type-error "bag-increment!" count))
       (if (= count 0)
           bag
-          (let* ((eq (comparator-equality-predicate (bag-element-comparator bag)))
-                 (entries (bag-entries bag)))
-            (let loop ((rest entries))
-              (cond
-                ((null? rest)
-                 (set-bag-entries! bag (cons (bag-entry element count) entries)))
-                (else
-                 (let ((entry (car rest)))
-                   (if (eq (bag-entry-element entry) element)
-                       (set-cdr! entry (+ count (bag-entry-count entry)))
-                       (loop (cdr rest)))))))
+          (let* ((entries (bag-entries bag))
+                 (entry (hash-table-ref/default entries element 0)))
+            (hash-table-set! entries element (+ count (bag-entry-count entry)))
             bag)))
 
     (define (bag-decrement! bag element count)
@@ -600,57 +586,36 @@
           (type-error "bag-decrement!" count))
       (if (= count 0)
           bag
-          (let* ((eq (comparator-equality-predicate (bag-element-comparator bag)))
-                 (entries (bag-entries bag)))
-            (let loop ((prev #f) (rest entries))
-              (cond
-                ((null? rest) bag)
-                (else
-                 (let ((entry (car rest)))
-                   (if (eq (bag-entry-element entry) element)
-                       (let ((new-count (- (bag-entry-count entry) count)))
-                         (if (> new-count 0)
-                             (set-cdr! entry new-count)
-                             (if prev
-                                 (set-cdr! prev (cdr rest))
-                                 (set-bag-entries! bag (cdr rest))))
-                         bag)
-                       (loop entry (cdr rest))))))))))
+          (let* ((entries (bag-entries bag))
+                 (entry (hash-table-ref/default entries element 0)))
+            (when (> entry 0)
+              (let ((new-count (- (bag-entry-count entry) count)))
+                (if (> new-count 0)
+                    (hash-table-set! entries element new-count)
+                    (hash-table-delete! entries element))))
+            bag)))
 
     (define (bag-contains? bag element)
       (check-bag bag)
-      (let* ((eq (comparator-equality-predicate (bag-element-comparator bag)))
-             (entries (bag-entries bag)))
-        (let loop ((rest entries))
-          (if (null? rest)
-              #f
-              (let ((entry (car rest)))
-                (if (eq (bag-entry-element entry) element)
-                    #t
-                    (loop (cdr rest))))))))
+      (hash-table-contains? (bag-entries bag) element))
 
     (define (bag-empty? bag)
       (check-bag bag)
-      (null? (bag-entries bag)))
+      (hash-table-empty? (bag-entries bag)))
 
     (define (bag-disjoint? a b)
       (check-bag a)
       (check-bag b)
-      (let* ((eq (comparator-equality-predicate (bag-element-comparator a)))
-             (entries-a (bag-entries a))
-             (entries-b (bag-entries b)))
-        (let loop-a ((rest entries-a))
-          (if (null? rest)
-              #t
-              (let* ((entry (car rest))
-                     (element (bag-entry-element entry)))
-                (let loop-b ((rest-b entries-b))
-                  (if (null? rest-b)
-                      (loop-a (cdr rest))
-                      (let ((entry-b (car rest-b)))
-                        (if (eq (bag-entry-element entry-b) element)
-                            #f
-                            (loop-b (cdr rest-b)))))))))))
+      (let ((entries-a (bag-entries a))
+            (entries-b (bag-entries b)))
+        (call/cc
+          (lambda (return)
+            (hash-table-for-each
+             (lambda (k entry)
+               (when (hash-table-contains? entries-b k)
+                 (return #f)))
+             entries-a)
+            #t))))
 
     (define (bag comparator . elements)
       (let ((result (make-bag/comparator comparator)))
@@ -668,26 +633,19 @@
 
     (define (bag-member bag element default)
       (check-bag bag)
-      (let* ((eq (comparator-equality-predicate (bag-element-comparator bag)))
-             (entries (bag-entries bag)))
-        (let loop ((rest entries))
-          (if (null? rest)
-              default
-              (let ((entry (car rest)))
-                (if (eq (bag-entry-element entry) element)
-                    (bag-entry-element entry)
-                    (loop (cdr rest))))))))
+      (if (hash-table-contains? (bag-entries bag) element)
+          element
+          default))
 
     (define (bag->list bag)
       (check-bag bag)
       (let ((result '()))
-        (for-each
-         (lambda (entry)
-           (let ((element (bag-entry-element entry))
-                 (count (bag-entry-count entry)))
+        (hash-table-for-each
+         (lambda (k entry)
+           (let ((count (bag-entry-count entry)))
              (let loop ((i 0))
                (when (< i count)
-                 (set! result (cons element result))
+                 (set! result (cons k result))
                  (loop (+ i 1))))))
          (bag-entries bag))
         result))

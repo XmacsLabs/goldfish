@@ -18,10 +18,10 @@
   (import (rename (srfi srfi-113)
                   (bag make-bag-with-comparator))
           (only (srfi srfi-113)
-                bag-unfold bag-member bag-element-comparator bag->list
+                bag-unfold bag-member bag-comparator bag->list
                 bag? bag-contains? bag-empty? bag-disjoint?)
           (srfi srfi-128))
-  (export bag bag-unfold bag-member bag-element-comparator
+  (export bag bag-unfold bag-member bag-comparator
           bag->list
           bag? bag-contains? bag-empty? bag-disjoint?)
 

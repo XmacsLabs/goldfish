@@ -23,7 +23,7 @@
 
 ;; --- Data Setup ---
 (define b-empty (bag))
-(define comp (bag-element-comparator b-empty))
+(define comp (bag-comparator b-empty))
 
 #|
 bag
@@ -47,7 +47,7 @@ element ... : any
 (check (bag-member b-1-2 1 #f) => 1)
 (check (bag-member b-1-2 2 #f) => 2)
 (check (bag-member b-1-2 3 'none) => 'none)
-(check-true (eq? (bag-element-comparator b-1-2) comp))
+(check-true (eq? (bag-comparator b-1-2) comp))
 (check (bag-member b-empty 1 'missing) => 'missing)
 
 ;; bag->list should include duplicates
@@ -109,7 +109,7 @@ comparator : comparator
 (check (bag-member b-unfold 2 #f) => 2)
 (check (bag-member b-unfold 3 #f) => 3)
 (check (bag-member b-unfold 4 'no) => 'no)
-(check-true (eq? (bag-element-comparator b-unfold) comp))
+(check-true (eq? (bag-comparator b-unfold) comp))
 (check-catch 'type-error
              (bag-unfold (lambda (n) #t)
                          (lambda (n) n)
@@ -259,12 +259,12 @@ bag2 : bag
 (check-catch 'type-error (bag-disjoint? (bag 1) "not a bag"))
 
 #|
-bag-element-comparator
+bag-comparator
 获取 bag 的 comparator。
 
 语法
 ----
-(bag-element-comparator bag)
+(bag-comparator bag)
 
 参数
 ----
@@ -275,8 +275,8 @@ bag : bag
 -----
 返回 bag 使用的 comparator。
 |#
-(check-true (eq? (bag-element-comparator b-empty) comp))
-(check-true (eq? (bag-element-comparator b-1-2) comp))
+(check-true (eq? (bag-comparator b-empty) comp))
+(check-true (eq? (bag-comparator b-1-2) comp))
 
 #|
 内部校验 check-bag 的函数也要覆盖错误分支。
