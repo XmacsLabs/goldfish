@@ -55,6 +55,87 @@ element ... : any
 (check-false (not (member 2 b-list)))
 (check (length b-list) => 3)
 
+#|
+bag-copy
+复制一个 bag。
+
+语法
+----
+(bag-copy bag)
+
+参数
+----
+bag : bag
+目标 bag。
+
+返回值
+-----
+返回一个新的 bag，包含原 bag 的所有元素，比较器相同。
+|#
+(let ((copy (bag-copy b-1-2)))
+  (check-true (bag? copy))
+  (check-false (eq? copy b-1-2))
+  (check-true (eq? (bag-comparator copy) comp))
+  (check (bag-size copy) => 3)
+  (check (bag-count (lambda (x) (= x 2)) copy) => 2))
+(check-true (bag-empty? (bag-copy b-empty)))
+(check-catch 'type-error (bag-copy "not a bag"))
+
+#|
+list->bag
+将列表转换为 bag。
+
+语法
+----
+(list->bag list)
+
+参数
+----
+list : list
+要转换的列表。
+
+返回值
+-----
+返回包含列表中所有元素的 bag（使用默认比较器，重复元素保留）。
+|#
+(define b-list-1 (list->bag '(1 2 2 3)))
+(check-true (bag? b-list-1))
+(check-true (eq? (bag-comparator b-list-1) comp))
+(check (bag-size b-list-1) => 4)
+(check (bag-count (lambda (x) (= x 2)) b-list-1) => 2)
+(define b-list-empty (list->bag '()))
+(check-true (bag-empty? b-list-empty))
+
+#|
+list->bag!
+将列表元素并入 bag（可变操作）。
+
+语法
+----
+(list->bag! bag list)
+
+参数
+----
+bag : bag
+目标 bag。
+
+list : list
+要并入的元素列表。
+
+返回值
+------
+返回修改后的 bag（与传入的 bag 是同一个对象）。
+|#
+(define b-list-merge (bag 1 2))
+(define b-list-merge-result (list->bag! b-list-merge '(2 3 3)))
+(check-true (eq? b-list-merge-result b-list-merge))
+(check (bag-size b-list-merge) => 5)
+(check (bag-count (lambda (x) (= x 2)) b-list-merge) => 2)
+(check (bag-count (lambda (x) (= x 3)) b-list-merge) => 2)
+(list->bag! b-list-merge '())
+(check (bag-size b-list-merge) => 5)
+(check-catch 'type-error (list->bag! "not a bag" '(1 2)))
+
 
 
 

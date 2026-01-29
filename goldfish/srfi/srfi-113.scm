@@ -39,6 +39,7 @@
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!
           bag bag-unfold bag-member bag-comparator bag->list
+          bag-copy list->bag list->bag!
           bag? bag-contains? bag-empty? bag-disjoint?
           bag-size bag-find bag-count bag-any? bag-every?)
   (begin
@@ -626,6 +627,23 @@
               (begin
                 (bag-increment! result (mapper seed) 1)
                 (loop (successor seed)))))))
+
+    (define (list->bag comparator elements)
+      (apply bag comparator elements))
+
+    (define (list->bag! bag elements)
+      (check-bag bag)
+      (for-each (lambda (x) (bag-increment! bag x 1)) elements)
+      bag)
+
+    (define (bag-copy bag)
+      (check-bag bag)
+      (let ((result (make-bag/comparator (bag-comparator bag))))
+        (hash-table-for-each
+         (lambda (k entry)
+           (bag-increment! result k entry))
+         (bag-entries bag))
+        result))
 
     (define (bag-member bag element default)
       (check-bag bag)
