@@ -37,7 +37,9 @@
           set-partition set-partition! set-union set-intersection set-difference set-xor
           set-union! set-intersection! set-difference! set-xor!
           set-adjoin set-adjoin! set-replace set-replace!
-          set-delete set-delete! set-delete-all set-delete-all!)
+          set-delete set-delete! set-delete-all set-delete-all!
+          bag bag-unfold bag-member bag-comparator bag->list
+          bag? bag-contains? bag-empty? bag-disjoint?)
   (begin
 
     (define-record-type set-impl
@@ -549,6 +551,98 @@
 
     (define (set-delete-all set element-list)
       (apply set-delete set element-list))
+
+    (define-record-type bag-impl
+      (%make-bag entries comparator)
+      bag?
+      (entries bag-entries set-bag-entries!)
+      (comparator bag-comparator))
+
+    (define (check-bag obj)
+      (when (not (bag? obj)) (type-error "not a bag" obj)))
+
+    (define (make-bag/comparator comparator)
+      (if (comparator? comparator)
+          (%make-bag (make-hash-table comparator) comparator)
+          (type-error "make-bag/comparator")))
+
+    (define (bag-increment! bag element count)
+      (check-bag bag)
+      (unless (and (exact-integer? count) (>= count 0))
+          (type-error "bag-increment!" count))
+      (if (= count 0)
+          bag
+          (let* ((entries (bag-entries bag))
+                 (entry (hash-table-ref/default entries element 0)))
+            (hash-table-set! entries element (+ count entry))
+            bag)))
+
+    (define (bag-decrement! bag element count)
+      (check-bag bag)
+      (if (not (and (exact-integer? count) (>= count 0)))
+          (type-error "bag-decrement!" count))
+      (if (= count 0)
+          bag
+          (let* ((entries (bag-entries bag))
+                 (entry (hash-table-ref/default entries element 0)))
+              (if (> entry count)
+                  (hash-table-set! entries element (- entry count))
+                  (hash-table-delete! entries element))
+            bag)))
+
+    (define (bag-contains? bag element)
+      (check-bag bag)
+      (hash-table-contains? (bag-entries bag) element))
+
+    (define (bag-empty? bag)
+      (check-bag bag)
+      (hash-table-empty? (bag-entries bag)))
+
+    (define (bag-disjoint? a b)
+      (check-bag a)
+      (check-bag b)
+      (let ((entries-a (bag-entries a))
+            (entries-b (bag-entries b)))
+        (call/cc
+          (lambda (return)
+            (hash-table-for-each
+             (lambda (k entry)
+               (when (hash-table-contains? entries-b k)
+                 (return #f)))
+             entries-a)
+            #t))))
+
+    (define (bag comparator . elements)
+      (let ((result (make-bag/comparator comparator)))
+        (for-each (lambda (x) (bag-increment! result x 1)) elements)
+        result))
+
+    (define (bag-unfold stop? mapper successor seed comparator)
+      (let ((result (make-bag/comparator comparator)))
+        (let loop ((seed seed))
+          (if (stop? seed)
+              result
+              (begin
+                (bag-increment! result (mapper seed) 1)
+                (loop (successor seed)))))))
+
+    (define (bag-member bag element default)
+      (check-bag bag)
+      (if (hash-table-contains? (bag-entries bag) element)
+          element
+          default))
+
+    (define (bag->list bag)
+      (check-bag bag)
+      (let ((result '()))
+        (hash-table-for-each
+         (lambda (k entry)
+           (let loop ((i 0))
+             (when (< i entry)
+               (set! result (cons k result))
+               (loop (+ i 1)))))
+         (bag-entries bag))
+        result))
 
     ) ; end of begin
   ) ; end of define-library

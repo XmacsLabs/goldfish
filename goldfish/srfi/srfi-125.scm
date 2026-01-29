@@ -15,7 +15,7 @@
 ;
 
 (define-library (srfi srfi-125)
-  (import (srfi srfi-1) (liii base) (liii error))
+  (import (srfi srfi-1) (srfi srfi-128) (liii base) (liii error))
   (export make-hash-table hash-table hash-table-unfold alist->hash-table hash-table?
           hash-table-contains? hash-table-empty? hash-table=? hash-table-mutable? hash-table-ref
           hash-table-ref/default hash-table-set! hash-table-delete! hash-table-intern!
@@ -139,4 +139,3 @@
     (define hash-table->alist
       (typed-lambda ((ht hash-table?))
         (append-map (lambda (x) (list (car x) (cdr x))) (map values ht))))))
-
