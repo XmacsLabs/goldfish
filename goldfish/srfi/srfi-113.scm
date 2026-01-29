@@ -39,7 +39,8 @@
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!
           bag bag-unfold bag-member bag-comparator bag->list
-          bag? bag-contains? bag-empty? bag-disjoint?)
+          bag? bag-contains? bag-empty? bag-disjoint?
+          bag-size bag-find bag-count bag-any? bag-every?)
   (begin
 
     (define-record-type set-impl
@@ -643,6 +644,52 @@
                (loop (+ i 1)))))
          (bag-entries bag))
         result))
+
+    (define (bag-count-entries bag predicate)
+      (check-bag bag)
+      (let ((count 0))
+        (hash-table-for-each
+         (lambda (k entry)
+           (when (predicate k)
+             (set! count (+ count entry))))
+         (bag-entries bag))
+        count))
+
+    (define (bag-size bag)
+      (bag-count-entries bag (lambda (x) #t)))
+
+    (define (bag-find predicate bag failure)
+      (check-bag bag)
+      (call/cc
+       (lambda (return)
+         (hash-table-for-each
+          (lambda (k entry)
+            (when (predicate k) (return k)))
+          (bag-entries bag))
+         (failure))))
+
+    (define (bag-count predicate bag)
+      (bag-count-entries bag predicate))
+
+    (define (bag-any? predicate bag)
+      (check-bag bag)
+      (call/cc
+       (lambda (return)
+         (hash-table-for-each
+          (lambda (k entry)
+            (when (predicate k) (return #t)))
+          (bag-entries bag))
+         #f)))
+
+    (define (bag-every? predicate bag)
+      (check-bag bag)
+      (call/cc
+       (lambda (return)
+         (hash-table-for-each
+          (lambda (k entry)
+            (unless (predicate k) (return #f)))
+          (bag-entries bag))
+         #t)))
 
     ) ; end of begin
   ) ; end of define-library
