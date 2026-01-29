@@ -566,9 +566,6 @@
           (%make-bag (make-hash-table comparator) comparator)
           (type-error "make-bag/comparator")))
 
-    (define (bag-entry-count entry)
-      entry)
-
     (define (bag-increment! bag element count)
       (check-bag bag)
       (unless (and (exact-integer? count) (>= count 0))
@@ -577,7 +574,7 @@
           bag
           (let* ((entries (bag-entries bag))
                  (entry (hash-table-ref/default entries element 0)))
-            (hash-table-set! entries element (+ count (bag-entry-count entry)))
+            (hash-table-set! entries element (+ count entry))
             bag)))
 
     (define (bag-decrement! bag element count)
@@ -588,11 +585,9 @@
           bag
           (let* ((entries (bag-entries bag))
                  (entry (hash-table-ref/default entries element 0)))
-            (when (> entry 0)
-              (let ((new-count (- (bag-entry-count entry) count)))
-                (if (> new-count 0)
-                    (hash-table-set! entries element new-count)
-                    (hash-table-delete! entries element))))
+              (if (> entry count)
+                  (hash-table-set! entries element (- entry count))
+                  (hash-table-delete! entries element))
             bag)))
 
     (define (bag-contains? bag element)
@@ -642,11 +637,10 @@
       (let ((result '()))
         (hash-table-for-each
          (lambda (k entry)
-           (let ((count (bag-entry-count entry)))
-             (let loop ((i 0))
-               (when (< i count)
-                 (set! result (cons k result))
-                 (loop (+ i 1))))))
+           (let loop ((i 0))
+             (when (< i entry)
+               (set! result (cons k result))
+               (loop (+ i 1)))))
          (bag-entries bag))
         result))
 

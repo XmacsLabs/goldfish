@@ -51,8 +51,8 @@ element ... : any
 (check (bag-member b-empty 1 'missing) => 'missing)
 
 ;; bag->list should include duplicates
-(check-true (not (not (member 1 b-list))))
-(check-true (not (not (member 2 b-list))))
+(check-false (not (member 1 b-list)))
+(check-false (not (member 2 b-list)))
 (check (length b-list) => 3)
 
 
