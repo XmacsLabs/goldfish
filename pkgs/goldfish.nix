@@ -8,6 +8,7 @@
   s7,
   tbox,
   isocline,
+  libcpr,
 
   static ? false,
 }:
@@ -27,6 +28,7 @@ stdenv.mkDerivation {
     s7
     tbox
     isocline
+    libcpr
   ]
   ++ lib.optional stdenv.hostPlatform.isMinGW windows.pthreads;
 
@@ -41,6 +43,8 @@ stdenv.mkDerivation {
   configurePhase = ''
     runHook preConfigure
     export HOME=$(mktemp -d)
+    # use nixpkgs libcpr
+    rm 3rdparty/cpr/ xmake/packages/c/cpr/ -r
     xmake global --network=private
     xmake config -m release --yes -vD \
       --repl=y --ccache=n             \
