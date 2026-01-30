@@ -651,6 +651,127 @@ success : procedure
       (check obj => 4))))
 
 #|
+bag=? / bag<? / bag>? / bag<=? / bag>=?
+多重集包含关系与相等性判断。
+
+语法
+----
+(bag=? bag1 bag2 ...)
+(bag<? bag1 bag2 ...)
+(bag>? bag1 bag2 ...)
+(bag<=? bag1 bag2 ...)
+(bag>=? bag1 bag2 ...)
+
+参数
+----
+bag1, bag2 ... : bag
+参与比较的 bag。
+
+返回值
+-----
+返回 #t 或 #f。
+|#
+(let ((b1 (bag 1 1 2))
+      (b2 (bag 1 1 2 2))
+      (b3 (bag 1 1 2)))
+  (check-true (bag=? b1 b3))
+  (check-false (bag=? b1 b2))
+  (check-true (bag<=? b1 b2))
+  (check-false (bag<=? b2 b1))
+  (check-true (bag<? b1 b2))
+  (check-false (bag<? b1 b1))
+  (check-true (bag>=? b2 b1))
+  (check-true (bag>? b2 b1)))
+
+#|
+bag-union / bag-intersection / bag-difference / bag-xor
+多重集并集/交集/差集/对称差。
+
+语法
+----
+(bag-union bag1 bag2 ...)
+(bag-intersection bag1 bag2 ...)
+(bag-difference bag1 bag2 ...)
+(bag-xor bag1 bag2)
+
+参数
+----
+bag1, bag2 ... : bag
+参与运算的 bag（bag-xor 仅支持两个）。
+
+返回值
+-----
+返回新的 bag，不修改原 bag。
+|#
+(let* ((b1 (bag 'a 'a 'b))
+       (b2 (bag 'a 'b 'b 'c))
+       (u (bag-union b1 b2))
+       (i (bag-intersection b1 b2))
+       (d (bag-difference b1 b2))
+       (x (bag-xor b1 b2)))
+  (check (bag-count (lambda (x) (eq? x 'a)) u) => 2)
+  (check (bag-count (lambda (x) (eq? x 'b)) u) => 2)
+  (check (bag-count (lambda (x) (eq? x 'c)) u) => 1)
+
+  (check (bag-count (lambda (x) (eq? x 'a)) i) => 1)
+  (check (bag-count (lambda (x) (eq? x 'b)) i) => 1)
+
+  (check (bag-count (lambda (x) (eq? x 'a)) d) => 1)
+  (check (bag-count (lambda (x) (eq? x 'b)) d) => 0)
+
+  (check (bag-count (lambda (x) (eq? x 'a)) x) => 1)
+  (check (bag-count (lambda (x) (eq? x 'b)) x) => 1)
+  (check (bag-count (lambda (x) (eq? x 'c)) x) => 1))
+
+#|
+bag-union! / bag-intersection! / bag-difference! / bag-xor!
+就地更新版本的并集/交集/差集/对称差。
+
+语法
+----
+(bag-union! bag1 bag2 ...)
+(bag-intersection! bag1 bag2 ...)
+(bag-difference! bag1 bag2 ...)
+(bag-xor! bag1 bag2)
+
+参数
+----
+bag1, bag2 ... : bag
+参与运算的 bag（bag-xor! 仅支持两个）。
+
+返回值
+-----
+返回修改后的 bag1。
+|#
+(let* ((b1 (bag 'a 'a 'b))
+       (b2 (bag 'a 'b 'b 'c)))
+  (bag-union! b1 b2)
+  (check (bag-count (lambda (x) (eq? x 'a)) b1) => 2)
+  (check (bag-count (lambda (x) (eq? x 'b)) b1) => 2)
+  (check (bag-count (lambda (x) (eq? x 'c)) b1) => 1))
+
+(let* ((b1 (bag 'a 'a 'b))
+       (b2 (bag 'a 'b 'b 'c)))
+  (bag-intersection! b1 b2)
+  (check (bag-count (lambda (x) (eq? x 'a)) b1) => 1)
+  (check (bag-count (lambda (x) (eq? x 'b)) b1) => 1)
+  (check (bag-count (lambda (x) (eq? x 'c)) b1) => 0))
+
+(let* ((b1 (bag 'a 'a 'b))
+       (b2 (bag 'a 'b 'b 'c)))
+  (bag-difference! b1 b2)
+  (check (bag-count (lambda (x) (eq? x 'a)) b1) => 1)
+  (check (bag-count (lambda (x) (eq? x 'b)) b1) => 0)
+  (check (bag-count (lambda (x) (eq? x 'c)) b1) => 0))
+
+(let* ((b1 (bag 'a 'a 'b))
+       (b2 (bag 'a 'b 'b 'c)))
+  (bag-xor! b1 b2)
+  (check (bag-count (lambda (x) (eq? x 'a)) b1) => 1)
+  (check (bag-count (lambda (x) (eq? x 'b)) b1) => 1)
+  (check (bag-count (lambda (x) (eq? x 'c)) b1) => 1))
+
+#|
 bag-comparator
 获取 bag 的 comparator。
 
