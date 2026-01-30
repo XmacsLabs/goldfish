@@ -256,6 +256,12 @@
     (hash-table 'a 1 'b 2 'c 3))
   (check cnt => 6))
 
+(let ((ht (hash-table 'a 1 'b 2 'c 3)))
+  (check (hash-table-fold (lambda (k v acc) (+ acc v)) 0 ht) => 6)
+  )
+
+(check (hash-table-fold (lambda (k v acc) (+ acc v)) 10 (hash-table)) => 10)
+
 (let* ((ht (hash-table 'a 1 'b 2 'c 3))
        (ks (hash-table-map->list (lambda (k v) k) ht))
        (vs (hash-table-map->list (lambda (k v) v) ht)))
@@ -275,4 +281,3 @@
        => (list 'k1 'v1))
 
 (check-report)
-
