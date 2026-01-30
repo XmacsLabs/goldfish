@@ -50,7 +50,8 @@
   (import (rename (scheme time)
                   (get-time-of-day      glue:get-time-of-day)
                   (monotonic-nanosecond glue:monotonic-nanosecond))
-          (only (srfi srfi-13) string-pad string-tokenize string-trim-right))
+          (only (srfi srfi-13) string-pad string-tokenize string-trim-right)
+          (liii error))
   (export
     ;; Constants
     TIME-DURATION TIME-MONOTONIC TIME-PROCESS
