@@ -664,14 +664,19 @@
          (bag-entries bag))
         result))
 
+    (define (bag-count-entries bag predicate)
+      (check-bag bag)
+      (let ((entries (bag-entries bag)))
+        (hash-table-fold
+         (lambda (k entry acc)
+           (if (predicate k)
+               (+ acc entry)
+               acc))
+         0
+         entries)))
 
     (define (bag-size bag)
-      (check-bag bag)
-      (hash-table-fold
-       (lambda (k entry acc)
-         (+ acc entry))
-       0
-       (bag-entries bag)))
+      (bag-count-entries bag (lambda (x) #t)))
 
     (define (bag-find predicate bag failure)
       (check-bag bag)
@@ -681,14 +686,7 @@
             (failure))))
 
     (define (bag-count predicate bag)
-      (check-bag bag)
-      (hash-table-fold
-       (lambda (k entry acc)
-         (if (predicate k)
-             (+ acc entry)
-             acc))
-       0
-       (bag-entries bag)))
+      (bag-count-entries bag predicate))
 
     (define (bag-any? predicate bag)
       (check-bag bag)
