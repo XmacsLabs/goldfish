@@ -638,12 +638,13 @@
 
     (define (bag-copy bag)
       (check-bag bag)
-      (let ((result (make-bag/comparator (bag-comparator bag))))
+      (let ((entries (make-hash-table (bag-comparator bag))))
         (hash-table-for-each
-         (lambda (k entry)
-           (bag-increment! result k entry))
-         (bag-entries bag))
-        result))
+          (lambda (k entry)
+            (hash-table-set! entries k entry))
+          (bag-entries bag))
+        (%make-bag entries (bag-comparator bag))))
+
 
     (define (bag-member bag element default)
       (check-bag bag)
