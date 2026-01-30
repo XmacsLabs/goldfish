@@ -39,7 +39,9 @@
           set-adjoin set-adjoin! set-replace set-replace!
           set-delete set-delete! set-delete-all set-delete-all!
           bag bag-unfold bag-member bag-comparator bag->list
-          bag? bag-contains? bag-empty? bag-disjoint?)
+          bag-copy list->bag list->bag!
+          bag? bag-contains? bag-empty? bag-disjoint?
+          bag-size bag-find bag-count bag-any? bag-every?)
   (begin
 
     (define-record-type set-impl
@@ -626,6 +628,24 @@
                 (bag-increment! result (mapper seed) 1)
                 (loop (successor seed)))))))
 
+    (define (list->bag comparator elements)
+      (apply bag comparator elements))
+
+    (define (list->bag! bag elements)
+      (check-bag bag)
+      (for-each (lambda (x) (bag-increment! bag x 1)) elements)
+      bag)
+
+    (define (bag-copy bag)
+      (check-bag bag)
+      (let ((entries (make-hash-table (bag-comparator bag))))
+        (hash-table-for-each
+          (lambda (k entry)
+            (hash-table-set! entries k entry))
+          (bag-entries bag))
+        (%make-bag entries (bag-comparator bag))))
+
+
     (define (bag-member bag element default)
       (check-bag bag)
       (if (hash-table-contains? (bag-entries bag) element)
@@ -643,6 +663,43 @@
                (loop (+ i 1)))))
          (bag-entries bag))
         result))
+
+    (define (bag-size bag)
+      (bag-count (lambda (x) #t) bag))
+
+    (define (bag-find predicate bag failure)
+      (check-bag bag)
+      (let ((found (find predicate (hash-table-keys (bag-entries bag)))))
+        (or found (failure))))
+
+    (define (bag-count predicate bag)
+      (check-bag bag)
+      (let ((entries (bag-entries bag)))
+        (hash-table-fold
+         (lambda (k entry acc)
+           (if (predicate k)
+               (+ acc entry)
+               acc))
+         0
+         entries)))
+
+    (define (bag-any? predicate bag)
+      (check-bag bag)
+      (let ((found
+             (hash-table-find
+              (lambda (k entry) (predicate k))
+              (bag-entries bag)
+              #f)))
+        (if found #t #f)))
+
+    (define (bag-every? predicate bag)
+      (check-bag bag)
+      (let ((found
+             (hash-table-find
+              (lambda (k entry) (not (predicate k)))
+              (bag-entries bag)
+              #f)))
+        (if found #f #t)))
 
     ) ; end of begin
   ) ; end of define-library

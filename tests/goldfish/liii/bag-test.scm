@@ -55,6 +55,87 @@ element ... : any
 (check-false (not (member 2 b-list)))
 (check (length b-list) => 3)
 
+#|
+bag-copy
+复制一个 bag。
+
+语法
+----
+(bag-copy bag)
+
+参数
+----
+bag : bag
+目标 bag。
+
+返回值
+-----
+返回一个新的 bag，包含原 bag 的所有元素，比较器相同。
+|#
+(let ((copy (bag-copy b-1-2)))
+  (check-true (bag? copy))
+  (check-false (eq? copy b-1-2))
+  (check-true (eq? (bag-comparator copy) comp))
+  (check (bag-size copy) => 3)
+  (check (bag-count (lambda (x) (= x 2)) copy) => 2))
+(check-true (bag-empty? (bag-copy b-empty)))
+(check-catch 'type-error (bag-copy "not a bag"))
+
+#|
+list->bag
+将列表转换为 bag。
+
+语法
+----
+(list->bag list)
+
+参数
+----
+list : list
+要转换的列表。
+
+返回值
+-----
+返回包含列表中所有元素的 bag（使用默认比较器，重复元素保留）。
+|#
+(define b-list-1 (list->bag '(1 2 2 3)))
+(check-true (bag? b-list-1))
+(check-true (eq? (bag-comparator b-list-1) comp))
+(check (bag-size b-list-1) => 4)
+(check (bag-count (lambda (x) (= x 2)) b-list-1) => 2)
+(define b-list-empty (list->bag '()))
+(check-true (bag-empty? b-list-empty))
+
+#|
+list->bag!
+将列表元素并入 bag（可变操作）。
+
+语法
+----
+(list->bag! bag list)
+
+参数
+----
+bag : bag
+目标 bag。
+
+list : list
+要并入的元素列表。
+
+返回值
+------
+返回修改后的 bag（与传入的 bag 是同一个对象）。
+|#
+(define b-list-merge (bag 1 2))
+(define b-list-merge-result (list->bag! b-list-merge '(2 3 3)))
+(check-true (eq? b-list-merge-result b-list-merge))
+(check (bag-size b-list-merge) => 5)
+(check (bag-count (lambda (x) (= x 2)) b-list-merge) => 2)
+(check (bag-count (lambda (x) (= x 3)) b-list-merge) => 2)
+(list->bag! b-list-merge '())
+(check (bag-size b-list-merge) => 5)
+(check-catch 'type-error (list->bag! "not a bag" '(1 2)))
+
 
 
 
@@ -257,6 +338,129 @@ bag2 : bag
 (check-true (bag-disjoint? (bag 1) b-empty))
 (check-catch 'type-error (bag-disjoint? "not a bag" (bag 1)))
 (check-catch 'type-error (bag-disjoint? (bag 1) "not a bag"))
+
+#|
+bag-size
+返回 bag 中元素总数（含重复）。
+
+语法
+----
+(bag-size bag)
+
+参数
+----
+bag : bag
+目标 bag。
+
+返回值
+-----
+返回 bag 中元素总数（包含重复元素）。
+|#
+(check (bag-size b-empty) => 0)
+(check (bag-size b-1-2) => 3)
+(check-catch 'type-error (bag-size "not a bag"))
+
+#|
+bag-find
+查找满足条件的元素。
+
+语法
+----
+(bag-find predicate bag failure)
+
+参数
+----
+predicate : procedure
+判断函数，接收元素并返回布尔值。
+
+bag : bag
+目标 bag。
+
+failure : procedure
+未找到时调用的过程。
+
+返回值
+-----
+返回第一个满足 predicate 的元素，否则返回 failure 的结果。
+|#
+(check (bag-find even? b-1-2 (lambda () 'none)) => 2)
+(check (bag-find (lambda (x) (> x 9)) b-1-2 (lambda () 'missing)) => 'missing)
+(check-catch 'type-error (bag-find even? "not a bag" (lambda () 'none)))
+
+#|
+bag-count
+统计满足条件的元素数量（含重复）。
+
+语法
+----
+(bag-count predicate bag)
+
+参数
+----
+predicate : procedure
+判断函数，接收元素并返回布尔值。
+
+bag : bag
+目标 bag。
+
+返回值
+-----
+返回满足 predicate 的元素总数（含重复）。
+|#
+(check (bag-count even? b-1-2) => 2)
+(check (bag-count (lambda (x) (> x 9)) b-1-2) => 0)
+(check-catch 'type-error (bag-count even? "not a bag"))
+
+#|
+bag-any?
+判断是否存在满足条件的元素。
+
+语法
+----
+(bag-any? predicate bag)
+
+参数
+----
+predicate : procedure
+判断函数，接收元素并返回布尔值。
+
+bag : bag
+目标 bag。
+
+返回值
+-----
+如果存在满足 predicate 的元素，返回 #t，否则返回 #f。
+|#
+(check-true (bag-any? even? b-1-2))
+(check-false (bag-any? (lambda (x) (> x 9)) b-1-2))
+(check-false (bag-any? even? b-empty))
+(check-catch 'type-error (bag-any? even? "not a bag"))
+
+#|
+bag-every?
+判断是否所有元素都满足条件。
+
+语法
+----
+(bag-every? predicate bag)
+
+参数
+----
+predicate : procedure
+判断函数，接收元素并返回布尔值。
+
+bag : bag
+目标 bag。
+
+返回值
+-----
+如果 bag 中所有元素都满足 predicate 返回 #t，否则返回 #f。
+空 bag 返回 #t。
+|#
+(check-true (bag-every? (lambda (x) (> x 0)) b-1-2))
+(check-false (bag-every? even? b-1-2))
+(check-true (bag-every? even? b-empty))
+(check-catch 'type-error (bag-every? even? "not a bag"))
 
 #|
 bag-comparator

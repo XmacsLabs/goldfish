@@ -16,18 +16,25 @@
 
 (define-library (liii bag)
   (import (rename (srfi srfi-113)
-                  (bag make-bag-with-comparator))
+                  (bag make-bag-with-comparator)
+                  (list->bag list->bag-with-comparator))
           (only (srfi srfi-113)
                 bag-unfold bag-member bag-comparator bag->list
-                bag? bag-contains? bag-empty? bag-disjoint?)
+                list->bag! bag-copy
+                bag? bag-contains? bag-empty? bag-disjoint?
+                bag-size bag-find bag-count bag-any? bag-every?)
           (srfi srfi-128))
   (export bag bag-unfold bag-member bag-comparator
-          bag->list
-          bag? bag-contains? bag-empty? bag-disjoint?)
+          bag->list list->bag list->bag! bag-copy
+          bag? bag-contains? bag-empty? bag-disjoint?
+          bag-size bag-find bag-count bag-any? bag-every?)
 
   (define comp (make-default-comparator))
 
   (define (bag . elements)
     (apply make-bag-with-comparator comp elements))
+
+  (define (list->bag elements)
+    (list->bag-with-comparator comp elements))
 
 ) ; end of define-library
