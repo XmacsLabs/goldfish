@@ -22,12 +22,18 @@
                 bag-unfold bag-member bag-comparator bag->list
                 list->bag! bag-copy
                 bag? bag-contains? bag-empty? bag-disjoint?
-                bag-size bag-find bag-count bag-any? bag-every?)
+                bag-size bag-find bag-count bag-any? bag-every?
+                bag-adjoin bag-adjoin! bag-replace bag-replace!
+                bag-delete bag-delete! bag-delete-all bag-delete-all!
+                bag-search!)
           (srfi srfi-128))
   (export bag bag-unfold bag-member bag-comparator
           bag->list list->bag list->bag! bag-copy
           bag? bag-contains? bag-empty? bag-disjoint?
-          bag-size bag-find bag-count bag-any? bag-every?)
+          bag-size bag-find bag-count bag-any? bag-every?
+          bag-adjoin bag-adjoin! bag-replace bag-replace!
+          bag-delete bag-delete! bag-delete-all bag-delete-all!
+          bag-search!)
 
   (define comp (make-default-comparator))
 

@@ -41,7 +41,10 @@
           bag bag-unfold bag-member bag-comparator bag->list
           bag-copy list->bag list->bag!
           bag? bag-contains? bag-empty? bag-disjoint?
-          bag-size bag-find bag-count bag-any? bag-every?)
+          bag-size bag-find bag-count bag-any? bag-every?
+          bag-adjoin bag-adjoin! bag-replace bag-replace!
+          bag-delete bag-delete! bag-delete-all bag-delete-all!
+          bag-search!)
   (begin
 
     (define-record-type set-impl
@@ -700,6 +703,78 @@
               (bag-entries bag)
               #f)))
         (if found #f #t)))
+
+    (define (bag-adjoin! bag . elements)
+      (check-bag bag)
+      (for-each (lambda (x) (bag-increment! bag x 1)) elements)
+      bag)
+
+    (define (bag-adjoin bag . elements)
+      (check-bag bag)
+      (let ((result (bag-copy bag)))
+        (for-each (lambda (x) (bag-increment! result x 1)) elements)
+        result))
+
+    (define (bag-replace! bag element)
+      (check-bag bag)
+      (let ((entries (bag-entries bag)))
+        (when (hash-table-contains? entries element)
+          (let ((count (hash-table-ref/default entries element 0)))
+            (hash-table-delete! entries element)
+            (hash-table-set! entries element count))))
+      bag)
+
+    (define (bag-replace bag element)
+      (check-bag bag)
+      (if (bag-contains? bag element)
+          (let ((result (bag-copy bag)))
+            (bag-replace! result element)
+            result)
+          bag))
+
+    (define (bag-delete! bag . elements)
+      (check-bag bag)
+      (for-each (lambda (x) (bag-decrement! bag x 1)) elements)
+      bag)
+
+    (define (bag-delete bag . elements)
+      (apply bag-delete! (bag-copy bag) elements))
+
+    (define (bag-delete-all! bag element-list)
+      (check-bag bag)
+      (for-each (lambda (x) (bag-decrement! bag x 1)) element-list)
+      bag)
+
+    (define (bag-delete-all bag element-list)
+      (bag-delete-all! (bag-copy bag) element-list))
+
+    (define (bag-search! bag element failure success)
+      (check-bag bag)
+      (let* ((comp (bag-comparator bag))
+             (same? (comparator-equality-predicate comp))
+             (entries (bag-entries bag))
+             (not-found (list 'not-found))
+             (found (call/cc
+                     (lambda (return)
+                       (hash-table-for-each
+                        (lambda (k entry)
+                          (when (same? k element) (return k)))
+                        entries)
+                       not-found))))
+        (if (eq? found not-found)
+            (failure (lambda (obj)
+                       (bag-increment! bag element 1)
+                       (values bag obj))
+                     (lambda (obj)
+                       (values bag obj)))
+            (success found
+                     (lambda (new-element obj)
+                       (bag-decrement! bag found 1)
+                       (bag-increment! bag new-element 1)
+                       (values bag obj))
+                     (lambda (obj)
+                       (bag-decrement! bag found 1)
+                       (values bag obj))))))
 
     ) ; end of begin
   ) ; end of define-library

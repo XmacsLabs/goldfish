@@ -463,6 +463,194 @@ bag : bag
 (check-catch 'type-error (bag-every? even? "not a bag"))
 
 #|
+bag-adjoin / bag-adjoin!
+向 bag 添加元素（允许重复）。
+
+语法
+----
+(bag-adjoin bag element ...)
+(bag-adjoin! bag element ...)
+
+参数
+----
+bag : bag
+目标 bag。
+
+element ... : any
+要添加的元素（可重复）。
+
+返回值
+-----
+bag-adjoin 返回新的 bag，原 bag 保持不变（非破坏性）。
+bag-adjoin! 就地修改原 bag，并返回修改后的 bag（破坏性）。
+|#
+(let ((b (bag 1 2 2)))
+  (define b2 (bag-adjoin b 2 3))
+  (check (bag-size b) => 3)
+  (check (bag-size b2) => 5)
+  (check (bag-count (lambda (x) (= x 2)) b2) => 3)
+  (bag-adjoin! b 2 3)
+  (check (bag-size b) => 5))
+(check-catch 'type-error (bag-adjoin "not a bag" 1))
+(check-catch 'type-error (bag-adjoin! "not a bag" 1))
+
+#|
+bag-replace / bag-replace!
+替换 bag 中与元素等价的代表值，保留计数。
+
+语法
+----
+(bag-replace bag element)
+(bag-replace! bag element)
+
+参数
+----
+bag : bag
+目标 bag。
+
+element : any
+用于替换的元素（按 comparator 等价判断）。
+
+返回值
+-----
+bag-replace 返回新的 bag，原 bag 保持不变（非破坏性）。
+bag-replace! 就地修改原 bag，并返回修改后的 bag（破坏性）。
+|#
+(let* ((s1 "hello")
+       (s2 (string-copy s1))
+       (b (bag s1))
+       (b2 (bag-replace b s2)))
+  (check-true (eq? (car (bag->list b)) s1))
+  (check-true (eq? (car (bag->list b2)) s2)))
+(let* ((s1 "hello")
+       (s2 (string-copy s1))
+       (b (bag s1)))
+  (bag-replace! b s2)
+  (check-true (eq? (car (bag->list b)) s2)))
+
+#|
+bag-delete / bag-delete!
+删除一个元素实例。
+
+语法
+----
+(bag-delete bag element ...)
+(bag-delete! bag element ...)
+
+参数
+----
+bag : bag
+目标 bag。
+
+element ... : any
+要删除的元素，每个元素只删除一个实例。
+
+返回值
+-----
+bag-delete 返回新的 bag，原 bag 保持不变（非破坏性）。
+bag-delete! 就地修改原 bag，并返回修改后的 bag（破坏性）。
+|#
+(let ((b (bag 1 2 2 3)))
+  (define b2 (bag-delete b 2 3))
+  (check (bag-size b) => 4)
+  (check (bag-size b2) => 2)
+  (check (bag-count (lambda (x) (= x 2)) b2) => 1))
+(let ((b (bag 1 2 2 3)))
+  (bag-delete! b 2 3)
+  (check (bag-size b) => 2)
+  (check (bag-count (lambda (x) (= x 2)) b) => 1))
+
+#|
+bag-delete-all / bag-delete-all!
+按列表删除元素实例（列表含重复则多次删除）。
+
+语法
+----
+(bag-delete-all bag element-list)
+(bag-delete-all! bag element-list)
+
+参数
+----
+bag : bag
+目标 bag。
+
+element-list : list
+要删除的元素列表，列表中重复元素会多次删除。
+
+返回值
+-----
+bag-delete-all 返回新的 bag，原 bag 保持不变（非破坏性）。
+bag-delete-all! 就地修改原 bag，并返回修改后的 bag（破坏性）。
+|#
+(let ((b (bag 1 2 2 2 3)))
+  (define b2 (bag-delete-all b '(2 2 3)))
+  (check (bag-size b) => 5)
+  (check (bag-size b2) => 2)
+  (check (bag-count (lambda (x) (= x 2)) b2) => 1))
+(let ((b (bag 1 2 2 2 3)))
+  (bag-delete-all! b '(2 2 3))
+  (check (bag-size b) => 2)
+  (check (bag-count (lambda (x) (= x 2)) b) => 1))
+
+#|
+bag-search!
+搜索并根据成功/失败分支更新 bag。
+
+语法
+----
+(bag-search! bag element failure success)
+
+参数
+----
+bag : bag
+目标 bag。
+
+element : any
+要查找的元素（按 comparator 等价判断）。
+
+failure : procedure
+未命中时调用，签名：(lambda (insert ignore) ...)
+
+success : procedure
+命中时调用，签名：(lambda (element update remove) ...)
+
+返回值
+-----
+返回 (values bag obj)，具体 obj 由 failure/success 回调决定。
+|#
+(let ((yam (bag #\y #\a #\m)))
+  (define (failure/insert insert ignore)
+    (insert 1))
+  (define (failure/ignore insert ignore)
+    (ignore 2))
+  (define (success/update element update remove)
+    (update #\b 3))
+  (define (success/remove element update remove)
+    (remove 4))
+
+  (call-with-values
+    (lambda () (bag-search! (bag-copy yam) #\! failure/insert error))
+    (lambda (b obj)
+      (check-true (bag-contains? b #\!))
+      (check obj => 1)))
+  (call-with-values
+    (lambda () (bag-search! (bag-copy yam) #\! failure/ignore error))
+    (lambda (b obj)
+      (check-false (bag-contains? b #\!))
+      (check obj => 2)))
+  (call-with-values
+    (lambda () (bag-search! (bag-copy yam) #\y error success/update))
+    (lambda (b obj)
+      (check-true (bag-contains? b #\b))
+      (check-false (bag-contains? b #\y))
+      (check obj => 3)))
+  (call-with-values
+    (lambda () (bag-search! (bag-copy yam) #\a error success/remove))
+    (lambda (b obj)
+      (check-false (bag-contains? b #\a))
+      (check obj => 4))))
+
+#|
 bag-comparator
 获取 bag 的 comparator。
 
