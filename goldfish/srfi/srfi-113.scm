@@ -692,23 +692,21 @@
 
     (define (bag-any? predicate bag)
       (check-bag bag)
-      (call/cc
-       (lambda (return)
-         (hash-table-for-each
-          (lambda (k entry)
-            (when (predicate k) (return #t)))
-          (bag-entries bag))
-         #f)))
+      (let ((found
+             (hash-table-find
+              (lambda (k entry) (predicate k))
+              (bag-entries bag)
+              #f)))
+        (if found #t #f)))
 
     (define (bag-every? predicate bag)
       (check-bag bag)
-      (call/cc
-       (lambda (return)
-         (hash-table-for-each
-          (lambda (k entry)
-            (unless (predicate k) (return #f)))
-          (bag-entries bag))
-         #t)))
+      (let ((found
+             (hash-table-find
+              (lambda (k entry) (not (predicate k)))
+              (bag-entries bag)
+              #f)))
+        (if found #f #t)))
 
     ) ; end of begin
   ) ; end of define-library
