@@ -219,7 +219,7 @@
         (cond
           ((null? table)       10) ; 理论值
           ((>= s (caar table)) (cdar table))
-          (else                (loop (cdr table))))))
+          (else                (lp (cdr table))))))
 
     (define (priv:current-time-monotonic)
       (receive (s ns) (floor/ (glue:monotonic-nanosecond) 1000000000) ; 1e9
