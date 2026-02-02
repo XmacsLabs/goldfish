@@ -254,6 +254,7 @@
             (cond
               ((symbol=? x 'true) #t)
               ((symbol=? x 'false) #f)
+              ((symbol=? x 'null) '())
               (else x))
             x)))
     (if (vector? x)
