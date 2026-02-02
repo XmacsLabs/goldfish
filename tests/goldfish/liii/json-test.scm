@@ -623,7 +623,6 @@ value : any | function
        (j2 (json-set j0 'age 'null)))
   (check (json-ref j0 'age) => 18)
   (check (json-ref j1 'age) => 19)
-  ;; 注意：json-ref 获取 'null 时会返回 '()
   (check (json-ref j2 'age) => 'null))
 
 ; 单层，键为字符串
