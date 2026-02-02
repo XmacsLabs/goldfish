@@ -46,7 +46,7 @@
   (empty . null)))))
 (check-true (json-null? 'null))
 (check-false (json-null? '((name . "Alice"))))      
-(check-true (json-null? (json-ref bob-j 'bob 'empty)))
+(check-true (json-null? (json-ref bob-pp 'bob 'empty)))
 
 ;; 2. json-object?
 ;; 在 guenchi json 中，非空列表 (alist) 表示对象
