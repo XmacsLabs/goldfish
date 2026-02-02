@@ -212,7 +212,7 @@ key1, key2, ... : symbol | string | number | boolean
 (check (json-ref bob-j 'bob 'name) => "Bob")
 
 (let1 j '((bob . ((age . 18) (sex . male))))
-  (check (json-null? (json-ref j 'alice)) => #t) 
+  (check (json-null? (json-ref j 'alice)) => #f) 
   (check (null? (json-ref j 'alice)) => #t)      ; 确认为 Scheme 空列表
   (check (json-null? (json-ref j 'bob)) => #f))
 
@@ -624,7 +624,7 @@ value : any | function
   (check (json-ref j0 'age) => 18)
   (check (json-ref j1 'age) => 19)
   ;; 注意：json-ref 获取 'null 时会返回 '()
-  (check (json-ref j2 'age) => '()))
+  (check (json-ref j2 'age) => 'null))
 
 ; 单层，键为字符串
 (let* ((j0 `(("age" . 18) ("sex" . male)))
@@ -1041,7 +1041,7 @@ predicate-fn : function (lambda (key) ...)
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))
        (j1 'null)
        (j2 (json-set j0 'person 'age j1)))
-  (check (json-ref j2 'person 'age) => '()))
+  (check (json-ref j2 'person 'age) => 'null))
 
 ; Test with boolean
 (let* ((j0 `((person . ((name . "Alice") (age . 25)))))

@@ -117,7 +117,7 @@
     ;;; ---------------------------------------------------------
 
     (define (json-null? x)
-      (or (eq? x 'null) (null? x)))
+      (eq? x 'null))
 
     (define (json-object? x)
       (and (list? x)
