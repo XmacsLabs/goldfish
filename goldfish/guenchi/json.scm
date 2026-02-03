@@ -194,6 +194,7 @@
         (cond                           
           ((string? x) (json-string-escape x))                        
           ((number? x) (number->string x))                             
+          ((boolean? x) (if x "true" "false"))
           ((symbol? x) (symbol->string x))
           ((null? x) "{}")
           (else (type-error "Unexpected x: " x)))))
