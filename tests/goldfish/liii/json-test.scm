@@ -1072,6 +1072,19 @@ predicate-fn : function (lambda (key) ...)
   => "{\"messages\":[{\"role\":\"user\",\"content\":[{\"text\":\"1\",\"type\":\"text\"},{\"text\":\"2\",\"type\":\"text\"}]},{\"role\":\"user\",\"content\":\"中文\"}]}"
 )
 
+(define sample-j
+  '((user . ((id . 1001)
+             (name . "Alice")
+             (active . #t)
+             (email . null)
+             (tags . #("dev" "scheme" "json"))
+             (profile . ((age . 21)
+                         (height . 168.5)
+                         (hobbies . #("music" "reading"))))))
+    (scores . #(98 87 93))))
+(check (json->string sample-j)
+  => "{user:{id:1001,name:\"Alice\",active:true,email:null,tags:[\"dev\",\"scheme\",\"json\"],profile:{age:21,height:168.5,hobbies:[\"music\",\"reading\"]}},scores:[98,87,93]}")
+
 #|
 Error Handling Tests
 |#
