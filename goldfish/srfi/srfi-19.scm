@@ -51,6 +51,7 @@
                   (get-time-of-day      glue:get-time-of-day)
                   (monotonic-nanosecond glue:monotonic-nanosecond))
           (only (srfi srfi-13) string-pad string-tokenize string-trim-right)
+          (only (scheme base) open-output-string open-input-string get-output-string)
           (liii error))
   (export
     ;; Constants
