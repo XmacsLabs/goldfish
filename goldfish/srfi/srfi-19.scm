@@ -52,7 +52,8 @@
                   (monotonic-nanosecond glue:monotonic-nanosecond))
           (only (srfi srfi-13) string-pad string-tokenize string-trim-right)
           (only (srfi srfi-8) receive)
-          (only (scheme base) open-output-string open-input-string get-output-string)
+          (only (scheme base) open-output-string open-input-string get-output-string
+                              floor/)
           (liii error))
   (export
     ;; Constants
