@@ -389,18 +389,17 @@
 
     (define (priv:date-week-number-iso date)
       (let* ((year (date-year date))
-             (yday (date-year-day date))
              (jan1-wday (priv:week-day 1 1 year))
-             ;; 可能为0或53+
-             (raw-week (+ (quotient (+ yday jan1-wday -2) 7)
-                          (if (> jan1-wday 4) 0 1))))
+             (offset (if (> jan1-wday 4) 0 1))
+             ;; 调整值：补偿 1-based 和 周日归属
+             (adjusted (+ (date-year-day date) jan1-wday -2))
+             (raw-week (+ (floor-quotient adjusted 7) offset)))
+        (cond ((zero? raw-week)
+               (priv:date-week-number-iso 
+                (make-date 0 0 0 0 31 12 (- year 1) 0)))
 
-        (cond ((<= raw-week 0)
-               ;; 归前一年：判断前一年52周还是53周（周四年首=53周）
-               (if (> (priv:week-day 1 1 (- year 1)) 4) 52 53))
               ((and (= raw-week 53)
                     (<= (priv:week-day 1 1 (+ year 1)) 4))
-               ;; 归下一年第1周
                1)
 
               (else raw-week))))
