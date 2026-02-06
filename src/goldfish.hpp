@@ -447,7 +447,7 @@ glue_scheme_time (s7_scheme* sc) {
              s7_make_typed_function (sc, s_get_time_of_day, f_get_time_of_day, 0, 0, false, d_get_time_of_day, NULL));
 
   const char* s_monotonic_nanosecond= "g_monotonic-nanosecond";
-  const char* d_monotonic_nanosecond= "(g_monotonic-nanosecond): () => integer, TODO";
+  const char* d_monotonic_nanosecond= "(g_monotonic-nanosecond): () => integer, returns the steady clock's monotonic nanoseconds since an unspecified epoch";
   s7_define (sc, cur_env, s7_make_symbol (sc, s_monotonic_nanosecond),
              s7_make_typed_function (sc, s_monotonic_nanosecond, f_monotonic_nanosecond, 0, 0, false, d_monotonic_nanosecond, NULL));
 
