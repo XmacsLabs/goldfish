@@ -378,6 +378,7 @@
     (define (priv:locale-long-month n)
       (vector-ref priv:LOCALE-LONG-MONTH-VECTOR n))
 
+    ;; Only handles positive integers `n`. Internal use only.
     (define (priv:padding n pad-with len)
       (let* ((str     (number->string n))
              (str-len (string-length str)))
