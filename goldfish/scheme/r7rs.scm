@@ -1,39 +1,89 @@
-(define (libname->symbol stx)
-  ;; 将 (scheme base) 这种列表转换成一个唯一的符号
-  ;; 比如转换为 '| (scheme base) |' 保持与你旧代码的符号惯例一致
-  (let ((obj (syntax->datum stx)))
-    (string->symbol (object->string obj))))
+; 0-clause BSD
+; Adapted from S7 Scheme's r7rs.scm
+(define-macro (define-library libname . body) ; |(lib name)| -> environment
+  `(define ,(symbol (object->string libname))
+     (with-let (sublet (unlet)
+                 (cons 'import import)
+                 (cons '*export* ())
+                 (cons 'export (define-macro (,(gensym) . names)
+                                 `(set! *export* (append ',names *export*)))))
+       ,@body
+       (apply inlet
+              (map (lambda (entry)
+                     (if (or (member (car entry) '(*export* export import))
+                             (and (pair? *export*)
+                                  (not (member (car entry) *export*))))
+                         (values)
+                         entry))
+                   (curlet))))))
 
-(define-syntax define-library
-  (lambda (x)
-    (syntax-case x (export import begin)
-      ((_ libname clause ...)
-       (letrec ((parse-clauses
-                 (lambda (cls exports imports body)
-                   (if (null? cls)
-                       (values exports imports body)
-                       (syntax-case (car cls) (export import begin)
-                         ;; 收集导出：(export a b (rename c d))
-                         ((export names ...)
-                          (parse-clauses (cdr cls)
-                                         (append (syntax (names ...)) exports)
-                                         imports body))
-                         ;; 收集导入：(import (scheme base) (prefix (lib) p:))
-                         ((import libs ...)
-                          (parse-clauses (cdr cls) exports 
-                                         (append (syntax (libs ...)) imports) body))
-                         ;; 收集主体代码：(begin (define x 1) ...)
-                         ((begin forms ...)
-                          (parse-clauses (cdr cls) exports imports 
-                                         (append (syntax (forms ...)) body)))))))
-                         ;; 忽略未识别的子句（如 include-library-declarations）
-                (_ (parse-clauses (cdr cls) exports imports body)))
-         (let-values (((exports imports body)
-                       (parse-clauses (syntax (clause ...)) '() '() '())))
-           ;; 核心转换：
-           ;; 将 R7RS libname (a b c) 转换为 psyntax 期望的扁平符号或结构
-           (let ((module-id (libname->symbol (syntax libname))))
-             (syntax `(module ,module-id ,exports
-                        (import ,@imports)
-                        ,@body)))))))))
+(unless (defined? 'r7rs-import-library-filename)
+  (define (r7rs-import-library-filename libs)
+    (when (pair? libs)
+      (let ((lib-filename (let loop ((lib (if (memq (caar libs) '(only except prefix rename))
+                                              (cadar libs)
+                                              (car libs)))
+                                     (name ""))
+                            (set! name (string-append name (symbol->string (car lib))))
+                            (if (null? (cdr lib))
+                                (string-append name ".scm")
+                                (begin
+                                  (set! name (string-append name "/"))
+                                  (loop (cdr lib) name))))))
+        (when (not (defined? (symbol (object->string (car libs)))))
+          ;(display "Loading ") (display lib-filename) (newline)
+          (load lib-filename))
+        (r7rs-import-library-filename (cdr libs))))))
 
+(define-macro (import . libs)
+  `(begin
+     (r7rs-import-library-filename ',libs)
+     (varlet (curlet)
+       ,@(map (lambda (lib)
+                (case (car lib)
+                  ((only)
+                   `((lambda (e names)
+                       (apply inlet
+                              (map (lambda (name)
+                                     (cons name (e name)))
+                                   names)))
+                     (symbol->value (symbol (object->string (cadr ',lib))))
+                     (cddr ',lib)))
+                  ((except)
+                   `((lambda (e names)
+                       (apply inlet
+                              (map (lambda (entry)
+                                     (if (member (car entry) names)
+                                         (values)
+                                         entry))
+                                   e)))
+                     (symbol->value (symbol (object->string (cadr ',lib))))
+                     (cddr ',lib)))
+                  ((prefix)
+                   `((lambda (e prefx)
+                       (apply inlet
+                              (map (lambda (entry)
+                                     (cons (string->symbol 
+                                            (string-append (symbol->string prefx) 
+                                                           (symbol->string (car entry)))) 
+                                           (cdr entry)))
+                                   e)))
+                     (symbol->value (symbol (object->string (cadr ',lib))))
+                     (caddr ',lib)))
+                  ((rename)
+                   `((lambda (e names)
+                       (apply inlet
+                              (map (lambda (entry)
+                                     (let ((info (assoc (car entry) names)))
+                                       (if info
+                                           (cons (cadr info) (cdr entry))
+                                           entry))) 
+                                   e)))
+                     (symbol->value (symbol (object->string (cadr ',lib))))
+                     (cddr ',lib)))
+                  (else
+                   `(let ((sym (symbol (object->string ',lib))))
+                      (if (not (defined? sym))
+                          (format () "~A not loaded~%" sym)
+                          (symbol->value sym))))))
+              libs))))

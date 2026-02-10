@@ -1,3 +1,8 @@
+(define (read . port)
+  (if (null? port)
+    (g_goldfish-read (current-input-port))
+    (g_goldfish-read port)))
+
 (define (void) (if #f #f))
 
 (define (andmap f first . rest)
@@ -30,6 +35,9 @@
 (define *symbol-properties* (make-hash-table))
 
 (define (putprop symbol key value)
+  (display "[put]symbol.key.value: ") (display symbol)
+  (display " . ") (display key)
+  (display " . ") (display value) (newline)
   (let ((props (hash-table-ref *symbol-properties* symbol)))
     (if props
         (hash-table-set! props key value)
@@ -39,6 +47,8 @@
     value))
 
 (define (getprop symbol key)
+  (display "[get]symbol.key: ") (display symbol)
+  (display " . ") (display key) (newline)
   (let ((props (hash-table-ref *symbol-properties* symbol)))
     (if props
         (hash-table-ref props key)
@@ -50,6 +60,11 @@
         (hash-table-set! props key #f))
     #f))
 
+(define s7-gensym gensym)
+(define (gensym x)
+  (cond
+    ((symbol? x) (s7-gensym (symbol->string x)))
+    (else        (s7-gensym x))))
 
 ;; API provided by psyntax
 (define $sc-put-cte             #f)
@@ -58,6 +73,7 @@
 (define environment?            #f)
 (define interaction-environment #f)
 (define identifier?             #f)
+(define unwrap-syntax           #f)
 (define syntax->list            #f)
 (define syntax-object->datum    #f)
 (define datum->syntax-object    #f)
@@ -76,15 +92,16 @@
 (define %primitive-load load)
 
 (define (eval expr . env)
-  ; (display "evaling ") (display expr) (newline)
-  (if (and (list? expr)
-           (string? (car expr))
-           (string=? (car expr) "noexpand"))
-    (%primitive-eval (cadr expr))
-    (%primitive-eval (sc-expand expr))))
+  (let ((target-env (if (pair? env) (car env) (rootlet))))
+    (if (and (pair? expr)
+             (equal? (car expr) "noexpand"))
+        (%primitive-eval (cadr expr) target-env)
+        (%primitive-eval expr target-env))))
 
 (load "scheme/psyntax.pp")
 
+(define syntax->datum syntax-object->datum)
+(define datum->syntax datum->syntax-object)
 
 (define (file-exists? path)
   (if (string? path)
@@ -96,49 +113,73 @@
     (error 'type-error "(file-exists? path): path should be string")))
 
 
-; (define (find-file-in-paths filename)
-;   (if (file-exists? filename)
-;       filename
-;       (let loop ((paths *load-path*))
-;         (if (null? paths)
-;             #f
-;             (let ((full-path (string-append (car paths) "/" filename)))
-;               (if (file-exists? full-path)
-;                   full-path
-;                   (loop (cdr paths))))))))
+(define (find-file-in-paths filename)
+  (if (file-exists? filename)
+      filename
+      (let loop ((paths *load-path*))
+        (if (null? paths)
+            #f
+            (let ((full-path (string-append (car paths) "/" filename)))
+              (if (file-exists? full-path)
+                  full-path
+                  (loop (cdr paths))))))))
 
 (define (psyntax-load filename)
-  (if (file-exists? filename)
-      (let ((forms '()))
-        (with-input-from-file filename
-          (lambda ()
-            (let loop ((expr (read)))
-              (if (eof-object? expr)
-                  (begin
-                    ; (display `(begin ,@forms)) (newline)
-                    ;; 核心：包装成一个巨大的 begin，一次性交给 psyntax
-                    (let ((expanded (sc-expand `(begin ,@(reverse forms)))))
-                      ; (display expanded) (newline) ; 调试用：查看最终生成的 s7 代码
-                      (eval expanded)))
-                  (begin
-                    (set! forms (cons expr forms))
-                    (loop (read))))))))
-      (error 'load (string-append "file not found: " filename))))
+  (with-input-from-file filename
+    (lambda ()
+      (let loop ((expr (read)))
+        (unless (eof-object? expr)
+          (begin
+            ; (display "eval: ") (write expr) (newline)
+            (let ((expanded (sc-expand expr #f #f #f)))
+              ; (display "nxpa: ") (write expanded) (newline)
+              (eval expanded)))
+          (loop (read)))))))
 
-(define load psyntax-load)
+(define (load fn)
+  (display "loading: ") (display fn) (newline)
+  (let ((fn* (find-file-in-paths fn)))
+    (if fn*
+      (psyntax-load fn*)
+      (error "not found" fn*))))
 
-; (define (load filename)
-;   ; (display "loading ") (display filename) (newline)
-;   (let ((abs-path (find-file-in-paths filename)))
-;     ; (display "loadinG ") (display abs-path) (newline)
-;     (if abs-path
-;         (with-input-from-file abs-path
-;           (lambda ()
-;             (let loop ((expr (read))
-;                        (forms '()))
-;               (if (eof-object? expr)
-;                   (eval (reverse forms))
-;                   (loop (read) (cons expr forms))))))
-;         (error 'load (string-append "file not found: " abs-path)))))
+(set! *#readers*
+  (append
+    (list
+      ;; #` (quasisyntax)
+      (cons #\` (lambda (str)
+                  (list 'quasisyntax (read))))
+      ;; #, (unsyntax)
+      (cons #\, (lambda (str)
+                  ;; 检查后面是否跟着 @，即 #,@ (unsyntax-splicing)
+                  (let ((next-char (peek-char)))
+                    (if (eq? next-char #\@)
+                        (begin
+                          (read-char) ;; 消耗掉 @
+                          (list 'unsyntax-splicing (read)))
+                        (list 'unsyntax (read))))))
+      ;; #' (syntax) - 保持之前的修正
+      (cons #\' (lambda (str)
+                  (list 'syntax (read)))))
+    *#readers*))
 
-(load "goldfish/scheme/r7rs.scm")
+; (load "demo/x.scm")
+
+(display "~~~~~~~~~~") (newline)
+(define (register-primitive sym value)
+  ($sc-put-cte sym value                '*top*))
+  ; ($sc-put-cte sym (cons 'global value) '*sc-expander*))
+
+(register-primitive 'gcd   gcd)
+; (register-primitive 'pair? pair?)
+(display "~~~~~~~~~~") (newline)
+
+(load "scheme/s7-shim.scm")
+(load "scheme/r7rs-small.scm")
+
+(define load psyntax-load-r7rs)
+(load "demo/define-syntax-last.scm")
+
+(display *symbol-properties*) (newline)
+
+(newline)
