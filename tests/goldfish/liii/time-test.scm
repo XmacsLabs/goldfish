@@ -351,17 +351,17 @@ time-difference
 ----
 time1 : time?
 time2 : time?
-两个时间对象，类型必须相同。
+两个时间对象，时间类型必须相同。
 
 返回值
 -----
 time?
-返回一个 TIME-DURATION 类型的时间对象。
+返回一个 TIME-DURATION 时间类型的时间对象。
 
 错误处理
 --------
 wrong-type-arg
-当参数不是时间对象或类型不匹配时抛出错误。
+当参数不是时间对象或时间类型不匹配时抛出错误。
 |#
 
 ;; Test time-difference
