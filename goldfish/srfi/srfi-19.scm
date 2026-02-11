@@ -160,27 +160,18 @@
       (+ (* (time-second time) priv:NANO)
          (time-nanosecond time)))
 
-    (define (priv:nanoseconds->values nanoseconds)
-      (receive (sec ns) (floor/ nanoseconds priv:NANO)
-        (values ns sec)))
-
     (define (priv:time-difference time1 time2 time3)
       (unless (and (time? time1) (time? time2))
         (error 'wrong-type-arg "time-difference: time1 and time2 must be time objects" (list time1 time2)))
       (unless (eq? (time-type time1) (time-type time2))
         (error 'wrong-type-arg "time-difference: time types must match"
                (list (time-type time1) (time-type time2))))
-      (set-time-type! time3 TIME-DURATION)
-      (if (and (= (time-second time1) (time-second time2))
-               (= (time-nanosecond time1) (time-nanosecond time2)))
-        (begin
-          (set-time-second! time3 0)
-          (set-time-nanosecond! time3 0))
-        (receive (nanos secs)
-                 (priv:nanoseconds->values (- (priv:time->nanoseconds time1)
-                                              (priv:time->nanoseconds time2)))
-          (set-time-second! time3 secs)
-          (set-time-nanosecond! time3 nanos)))
+      (receive (secs nanos)
+               (floor/ (- (priv:time->nanoseconds time1)
+                          (priv:time->nanoseconds time2))
+                       priv:NANO)
+        (set-time-second! time3 secs)
+        (set-time-nanosecond! time3 nanos))
       time3)
 
     (define (time-difference time1 time2)
