@@ -65,6 +65,7 @@
     set-time-type! set-time-nanosecond! set-time-second!
     copy-time
     ;; Time comparison procedures
+    time<=? time<? time=? time>=? time>?
     ;; Time arithmetic procedures
     time-difference
     ;; Current time and clock resolution
@@ -150,7 +151,37 @@
     ;; Time comparison procedures
     ;; ====================
 
-    ;; TODO
+    (define (priv:check-same-time-type time1 time2)
+      (unless (and (time? time1) (time? time2))
+        (error 'wrong-type-arg "time comparison: time1 and time2 must be time objects"
+               (list time1 time2)))
+      (unless (eq? (time-type time1) (time-type time2))
+        (error 'wrong-type-arg "time comparison: time types must match"
+               (list (time-type time1) (time-type time2)))))
+
+    (define (priv:time-compare time1 time2)
+      (priv:check-same-time-type time1 time2)
+      (let ((delta (- (priv:time->nanoseconds time1)
+                      (priv:time->nanoseconds time2))))
+        (cond
+          ((< delta 0) -1)
+          ((> delta 0) 1)
+          (else 0))))
+
+    (define (time<? time1 time2)
+      (< (priv:time-compare time1 time2) 0))
+
+    (define (time<=? time1 time2)
+      (<= (priv:time-compare time1 time2) 0))
+
+    (define (time=? time1 time2)
+      (= (priv:time-compare time1 time2) 0))
+
+    (define (time>=? time1 time2)
+      (>= (priv:time-compare time1 time2) 0))
+
+    (define (time>? time1 time2)
+      (> (priv:time-compare time1 time2) 0))
 
     ;; ====================
     ;; Time arithmetic procedures
