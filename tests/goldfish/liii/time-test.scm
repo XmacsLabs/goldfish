@@ -796,6 +796,32 @@ wrong-type-arg
   (check (date-year d) => 2000)
   (check (date-zone-offset d) => -14400))
 
+#|
+date-year-day
+获取日期在当年中的序号（1-365/366）。
+
+语法
+----
+(date-year-day date)
+
+参数
+----
+date : date?
+日期对象。
+
+返回值
+-----
+integer?
+当年中的第几天，1 表示 1 月 1 日。
+
+错误处理
+--------
+wrong-type-arg
+当参数不是日期对象时抛出错误。
+value-error
+当日期的月份不合法时抛出错误。
+|#
+
 ;; Test date-year-day
 (let ((d1 (make-date 0 0 0 0 1 1 2023 0))   ; non-leap year
       (d2 (make-date 0 0 0 0 1 3 2023 0))
@@ -808,6 +834,35 @@ wrong-type-arg
   (check (date-year-day d4) => 365)
   (check (date-year-day d5) => 366))
 
+;; Test date-year-day error conditions
+(check-catch 'wrong-type-arg (date-year-day "not-a-date"))
+(check-catch 'value-error (date-year-day (make-date 0 0 0 0 1 0 2023 0)))
+(check-catch 'value-error (date-year-day (make-date 0 0 0 0 1 13 2023 0)))
+
+#|
+date-week-day
+获取日期是星期几（周日=0，周一=1，...）。
+
+语法
+----
+(date-week-day date)
+
+参数
+----
+date : date?
+日期对象。
+
+返回值
+-----
+integer?
+星期几的编号，范围 0-6。
+
+错误处理
+--------
+wrong-type-arg
+当参数不是日期对象时抛出错误。
+|#
+
 ;; Test date-week-day
 (let ((d1 (make-date 0 0 0 0 1 1 1970 0))   ; 1970-01-01 Thu
       (d2 (make-date 0 0 0 0 25 12 2023 0)) ; 2023-12-25 Mon
@@ -815,6 +870,36 @@ wrong-type-arg
   (check (date-week-day d1) => 4)
   (check (date-week-day d2) => 1)
   (check (date-week-day d3) => 4))
+
+;; Test date-week-day error conditions
+(check-catch 'wrong-type-arg (date-week-day "not-a-date"))
+
+#|
+date-week-number
+获取日期在当年的周序号（忽略年初的残周）。
+
+语法
+----
+(date-week-number date day-of-week-starting-week)
+
+参数
+----
+date : date?
+日期对象。
+
+day-of-week-starting-week : integer?
+一周从哪一天开始（周日=0，周一=1，...）。
+
+返回值
+-----
+integer?
+周序号（从 0 开始计数）。
+
+错误处理
+--------
+wrong-type-arg
+当参数不是日期对象时抛出错误。
+|#
 
 ;; Test date-week-number (ignore first partial week)
 (let ((d1 (make-date 0 0 0 0 4 1 1970 0))   ; 1970-01-04 Sun
@@ -827,6 +912,9 @@ wrong-type-arg
   (check (date-week-number d3 1) => 0)
   (check (date-week-number d4 1) => 1)
   (check (date-week-number d5 1) => 52))
+
+;; Test date-week-number error conditions
+(check-catch 'wrong-type-arg (date-week-number "not-a-date" 0))
 
 ;; Test error conditions
 (check-catch 'wrong-type-arg (date-nanosecond "not-a-date"))
