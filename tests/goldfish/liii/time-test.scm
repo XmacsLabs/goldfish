@@ -849,6 +849,37 @@ time-utc->date
 
 date->time-utc
 将日期对象转换为 TIME-UTC 时间对象。
+
+语法
+----
+(time-utc->date time-utc [tz-offset])
+(date->time-utc date)
+
+参数
+----
+time-utc : time?
+必须是 TIME-UTC 类型的时间对象。
+
+tz-offset : integer? (可选)
+时区偏移（秒），默认 0 表示 UTC。
+
+date : date?
+日期对象。
+
+返回值
+-----
+time-utc->date : date?
+date->time-utc : time?
+
+说明
+----
+1. time-utc->date 将 UTC 时间按 tz-offset 转换成本地日期。
+2. date->time-utc 将本地日期按 date 的 zone-offset 转回 UTC 时间。
+
+错误处理
+--------
+wrong-type-arg
+当参数类型不正确，或 time-utc 不是 TIME-UTC 时抛出错误。
 |#
 
 ;; time-utc->date basic (UTC)
@@ -932,6 +963,78 @@ date->time-utc
   (check (date-second d2) => (date-second d1))
   (check (date-nanosecond d2) => (date-nanosecond d1))
   (check (date-zone-offset d2) => (date-zone-offset d1)))
+
+;; 2000-02-29 leap day round-trip (UTC)
+(let* ((d1 (make-date 0 0 0 0 29 2 2000 0))
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 2000)
+  (check (date-month d2) => 2)
+  (check (date-day d2) => 29))
+
+;; additional leap year boundary cases (UTC)
+(let* ((d1 (make-date 0 0 0 0 28 2 1900 0)) ; 1900 is not a leap year
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 1900)
+  (check (date-month d2) => 2)
+  (check (date-day d2) => 28))
+
+(let* ((d1 (make-date 0 0 0 0 1 3 1900 0))
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 1900)
+  (check (date-month d2) => 3)
+  (check (date-day d2) => 1))
+
+(let* ((d1 (make-date 0 0 0 0 29 2 2004 0)) ; regular leap year
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 2004)
+  (check (date-month d2) => 2)
+  (check (date-day d2) => 29))
+
+(let* ((d1 (make-date 0 0 0 0 28 2 2100 0)) ; 2100 is not a leap year
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 2100)
+  (check (date-month d2) => 2)
+  (check (date-day d2) => 28))
+
+(let* ((d1 (make-date 0 0 0 0 1 3 2100 0))
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 2100)
+  (check (date-month d2) => 3)
+  (check (date-day d2) => 1))
+
+(let* ((d1 (make-date 0 0 0 0 29 2 2400 0)) ; 2400 is a leap year
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t 0)))
+  (check (date-year d2) => 2400)
+  (check (date-month d2) => 2)
+  (check (date-day d2) => 29))
+
+;; time-utc -> date -> time-utc round-trip cases
+(let* ((t1 (make-time TIME-UTC 0 0))
+       (d (time-utc->date t1))
+       (t2 (date->time-utc d)))
+  (check (time=? t1 t2) => #t))
+
+(let* ((t1 (make-time TIME-UTC 123456789 98765))
+       (d (time-utc->date t1))
+       (t2 (date->time-utc d)))
+  (check (time=? t1 t2) => #t))
+
+(let* ((t1 (make-time TIME-UTC 500000000 -12345))
+       (d (time-utc->date t1))
+       (t2 (date->time-utc d)))
+  (check (time=? t1 t2) => #t))
+
+(let* ((t1 (make-time TIME-UTC 0 1704067200))
+       (d (time-utc->date t1))
+       (t2 (date->time-utc d)))
+  (check (time=? t1 t2) => #t))
 
 ;; converter error conditions
 (check-catch 'wrong-type-arg
