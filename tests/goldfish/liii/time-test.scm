@@ -808,6 +808,26 @@ wrong-type-arg
   (check (date-year-day d4) => 365)
   (check (date-year-day d5) => 366))
 
+;; Test date-week-day
+(let ((d1 (make-date 0 0 0 0 1 1 1970 0))   ; 1970-01-01 Thu
+      (d2 (make-date 0 0 0 0 25 12 2023 0)) ; 2023-12-25 Mon
+      (d3 (make-date 0 0 0 0 29 2 2024 0))) ; 2024-02-29 Thu
+  (check (date-week-day d1) => 4)
+  (check (date-week-day d2) => 1)
+  (check (date-week-day d3) => 4))
+
+;; Test date-week-number (ignore first partial week)
+(let ((d1 (make-date 0 0 0 0 4 1 1970 0))   ; 1970-01-04 Sun
+      (d2 (make-date 0 0 0 0 11 1 1970 0))  ; 1970-01-11 Sun
+      (d3 (make-date 0 0 0 0 5 1 1970 0))   ; 1970-01-05 Mon
+      (d4 (make-date 0 0 0 0 12 1 1970 0))  ; 1970-01-12 Mon
+      (d5 (make-date 0 0 0 0 31 12 2024 0)))
+  (check (date-week-number d1 0) => 0)
+  (check (date-week-number d2 0) => 1)
+  (check (date-week-number d3 1) => 0)
+  (check (date-week-number d4 1) => 1)
+  (check (date-week-number d5 1) => 52))
+
 ;; Test error conditions
 (check-catch 'wrong-type-arg (date-nanosecond "not-a-date"))
 (check-catch 'wrong-type-arg (date-second 123))
