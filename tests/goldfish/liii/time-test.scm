@@ -808,6 +808,108 @@ wrong-type-arg
 (check-catch 'wrong-type-arg (date-zone-offset #f))
 
 ;; ====================
+;; Time/Date Converters
+;; ====================
+
+#|
+time-utc->date
+将 TIME-UTC 时间对象转换为日期对象。
+
+date->time-utc
+将日期对象转换为 TIME-UTC 时间对象。
+|#
+
+;; time-utc->date basic (UTC)
+(let* ((t (make-time TIME-UTC 0 0))
+       (d (time-utc->date t 0)))
+  (check (date-year d) => 1970)
+  (check (date-month d) => 1)
+  (check (date-day d) => 1)
+  (check (date-hour d) => 0)
+  (check (date-minute d) => 0)
+  (check (date-second d) => 0)
+  (check (date-zone-offset d) => 0))
+
+;; time-utc->date with positive tz offset (+8)
+(let* ((t (make-time TIME-UTC 0 0))
+       (d (time-utc->date t 28800)))
+  (check (date-year d) => 1970)
+  (check (date-month d) => 1)
+  (check (date-day d) => 1)
+  (check (date-hour d) => 8)
+  (check (date-minute d) => 0)
+  (check (date-second d) => 0)
+  (check (date-zone-offset d) => 28800))
+
+;; time-utc->date with negative tz offset (-1 hour)
+(let* ((t (make-time TIME-UTC 0 0))
+       (d (time-utc->date t -3600)))
+  (check (date-year d) => 1969)
+  (check (date-month d) => 12)
+  (check (date-day d) => 31)
+  (check (date-hour d) => 23)
+  (check (date-minute d) => 0)
+  (check (date-second d) => 0)
+  (check (date-zone-offset d) => -3600))
+
+;; time-utc->date before 1970
+(let* ((t (make-time TIME-UTC 0 -1))
+       (d (time-utc->date t 0)))
+  (check (date-year d) => 1969)
+  (check (date-month d) => 12)
+  (check (date-day d) => 31)
+  (check (date-hour d) => 23)
+  (check (date-minute d) => 59)
+  (check (date-second d) => 59))
+
+;; time-utc->date negative day boundaries
+(let* ((t (make-time TIME-UTC 0 -86400))
+       (d (time-utc->date t 0)))
+  (check (date-year d) => 1969)
+  (check (date-month d) => 12)
+  (check (date-day d) => 31)
+  (check (date-hour d) => 0)
+  (check (date-minute d) => 0)
+  (check (date-second d) => 0))
+
+(let* ((t (make-time TIME-UTC 0 -86401))
+       (d (time-utc->date t 0)))
+  (check (date-year d) => 1969)
+  (check (date-month d) => 12)
+  (check (date-day d) => 30)
+  (check (date-hour d) => 23)
+  (check (date-minute d) => 59)
+  (check (date-second d) => 59))
+
+;; date->time-utc basic
+(let* ((d (make-date 0 0 0 8 1 1 1970 28800))
+       (t (date->time-utc d)))
+  (check (time-type t) => TIME-UTC)
+  (check (time-second t) => 0)
+  (check (time-nanosecond t) => 0))
+
+;; round-trip date -> time -> date with same tz-offset
+(let* ((d1 (make-date 123456789 45 30 14 25 12 2023 28800))
+       (t (date->time-utc d1))
+       (d2 (time-utc->date t (date-zone-offset d1))))
+  (check (date-year d2) => (date-year d1))
+  (check (date-month d2) => (date-month d1))
+  (check (date-day d2) => (date-day d1))
+  (check (date-hour d2) => (date-hour d1))
+  (check (date-minute d2) => (date-minute d1))
+  (check (date-second d2) => (date-second d1))
+  (check (date-nanosecond d2) => (date-nanosecond d1))
+  (check (date-zone-offset d2) => (date-zone-offset d1)))
+
+;; converter error conditions
+(check-catch 'wrong-type-arg
+  (time-utc->date (make-time TIME-TAI 0 0) 0))
+(check-catch 'wrong-type-arg
+  (time-utc->date (make-time TIME-UTC 0 0) "bad-offset"))
+(check-catch 'wrong-type-arg
+  (date->time-utc "not-a-date"))
+
+;; ====================
 ;; Date to String/String to Date Converters
 ;; ====================
 
