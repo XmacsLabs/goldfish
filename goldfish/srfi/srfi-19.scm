@@ -418,16 +418,20 @@
     ;; Time/Date/Julian Day/Modified Julian Day Converters
     ;; ====================
 
-    (define (priv:days-before-year year)
-      (+ (* 365 year)
-         (floor-quotient year 4)
-         (- (floor-quotient year 100))
-         (floor-quotient year 400)))
-
     (define (priv:days-since-epoch year month day)
-      (+ (- (priv:days-before-year year)
-            (priv:days-before-year 1970))
-         (- (priv:year-day day month year) 1)))
+      ;; Howard Hinnant's days_from_civil algorithm, inverse of civil-from-days
+      (let* ((y (- year (if (<= month 2) 1 0)))
+             (era (if (>= y 0)
+                    (floor-quotient y 400)
+                    (floor-quotient (- y 399) 400)))
+             (yoe (- y (* era 400)))
+             (m (+ month (if (> month 2) -3 9))) ; March=0, ..., February=11
+             (doy (+ (floor-quotient (+ (* 153 m) 2) 5) (- day 1)))
+             (doe (+ (* yoe 365)
+                     (floor-quotient yoe 4)
+                     (- (floor-quotient yoe 100))
+                     doy)))
+        (- (+ (* era 146097) doe) 719468)))
 
     (define (priv:civil-from-days days)
       ;; Howard Hinnant's algorithm, adapted for proleptic Gregorian calendar
@@ -450,6 +454,8 @@
              (y (if (<= m 2) (+ y 1) y)))
         (values y m d)))
 
+    ;; TODO: spec says default tz-offset should be local time zone.
+    ;; We don't have a local tz interface yet, so default is 0 (UTC).
     (define* (time-utc->date time-utc (tz-offset 0))
       (unless (and (time? time-utc) (eq? (time-type time-utc) TIME-UTC))
         (error 'wrong-type-arg "time-utc->date: time-utc must be a TIME-UTC object" time-utc))
