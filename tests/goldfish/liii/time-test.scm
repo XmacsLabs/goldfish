@@ -1019,22 +1019,22 @@ wrong-type-arg
 (let* ((t1 (make-time TIME-UTC 0 0))
        (d (time-utc->date t1))
        (t2 (date->time-utc d)))
-  (check (time=? t1 t2) => #t))
+  (check-true (time=? t1 t2)))
 
 (let* ((t1 (make-time TIME-UTC 123456789 98765))
        (d (time-utc->date t1))
        (t2 (date->time-utc d)))
-  (check (time=? t1 t2) => #t))
+  (check-true (time=? t1 t2)))
 
 (let* ((t1 (make-time TIME-UTC 500000000 -12345))
        (d (time-utc->date t1))
        (t2 (date->time-utc d)))
-  (check (time=? t1 t2) => #t))
+  (check-true (time=? t1 t2)))
 
 (let* ((t1 (make-time TIME-UTC 0 1704067200))
        (d (time-utc->date t1))
        (t2 (date->time-utc d)))
-  (check (time=? t1 t2) => #t))
+  (check-true (time=? t1 t2)))
 
 ;; converter error conditions
 (check-catch 'wrong-type-arg
