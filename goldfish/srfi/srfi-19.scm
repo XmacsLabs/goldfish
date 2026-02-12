@@ -75,6 +75,7 @@
     date-nanosecond date-second date-minute date-hour
     date-day        date-month  date-year   date-zone-offset
     ;; Time/Date/Julian Day/Modified Julian Day Converters
+    time-utc->date date->time-utc
     ;; Date to String/String to Date Converters
     date->string)
   (begin
@@ -415,7 +416,63 @@
     ;; Time/Date/Julian Day/Modified Julian Day Converters
     ;; ====================
 
-    ;; TODO
+    (define (priv:days-before-year year)
+      (+ (* 365 year)
+         (floor-quotient year 4)
+         (- (floor-quotient year 100))
+         (floor-quotient year 400)))
+
+    (define (priv:days-since-epoch year month day)
+      (+ (- (priv:days-before-year year)
+            (priv:days-before-year 1970))
+         (- (priv:year-day day month year) 1)))
+
+    (define (priv:civil-from-days days)
+      ;; Howard Hinnant's algorithm, adapted for proleptic Gregorian calendar
+      (let* ((z (+ days 719468))
+             (era (if (>= z 0)
+                    (floor-quotient z 146097)
+                    (floor-quotient (- z 146096) 146097)))
+             (doe (- z (* era 146097))) ; [0, 146096]
+             (yoe (floor-quotient (- doe (floor-quotient doe 1460)
+                                    (- (floor-quotient doe 36524))
+                                    (floor-quotient doe 146096))
+                                  365))
+             (y (+ yoe (* era 400)))
+             (doy (- doe (+ (* 365 yoe)
+                            (floor-quotient yoe 4)
+                            (- (floor-quotient yoe 100)))))
+             (mp (floor-quotient (+ (* 5 doy) 2) 153))
+             (d (+ (- doy (floor-quotient (+ (* 153 mp) 2) 5)) 1))
+             (m (+ mp (if (< mp 10) 3 -9)))
+             (y (if (<= m 2) (+ y 1) y)))
+        (values y m d)))
+
+    (define* (time-utc->date time-utc (tz-offset 0))
+      (unless (and (time? time-utc) (eq? (time-type time-utc) TIME-UTC))
+        (error 'wrong-type-arg "time-utc->date: time-utc must be a TIME-UTC object" time-utc))
+      (unless (integer? tz-offset)
+        (error 'wrong-type-arg "time-utc->date: tz-offset must be an integer" tz-offset))
+      (let* ((sec (+ (time-second time-utc) tz-offset))
+             (nsec (time-nanosecond time-utc)))
+        (receive (days day-sec) (floor/ sec priv:SID)
+          (receive (year month day) (priv:civil-from-days days)
+            (receive (hour rem1) (floor/ day-sec 3600)
+              (receive (minute second) (floor/ rem1 60)
+                (make-date nsec second minute hour day month year tz-offset)))))))
+
+    (define (date->time-utc date)
+      (unless (date? date)
+        (error 'wrong-type-arg "date->time-utc: date must be a date object" date))
+      (let* ((days (priv:days-since-epoch (date-year date)
+                                          (date-month date)
+                                          (date-day date)))
+             (local-sec (+ (* days priv:SID)
+                           (* (date-hour date) 3600)
+                           (* (date-minute date) 60)
+                           (date-second date)))
+             (utc-sec (- local-sec (date-zone-offset date))))
+        (make-time TIME-UTC (date-nanosecond date) utc-sec)))
 
     ;; ====================
     ;; Date to String/String to Date Converters
