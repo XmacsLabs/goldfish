@@ -454,6 +454,8 @@
              (y (if (<= m 2) (+ y 1) y)))
         (values y m d)))
 
+    ;; TODO: spec says default tz-offset should be local time zone.
+    ;; We don't have a local tz interface yet, so default is 0 (UTC).
     (define* (time-utc->date time-utc (tz-offset 0))
       (unless (and (time? time-utc) (eq? (time-type time-utc) TIME-UTC))
         (error 'wrong-type-arg "time-utc->date: time-utc must be a TIME-UTC object" time-utc))
