@@ -74,6 +74,7 @@
     make-date date?
     date-nanosecond date-second date-minute date-hour
     date-day        date-month  date-year   date-zone-offset
+    date-year-day
     ;; Time/Date/Julian Day/Modified Julian Day Converters
     time-utc->date date->time-utc
     ;; Date to String/String to Date Converters

@@ -796,6 +796,18 @@ wrong-type-arg
   (check (date-year d) => 2000)
   (check (date-zone-offset d) => -14400))
 
+;; Test date-year-day
+(let ((d1 (make-date 0 0 0 0 1 1 2023 0))   ; non-leap year
+      (d2 (make-date 0 0 0 0 1 3 2023 0))
+      (d3 (make-date 0 0 0 0 1 3 2024 0))   ; leap year
+      (d4 (make-date 0 0 0 0 31 12 2023 0))
+      (d5 (make-date 0 0 0 0 31 12 2024 0)))    ; negative year
+  (check (date-year-day d1) => 1)
+  (check (date-year-day d2) => 60)
+  (check (date-year-day d3) => 61)
+  (check (date-year-day d4) => 365)
+  (check (date-year-day d5) => 366))
+
 ;; Test error conditions
 (check-catch 'wrong-type-arg (date-nanosecond "not-a-date"))
 (check-catch 'wrong-type-arg (date-second 123))
