@@ -21,6 +21,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
+#include <mutex>
 #include <s7.h>
 #include <string>
 #include <vector>
@@ -56,6 +58,14 @@
 #ifdef GOLDFISH_WITH_REPL
 #include <functional>
 #include <isocline.h>
+#endif
+
+#ifdef GOLDFISH_WITH_COROUTINE
+#include <marl/defer.h>
+#include <marl/event.h>
+#include <marl/scheduler.h>
+#include <marl/task.h>
+#include <marl/waitgroup.h>
 #endif
 
 #define GOLDFISH_VERSION "17.11.25"
@@ -358,7 +368,6 @@ glue_http_stream (s7_scheme* sc) {
   glue_http_stream_get(sc);
   glue_http_stream_post(sc);
 }
-
 
 inline s7_pointer
 string_vector_to_s7_vector (s7_scheme* sc, vector<string> v) {
@@ -985,8 +994,6 @@ glue_liii_hashlib (s7_scheme* sc) {
   glue_sha256 (sc);
 }
 
-
-
 static s7_pointer
 f_isdir (s7_scheme* sc, s7_pointer args) {
   const char*    dir_c= s7_string (s7_car (args));
@@ -1417,6 +1424,254 @@ glue_liii_list (s7_scheme* sc) {
   glue_iota_list (sc);
 }
 
+// -------------------------------- coroutine --------------------------------
+#ifdef GOLDFISH_WITH_COROUTINE
+
+static std::unique_ptr<marl::Scheduler> g_scheduler;
+static std::mutex g_scheduler_mutex;
+
+// Thread-safe queue for coroutine tasks
+static std::mutex g_task_mutex;
+static std::vector<std::function<void()>> g_pending_tasks;
+
+// Store async callbacks for later execution
+static std::mutex g_http_callbacks_mutex;
+static std::vector<std::pair<s7_scheme*, std::function<void()>>> g_http_callbacks;
+
+// Process pending HTTP callbacks (call this periodically or in g_coroutine-wait)
+static void
+process_http_callbacks () {
+  std::vector<std::pair<s7_scheme*, std::function<void()>>> callbacks;
+  {
+    std::lock_guard<std::mutex> lock(g_http_callbacks_mutex);
+    callbacks.swap(g_http_callbacks);
+  }
+  for (auto& callback_pair : callbacks) {
+    callback_pair.second();
+  }
+}
+
+static s7_pointer
+f_coroutine_scheduler_start (s7_scheme* sc, s7_pointer args) {
+  std::lock_guard<std::mutex> lock(g_scheduler_mutex);
+  if (g_scheduler != nullptr) {
+    return s7_make_boolean(sc, false); // already started
+  }
+  
+  s7_int threads = 0;
+  if (s7_is_integer(s7_car(args))) {
+    threads = s7_integer(s7_car(args));
+  }
+  
+  marl::Scheduler::Config config;
+  if (threads > 0) {
+    config.setWorkerThreadCount(static_cast<int>(threads));
+    g_scheduler = std::make_unique<marl::Scheduler>(config);
+  } else {
+    g_scheduler = std::make_unique<marl::Scheduler>(marl::Scheduler::Config::allCores());
+  }
+  g_scheduler->bind();
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_coroutine_scheduler_start (s7_scheme* sc) {
+  const char* name = "g_coroutine-scheduler-start";
+  const char* desc = "(g_coroutine-scheduler-start [threads]) => boolean, start the coroutine scheduler. threads=0 means use all cores";
+  glue_define(sc, name, desc, f_coroutine_scheduler_start, 0, 1);
+}
+
+static s7_pointer
+f_coroutine_scheduler_stop (s7_scheme* sc, s7_pointer args) {
+  std::lock_guard<std::mutex> lock(g_scheduler_mutex);
+  if (g_scheduler == nullptr) {
+    return s7_make_boolean(sc, false); // not started
+  }
+  
+  // Execute any remaining pending tasks before stopping
+  {
+    std::lock_guard<std::mutex> task_lock(g_task_mutex);
+    for (auto& task : g_pending_tasks) {
+      task();
+    }
+    g_pending_tasks.clear();
+  }
+  
+  g_scheduler->unbind();
+  g_scheduler.reset();
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_coroutine_scheduler_stop (s7_scheme* sc) {
+  const char* name = "g_coroutine-scheduler-stop";
+  const char* desc = "(g_coroutine-scheduler-stop) => boolean, stop the coroutine scheduler";
+  glue_define(sc, name, desc, f_coroutine_scheduler_stop, 0, 0);
+}
+
+static s7_pointer
+f_coroutine_run (s7_scheme* sc, s7_pointer args) {
+  if (g_scheduler == nullptr) {
+    return s7_error(sc, s7_make_symbol(sc, "coroutine-error"),
+                    s7_list(sc, 1, s7_make_string(sc, "scheduler not started")));
+  }
+  
+  s7_pointer thunk = s7_car(args);
+  if (!s7_is_procedure(thunk)) {
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "coroutine-run: expected procedure"), thunk));
+  }
+  
+  // Note: s7 is not thread-safe, so we queue the task for later execution
+  // The task will be executed when g_coroutine-wait is called
+  std::lock_guard<std::mutex> lock(g_task_mutex);
+  g_pending_tasks.push_back([sc, thunk]() {
+    s7_call(sc, thunk, s7_nil(sc));
+  });
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_coroutine_run (s7_scheme* sc) {
+  const char* name = "g_coroutine-run";
+  const char* desc = "(g_coroutine-run thunk) => boolean, run thunk in a coroutine";
+  glue_define(sc, name, desc, f_coroutine_run, 1, 0);
+}
+
+static s7_pointer
+f_coroutine_wait (s7_scheme* sc, s7_pointer args) {
+  if (g_scheduler == nullptr) {
+    return s7_make_boolean(sc, false);
+  }
+  
+  // Execute all pending tasks (s7 is not thread-safe, execute sequentially)
+  std::vector<std::function<void()>> tasks;
+  {
+    std::lock_guard<std::mutex> lock(g_task_mutex);
+    tasks.swap(g_pending_tasks);
+  }
+  
+  for (auto& task : tasks) {
+    task();
+  }
+  
+  // Process any HTTP callbacks
+  process_http_callbacks();
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_coroutine_wait (s7_scheme* sc) {
+  const char* name = "g_coroutine-wait";
+  const char* desc = "(g_coroutine-wait) => boolean, wait for all coroutines to complete";
+  glue_define(sc, name, desc, f_coroutine_wait, 0, 0);
+}
+
+static s7_pointer
+f_coroutine_yield (s7_scheme* sc, s7_pointer args) {
+  // Yield is automatic in marl when a fiber blocks
+  // We can use this as a hint to the scheduler
+  auto scheduler = marl::Scheduler::get();
+  if (scheduler != nullptr) {
+    // Allow other tasks to run by yielding this thread
+    std::this_thread::yield();
+  }
+  return s7_nil(sc);
+}
+
+inline void
+glue_coroutine_yield (s7_scheme* sc) {
+  const char* name = "g_coroutine-yield";
+  const char* desc = "(g_coroutine-yield) => nil, hint the scheduler to yield to other tasks";
+  glue_define(sc, name, desc, f_coroutine_yield, 0, 0);
+}
+
+static s7_pointer
+f_coroutine_sleep (s7_scheme* sc, s7_pointer args) {
+  s7_double seconds = s7_real(s7_car(args));
+  auto milliseconds = static_cast<int>(seconds * 1000);
+  
+  // Use marl::Event for non-blocking sleep within coroutines
+  marl::Event event(marl::Event::Mode::Manual);
+  marl::schedule([event, milliseconds]() mutable {
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+    event.signal();
+  });
+  event.wait();
+  
+  return s7_nil(sc);
+}
+
+inline void
+glue_coroutine_sleep (s7_scheme* sc) {
+  const char* name = "g_coroutine-sleep";
+  const char* desc = "(g_coroutine-sleep seconds) => nil, non-blocking sleep for specified seconds";
+  glue_define(sc, name, desc, f_coroutine_sleep, 1, 0);
+}
+
+// Async HTTP support
+static s7_pointer
+f_http_async_get (s7_scheme* sc, s7_pointer args) {
+  const char* url = s7_string(s7_car(args));
+  s7_pointer params = s7_cadr(args);
+  s7_pointer callback = s7_caddr(args);
+  
+  if (!s7_is_procedure(callback)) {
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "http-async-get: expected callback procedure"), callback));
+  }
+  
+  // Protect callback from GC
+  int gc_loc = s7_gc_protect(sc, callback);
+  
+  // Use cpr::GetAsync for non-blocking HTTP request
+  auto future = std::make_shared<cpr::AsyncResponse>(cpr::GetAsync(cpr::Url(url)));
+  
+  // Schedule a task to wait for completion and call the callback
+  marl::schedule([sc, callback, gc_loc, future]() mutable {
+    cpr::Response r = future->get();  // This blocks only this fiber, not the main thread
+    
+    // Queue the callback to be executed in the main thread
+    std::lock_guard<std::mutex> lock(g_http_callbacks_mutex);
+    g_http_callbacks.push_back({sc, [sc, callback, gc_loc, r]() mutable {
+      s7_pointer ht = response2hashtable(sc, r);
+      s7_call(sc, callback, s7_cons(sc, ht, s7_nil(sc)));
+      s7_gc_unprotect_at(sc, gc_loc);
+    }});
+  });
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_http_async_get (s7_scheme* sc) {
+  const char* name = "g_http-async-get";
+  const char* desc = "(g_http-async-get url params callback) => boolean, async http get. callback receives response hashtable";
+  glue_define(sc, name, desc, f_http_async_get, 3, 0);
+}
+
+inline void
+glue_http_async (s7_scheme* sc) {
+  glue_http_async_get(sc);
+}
+
+inline void
+glue_liii_coroutine (s7_scheme* sc) {
+  glue_coroutine_scheduler_start (sc);
+  glue_coroutine_scheduler_stop (sc);
+  glue_coroutine_run (sc);
+  glue_coroutine_wait (sc);
+  glue_coroutine_yield (sc);
+  glue_coroutine_sleep (sc);
+  glue_http_async (sc);
+}
+
+#endif // GOLDFISH_WITH_COROUTINE
+
 void
 glue_for_community_edition (s7_scheme* sc) {
   glue_goldfish (sc);
@@ -1430,8 +1685,14 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_datetime (sc);
   glue_liii_uuid (sc);
   glue_liii_hashlib (sc);
+#ifdef GOLDFISH_WITH_COROUTINE
+  glue_liii_coroutine (sc);
+#endif
   glue_http (sc);
   glue_http_stream (sc);
+#ifdef GOLDFISH_WITH_COROUTINE
+  glue_http_async (sc);
+#endif
 }
 
 static void

@@ -48,6 +48,12 @@ if has_config("http") then
     add_requires("cpr")
 end
 
+option("coroutine")
+    set_description("Enable coroutine support (marl)")
+    set_default(true)
+    set_values(false, true)
+option_end()
+
 local S7_VERSION = "20250922"
 if has_config("pin-deps") then
     add_requires("s7 "..S7_VERSION, {system=system})
@@ -83,6 +89,16 @@ else
     add_requires("isocline", {system=system})
 end
 
+-- marl for coroutine support
+if has_config("coroutine") then
+    local MARL_VERSION = "2025.02.23"
+    if has_config("pin-deps") then
+        add_requires("marl " .. MARL_VERSION, {system=system})
+    else
+        add_requires("marl", {system=system})
+    end
+end
+
 -- local header only dependency, no need to (un)pin version
 add_requires("argh v1.3.2")
 
@@ -106,6 +122,12 @@ target ("goldfish") do
     if has_config("repl") then
         add_packages("isocline")
         add_defines("GOLDFISH_WITH_REPL")
+    end
+
+    -- only enable coroutine if coroutine option is enabled
+    if has_config("coroutine") then
+        add_packages("marl")
+        add_defines("GOLDFISH_WITH_COROUTINE")
     end
 
     add_installfiles("$(projectdir)/goldfish/(scheme/*.scm)", {prefixdir = "share/goldfish"})
