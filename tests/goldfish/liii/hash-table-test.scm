@@ -280,4 +280,19 @@
 (check (hash-table->alist (alist->hash-table (list 'k1 'v1)))
        => (list 'k1 'v1))
 
+(let1 ht (make-hash-table)
+  (hash-table-set! ht 'k1 'v1)
+  (hash-table-set! ht 'k2 'v2)
+  (let1 ht-copy (hash-table-copy ht)
+    ;; 复制后内容一致
+    (check (hash-table->alist ht-copy) => (hash-table->alist ht))
+    ;; 修改副本不影响原表
+    (hash-table-set! ht-copy 'k1 'modified)
+    (check (hash-table-ref ht 'k1) => 'v1)
+    (check (hash-table-ref ht-copy 'k1) => 'modified)
+    ;; 原表无此键，副本有
+    (hash-table-set! ht-copy 'k3 'v3)
+    (check (hash-table-ref ht 'k3) => #f)
+    (check (hash-table-ref ht-copy 'k3) => 'v3)))
+
 (check-report)
