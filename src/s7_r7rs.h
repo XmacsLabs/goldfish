@@ -23,6 +23,9 @@ extern s7_pointer unlink_symbol, access_symbol, time_symbol, clock_gettime_symbo
 s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args);
 s7_pointer sqrt_p_p(s7_scheme *sc, s7_pointer num);
 
+/* Helper function to check for NaN */
+bool is_NaN(s7_double x);
+
 /* R7RS Scheme code string */
 extern const char r7rs_scm[];
 

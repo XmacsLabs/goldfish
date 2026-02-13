@@ -13197,7 +13197,7 @@ static bool is_positive(s7_scheme *sc, s7_pointer x);
 static bool is_negative(s7_scheme *sc, s7_pointer x);
 static s7_pointer make_ratio(s7_scheme *sc, s7_int a, s7_int b);
 
-static bool is_NaN(s7_double x) {return(x != x);}
+/* is_NaN is declared in s7_r7rs.h and defined in s7_r7rs.c */
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
 
 #if defined(__sun) && defined(__SVR4)

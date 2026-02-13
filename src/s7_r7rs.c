@@ -6,11 +6,17 @@
  * Bill Schottstaedt, bil@ccrma.stanford.edu
  */
 
-#ifndef HAVE_COMPLEX_NUMBERS
-  #if __TINYC__ || (__clang__ && __cplusplus)
+#ifdef _MSC_VER
+  #ifndef HAVE_COMPLEX_NUMBERS
     #define HAVE_COMPLEX_NUMBERS 0
-  #else
-    #define HAVE_COMPLEX_NUMBERS 1
+  #endif
+#else
+  #ifndef HAVE_COMPLEX_NUMBERS
+    #if __TINYC__ || (__clang__ && __cplusplus)
+      #define HAVE_COMPLEX_NUMBERS 0
+    #else
+      #define HAVE_COMPLEX_NUMBERS 1
+    #endif
   #endif
 #endif
 
@@ -25,8 +31,8 @@
 const char r7rs_scm[] = "";
 
 /* -------------------------------- sqrt -------------------------------- */
-/* Helper to check if a double is NaN */
-static bool is_nan(double x)
+/* Helper function to check for NaN */
+bool is_NaN(s7_double x)
 {
   return x != x;
 }
@@ -85,7 +91,7 @@ s7_pointer sqrt_p_p(s7_scheme *sc, s7_pointer num)
   if (s7_is_real(num))
     {
       double rv = s7_real(num);
-      if (is_nan(rv)) return num;
+      if (is_NaN(rv)) return num;
       if (rv >= 0.0)
         return s7_make_real(sc, sqrt(rv));
       return make_complex_not_0i(sc, 0.0, sqrt(-rv));
