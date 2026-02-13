@@ -44,16 +44,21 @@ option("http")
     set_values(false, true)
 option_end()
 
+option("gmp")
+    set_description("Enable GMP support for S7")
+    set_default(false)
+    set_values(false, true)
+option_end()
+
 if has_config("http") then
     add_requires("cpr")
 end
 
-local S7_VERSION = "20250922"
-if has_config("pin-deps") then
-    add_requires("s7 "..S7_VERSION, {system=system})
-else
-    add_requires("s7", {system=system})
+if has_config("gmp") then
+    add_requires("gmp")
 end
+
+-- S7 is now included as source files in src/ directory
 
 local TBOX_VERSION = "1.7.7"
 if has_config("tbox") then
@@ -96,11 +101,26 @@ target ("goldfish") do
         -- preload goldfish stdlib in `bin/goldfish.data`
         add_ldflags("--preload-file goldfish@/goldfish")
     end
-    add_files ("src/goldfish.cpp")
-    add_packages("s7")
+    add_files ("src/goldfish.cpp", "src/s7.c")
     add_packages("tbox")
     add_packages("argh")
     add_packages("cpr")
+
+    -- S7 configuration from original 3rdparty/s7/xmake.lua
+    add_defines("WITH_SYSTEM_EXTRAS=0")
+    if not is_plat("wasm") then
+        add_defines("HAVE_OVERFLOW_CHECKS=0")
+    end
+    add_defines("WITH_WARNINGS")
+    add_defines("WITH_R7RS=1")
+    if is_mode("debug") then
+        add_defines("S7_DEBUGGING")
+    end
+    add_options("gmp")
+    if has_config("gmp") then
+        add_defines("WITH_GMP")
+        add_packages("gmp")
+    end
 
     -- only enable REPL if repl option is enabled
     if has_config("repl") then
@@ -120,8 +140,23 @@ target("goldfish_repl_wasm")
     set_languages("c++17")
     set_targetdir("$(projectdir)/repl/")
     add_files("src/goldfish_repl.cpp")
-    add_packages("s7", "tbox", "argh")
+    add_packages("tbox", "argh")
     add_defines("GOLDFISH_ENABLE_REPL")
+
+    -- S7 configuration from original 3rdparty/s7/xmake.lua
+    add_defines("WITH_SYSTEM_EXTRAS=0")
+    -- WASM platform doesn't have HAVE_OVERFLOW_CHECKS=0
+    add_defines("WITH_WARNINGS")
+    add_defines("WITH_R7RS=1")
+    if is_mode("debug") then
+        add_defines("S7_DEBUGGING")
+    end
+    add_options("gmp")
+    if has_config("gmp") then
+        add_defines("WITH_GMP")
+        add_packages("gmp")
+    end
+
     add_ldflags("--preload-file goldfish@/goldfish")
     -- 导出 REPL 相关函数
     add_ldflags("-sEXPORTED_FUNCTIONS=['_eval_string','_get_out','_get_err','_malloc','_free']", {force = true})

@@ -21,7 +21,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <s7.h>
+#include "s7.h"
 #include <string>
 #include <vector>
 #include <thread>
