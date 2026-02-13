@@ -153,7 +153,7 @@ path : 文件路径（string类型）
 (when (or (os-linux?) (os-macos?))
   (check (path-file? "/etc/passwd") => #t)
   (check (path-file? "/etc/hosts") => #t)
-  (check (path-file? "/bin/ls") => #t))
+  (check (path-file? "/usr/bin/env") => #t))
 
 (when (os-windows?)
   (check (path-file? "C:/Windows/System32/drivers/etc/hosts") => #t)
@@ -1009,7 +1009,7 @@ boolean
 ;; 文件存在性测试
 (when (or (os-linux?) (os-macos?))
   (check-true (path-exists? "/etc/passwd"))
-  (check-true (path-exists? "/bin/sh")))
+  (check-true (path-exists? "/usr/bin/env")))
 
 (when (os-windows?)
   (check-true (path-exists? "C:\\Windows\\System32\\drivers\\etc\\hosts"))
