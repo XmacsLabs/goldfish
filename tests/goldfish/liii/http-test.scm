@@ -3,7 +3,8 @@
         (liii string)
         (liii rich-json)
         (only (liii lang) display*)
-        (only (liii base) let1))
+        (only (liii base) let1)
+        (liii time))
 
 (check-set-mode! 'report-failed)
 
@@ -130,6 +131,63 @@
   (let ((response (string-join (reverse collected) "")))
     (check-true (> (string-length response) 0))
     (check-true (string-contains response "stream-test"))))
+
+;; Async HTTP tests
+
+;; Test async GET request
+(let ((async-completed #f)
+      (async-response #f))
+  (http-async-get "https://httpbin.org/get"
+    (lambda (response)
+      (set! async-completed #t)
+      (set! async-response response)))
+  (http-wait-all 30)
+  (check-true async-completed)
+  (check (async-response 'status-code) => 200)
+  (check-true (string-contains (async-response 'text) "httpbin.org")))
+
+;; Test async POST request
+(let ((post-completed #f)
+      (post-response #f))
+  (http-async-post "https://httpbin.org/post"
+    (lambda (response)
+      (set! post-completed #t)
+      (set! post-response response))
+    '()                                    ; params
+    "{\"test\": \"async-post\"}"              ; body
+    '(("Content-Type" . "application/json")) ; headers
+    '())                                   ; proxy
+  (http-wait-all 30)
+  (check-true post-completed)
+  (check (post-response 'status-code) => 200)
+  (check-true (string-contains (post-response 'text) "async-post")))
+
+;; Test multiple concurrent async requests
+(let ((completed-count 0)
+      (start-time (current-second)))
+  (http-async-get "https://httpbin.org/delay/1" (lambda (r) (set! completed-count (+ completed-count 1))))
+  (http-async-get "https://httpbin.org/delay/1" (lambda (r) (set! completed-count (+ completed-count 1))))
+  (http-async-get "https://httpbin.org/delay/1" (lambda (r) (set! completed-count (+ completed-count 1))))
+  (http-wait-all 30)
+  (let ((elapsed (- (current-second) start-time)))
+    ;; All 3 requests should complete in ~1s (concurrent), not ~3s (sequential)
+    (check completed-count => 3)
+    ;; Allow some tolerance for network latency
+    (check-true (< elapsed 5.0)))) ; Async requests should complete concurrently
+
+;; Test http-poll returns correct count
+(let ((poll-count 0))
+  (http-async-get "https://httpbin.org/get" (lambda (r) (set! poll-count (+ poll-count 1))))
+  ;; Poll until completion
+  (let loop ((pending #t))
+    (when pending
+      (let ((executed (http-poll)))
+        (if (> executed 0)
+            (display (string-append "Poll executed " (number->string executed) " callback(s)\n"))
+            (begin
+              (sleep 0.05)
+              (loop #t))))))
+  (check poll-count => 1))
 
 (check-report)
 
