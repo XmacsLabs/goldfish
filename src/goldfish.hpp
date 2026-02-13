@@ -1319,8 +1319,8 @@ f_md5_file (s7_scheme* sc, s7_pointer args) {
 
 inline void
 glue_md5_file (s7_scheme* sc) {
-  const char* name= "g_md5-file";
-  const char* desc= "(g_md5-file path) => string|#f";
+  const char* name= "g_md5-by-file";
+  const char* desc= "(g_md5-by-file path) => string|#f";
   glue_define (sc, name, desc, f_md5_file, 1, 0);
 }
 
@@ -1360,8 +1360,8 @@ f_sha1_file (s7_scheme* sc, s7_pointer args) {
 
 inline void
 glue_sha1_file (s7_scheme* sc) {
-  const char* name= "g_sha1-file";
-  const char* desc= "(g_sha1-file path) => string|#f";
+  const char* name= "g_sha1-by-file";
+  const char* desc= "(g_sha1-by-file path) => string|#f";
   glue_define (sc, name, desc, f_sha1_file, 1, 0);
 }
 
@@ -1401,8 +1401,8 @@ f_sha256_file (s7_scheme* sc, s7_pointer args) {
 
 inline void
 glue_sha256_file (s7_scheme* sc) {
-  const char* name= "g_sha256-file";
-  const char* desc= "(g_sha256-file path) => string|#f";
+  const char* name= "g_sha256-by-file";
+  const char* desc= "(g_sha256-by-file path) => string|#f";
   glue_define (sc, name, desc, f_sha256_file, 1, 0);
 }
 

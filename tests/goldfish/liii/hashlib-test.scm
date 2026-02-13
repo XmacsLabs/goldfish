@@ -45,14 +45,14 @@
 (let ((tmp-file "tests/resources/hashlib-test-temp.txt")
       (content "hello"))
   (path-write-text tmp-file content)
-  (check (md5-file tmp-file) => (md5 content))
-  (check (sha1-file tmp-file) => (sha1 content))
-  (check (sha256-file tmp-file) => (sha256 content))
+  (check (md5-by-file tmp-file) => (md5 content))
+  (check (sha1-by-file tmp-file) => (sha1 content))
+  (check (sha256-by-file tmp-file) => (sha256 content))
 
   (path-write-text tmp-file "")
-  (check (md5-file tmp-file) => (md5 ""))
-  (check (sha1-file tmp-file) => (sha1 ""))
-  (check (sha256-file tmp-file) => (sha256 ""))
+  (check (md5-by-file tmp-file) => (md5 ""))
+  (check (sha1-by-file tmp-file) => (sha1 ""))
+  (check (sha256-by-file tmp-file) => (sha256 ""))
   (delete-file tmp-file))
 
 ;; Large file (200MB) hash test
@@ -66,9 +66,9 @@
        (ret (os-call download-cmd)))
   (check ret => 0)
   (check (path-getsize large-file) => 209715200)
-  (check (md5-file large-file) => "3389a0b30e05ef6613ccbdae5d9ec0bd")
-  (check (sha1-file large-file) => "fd72443c217d301f8959b5e721f8f0b6fc5eb127")
-  (check (sha256-file large-file) => "d14b73150642f30d2342e6620fa537ea273a58b8b751fc5af8f4aabe809f8fc4")
+  (check (md5-by-file large-file) => "3389a0b30e05ef6613ccbdae5d9ec0bd")
+  (check (sha1-by-file large-file) => "fd72443c217d301f8959b5e721f8f0b6fc5eb127")
+  (check (sha256-by-file large-file) => "d14b73150642f30d2342e6620fa537ea273a58b8b751fc5af8f4aabe809f8fc4")
   (when (path-exists? large-file)
     (delete-file large-file)))
 
