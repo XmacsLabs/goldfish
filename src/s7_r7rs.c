@@ -117,3 +117,24 @@ s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
   #define Q_sqrt sc->pl_nn
   return(sqrt_p_p(sc, s7_car(args)));
 }
+
+/* ---------------------------------------- nan? ---------------------------------------- */
+bool s7_is_nan(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_real(x))
+    {
+      if (s7_is_integer(x) || s7_is_rational(x))
+        return false;
+      return is_NaN(s7_real(x));
+    }
+  if (s7_is_complex(x))
+    return is_NaN(s7_real_part(x)) || is_NaN(s7_imag_part(x));
+  return false;
+}
+
+s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
+  #define Q_is_nan sc->pl_bt
+  return s7_make_boolean(sc, s7_is_nan(sc, s7_car(args)));
+}

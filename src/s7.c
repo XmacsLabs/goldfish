@@ -25528,30 +25528,7 @@ static bool is_float_b(s7_pointer x) {return(is_t_real(x));}
 /* ---------------------------------------- nan? ---------------------------------------- */
 static bool is_nan_b_7p(s7_scheme *sc, s7_pointer x)
 {
-  if (is_t_real(x)) return(is_NaN(real(x)));
-  switch (type(x))
-    {
-    case T_INTEGER:
-    case T_RATIO:   return(false);
-    case T_COMPLEX: return((is_NaN(real_part(x))) || (is_NaN(imag_part(x))));
-#if WITH_GMP
-    case T_BIG_INTEGER:
-    case T_BIG_RATIO:   return(false);
-    case T_BIG_REAL:    return(mpfr_nan_p(big_real(x)) != 0);
-    case T_BIG_COMPLEX: return((mpfr_nan_p(mpc_realref(big_complex(x))) != 0) || (mpfr_nan_p(mpc_imagref(big_complex(x))) != 0));
-#endif
-    default:
-      if (is_number(x))
-	return(method_or_bust_p(sc, x, sc->is_nan_symbol, a_number_string) != sc->F);
-    }
-  return(false);
-}
-
-static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
-  #define Q_is_nan sc->pl_bt
-  return(make_boolean(sc, is_nan_b_7p(sc, car(args))));
+  return s7_is_nan(sc, x);
 }
 
 
@@ -100427,7 +100404,7 @@ static void init_rootlet(s7_scheme *sc)
   sc->is_positive_symbol =           defun("positive?",	        is_positive,		1, 0, false);
   sc->is_negative_symbol =           defun("negative?",	        is_negative,		1, 0, false);
   sc->is_infinite_symbol =           defun("infinite?",	        is_infinite,		1, 0, false);
-  sc->is_nan_symbol =                defun("nan?",		is_nan,			1, 0, false);
+  sc->is_nan_symbol = s7_define_typed_function(sc, "nan?", g_is_nan, 1, 0, false, "(nan? obj) returns #t if obj is a NaN", sc->pl_bt);
   sc->complex_symbol =               defun("complex",	        complex,	        2, 0, false);
 
   sc->add_symbol =                   defun("+",		        add,			0, 0, true); set_all_integer_and_float(sc->add_symbol);
