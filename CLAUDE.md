@@ -78,6 +78,7 @@
 固定的任务编号:
 1. `200_0`: 更新Goldfish Scheme的AUTHORS文件
 2. `200_1`: 更新Goldfish Scheme的版本号
+3. `200_21`: 从 s7.c 拆分出 s7_r7rs.h 和 s7_r7rs.c
 
 ### devel/x_y.md 模板
 ```markdown
