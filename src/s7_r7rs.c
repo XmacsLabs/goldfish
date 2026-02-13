@@ -25,8 +25,6 @@
 #include <time.h>
 #include <math.h>
 
-#if WITH_R7RS
-
 /* R7RS Scheme code string */
 const char r7rs_scm[] = "";
 
@@ -119,5 +117,3 @@ s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
   #define Q_sqrt sc->pl_nn
   return(sqrt_p_p(sc, s7_car(args)));
 }
-
-#endif /* WITH_R7RS */
