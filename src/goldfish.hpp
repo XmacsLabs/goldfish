@@ -1205,10 +1205,12 @@ glue_liii_uuid (s7_scheme* sc) {
 
 inline void
 hash_bytes_to_hex (const tb_byte_t* bytes, tb_size_t length, tb_char_t* hex_output) {
+  static const tb_char_t hex_digits[]= "0123456789abcdef";
   for (tb_size_t i= 0; i < length; ++i) {
-    tb_snprintf (hex_output + (i << 1), 3, "%02x", bytes[i]);
+    hex_output[i * 2]    = hex_digits[bytes[i] >> 4];
+    hex_output[i * 2 + 1]= hex_digits[bytes[i] & 0x0f];
   }
-  hex_output[length << 1]= '\0';
+  hex_output[length * 2]= '\0';
 }
 
 static bool
