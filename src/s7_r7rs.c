@@ -12,10 +12,6 @@
 
 #if WITH_R7RS
 
-/* R7RS specific symbols */
-s7_pointer unlink_symbol, access_symbol, time_symbol, clock_gettime_symbol,
-           getenvs_symbol, uname_symbol;
-
 /* R7RS Scheme code string */
 const char r7rs_scm[] = "";
 

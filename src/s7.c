@@ -1401,7 +1401,7 @@ struct s7_scheme {
              string_to_list_symbol, vector_length_symbol, vector_to_list_symbol;
 #endif
 #if WITH_R7RS
-  s7_pointer unlink_symbol, access_symbol, time_symbol, clock_gettime_symbol, getenvs_symbol, uname_symbol;
+  s7_pointer unlink_symbol, access_symbol, time_symbol, clock_gettime_symbol, uname_symbol;
 #endif
   bool r7rs_inited;
   s7_pointer s7_symbol, r5rs_symbol, r7rs_symbol, global_is_eq, initial_is_eq, global_memq, initial_memq, global_assq, initial_assq;
