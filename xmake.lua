@@ -122,6 +122,13 @@ target ("goldfish") do
         add_packages("gmp")
     end
 
+    -- Windows-specific configuration from original 3rdparty/s7/xmake.lua
+    if is_plat("windows") then
+        set_optimize("faster")
+        set_languages("c11")
+        add_cxxflags("/fp:precise")
+    end
+
     -- only enable REPL if repl option is enabled
     if has_config("repl") then
         add_packages("isocline")
