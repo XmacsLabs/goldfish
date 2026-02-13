@@ -98758,7 +98758,7 @@ static void change_scheme_version(s7_scheme *sc, s7_pointer val)
       s7_pointer args = sc->args; /* TODO: gc protect? */
       /* need to check old and new curlet and whether we're coming from s7 or r5rs if envs match, and if either is rootlet, more headaches */
       /* if ((!sc->r7rs_inited) || (sc->curlet != sc->rootlet)) */ /* TODO: check multiple threads here, also if not rootlet before and not == now, call r7rs_init again (or don't set flag if local?) */
-	r7rs_init(sc);
+      r7rs_init(sc);
       s7_load_c_string_with_environment(sc, r7rs_scm, strlen(r7rs_scm), sc->curlet);
       sc->args = args;
     }
@@ -101626,12 +101626,6 @@ s7_scheme *s7_init(void)
   fprintf(stderr, "sizes: c_proc_t %d, c_object_t %d, vunion: %d, port_t %d, block_t %d, port_functions_t %d, s7_cell %d, s7 %d, opt_info %d\n",
 	  (int)sizeof(c_proc_t), (int)sizeof(c_object_t), (int)sizeof(vunion), (int)sizeof(port_t),
 	  (int)sizeof(block_t), (int)sizeof(port_functions_t), (int)sizeof(s7_cell), (int)sizeof(s7_scheme), (int)sizeof(opt_info));
-#endif
-
-#if WITH_R7RS
-  /* Register getenvs globally so it's available in all modes */
-  s7_define(sc, sc->rootlet, make_symbol(sc, "getenvs", 7),
-            s7_make_typed_function(sc, "getenvs", g_getenvs, 0, 0, false, "(getenvs) returns all the environment variables in an alist", NULL));
 #endif
 
   return(sc);

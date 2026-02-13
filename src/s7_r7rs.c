@@ -447,17 +447,4 @@ s7_pointer g_getenvs(s7_scheme *sc, s7_pointer args)
   return(p);
 }
 
-/* R7RS initialization and support functions */
-void initialize_r7rs_support(s7_scheme *sc)
-{
-  /* Call r7rs_init from s7.c */
-  r7rs_init(sc);
-}
-
-void setup_r7rs_features(s7_scheme *sc)
-{
-  /* setup_r7rs_features is implemented in s7.c as part of r7rs_init */
-  /* No additional setup needed here */
-}
-
 #endif /* WITH_R7RS */
