@@ -1453,9 +1453,6 @@ struct s7_scheme {
 #if WITH_SYSTEM_EXTRAS
   s7_pointer is_directory_symbol, file_exists_symbol, delete_file_symbol, system_symbol, directory_to_list_symbol, file_mtime_symbol;
 #endif
-#if WITH_SYSTEM_EXTRAS || WITH_R7RS
-  s7_pointer getenv_symbol;
-#endif
   s7_pointer open_input_function_choices[S7_NUM_READ_CHOICES];
   s7_pointer closed_input_function, closed_output_function;
   s7_pointer vector_set_function, string_set_function, list_set_function, hash_table_set_function, let_set_function, c_object_set_function, last_function;
@@ -38568,20 +38565,6 @@ static s7_pointer g_file_mtime(s7_scheme *sc, s7_pointer args)
 #endif /* with_system_extras */
 
 
-#if WITH_R7RS || WITH_SYSTEM_EXTRAS
-/* -------------------------------- getenv -------------------------------- */
-static s7_pointer g_getenv(s7_scheme *sc, s7_pointer args) /* r7rs says #f if no such variable. this used to return "" in that case, 6-May-22 */
-{
-  #define H_getenv "(getenv var) returns the value of a let variable, or #f if none is found"
-  #define Q_getenv s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_string_symbol, sc->not_symbol), sc->is_string_symbol)
-  char *result;
-  s7_pointer name = car(args);
-  if (!is_string(name))
-    return(sole_arg_method_or_bust(sc, name, sc->getenv_symbol, args, sc->type_names[T_STRING]));
-  result = getenv(string_value(name));
-  return((result) ? s7_make_string(sc, result) : sc->F);
-}
-#endif
 
 #if WITH_R7RS
 
@@ -100598,9 +100581,6 @@ static void init_rootlet(s7_scheme *sc)
   sc->directory_to_list_symbol =     defun("directory->list",   directory_to_list,	1, 0, false);
   sc->file_mtime_symbol =            defun("file-mtime",	file_mtime,		1, 0, false);
 #endif
-#endif
-#if WITH_R7RS || WITH_SYSTEM_EXTRAS
-  sc->getenv_symbol =                defun("getenv",		getenv,			1, 0, false);
 #endif
   sc->real_part_symbol =             defun("real-part",	        real_part,		1, 0, false);
   sc->imag_part_symbol =             defun("imag-part",	        imag_part,		1, 0, false);
