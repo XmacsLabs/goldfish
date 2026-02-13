@@ -14,7 +14,7 @@
 ; under the License.
 ;
 
-(import (liii check) (liii hashlib) (liii path) (liii os))
+(import (liii check) (liii hashlib) (liii path))
 
 (check (md5 "") => "d41d8cd98f00b204e9800998ecf8427e")
 (check (md5 "hello") => "5d41402abc4b2a76b9719d911017c592")
@@ -55,20 +55,15 @@
   (check (sha256-by-file tmp-file) => (sha256 ""))
   (delete-file tmp-file))
 
-;; Large file (200MB) hash test
-(let* ((large-url "http://ipv4.download.thinkbroadband.com/200MB.zip")
-       (large-file "tests/resources/hashlib-test-large-200MB.zip")
-       (download-cmd (string-append "curl -L --fail --retry 2 --connect-timeout 30 -o \""
-                                    large-file
-                                    "\" \""
-                                    large-url
-                                    "\""))
-       (ret (os-call download-cmd)))
-  (check ret => 0)
-  (check (path-getsize large-file) => 209715200)
-  (check (md5-by-file large-file) => "3389a0b30e05ef6613ccbdae5d9ec0bd")
-  (check (sha1-by-file large-file) => "fd72443c217d301f8959b5e721f8f0b6fc5eb127")
-  (check (sha256-by-file large-file) => "d14b73150642f30d2342e6620fa537ea273a58b8b751fc5af8f4aabe809f8fc4")
+;; Large file hash test (local deterministic data, no network dependency)
+(let* ((large-file "tests/resources/hashlib-test-large-local.txt")
+       (large-size (* 100 1024 1024)) ; 100MB
+       (large-content (make-string large-size #\A)))
+  (path-write-text large-file large-content)
+  (check (path-getsize large-file) => large-size)
+  (check (md5-by-file large-file) => (md5 large-content))
+  (check (sha1-by-file large-file) => (sha1 large-content))
+  (check (sha256-by-file large-file) => (sha256 large-content))
   (when (path-exists? large-file)
     (delete-file large-file)))
 
