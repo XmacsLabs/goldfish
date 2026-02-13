@@ -64,15 +64,16 @@
 | 200 | 基础设施，包含CI/CD/xmake构建定义 |
 | 201 | 文档和测试 |
 | 202 | 性能优化 |
-| 203 | (liii trie) |
+| 203 | (liii trie) | iota 等函数性能优化 |
 | 204 | goldfish CLI/REPL |
 | 205 | (liii coroutine) |
-| 206 | (liii os) |
+| 206 | (liii os) / (liii time) | 操作系统和时间相关功能 |
 | 207 | (liii sort) |
-| 208 | (liii unicode) | 
-| 209 | (liii oop) |
-| 210 | S7内置的函数 |
-| 211 | (liii timeit) |
+| 208 | (liii unicode) | UTF-8/UTF-16 编码转换 |
+| 209 | (liii oop) | 面向对象编程 |
+| 210 | S7内置的函数 | S7 Scheme 内置功能文档和测试 |
+| 211 | (liii timeit) | 性能测试工具 |
+| 212 | Windows 构建 | Windows 平台特定修复 |
 
 固定的任务编号:
 1. `200_0`: 更新Goldfish Scheme的AUTHORS文件
