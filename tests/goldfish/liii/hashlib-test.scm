@@ -14,7 +14,7 @@
 ; under the License.
 ;
 
-(import (liii check) (liii hashlib))
+(import (liii check) (liii hashlib) (liii path))
 
 (check (md5 "") => "d41d8cd98f00b204e9800998ecf8427e")
 (check (md5 "hello") => "5d41402abc4b2a76b9719d911017c592")
@@ -41,5 +41,32 @@
 (check (sha256 "123456") => "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92")
 (check (sha256 "!@#$%^&*()") => "95ce789c5c9d18490972709838ca3a9719094bca3ac16332cfec0652b0236141")
 (check (sha256 "Hello") => "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969")
+
+(let ((tmp-file "tests/resources/hashlib-test-temp.txt")
+      (content "hello"))
+  (path-write-text tmp-file content)
+  (check (md5-by-file tmp-file) => (md5 content))
+  (check (sha1-by-file tmp-file) => (sha1 content))
+  (check (sha256-by-file tmp-file) => (sha256 content))
+
+  (path-write-text tmp-file "")
+  (check (md5-by-file tmp-file) => (md5 ""))
+  (check (sha1-by-file tmp-file) => (sha1 ""))
+  (check (sha256-by-file tmp-file) => (sha256 ""))
+  (delete-file tmp-file))
+
+;; Large file hash test (local deterministic data, no network dependency)
+(let* ((large-file "tests/resources/hashlib-test-large-local.txt")
+       (large-size (* 100 1024 1024)) ; 100MB
+       (large-content (make-string large-size #\A)))
+  (path-write-text large-file large-content)
+  (check (path-getsize large-file) => large-size)
+  (check (md5-by-file large-file) => (md5 large-content))
+  (check (sha1-by-file large-file) => (sha1 large-content))
+  (check (sha256-by-file large-file) => (sha256 large-content))
+  (when (path-exists? large-file)
+    (delete-file large-file)))
+
+
 
 (check-report)
