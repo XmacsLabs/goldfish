@@ -101,7 +101,8 @@ target ("goldfish") do
         -- preload goldfish stdlib in `bin/goldfish.data`
         add_ldflags("--preload-file goldfish@/goldfish")
     end
-    add_files ("src/goldfish.cpp", "src/s7.c")
+    add_files ("src/goldfish.cpp")
+    add_files ("src/s7.c", {languages = "c11"})
     add_packages("tbox")
     add_packages("argh")
     add_packages("cpr")
