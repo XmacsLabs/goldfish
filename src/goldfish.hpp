@@ -23,8 +23,8 @@
 #include <iostream>
 #include <s7.h>
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include <tbox/platform/file.h>
 #include <tbox/platform/path.h>
@@ -75,22 +75,19 @@ static s7_pointer
 response2hashtable (s7_scheme* sc, cpr::Response r) {
   s7_pointer ht= s7_make_hash_table (sc, 8);
   s7_hash_table_set (sc, ht, s7_make_symbol (sc, "status-code"), s7_make_integer (sc, r.status_code));
-  s7_hash_table_set (sc, ht, s7_make_symbol (sc, "url"), s7_make_string (sc, r.url.c_str()));
-  s7_hash_table_set (sc, ht, s7_make_symbol(sc, "elapsed"), s7_make_real (sc, r.elapsed));
+  s7_hash_table_set (sc, ht, s7_make_symbol (sc, "url"), s7_make_string (sc, r.url.c_str ()));
+  s7_hash_table_set (sc, ht, s7_make_symbol (sc, "elapsed"), s7_make_real (sc, r.elapsed));
   s7_hash_table_set (sc, ht, s7_make_symbol (sc, "text"), s7_make_string (sc, r.text.c_str ()));
   s7_hash_table_set (sc, ht, s7_make_symbol (sc, "reason"), s7_make_string (sc, r.reason.c_str ()));
-  s7_pointer headers= s7_make_hash_table(sc, r.header.size());
-  for (const auto &header : r.header) {
-    const auto key= header.first.c_str ();
-    std::string key_lower = header.first;
-    std::transform(key_lower.begin(), key_lower.end(),
-                   key_lower.begin(), ::tolower);
+  s7_pointer headers= s7_make_hash_table (sc, r.header.size ());
+  for (const auto& header : r.header) {
+    const auto  key      = header.first.c_str ();
+    std::string key_lower= header.first;
+    std::transform (key_lower.begin (), key_lower.end (), key_lower.begin (), ::tolower);
     const auto value= header.second.c_str ();
-    s7_hash_table_set(sc, headers,
-                      s7_make_string(sc, key_lower.c_str()),
-                      s7_make_string(sc, value));
+    s7_hash_table_set (sc, headers, s7_make_string (sc, key_lower.c_str ()), s7_make_string (sc, value));
   }
-  s7_hash_table_set (sc, ht, s7_make_symbol(sc, "headers"), headers);
+  s7_hash_table_set (sc, ht, s7_make_symbol (sc, "headers"), headers);
 
   return ht;
 }
@@ -98,12 +95,12 @@ response2hashtable (s7_scheme* sc, cpr::Response r) {
 inline cpr::Parameters
 to_cpr_parameters (s7_scheme* sc, s7_pointer args) {
   cpr::Parameters params= cpr::Parameters{};
-  if (s7_is_list(sc, args)) {
+  if (s7_is_list (sc, args)) {
     s7_pointer iter= args;
     while (!s7_is_null (sc, iter)) {
       s7_pointer pair= s7_car (iter);
       if (s7_is_pair (pair)) {
-        const char* key= s7_string (s7_car (pair));
+        const char* key  = s7_string (s7_car (pair));
         const char* value= s7_string (s7_cdr (pair));
         params.Add (cpr::Parameter (string (key), string (value)));
       }
@@ -116,12 +113,12 @@ to_cpr_parameters (s7_scheme* sc, s7_pointer args) {
 inline cpr::Header
 to_cpr_headers (s7_scheme* sc, s7_pointer args) {
   cpr::Header headers= cpr::Header{};
-  if (s7_is_list(sc, args)) {
+  if (s7_is_list (sc, args)) {
     s7_pointer iter= args;
     while (!s7_is_null (sc, iter)) {
       s7_pointer pair= s7_car (iter);
       if (s7_is_pair (pair)) {
-        const char* key= s7_string (s7_car (pair));
+        const char* key  = s7_string (s7_car (pair));
         const char* value= s7_string (s7_cdr (pair));
         headers.insert (std::make_pair (key, value));
       }
@@ -134,23 +131,23 @@ to_cpr_headers (s7_scheme* sc, s7_pointer args) {
 inline cpr::Proxies
 to_cpr_proxies (s7_scheme* sc, s7_pointer args) {
   std::map<std::string, std::string> proxy_map;
-  if (s7_is_list(sc, args)) {
+  if (s7_is_list (sc, args)) {
     s7_pointer iter= args;
     while (!s7_is_null (sc, iter)) {
       s7_pointer pair= s7_car (iter);
       if (s7_is_pair (pair)) {
-        const char* key= s7_string (s7_car (pair));
+        const char* key  = s7_string (s7_car (pair));
         const char* value= s7_string (s7_cdr (pair));
-        proxy_map[key] = value;
+        proxy_map[key]   = value;
       }
       iter= s7_cdr (iter);
     }
   }
-  return cpr::Proxies(proxy_map);
+  return cpr::Proxies (proxy_map);
 }
 static s7_pointer
 f_http_head (s7_scheme* sc, s7_pointer args) {
-  const char* url= s7_string (s7_car (args));
+  const char*  url= s7_string (s7_car (args));
   cpr::Session session;
   session.SetUrl (cpr::Url (url));
   cpr::Response r= session.Head ();
@@ -159,29 +156,29 @@ f_http_head (s7_scheme* sc, s7_pointer args) {
 
 inline void
 glue_http_head (s7_scheme* sc) {
-  s7_pointer cur_env= s7_curlet (sc);
-  const char* s_http_head = "g_http-head";
-  const char* d_http_head = "(g_http-head url ...) => hash-table?";
-  auto func_http_head= s7_make_typed_function (sc, s_http_head, f_http_head, 1, 0, false, d_http_head, NULL);
+  s7_pointer  cur_env       = s7_curlet (sc);
+  const char* s_http_head   = "g_http-head";
+  const char* d_http_head   = "(g_http-head url ...) => hash-table?";
+  auto        func_http_head= s7_make_typed_function (sc, s_http_head, f_http_head, 1, 0, false, d_http_head, NULL);
   s7_define (sc, cur_env, s7_make_symbol (sc, s_http_head), func_http_head);
 }
 
 static s7_pointer
 f_http_get (s7_scheme* sc, s7_pointer args) {
-  const char* url= s7_string (s7_car (args));
-  s7_pointer params= s7_cadr (args);
-  cpr::Parameters cpr_params= to_cpr_parameters(sc, params);
-  s7_pointer headers= s7_caddr (args);
-  cpr::Header cpr_headers= to_cpr_headers (sc, headers);
-  s7_pointer proxy= s7_cadddr (args);
-  cpr::Proxies cpr_proxies= to_cpr_proxies(sc, proxy);
+  const char*     url        = s7_string (s7_car (args));
+  s7_pointer      params     = s7_cadr (args);
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  s7_pointer      headers    = s7_caddr (args);
+  cpr::Header     cpr_headers= to_cpr_headers (sc, headers);
+  s7_pointer      proxy      = s7_cadddr (args);
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
 
   cpr::Session session;
   session.SetUrl (cpr::Url (url));
   session.SetParameters (cpr_params);
   session.SetHeader (cpr_headers);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
-    session.SetProxies(cpr_proxies);
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
+    session.SetProxies (cpr_proxies);
   }
 
   cpr::Response r= session.Get ();
@@ -190,32 +187,32 @@ f_http_get (s7_scheme* sc, s7_pointer args) {
 
 inline void
 glue_http_get (s7_scheme* sc) {
-  s7_pointer cur_env= s7_curlet (sc);
-  const char* s_http_get= "g_http-get";
-  const char* d_http_get= "(g_http-get url params headers proxy) => hash-table?";
-  auto func_http_get= s7_make_typed_function (sc, s_http_get, f_http_get, 4, 0, false, d_http_get, NULL);
+  s7_pointer  cur_env      = s7_curlet (sc);
+  const char* s_http_get   = "g_http-get";
+  const char* d_http_get   = "(g_http-get url params headers proxy) => hash-table?";
+  auto        func_http_get= s7_make_typed_function (sc, s_http_get, f_http_get, 4, 0, false, d_http_get, NULL);
   s7_define (sc, cur_env, s7_make_symbol (sc, s_http_get), func_http_get);
 }
 
 static s7_pointer
 f_http_post (s7_scheme* sc, s7_pointer args) {
-  const char* url= s7_string (s7_car (args));
-  s7_pointer params= s7_cadr (args);
-  cpr::Parameters cpr_params= to_cpr_parameters(sc, params);
-  const char* body= s7_string (s7_caddr (args));
-  cpr::Body cpr_body= cpr::Body (body);
-  s7_pointer headers= s7_cadddr (args);
-  cpr::Header cpr_headers= to_cpr_headers (sc, headers);
-  s7_pointer proxy= s7_car (s7_cddddr (args));
-  cpr::Proxies cpr_proxies= to_cpr_proxies (sc, proxy);
+  const char*     url        = s7_string (s7_car (args));
+  s7_pointer      params     = s7_cadr (args);
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  const char*     body       = s7_string (s7_caddr (args));
+  cpr::Body       cpr_body   = cpr::Body (body);
+  s7_pointer      headers    = s7_cadddr (args);
+  cpr::Header     cpr_headers= to_cpr_headers (sc, headers);
+  s7_pointer      proxy      = s7_car (s7_cddddr (args));
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
 
   cpr::Session session;
   session.SetUrl (cpr::Url (url));
   session.SetParameters (cpr_params);
   session.SetBody (cpr_body);
   session.SetHeader (cpr_headers);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
-    session.SetProxies(cpr_proxies);
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
+    session.SetProxies (cpr_proxies);
   }
 
   cpr::Response r= session.Post ();
@@ -224,125 +221,129 @@ f_http_post (s7_scheme* sc, s7_pointer args) {
 
 inline void
 glue_http_post (s7_scheme* sc) {
-  s7_pointer cur_env= s7_curlet (sc);
-  const char* name= "g_http-post";
-  const char* doc= "(g_http-post url params body headers proxy) => hash-table?";
-  auto func_http_post= s7_make_typed_function (sc, name, f_http_post, 5, 0, false, doc, NULL);
+  s7_pointer  cur_env       = s7_curlet (sc);
+  const char* name          = "g_http-post";
+  const char* doc           = "(g_http-post url params body headers proxy) => hash-table?";
+  auto        func_http_post= s7_make_typed_function (sc, name, f_http_post, 5, 0, false, doc, NULL);
   s7_define (sc, cur_env, s7_make_symbol (sc, name), func_http_post);
 }
 
 static s7_pointer
 f_http_stream_get (s7_scheme* sc, s7_pointer args) {
-  const char* url = s7_string (s7_car (args));
-  s7_pointer params = s7_cadr (args);
-  s7_pointer proxy = s7_caddr (args);
-  s7_pointer userdata = s7_cadddr (args);
-  s7_pointer callback = s7_car(s7_cddddr(args));
+  const char* url     = s7_string (s7_car (args));
+  s7_pointer  params  = s7_cadr (args);
+  s7_pointer  proxy   = s7_caddr (args);
+  s7_pointer  userdata= s7_cadddr (args);
+  s7_pointer  callback= s7_car (s7_cddddr (args));
 
-  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
-  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
 
   cpr::Session session;
   session.SetUrl (cpr::Url (url));
   session.SetParameters (cpr_params);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
     session.SetProxies (cpr_proxies);
   }
 
-  session.SetWriteCallback(cpr::WriteCallback{[sc, callback](const std::string_view& data, intptr_t cpr_userdata) -> bool {
-    // Retrieve userdata from intptr_t
-    s7_pointer userdata_ptr = (s7_pointer)cpr_userdata;
+  session.SetWriteCallback (
+      cpr::WriteCallback{[sc, callback] (const std::string_view& data, intptr_t cpr_userdata) -> bool {
+                           // Retrieve userdata from intptr_t
+                           s7_pointer userdata_ptr= (s7_pointer) cpr_userdata;
 
-    // Call the scheme callback inline
-    s7_pointer data_str = s7_make_string_with_length(sc, data.data(), data.length());
-    s7_pointer args = s7_cons(sc, data_str, s7_cons(sc, userdata_ptr, s7_nil(sc)));
+                           // Call the scheme callback inline
+                           s7_pointer data_str= s7_make_string_with_length (sc, data.data (), data.length ());
+                           s7_pointer args    = s7_cons (sc, data_str, s7_cons (sc, userdata_ptr, s7_nil (sc)));
 
-    s7_pointer ret = s7_call(sc, callback, args);
-    if (s7_is_boolean(ret)) {
-      return s7_boolean(sc, ret);
-    }
+                           s7_pointer ret= s7_call (sc, callback, args);
+                           if (s7_is_boolean (ret)) {
+                             return s7_boolean (sc, ret);
+                           }
 
-    return true; // Continue receiving
-  }, reinterpret_cast<intptr_t>(userdata)});
+                           return true; // Continue receiving
+                         },
+                         reinterpret_cast<intptr_t> (userdata)});
 
   try {
-    cpr::Response response = session.Get();
+    cpr::Response response= session.Get ();
   } catch (const std::exception& e) {
-    return s7_make_integer(sc, 500); // Error case
+    return s7_make_integer (sc, 500); // Error case
   }
-  return s7_undefined(sc);
+  return s7_undefined (sc);
 }
 
 inline void
 glue_http_stream_get (s7_scheme* sc) {
-  s7_pointer cur_env= s7_curlet (sc);
-  const char* s_stream_get = "g_http-stream-get";
-  const char* d_stream_get = "(g_http-stream-get url params proxy userdata callback) => undefined";
-  auto func_stream_get = s7_make_typed_function (sc, s_stream_get, f_http_stream_get, 5, 0, false, d_stream_get, NULL);
+  s7_pointer  cur_env     = s7_curlet (sc);
+  const char* s_stream_get= "g_http-stream-get";
+  const char* d_stream_get= "(g_http-stream-get url params proxy userdata callback) => undefined";
+  auto func_stream_get= s7_make_typed_function (sc, s_stream_get, f_http_stream_get, 5, 0, false, d_stream_get, NULL);
   s7_define (sc, cur_env, s7_make_symbol (sc, s_stream_get), func_stream_get);
 }
 
 static s7_pointer
 f_http_stream_post (s7_scheme* sc, s7_pointer args) {
   s7_pointer url_arg = s7_car (args);
-  s7_pointer params = s7_cadr (args);
-  s7_pointer body_arg = s7_caddr (args);
+  s7_pointer params  = s7_cadr (args);
+  s7_pointer body_arg= s7_caddr (args);
   s7_pointer headers = s7_cadddr (args);
-  s7_pointer proxy = s7_car(s7_cddddr(args));
-  s7_pointer userdata = s7_cadr(s7_cddddr(args));
-  s7_pointer callback = s7_list_ref(sc, args, 6);
+  s7_pointer proxy   = s7_car (s7_cddddr (args));
+  s7_pointer userdata= s7_cadr (s7_cddddr (args));
+  s7_pointer callback= s7_list_ref (sc, args, 6);
 
-  const char* url = s7_string(url_arg);
-  const char* body = s7_string(body_arg);
+  const char* url = s7_string (url_arg);
+  const char* body= s7_string (body_arg);
 
-  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
-  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
-  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  cpr::Header     cpr_headers= to_cpr_headers (sc, headers);
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
 
   cpr::Session session;
   session.SetUrl (cpr::Url (url));
   session.SetParameters (cpr_params);
   session.SetBody (cpr::Body (body));
   session.SetHeader (cpr_headers);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
     session.SetProxies (cpr_proxies);
   }
 
-
   // Store userdata in s7 managed memory to prevent GC
-  s7_pointer userdata_loc = s7_make_c_pointer(sc, (void*)userdata);
+  s7_pointer userdata_loc= s7_make_c_pointer (sc, (void*) userdata);
 
-  session.SetWriteCallback(cpr::WriteCallback{[sc, callback](const std::string_view& data, intptr_t cpr_userdata) -> bool {
-    // Retrieve userdata from intptr_t
-    s7_pointer userdata_ptr = (s7_pointer)cpr_userdata;
+  session.SetWriteCallback (
+      cpr::WriteCallback{[sc, callback] (const std::string_view& data, intptr_t cpr_userdata) -> bool {
+                           // Retrieve userdata from intptr_t
+                           s7_pointer userdata_ptr= (s7_pointer) cpr_userdata;
 
-    // Call the scheme callback inline
-    s7_pointer data_str = s7_make_string_with_length(sc, data.data(), data.length());
-    s7_pointer args = s7_cons(sc, data_str, s7_cons(sc, userdata_ptr, s7_nil(sc)));
+                           // Call the scheme callback inline
+                           s7_pointer data_str= s7_make_string_with_length (sc, data.data (), data.length ());
+                           s7_pointer args    = s7_cons (sc, data_str, s7_cons (sc, userdata_ptr, s7_nil (sc)));
 
-    s7_pointer ret = s7_call(sc, callback, args);
-    if (s7_is_boolean(ret)) {
-      return s7_boolean(sc, ret);
-    }
+                           s7_pointer ret= s7_call (sc, callback, args);
+                           if (s7_is_boolean (ret)) {
+                             return s7_boolean (sc, ret);
+                           }
 
-    return true; // Continue receiving
-  }, reinterpret_cast<intptr_t>(userdata)});
+                           return true; // Continue receiving
+                         },
+                         reinterpret_cast<intptr_t> (userdata)});
 
   try {
-    cpr::Response response = session.Post();
+    cpr::Response response= session.Post ();
   } catch (const std::exception& e) {
-    return s7_make_integer(sc, 500); // Error case
+    return s7_make_integer (sc, 500); // Error case
   }
-  return s7_undefined(sc);
+  return s7_undefined (sc);
 }
 
 inline void
 glue_http_stream_post (s7_scheme* sc) {
   s7_pointer cur_env= s7_curlet (sc);
 
-  const char* s_stream_post = "g_http-stream-post";
-  const char* d_stream_post = "(g_http-stream-post url params body headers proxy userdata callback) => undefined";
-  auto func_stream_post = s7_make_typed_function (sc, s_stream_post, f_http_stream_post, 7, 0, false, d_stream_post, NULL);
+  const char* s_stream_post= "g_http-stream-post";
+  const char* d_stream_post= "(g_http-stream-post url params body headers proxy userdata callback) => undefined";
+  auto        func_stream_post=
+      s7_make_typed_function (sc, s_stream_post, f_http_stream_post, 7, 0, false, d_stream_post, NULL);
   s7_define (sc, cur_env, s7_make_symbol (sc, s_stream_post), func_stream_post);
 }
 
@@ -355,30 +356,30 @@ glue_http (s7_scheme* sc) {
 
 inline void
 glue_http_stream (s7_scheme* sc) {
-  glue_http_stream_get(sc);
-  glue_http_stream_post(sc);
+  glue_http_stream_get (sc);
+  glue_http_stream_post (sc);
 }
 
 // -------------------------------- Async HTTP --------------------------------
 // Data structure to store async HTTP request state
 struct AsyncHttpRequest {
-  s7_scheme* sc;
-  s7_pointer callback;
-  int gc_loc;
-  std::shared_ptr<cpr::Session> session;  // Keep session alive
-  cpr::AsyncResponse async_response;
-  bool completed;
-  cpr::Response response;
-  std::mutex mutex;
-  
-  AsyncHttpRequest(s7_scheme* scheme, s7_pointer cb, int gc_protect_loc, 
-                   std::shared_ptr<cpr::Session> sess, cpr::AsyncResponse&& ar)
-    : sc(scheme), callback(cb), gc_loc(gc_protect_loc), 
-      session(std::move(sess)), async_response(std::move(ar)), completed(false) {}
+  s7_scheme*                    sc;
+  s7_pointer                    callback;
+  int                           gc_loc;
+  std::shared_ptr<cpr::Session> session; // Keep session alive
+  cpr::AsyncResponse            async_response;
+  bool                          completed;
+  cpr::Response                 response;
+  std::mutex                    mutex;
+
+  AsyncHttpRequest (s7_scheme* scheme, s7_pointer cb, int gc_protect_loc, std::shared_ptr<cpr::Session> sess,
+                    cpr::AsyncResponse&& ar)
+      : sc (scheme), callback (cb), gc_loc (gc_protect_loc), session (std::move (sess)),
+        async_response (std::move (ar)), completed (false) {}
 };
 
 // Global list of pending async requests
-static std::mutex g_async_requests_mutex;
+static std::mutex                                     g_async_requests_mutex;
 static std::vector<std::shared_ptr<AsyncHttpRequest>> g_async_requests;
 
 // Check if any async requests have completed and process their callbacks
@@ -387,275 +388,281 @@ static std::vector<std::shared_ptr<AsyncHttpRequest>> g_async_requests;
 static int
 process_async_http_callbacks () {
   std::vector<std::shared_ptr<AsyncHttpRequest>> completed_requests;
-  
+
   // Find completed requests
   {
-    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
-    for (auto it = g_async_requests.begin(); it != g_async_requests.end(); ) {
-      bool is_ready = false;
+    std::lock_guard<std::mutex> lock (g_async_requests_mutex);
+    for (auto it= g_async_requests.begin (); it != g_async_requests.end ();) {
+      bool is_ready= false;
       {
-        std::lock_guard<std::mutex> req_lock((*it)->mutex);
+        std::lock_guard<std::mutex> req_lock ((*it)->mutex);
         if (!(*it)->completed) {
           // Check if the future is ready (non-blocking)
-          if ((*it)->async_response.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            (*it)->response = (*it)->async_response.get();
-            (*it)->completed = true;
-            is_ready = true;
+          if ((*it)->async_response.wait_for (std::chrono::seconds (0)) == std::future_status::ready) {
+            (*it)->response = (*it)->async_response.get ();
+            (*it)->completed= true;
+            is_ready        = true;
           }
         }
       }
-      
+
       if (is_ready) {
-        completed_requests.push_back(*it);
-        it = g_async_requests.erase(it);
-      } else {
+        completed_requests.push_back (*it);
+        it= g_async_requests.erase (it);
+      }
+      else {
         ++it;
       }
     }
   }
-  
+
   // Execute callbacks for completed requests (outside the lock)
   for (auto& req : completed_requests) {
-    s7_pointer ht = response2hashtable(req->sc, req->response);
-    s7_call(req->sc, req->callback, s7_cons(req->sc, ht, s7_nil(req->sc)));
-    s7_gc_unprotect_at(req->sc, req->gc_loc);
+    s7_pointer ht= response2hashtable (req->sc, req->response);
+    s7_call (req->sc, req->callback, s7_cons (req->sc, ht, s7_nil (req->sc)));
+    s7_gc_unprotect_at (req->sc, req->gc_loc);
   }
-  
-  return static_cast<int>(completed_requests.size());
+
+  return static_cast<int> (completed_requests.size ());
 }
 
 // Start an async HTTP GET request
 static s7_pointer
 f_http_async_get (s7_scheme* sc, s7_pointer args) {
-  const char* url = s7_string(s7_car(args));
-  s7_pointer params = s7_cadr(args);
-  s7_pointer headers = s7_caddr(args);
-  s7_pointer proxy = s7_cadddr(args);
-  s7_pointer callback = s7_car(s7_cddddr(args));
-  
-  if (!s7_is_procedure(callback)) {
-    return s7_error(sc, s7_make_symbol(sc, "type-error"),
-                    s7_list(sc, 2, s7_make_string(sc, "http-async-get: callback must be a procedure"), callback));
+  const char* url     = s7_string (s7_car (args));
+  s7_pointer  params  = s7_cadr (args);
+  s7_pointer  headers = s7_caddr (args);
+  s7_pointer  proxy   = s7_cadddr (args);
+  s7_pointer  callback= s7_car (s7_cddddr (args));
+
+  if (!s7_is_procedure (callback)) {
+    return s7_error (sc, s7_make_symbol (sc, "type-error"),
+                     s7_list (sc, 2, s7_make_string (sc, "http-async-get: callback must be a procedure"), callback));
   }
-  
-  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
-  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
-  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
-  
+
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  cpr::Header     cpr_headers= to_cpr_headers (sc, headers);
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
+
   // Protect callback from GC
-  int gc_loc = s7_gc_protect(sc, callback);
-  
+  int gc_loc= s7_gc_protect (sc, callback);
+
   // Create session on heap with shared_ptr to keep it alive
-  auto session = std::make_shared<cpr::Session>();
-  session->SetUrl(cpr::Url(url));
-  session->SetParameters(cpr_params);
-  session->SetHeader(cpr_headers);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
-    session->SetProxies(cpr_proxies);
+  auto session= std::make_shared<cpr::Session> ();
+  session->SetUrl (cpr::Url (url));
+  session->SetParameters (cpr_params);
+  session->SetHeader (cpr_headers);
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
+    session->SetProxies (cpr_proxies);
   }
-  
+
   // Start async request using libcpr's built-in thread pool
   // Session is captured by shared_ptr, so it stays alive until async operation completes
-  auto async_resp = session->GetAsync();
-  
+  auto async_resp= session->GetAsync ();
+
   // Store the request (session is also stored to keep reference)
-  auto req = std::make_shared<AsyncHttpRequest>(sc, callback, gc_loc, session, std::move(async_resp));
+  auto req= std::make_shared<AsyncHttpRequest> (sc, callback, gc_loc, session, std::move (async_resp));
   {
-    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
-    g_async_requests.push_back(req);
+    std::lock_guard<std::mutex> lock (g_async_requests_mutex);
+    g_async_requests.push_back (req);
   }
-  
-  return s7_make_boolean(sc, true);
+
+  return s7_make_boolean (sc, true);
 }
 
 inline void
 glue_http_async_get (s7_scheme* sc) {
-  s7_pointer cur_env = s7_curlet(sc);
-  const char* name = "g_http-async-get";
-  const char* doc = "(g_http-async-get url params headers proxy callback) => boolean, start async http get. callback receives response hashtable. Use g_http-poll to check for completion.";
-  auto func = s7_make_typed_function(sc, name, f_http_async_get, 5, 0, false, doc, NULL);
-  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+  s7_pointer  cur_env= s7_curlet (sc);
+  const char* name   = "g_http-async-get";
+  const char* doc = "(g_http-async-get url params headers proxy callback) => boolean, start async http get. callback "
+                    "receives response hashtable. Use g_http-poll to check for completion.";
+  auto        func= s7_make_typed_function (sc, name, f_http_async_get, 5, 0, false, doc, NULL);
+  s7_define (sc, cur_env, s7_make_symbol (sc, name), func);
 }
 
 // Start an async HTTP POST request
 static s7_pointer
 f_http_async_post (s7_scheme* sc, s7_pointer args) {
-  const char* url = s7_string(s7_car(args));
-  s7_pointer params = s7_cadr(args);
-  const char* body = s7_string(s7_caddr(args));
-  s7_pointer headers = s7_cadddr(args);
-  s7_pointer proxy = s7_car(s7_cddddr(args));
-  s7_pointer callback = s7_cadr(s7_cddddr(args));
-  
-  if (!s7_is_procedure(callback)) {
-    return s7_error(sc, s7_make_symbol(sc, "type-error"),
-                    s7_list(sc, 2, s7_make_string(sc, "http-async-post: callback must be a procedure"), callback));
+  const char* url     = s7_string (s7_car (args));
+  s7_pointer  params  = s7_cadr (args);
+  const char* body    = s7_string (s7_caddr (args));
+  s7_pointer  headers = s7_cadddr (args);
+  s7_pointer  proxy   = s7_car (s7_cddddr (args));
+  s7_pointer  callback= s7_cadr (s7_cddddr (args));
+
+  if (!s7_is_procedure (callback)) {
+    return s7_error (sc, s7_make_symbol (sc, "type-error"),
+                     s7_list (sc, 2, s7_make_string (sc, "http-async-post: callback must be a procedure"), callback));
   }
-  
-  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
-  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
-  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
-  
+
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  cpr::Header     cpr_headers= to_cpr_headers (sc, headers);
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
+
   // Protect callback from GC
-  int gc_loc = s7_gc_protect(sc, callback);
-  
+  int gc_loc= s7_gc_protect (sc, callback);
+
   // Create session on heap with shared_ptr to keep it alive
-  auto session = std::make_shared<cpr::Session>();
-  session->SetUrl(cpr::Url(url));
-  session->SetParameters(cpr_params);
-  session->SetBody(cpr::Body(body));
-  session->SetHeader(cpr_headers);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
-    session->SetProxies(cpr_proxies);
+  auto session= std::make_shared<cpr::Session> ();
+  session->SetUrl (cpr::Url (url));
+  session->SetParameters (cpr_params);
+  session->SetBody (cpr::Body (body));
+  session->SetHeader (cpr_headers);
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
+    session->SetProxies (cpr_proxies);
   }
-  
+
   // Start async request using libcpr's built-in thread pool
-  auto async_resp = session->PostAsync();
-  
+  auto async_resp= session->PostAsync ();
+
   // Store the request (session is also stored to keep reference)
-  auto req = std::make_shared<AsyncHttpRequest>(sc, callback, gc_loc, session, std::move(async_resp));
+  auto req= std::make_shared<AsyncHttpRequest> (sc, callback, gc_loc, session, std::move (async_resp));
   {
-    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
-    g_async_requests.push_back(req);
+    std::lock_guard<std::mutex> lock (g_async_requests_mutex);
+    g_async_requests.push_back (req);
   }
-  
-  return s7_make_boolean(sc, true);
+
+  return s7_make_boolean (sc, true);
 }
 
 inline void
 glue_http_async_post (s7_scheme* sc) {
-  s7_pointer cur_env = s7_curlet(sc);
-  const char* name = "g_http-async-post";
-  const char* doc = "(g_http-async-post url params body headers proxy callback) => boolean, start async http post. callback receives response hashtable. Use g_http-poll to check for completion.";
-  auto func = s7_make_typed_function(sc, name, f_http_async_post, 6, 0, false, doc, NULL);
-  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+  s7_pointer  cur_env= s7_curlet (sc);
+  const char* name   = "g_http-async-post";
+  const char* doc    = "(g_http-async-post url params body headers proxy callback) => boolean, start async http post. "
+                       "callback receives response hashtable. Use g_http-poll to check for completion.";
+  auto        func   = s7_make_typed_function (sc, name, f_http_async_post, 6, 0, false, doc, NULL);
+  s7_define (sc, cur_env, s7_make_symbol (sc, name), func);
 }
 
 // Start an async HTTP HEAD request
 static s7_pointer
 f_http_async_head (s7_scheme* sc, s7_pointer args) {
-  const char* url = s7_string(s7_car(args));
-  s7_pointer params = s7_cadr(args);
-  s7_pointer headers = s7_caddr(args);
-  s7_pointer proxy = s7_cadddr(args);
-  s7_pointer callback = s7_car(s7_cddddr(args));
-  
-  if (!s7_is_procedure(callback)) {
-    return s7_error(sc, s7_make_symbol(sc, "type-error"),
-                    s7_list(sc, 2, s7_make_string(sc, "http-async-head: callback must be a procedure"), callback));
+  const char* url     = s7_string (s7_car (args));
+  s7_pointer  params  = s7_cadr (args);
+  s7_pointer  headers = s7_caddr (args);
+  s7_pointer  proxy   = s7_cadddr (args);
+  s7_pointer  callback= s7_car (s7_cddddr (args));
+
+  if (!s7_is_procedure (callback)) {
+    return s7_error (sc, s7_make_symbol (sc, "type-error"),
+                     s7_list (sc, 2, s7_make_string (sc, "http-async-head: callback must be a procedure"), callback));
   }
-  
-  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
-  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
-  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
-  
+
+  cpr::Parameters cpr_params = to_cpr_parameters (sc, params);
+  cpr::Header     cpr_headers= to_cpr_headers (sc, headers);
+  cpr::Proxies    cpr_proxies= to_cpr_proxies (sc, proxy);
+
   // Protect callback from GC
-  int gc_loc = s7_gc_protect(sc, callback);
-  
+  int gc_loc= s7_gc_protect (sc, callback);
+
   // Create session on heap with shared_ptr to keep it alive
-  auto session = std::make_shared<cpr::Session>();
-  session->SetUrl(cpr::Url(url));
-  session->SetParameters(cpr_params);
-  session->SetHeader(cpr_headers);
-  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
-    session->SetProxies(cpr_proxies);
+  auto session= std::make_shared<cpr::Session> ();
+  session->SetUrl (cpr::Url (url));
+  session->SetParameters (cpr_params);
+  session->SetHeader (cpr_headers);
+  if (s7_is_list (sc, proxy) && !s7_is_null (sc, proxy)) {
+    session->SetProxies (cpr_proxies);
   }
-  
+
   // Start async request using libcpr's built-in thread pool
-  auto async_resp = session->HeadAsync();
-  
+  auto async_resp= session->HeadAsync ();
+
   // Store the request (session is also stored to keep reference)
-  auto req = std::make_shared<AsyncHttpRequest>(sc, callback, gc_loc, session, std::move(async_resp));
+  auto req= std::make_shared<AsyncHttpRequest> (sc, callback, gc_loc, session, std::move (async_resp));
   {
-    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
-    g_async_requests.push_back(req);
+    std::lock_guard<std::mutex> lock (g_async_requests_mutex);
+    g_async_requests.push_back (req);
   }
-  
-  return s7_make_boolean(sc, true);
+
+  return s7_make_boolean (sc, true);
 }
 
 inline void
 glue_http_async_head (s7_scheme* sc) {
-  s7_pointer cur_env = s7_curlet(sc);
-  const char* name = "g_http-async-head";
-  const char* doc = "(g_http-async-head url params headers proxy callback) => boolean, start async http head. callback receives response hashtable. Use g_http-poll to check for completion.";
-  auto func = s7_make_typed_function(sc, name, f_http_async_head, 5, 0, false, doc, NULL);
-  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+  s7_pointer  cur_env= s7_curlet (sc);
+  const char* name   = "g_http-async-head";
+  const char* doc = "(g_http-async-head url params headers proxy callback) => boolean, start async http head. callback "
+                    "receives response hashtable. Use g_http-poll to check for completion.";
+  auto        func= s7_make_typed_function (sc, name, f_http_async_head, 5, 0, false, doc, NULL);
+  s7_define (sc, cur_env, s7_make_symbol (sc, name), func);
 }
 
 // Poll for completed async HTTP requests and execute their callbacks
 static s7_pointer
 f_http_poll (s7_scheme* sc, s7_pointer args) {
-  int executed = process_async_http_callbacks();
-  return s7_make_integer(sc, executed);
+  int executed= process_async_http_callbacks ();
+  return s7_make_integer (sc, executed);
 }
 
 inline void
 glue_http_poll (s7_scheme* sc) {
-  s7_pointer cur_env = s7_curlet(sc);
-  const char* name = "g_http-poll";
-  const char* doc = "(g_http-poll) => integer, check for completed async http requests and execute their callbacks. Returns number of callbacks executed.";
-  auto func = s7_make_typed_function(sc, name, f_http_poll, 0, 0, false, doc, NULL);
-  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+  s7_pointer  cur_env= s7_curlet (sc);
+  const char* name   = "g_http-poll";
+  const char* doc    = "(g_http-poll) => integer, check for completed async http requests and execute their callbacks. "
+                       "Returns number of callbacks executed.";
+  auto        func   = s7_make_typed_function (sc, name, f_http_poll, 0, 0, false, doc, NULL);
+  s7_define (sc, cur_env, s7_make_symbol (sc, name), func);
 }
 
 // Wait for all pending async HTTP requests to complete (blocking)
 static s7_pointer
 f_http_wait_all (s7_scheme* sc, s7_pointer args) {
-  s7_double timeout_sec = -1.0; // -1 means wait forever
-  if (s7_is_real(s7_car(args))) {
-    timeout_sec = s7_real(s7_car(args));
+  s7_double timeout_sec= -1.0; // -1 means wait forever
+  if (s7_is_real (s7_car (args))) {
+    timeout_sec= s7_real (s7_car (args));
   }
-  
-  auto start = std::chrono::steady_clock::now();
-  bool has_pending = true;
-  int total_executed = 0;
-  
+
+  auto start         = std::chrono::steady_clock::now ();
+  bool has_pending   = true;
+  int  total_executed= 0;
+
   while (has_pending) {
-    int executed = process_async_http_callbacks();
-    total_executed += executed;
-    
+    int executed= process_async_http_callbacks ();
+    total_executed+= executed;
+
     // Check if there are still pending requests
     {
-      std::lock_guard<std::mutex> lock(g_async_requests_mutex);
-      has_pending = !g_async_requests.empty();
+      std::lock_guard<std::mutex> lock (g_async_requests_mutex);
+      has_pending= !g_async_requests.empty ();
     }
-    
+
     if (has_pending) {
       // Check timeout
       if (timeout_sec >= 0) {
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::steady_clock::now() - start).count() / 1000.0;
+        auto elapsed=
+            std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::steady_clock::now () - start).count () /
+            1000.0;
         if (elapsed >= timeout_sec) {
           break; // Timeout
         }
       }
       // Small sleep to avoid busy waiting
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for (std::chrono::milliseconds (10));
     }
   }
-  
-  return s7_make_integer(sc, total_executed);
+
+  return s7_make_integer (sc, total_executed);
 }
 
 inline void
 glue_http_wait_all (s7_scheme* sc) {
-  s7_pointer cur_env = s7_curlet(sc);
-  const char* name = "g_http-wait-all";
-  const char* doc = "(g_http-wait-all [timeout-seconds]) => integer, wait for all pending async http requests to complete. timeout < 0 means wait forever. Returns number of callbacks executed.";
-  auto func = s7_make_typed_function(sc, name, f_http_wait_all, 0, 1, false, doc, NULL);
-  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+  s7_pointer  cur_env= s7_curlet (sc);
+  const char* name   = "g_http-wait-all";
+  const char* doc    = "(g_http-wait-all [timeout-seconds]) => integer, wait for all pending async http requests to "
+                       "complete. timeout < 0 means wait forever. Returns number of callbacks executed.";
+  auto        func   = s7_make_typed_function (sc, name, f_http_wait_all, 0, 1, false, doc, NULL);
+  s7_define (sc, cur_env, s7_make_symbol (sc, name), func);
 }
 
 inline void
 glue_http_async (s7_scheme* sc) {
-  glue_http_async_get(sc);
-  glue_http_async_post(sc);
-  glue_http_async_head(sc);
-  glue_http_poll(sc);
-  glue_http_wait_all(sc);
+  glue_http_async_get (sc);
+  glue_http_async_post (sc);
+  glue_http_async_head (sc);
+  glue_http_poll (sc);
+  glue_http_wait_all (sc);
 }
-
 
 inline s7_pointer
 string_vector_to_s7_vector (s7_scheme* sc, vector<string> v) {
@@ -707,30 +714,30 @@ glue_goldfish (s7_scheme* sc) {
 static s7_pointer
 f_get_time_of_day (s7_scheme* sc, s7_pointer args) {
   using namespace std::chrono;
-  auto now = time_point_cast<microseconds>(system_clock::now());
-  auto since_epoch = now.time_since_epoch();
-  auto sec = duration_cast<seconds>(since_epoch);
+  auto now        = time_point_cast<microseconds> (system_clock::now ());
+  auto since_epoch= now.time_since_epoch ();
+  auto sec        = duration_cast<seconds> (since_epoch);
 
-  s7_pointer vs = s7_list(sc, 2,
-                          s7_make_integer(sc, sec.count()),
-                          s7_make_integer(sc, (since_epoch - sec).count()));
-  return s7_values(sc, vs);
+  s7_pointer vs=
+      s7_list (sc, 2, s7_make_integer (sc, sec.count ()), s7_make_integer (sc, (since_epoch - sec).count ()));
+  return s7_values (sc, vs);
 }
 
 static s7_pointer
 f_monotonic_nanosecond (s7_scheme* sc, s7_pointer args) {
   using namespace std::chrono;
-  auto now = steady_clock::now();
-  auto duration = now.time_since_epoch();
-  auto count = duration_cast<std::chrono::nanoseconds>(duration).count();
-  return s7_make_integer(sc, count);
+  auto now     = steady_clock::now ();
+  auto duration= now.time_since_epoch ();
+  auto count   = duration_cast<std::chrono::nanoseconds> (duration).count ();
+  return s7_make_integer (sc, count);
 }
 
-template<typename Clock>
-constexpr int64_t clock_resolution_ns() {
+template <typename Clock>
+constexpr int64_t
+clock_resolution_ns () {
   typedef std::chrono::duration<double, std::nano> NS;
-  NS ns = typename Clock::duration(1);
-  return ns.count();
+  NS                                               ns= typename Clock::duration (1);
+  return ns.count ();
 }
 
 inline void
@@ -739,21 +746,22 @@ glue_scheme_time (s7_scheme* sc) {
 
   const char* s_get_time_of_day= "g_get-time-of-day";
   const char* d_get_time_of_day= "(g_get-time-of-day): () => (integer, integer), return the "
-                                "current second and microsecond in integer";
+                                 "current second and microsecond in integer";
   s7_define (sc, cur_env, s7_make_symbol (sc, s_get_time_of_day),
              s7_make_typed_function (sc, s_get_time_of_day, f_get_time_of_day, 0, 0, false, d_get_time_of_day, NULL));
 
   const char* s_monotonic_nanosecond= "g_monotonic-nanosecond";
-  const char* d_monotonic_nanosecond= "(g_monotonic-nanosecond): () => integer, returns the steady clock's monotonic nanoseconds since an unspecified epoch";
+  const char* d_monotonic_nanosecond= "(g_monotonic-nanosecond): () => integer, returns the steady clock's monotonic "
+                                      "nanoseconds since an unspecified epoch";
   s7_define (sc, cur_env, s7_make_symbol (sc, s_monotonic_nanosecond),
-             s7_make_typed_function (sc, s_monotonic_nanosecond, f_monotonic_nanosecond, 0, 0, false, d_monotonic_nanosecond, NULL));
+             s7_make_typed_function (sc, s_monotonic_nanosecond, f_monotonic_nanosecond, 0, 0, false,
+                                     d_monotonic_nanosecond, NULL));
 
   s7_define_constant_with_environment (sc, cur_env, "g_system-clock-resolution",
-                                       s7_make_integer(sc, clock_resolution_ns<std::chrono::system_clock>()));
+                                       s7_make_integer (sc, clock_resolution_ns<std::chrono::system_clock> ()));
   s7_define_constant_with_environment (sc, cur_env, "g_steady-clock-resolution",
-                                       s7_make_integer(sc, clock_resolution_ns<std::chrono::steady_clock>()));
+                                       s7_make_integer (sc, clock_resolution_ns<std::chrono::steady_clock> ()));
 }
-
 
 static s7_pointer
 f_get_environment_variable (s7_scheme* sc, s7_pointer args) {
@@ -820,8 +828,8 @@ goldfish_exe () {
   GetModuleFileName (NULL, buffer, GOLDFISH_PATH_MAXN);
   return string (buffer);
 #elif TB_CONFIG_OS_MACOSX
-  char        buffer[PATH_MAX];
-  uint32_t    size= sizeof (buffer);
+  char     buffer[PATH_MAX];
+  uint32_t size= sizeof (buffer);
   if (_NSGetExecutablePath (buffer, &size) == 0) {
     char real_path[GOLDFISH_PATH_MAXN];
     if (realpath (buffer, real_path) != NULL) {
@@ -1146,23 +1154,21 @@ glue_getpid (s7_scheme* sc) {
 }
 
 static s7_pointer
-f_sleep(s7_scheme* sc, s7_pointer args) {
-  s7_double seconds = s7_real(s7_car(args));
-  
-  // 使用 tbox 的 tb_sleep 函数，参数是毫秒
-  tb_msleep((tb_long_t)(seconds * 1000));
+f_sleep (s7_scheme* sc, s7_pointer args) {
+  s7_double seconds= s7_real (s7_car (args));
 
-  return s7_nil(sc);
+  // 使用 tbox 的 tb_sleep 函数，参数是毫秒
+  tb_msleep ((tb_long_t) (seconds * 1000));
+
+  return s7_nil (sc);
 }
 
 inline void
-glue_sleep(s7_scheme* sc) {
-  const char* name = "g_sleep";
-  const char* desc = "(g_sleep seconds) => nil, sleep for the specified number of seconds";
-  glue_define(sc, name, desc, f_sleep, 1, 0);
+glue_sleep (s7_scheme* sc) {
+  const char* name= "g_sleep";
+  const char* desc= "(g_sleep seconds) => nil, sleep for the specified number of seconds";
+  glue_define (sc, name, desc, f_sleep, 1, 0);
 }
-
-
 
 inline void
 glue_liii_os (s7_scheme* sc) {
@@ -1205,10 +1211,12 @@ glue_liii_uuid (s7_scheme* sc) {
 
 inline void
 hash_bytes_to_hex (const tb_byte_t* bytes, tb_size_t length, tb_char_t* hex_output) {
+  static const tb_char_t hex_digits[]= "0123456789abcdef";
   for (tb_size_t i= 0; i < length; ++i) {
-    tb_snprintf (hex_output + (i << 1), 3, "%02x", bytes[i]);
+    hex_output[i * 2]    = hex_digits[bytes[i] >> 4];
+    hex_output[i * 2 + 1]= hex_digits[bytes[i] & 0x0f];
   }
-  hex_output[length << 1]= '\0';
+  hex_output[length * 2]= '\0';
 }
 
 static bool
@@ -1236,7 +1244,7 @@ md5_file_to_hex (const char* path, tb_char_t* hex_output) {
       return false;
     }
     tb_md5_spak (&md5, buffer, real_size);
-    offset += real_size;
+    offset+= real_size;
   }
 
   tb_file_exit (file);
@@ -1272,7 +1280,7 @@ sha_file_to_hex (const char* path, tb_size_t mode, tb_size_t digest_size, tb_cha
       return false;
     }
     tb_sha_spak (&sha, buffer, real_size);
-    offset += real_size;
+    offset+= real_size;
   }
 
   tb_file_exit (file);
@@ -1309,7 +1317,7 @@ glue_md5 (s7_scheme* sc) {
 
 static s7_pointer
 f_md5_file (s7_scheme* sc, s7_pointer args) {
-  const char* path= s7_string (s7_car (args));
+  const char* path          = s7_string (s7_car (args));
   tb_char_t   hex_output[33]= {0};
   if (!md5_file_to_hex (path, hex_output)) {
     return s7_make_boolean (sc, false);
@@ -1350,7 +1358,7 @@ glue_sha1 (s7_scheme* sc) {
 
 static s7_pointer
 f_sha1_file (s7_scheme* sc, s7_pointer args) {
-  const char* path= s7_string (s7_car (args));
+  const char* path          = s7_string (s7_car (args));
   tb_char_t   hex_output[41]= {0};
   if (!sha_file_to_hex (path, 160, 20, hex_output)) {
     return s7_make_boolean (sc, false);
@@ -1391,7 +1399,7 @@ glue_sha256 (s7_scheme* sc) {
 
 static s7_pointer
 f_sha256_file (s7_scheme* sc, s7_pointer args) {
-  const char* path= s7_string (s7_car (args));
+  const char* path          = s7_string (s7_car (args));
   tb_char_t   hex_output[65]= {0};
   if (!sha_file_to_hex (path, 256, 32, hex_output)) {
     return s7_make_boolean (sc, false);
@@ -1415,8 +1423,6 @@ glue_liii_hashlib (s7_scheme* sc) {
   glue_sha256 (sc);
   glue_sha256_file (sc);
 }
-
-
 
 static s7_pointer
 f_isdir (s7_scheme* sc, s7_pointer args) {
