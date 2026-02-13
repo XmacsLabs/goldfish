@@ -26,3 +26,4 @@ node_modules/
 result*
 .envrc
 .direnv/
+tests/resources/hashlib-test-large-local.txt
