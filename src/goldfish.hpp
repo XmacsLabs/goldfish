@@ -64,6 +64,11 @@
 
 static std::vector<std::string> command_args= std::vector<std::string> ();
 
+// Declare environ for non-Windows platforms (needed for f_getenvs)
+#if !defined(TB_CONFIG_OS_WINDOWS)
+extern char **environ;
+#endif
+
 namespace goldfish {
 using std::cerr;
 using std::cout;
@@ -797,6 +802,41 @@ f_unset_environment_variable (s7_scheme* sc, s7_pointer args) {
   return s7_make_boolean (sc, tb_environment_remove (env_name));
 }
 
+static s7_pointer
+f_getenvs (s7_scheme* sc, s7_pointer args) {
+  s7_pointer p = s7_nil(sc);
+
+#ifdef TB_CONFIG_OS_WINDOWS
+  // Windows: use GetEnvironmentStrings
+  LPCH env_strings = GetEnvironmentStrings();
+  if (env_strings) {
+    LPCH env = env_strings;
+    while (*env) {
+      const char* eq = strchr(env, '=');
+      if (eq && eq != env) { // skip empty variable names
+        s7_pointer name = s7_make_string_with_length(sc, env, eq - env);
+        s7_pointer value = s7_make_string(sc, eq + 1);
+        p = s7_cons(sc, s7_cons(sc, name, value), p);
+      }
+      env += strlen(env) + 1;
+    }
+    FreeEnvironmentStrings(env_strings);
+  }
+#else
+  // Unix/Linux/macOS: use environ (declared at global scope)
+  for (int32_t i = 0; environ[i]; i++) {
+    const char* eq = strchr(environ[i], '=');
+    if (eq) {
+      s7_pointer name = s7_make_string_with_length(sc, environ[i], eq - environ[i]);
+      s7_pointer value = s7_make_string(sc, eq + 1);
+      p = s7_cons(sc, s7_cons(sc, name, value), p);
+    }
+  }
+#endif
+
+  return p;
+}
+
 inline void
 glue_scheme_process_context (s7_scheme* sc) {
   s7_pointer cur_env= s7_curlet (sc);
@@ -805,12 +845,16 @@ glue_scheme_process_context (s7_scheme* sc) {
   const char* d_get_environment_variable= "(g_get-environemt-variable string) => string";
   const char* s_command_line            = "g_command-line";
   const char* d_command_line            = "(g_command-line) => string";
+  const char* s_getenvs                 = "g_getenvs";
+  const char* d_getenvs                 = "(g_getenvs) => alist, returns all environment variables as an alist";
 
   s7_define (sc, cur_env, s7_make_symbol (sc, s_get_environment_variable),
              s7_make_typed_function (sc, s_get_environment_variable, f_get_environment_variable, 1, 0, false,
                                      d_get_environment_variable, NULL));
   s7_define (sc, cur_env, s7_make_symbol (sc, s_command_line),
              s7_make_typed_function (sc, s_command_line, f_command_line, 0, 0, false, d_command_line, NULL));
+  s7_define (sc, cur_env, s7_make_symbol (sc, s_getenvs),
+             s7_make_typed_function (sc, s_getenvs, f_getenvs, 0, 0, false, d_getenvs, NULL));
 }
 
 string
