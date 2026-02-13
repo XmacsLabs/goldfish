@@ -20,12 +20,20 @@
         (liii path)
         (liii lang))
 
+(define enable-http-tests? 
+  (let ((env-var (getenv "GOLDFISH_TEST_HTTP")))
+    (and env-var (not (equal? env-var "0")))))
+
 (define level1-tests
   ((path :./ "tests" :/ "goldfish" :list-path)
    :filter (@ _ :dir?)
    :flat-map (lambda (x) ((x :list-path) :collect))
    :filter (@ _ :file?)
-   :filter (lambda (x) (not ($ (x :to-string) :contains "srfi-78")))
+   :filter (lambda (x) 
+             (let ((file-path (x :to-string)))
+               (and (not ($ file-path :contains "srfi-78"))
+                    (or enable-http-tests?
+                        (not ($ file-path :contains "http-test"))))))
    :map (@ _ :to-string)))
 
 (define (all-tests)
