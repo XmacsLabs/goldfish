@@ -22,7 +22,7 @@
       (g_get-environment-variable key))
 
     (define (get-environment-variables)
-      (getenvs))
+      (g_getenvs))
 
     (define (command-line)
       (g_command-line))

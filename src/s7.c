@@ -98728,7 +98728,6 @@ void r7rs_init(s7_scheme *sc)
   sc->access_symbol = make_symbol(sc, "access", 6);
   sc->unlink_symbol = make_symbol(sc, "unlink", 6);
   sc->time_symbol = make_symbol(sc, "time", 4);
-  sc->getenvs_symbol = make_symbol(sc, "getenvs", 7);
 
 #ifdef CLOCK_REALTIME
   s7_define(sc, cur_env, make_symbol(sc, "CLOCK_REALTIME", 14), make_integer(sc, (s7_int)CLOCK_REALTIME));
@@ -98736,9 +98735,6 @@ void r7rs_init(s7_scheme *sc)
 #ifdef F_OK
   s7_define(sc, cur_env, make_symbol(sc, "F_OK", 4), make_integer(sc, (s7_int)F_OK));
 #endif
-  s7_define(sc, cur_env, sc->getenvs_symbol,
-            s7_make_typed_function_with_environment(sc, "getenvs", g_getenvs, 0, 0, false, "(getenvs) returns all the environment variables in an alist",
-						    s7_make_signature(sc, 1, sc->is_pair_symbol), cur_env));
   s7_define(sc, cur_env, sc->unlink_symbol,
             s7_make_typed_function_with_environment(sc, "unlink", g_unlink, 1, 0, false, "int unlink(char*)",
 						    s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_string_symbol), cur_env));
