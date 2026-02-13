@@ -64,6 +64,11 @@
 
 static std::vector<std::string> command_args= std::vector<std::string> ();
 
+// Declare environ for non-Windows platforms (needed for f_getenvs)
+#if !defined(TB_CONFIG_OS_WINDOWS)
+extern char **environ;
+#endif
+
 namespace goldfish {
 using std::cerr;
 using std::cout;
@@ -818,11 +823,11 @@ f_getenvs (s7_scheme* sc, s7_pointer args) {
     FreeEnvironmentStrings(env_strings);
   }
 #else
-  // Unix/Linux: use environ
-  for (int32_t i = 0; ::environ[i]; i++) {
-    const char* eq = strchr(::environ[i], '=');
+  // Unix/Linux/macOS: use environ (declared at global scope)
+  for (int32_t i = 0; environ[i]; i++) {
+    const char* eq = strchr(environ[i], '=');
     if (eq) {
-      s7_pointer name = s7_make_string_with_length(sc, ::environ[i], eq - ::environ[i]);
+      s7_pointer name = s7_make_string_with_length(sc, environ[i], eq - environ[i]);
       s7_pointer value = s7_make_string(sc, eq + 1);
       p = s7_cons(sc, s7_cons(sc, name, value), p);
     }
