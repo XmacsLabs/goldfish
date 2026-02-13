@@ -17,10 +17,11 @@ extern "C" {
 
 /* R7RS specific symbols */
 extern s7_pointer unlink_symbol, access_symbol, time_symbol, clock_gettime_symbol,
-                  getenvs_symbol, uname_symbol;
+                  getenvs_symbol, uname_symbol, sqrt_symbol;
 
 /* R7RS specific function declarations */
-s7_pointer g_getenvs(s7_scheme *sc, s7_pointer args);
+s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args);
+s7_pointer sqrt_p_p(s7_scheme *sc, s7_pointer num);
 
 /* R7RS Scheme code string */
 extern const char r7rs_scm[];
