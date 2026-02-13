@@ -15,6 +15,7 @@
 ;
 
 (define-library (scheme base)
+  (import (scheme core))
   (export
     let-values
     ; R7RS 5: Program Structure
@@ -51,35 +52,57 @@
     ; 0-clause BSD
     ; Bill Schottstaedt
     ; from S7 source repo: r7rs.scm
-    (define-macro (let-values vars . body)
-      (if (and (pair? vars)
-               (pair? (car vars))
-               (null? (cdar vars)))
-          `((lambda ,(caar vars)
-              ,@body)
-            ,(cadar vars))
-          `(with-let
-            (apply sublet (curlet)
-              (list
-                ,@(map
-                   (lambda (v)
-                     `((lambda ,(car v)
-                         (values ,@(map (lambda (name)
-                                          (values (symbol->keyword name) name))
-                                     (let args->proper-list ((args (car v)))
-                                       (cond ((symbol? args)
-                                              (list args))
-                                             ((not (pair? args))
-                                              args)
-                                             ((pair? (car args))
-                                              (cons (caar args)
-                                                    (args->proper-list (cdr args))))
-                                             (else
-                                              (cons (car args)
-                                                    (args->proper-list (cdr args)))))))))
-                       ,(cadr v)))
-                   vars)))
-            ,@body)))
+    (define-syntax let-values
+      (lambda (x)
+        (syntax-case x ()
+          ((_ ((binds exp)) b0 b1 ...)
+           (syntax (call-with-values (lambda () exp)
+                     (lambda binds b0 b1 ...))))
+          ((_ (clause ...) b0 b1 ...)
+           (let lp ((clauses (syntax (clause ...)))
+                    (ids '())
+                    (tmps '()))
+             (if (null? clauses)
+                 (with-syntax (((id ...) ids)
+                               ((tmp ...) tmps))
+                   (syntax (let ((id tmp) ...)
+                             b0 b1 ...)))
+                 (syntax-case (car clauses) ()
+                   (((var ...) exp)
+                    (with-syntax (((new-tmp ...) (generate-temporaries
+                                                  (syntax (var ...))))
+                                  ((id ...) ids)
+                                  ((tmp ...) tmps))
+                      (with-syntax ((inner (lp (cdr clauses)
+                                               (syntax (var ... id ...))
+                                               (syntax (new-tmp ... tmp ...)))))
+                        (syntax (call-with-values (lambda () exp)
+                                  (lambda (new-tmp ...) inner))))))
+                   ((vars exp)
+                    (with-syntax ((((new-var . new-tmp) ...)
+                                   (let lp ((vars (syntax vars)))
+                                     (syntax-case vars ()
+                                       ((id . rest)
+                                        (acons (syntax id)
+                                               (car
+                                                (generate-temporaries (syntax (id))))
+                                               (lp (syntax rest))))
+                                       (id (acons (syntax id)
+                                                  (car
+                                                   (generate-temporaries (syntax (id))))
+                                                  '())))))
+                                  ((id ...) ids)
+                                  ((tmp ...) tmps))
+                      (with-syntax ((inner (lp (cdr clauses)
+                                               (syntax (new-var ... id ...))
+                                               (syntax (new-tmp ... tmp ...))))
+                                    (args (let lp ((tmps (syntax (new-tmp ...))))
+                                            (syntax-case tmps ()
+                                              ((id) (syntax id))
+                                              ((id . rest) (cons (syntax id)
+                                                                 (lp (syntax rest))))))))
+                        (syntax (call-with-values (lambda () exp)
+                                  (lambda args inner)))))))))))))
 
     ; 0-clause BSD by Bill Schottstaedt from S7 source repo: s7test.scm
     (define-macro (define-values vars expression)
@@ -549,7 +572,7 @@ wrong-type-arg
           (close-input-port p)
           (close-output-port p)))
 
-    (define (eof-object) #<eof>)
+    (define (eof-object) (call-with-input-string "" read))
 
     ; 0 clause BSD, from S7 repo r7rs.scm
     (define list-copy copy)

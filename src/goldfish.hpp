@@ -685,6 +685,42 @@ f_delete_file (s7_scheme* sc, s7_pointer args) {
   return s7_make_boolean (sc, tb_file_remove (path_c));
 }
 
+static s7_pointer goldfish_sanitize_datum(s7_scheme *sc, s7_pointer obj) {
+    if (s7_is_pair(obj)) {
+        return s7_cons(sc,
+            goldfish_sanitize_datum(sc, s7_car(obj)),
+            goldfish_sanitize_datum(sc, s7_cdr(obj)));
+    }
+
+    if (!s7_is_symbol(obj) && !s7_is_number(obj) && !s7_is_string(obj) && !s7_is_boolean(obj)) {
+        char *str = s7_object_to_c_string(sc, obj);
+        s7_pointer result = obj;
+
+        if (strstr(str, "#_list-values") || strcmp(str, "list-values") == 0) {
+            result = s7_make_symbol(sc, "list-values");
+        } else if (strstr(str, "#_apply-values") || strcmp(str, "apply-values") == 0) {
+            result = s7_make_symbol(sc, "apply-values");
+        } else if (strstr(str, "#_quote") || strcmp(str, "quote") == 0) {
+            result = s7_make_symbol(sc, "quote");
+        }
+
+        free(str);
+        return result;
+    }
+
+    return obj;
+}
+
+static s7_pointer f_goldfish_read(s7_scheme *sc, s7_pointer args) {
+    s7_pointer port = s7_car(args);
+    if (!s7_is_input_port(sc, port)) {
+        return s7_wrong_type_arg_error(sc, "goldfish-read", 1, port, "an input port");
+    }
+    s7_pointer raw_obj = s7_read(sc, port);
+    if (raw_obj == s7_eof_object(sc)) return raw_obj;
+    return goldfish_sanitize_datum(sc, raw_obj);
+}
+
 inline void
 glue_goldfish (s7_scheme* sc) {
   s7_pointer cur_env= s7_curlet (sc);
@@ -693,12 +729,17 @@ glue_goldfish (s7_scheme* sc) {
   const char* d_version    = "(version) => string";
   const char* s_delete_file= "g_delete-file";
   const char* d_delete_file= "(g_delete-file string) => boolean";
+  const char* s_goldfish_read= "g_goldfish-read";
+  const char* d_goldfish_read= "(g_goldfish-read port) => any";
 
   s7_define (sc, cur_env, s7_make_symbol (sc, s_version),
              s7_make_typed_function (sc, s_version, f_version, 0, 0, false, d_version, NULL));
 
   s7_define (sc, cur_env, s7_make_symbol (sc, s_delete_file),
              s7_make_typed_function (sc, s_delete_file, f_delete_file, 1, 0, false, d_delete_file, NULL));
+
+  s7_define (sc, cur_env, s7_make_symbol (sc, s_goldfish_read),
+             s7_make_typed_function (sc, s_goldfish_read, f_goldfish_read, 1, 0, false, d_goldfish_read, NULL));
 }
 
 // old `f_current_second` TODO: use std::chrono::tai_clock::now() when using C++ 20
