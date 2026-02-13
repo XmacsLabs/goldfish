@@ -127,6 +127,7 @@ target ("goldfish") do
     -- Windows-specific configuration from original 3rdparty/s7/xmake.lua
     if is_plat("windows") then
         set_optimize("faster")
+        set_languages("c11")
         add_cxxflags("/fp:precise")
     end
 
