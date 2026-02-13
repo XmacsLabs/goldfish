@@ -101627,6 +101627,13 @@ s7_scheme *s7_init(void)
 	  (int)sizeof(c_proc_t), (int)sizeof(c_object_t), (int)sizeof(vunion), (int)sizeof(port_t),
 	  (int)sizeof(block_t), (int)sizeof(port_functions_t), (int)sizeof(s7_cell), (int)sizeof(s7_scheme), (int)sizeof(opt_info));
 #endif
+
+#if WITH_R7RS
+  /* Register getenvs globally so it's available in all modes */
+  s7_define(sc, sc->rootlet, make_symbol(sc, "getenvs", 7),
+            s7_make_typed_function(sc, "getenvs", g_getenvs, 0, 0, false, "(getenvs) returns all the environment variables in an alist", NULL));
+#endif
+
   return(sc);
 }
 

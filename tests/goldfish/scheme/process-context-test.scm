@@ -26,4 +26,16 @@
   (check (string-prefix? "/" (get-environment-variable "HOME"))
          => #t))
 
+; Test get-environment-variables
+(when (os-linux?)
+  (let ((envs (get-environment-variables)))
+    ; Check that it returns a list
+    (check (list? envs) => #t)
+    ; Check that it contains HOME with a value starting with "/"
+    (let ((home-env (assoc "HOME" envs)))
+      (check (pair? home-env) => #t)
+      (check (string-prefix? "/" (cdr home-env)) => #t))
+    ; Check that it contains PATH
+    (check (pair? (assoc "PATH" envs)) => #t)))
+
 (check-report)
