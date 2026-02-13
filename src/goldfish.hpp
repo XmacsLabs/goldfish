@@ -359,6 +359,303 @@ glue_http_stream (s7_scheme* sc) {
   glue_http_stream_post(sc);
 }
 
+// -------------------------------- Async HTTP --------------------------------
+// Data structure to store async HTTP request state
+struct AsyncHttpRequest {
+  s7_scheme* sc;
+  s7_pointer callback;
+  int gc_loc;
+  std::shared_ptr<cpr::Session> session;  // Keep session alive
+  cpr::AsyncResponse async_response;
+  bool completed;
+  cpr::Response response;
+  std::mutex mutex;
+  
+  AsyncHttpRequest(s7_scheme* scheme, s7_pointer cb, int gc_protect_loc, 
+                   std::shared_ptr<cpr::Session> sess, cpr::AsyncResponse&& ar)
+    : sc(scheme), callback(cb), gc_loc(gc_protect_loc), 
+      session(std::move(sess)), async_response(std::move(ar)), completed(false) {}
+};
+
+// Global list of pending async requests
+static std::mutex g_async_requests_mutex;
+static std::vector<std::shared_ptr<AsyncHttpRequest>> g_async_requests;
+
+// Check if any async requests have completed and process their callbacks
+// This function should be called periodically from the main thread
+// Returns the number of callbacks executed
+static int
+process_async_http_callbacks () {
+  std::vector<std::shared_ptr<AsyncHttpRequest>> completed_requests;
+  
+  // Find completed requests
+  {
+    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
+    for (auto it = g_async_requests.begin(); it != g_async_requests.end(); ) {
+      bool is_ready = false;
+      {
+        std::lock_guard<std::mutex> req_lock((*it)->mutex);
+        if (!(*it)->completed) {
+          // Check if the future is ready (non-blocking)
+          if ((*it)->async_response.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            (*it)->response = (*it)->async_response.get();
+            (*it)->completed = true;
+            is_ready = true;
+          }
+        }
+      }
+      
+      if (is_ready) {
+        completed_requests.push_back(*it);
+        it = g_async_requests.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  }
+  
+  // Execute callbacks for completed requests (outside the lock)
+  for (auto& req : completed_requests) {
+    s7_pointer ht = response2hashtable(req->sc, req->response);
+    s7_call(req->sc, req->callback, s7_cons(req->sc, ht, s7_nil(req->sc)));
+    s7_gc_unprotect_at(req->sc, req->gc_loc);
+  }
+  
+  return static_cast<int>(completed_requests.size());
+}
+
+// Start an async HTTP GET request
+static s7_pointer
+f_http_async_get (s7_scheme* sc, s7_pointer args) {
+  const char* url = s7_string(s7_car(args));
+  s7_pointer params = s7_cadr(args);
+  s7_pointer headers = s7_caddr(args);
+  s7_pointer proxy = s7_cadddr(args);
+  s7_pointer callback = s7_car(s7_cddddr(args));
+  
+  if (!s7_is_procedure(callback)) {
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "http-async-get: callback must be a procedure"), callback));
+  }
+  
+  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
+  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
+  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
+  
+  // Protect callback from GC
+  int gc_loc = s7_gc_protect(sc, callback);
+  
+  // Create session on heap with shared_ptr to keep it alive
+  auto session = std::make_shared<cpr::Session>();
+  session->SetUrl(cpr::Url(url));
+  session->SetParameters(cpr_params);
+  session->SetHeader(cpr_headers);
+  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
+    session->SetProxies(cpr_proxies);
+  }
+  
+  // Start async request using libcpr's built-in thread pool
+  // Session is captured by shared_ptr, so it stays alive until async operation completes
+  auto async_resp = session->GetAsync();
+  
+  // Store the request (session is also stored to keep reference)
+  auto req = std::make_shared<AsyncHttpRequest>(sc, callback, gc_loc, session, std::move(async_resp));
+  {
+    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
+    g_async_requests.push_back(req);
+  }
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_http_async_get (s7_scheme* sc) {
+  s7_pointer cur_env = s7_curlet(sc);
+  const char* name = "g_http-async-get";
+  const char* doc = "(g_http-async-get url params headers proxy callback) => boolean, start async http get. callback receives response hashtable. Use g_http-poll to check for completion.";
+  auto func = s7_make_typed_function(sc, name, f_http_async_get, 5, 0, false, doc, NULL);
+  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+}
+
+// Start an async HTTP POST request
+static s7_pointer
+f_http_async_post (s7_scheme* sc, s7_pointer args) {
+  const char* url = s7_string(s7_car(args));
+  s7_pointer params = s7_cadr(args);
+  const char* body = s7_string(s7_caddr(args));
+  s7_pointer headers = s7_cadddr(args);
+  s7_pointer proxy = s7_car(s7_cddddr(args));
+  s7_pointer callback = s7_cadr(s7_cddddr(args));
+  
+  if (!s7_is_procedure(callback)) {
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "http-async-post: callback must be a procedure"), callback));
+  }
+  
+  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
+  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
+  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
+  
+  // Protect callback from GC
+  int gc_loc = s7_gc_protect(sc, callback);
+  
+  // Create session on heap with shared_ptr to keep it alive
+  auto session = std::make_shared<cpr::Session>();
+  session->SetUrl(cpr::Url(url));
+  session->SetParameters(cpr_params);
+  session->SetBody(cpr::Body(body));
+  session->SetHeader(cpr_headers);
+  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
+    session->SetProxies(cpr_proxies);
+  }
+  
+  // Start async request using libcpr's built-in thread pool
+  auto async_resp = session->PostAsync();
+  
+  // Store the request (session is also stored to keep reference)
+  auto req = std::make_shared<AsyncHttpRequest>(sc, callback, gc_loc, session, std::move(async_resp));
+  {
+    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
+    g_async_requests.push_back(req);
+  }
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_http_async_post (s7_scheme* sc) {
+  s7_pointer cur_env = s7_curlet(sc);
+  const char* name = "g_http-async-post";
+  const char* doc = "(g_http-async-post url params body headers proxy callback) => boolean, start async http post. callback receives response hashtable. Use g_http-poll to check for completion.";
+  auto func = s7_make_typed_function(sc, name, f_http_async_post, 6, 0, false, doc, NULL);
+  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+}
+
+// Start an async HTTP HEAD request
+static s7_pointer
+f_http_async_head (s7_scheme* sc, s7_pointer args) {
+  const char* url = s7_string(s7_car(args));
+  s7_pointer params = s7_cadr(args);
+  s7_pointer headers = s7_caddr(args);
+  s7_pointer proxy = s7_cadddr(args);
+  s7_pointer callback = s7_car(s7_cddddr(args));
+  
+  if (!s7_is_procedure(callback)) {
+    return s7_error(sc, s7_make_symbol(sc, "type-error"),
+                    s7_list(sc, 2, s7_make_string(sc, "http-async-head: callback must be a procedure"), callback));
+  }
+  
+  cpr::Parameters cpr_params = to_cpr_parameters(sc, params);
+  cpr::Header cpr_headers = to_cpr_headers(sc, headers);
+  cpr::Proxies cpr_proxies = to_cpr_proxies(sc, proxy);
+  
+  // Protect callback from GC
+  int gc_loc = s7_gc_protect(sc, callback);
+  
+  // Create session on heap with shared_ptr to keep it alive
+  auto session = std::make_shared<cpr::Session>();
+  session->SetUrl(cpr::Url(url));
+  session->SetParameters(cpr_params);
+  session->SetHeader(cpr_headers);
+  if (s7_is_list(sc, proxy) && !s7_is_null(sc, proxy)) {
+    session->SetProxies(cpr_proxies);
+  }
+  
+  // Start async request using libcpr's built-in thread pool
+  auto async_resp = session->HeadAsync();
+  
+  // Store the request (session is also stored to keep reference)
+  auto req = std::make_shared<AsyncHttpRequest>(sc, callback, gc_loc, session, std::move(async_resp));
+  {
+    std::lock_guard<std::mutex> lock(g_async_requests_mutex);
+    g_async_requests.push_back(req);
+  }
+  
+  return s7_make_boolean(sc, true);
+}
+
+inline void
+glue_http_async_head (s7_scheme* sc) {
+  s7_pointer cur_env = s7_curlet(sc);
+  const char* name = "g_http-async-head";
+  const char* doc = "(g_http-async-head url params headers proxy callback) => boolean, start async http head. callback receives response hashtable. Use g_http-poll to check for completion.";
+  auto func = s7_make_typed_function(sc, name, f_http_async_head, 5, 0, false, doc, NULL);
+  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+}
+
+// Poll for completed async HTTP requests and execute their callbacks
+static s7_pointer
+f_http_poll (s7_scheme* sc, s7_pointer args) {
+  int executed = process_async_http_callbacks();
+  return s7_make_integer(sc, executed);
+}
+
+inline void
+glue_http_poll (s7_scheme* sc) {
+  s7_pointer cur_env = s7_curlet(sc);
+  const char* name = "g_http-poll";
+  const char* doc = "(g_http-poll) => integer, check for completed async http requests and execute their callbacks. Returns number of callbacks executed.";
+  auto func = s7_make_typed_function(sc, name, f_http_poll, 0, 0, false, doc, NULL);
+  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+}
+
+// Wait for all pending async HTTP requests to complete (blocking)
+static s7_pointer
+f_http_wait_all (s7_scheme* sc, s7_pointer args) {
+  s7_double timeout_sec = -1.0; // -1 means wait forever
+  if (s7_is_real(s7_car(args))) {
+    timeout_sec = s7_real(s7_car(args));
+  }
+  
+  auto start = std::chrono::steady_clock::now();
+  bool has_pending = true;
+  int total_executed = 0;
+  
+  while (has_pending) {
+    int executed = process_async_http_callbacks();
+    total_executed += executed;
+    
+    // Check if there are still pending requests
+    {
+      std::lock_guard<std::mutex> lock(g_async_requests_mutex);
+      has_pending = !g_async_requests.empty();
+    }
+    
+    if (has_pending) {
+      // Check timeout
+      if (timeout_sec >= 0) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::steady_clock::now() - start).count() / 1000.0;
+        if (elapsed >= timeout_sec) {
+          break; // Timeout
+        }
+      }
+      // Small sleep to avoid busy waiting
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+  
+  return s7_make_integer(sc, total_executed);
+}
+
+inline void
+glue_http_wait_all (s7_scheme* sc) {
+  s7_pointer cur_env = s7_curlet(sc);
+  const char* name = "g_http-wait-all";
+  const char* doc = "(g_http-wait-all [timeout-seconds]) => integer, wait for all pending async http requests to complete. timeout < 0 means wait forever. Returns number of callbacks executed.";
+  auto func = s7_make_typed_function(sc, name, f_http_wait_all, 0, 1, false, doc, NULL);
+  s7_define(sc, cur_env, s7_make_symbol(sc, name), func);
+}
+
+inline void
+glue_http_async (s7_scheme* sc) {
+  glue_http_async_get(sc);
+  glue_http_async_post(sc);
+  glue_http_async_head(sc);
+  glue_http_poll(sc);
+  glue_http_wait_all(sc);
+}
+
 
 inline s7_pointer
 string_vector_to_s7_vector (s7_scheme* sc, vector<string> v) {
@@ -1432,6 +1729,7 @@ glue_for_community_edition (s7_scheme* sc) {
   glue_liii_hashlib (sc);
   glue_http (sc);
   glue_http_stream (sc);
+  glue_http_async (sc);
 }
 
 static void
