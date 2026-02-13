@@ -1451,7 +1451,7 @@ struct s7_scheme {
              sequence_symbol, size_symbol, source_symbol, weak_symbol;
 
 #if WITH_SYSTEM_EXTRAS
-  s7_pointer is_directory_symbol, file_exists_symbol, delete_file_symbol, system_symbol, directory_to_list_symbol, file_mtime_symbol;
+  s7_pointer is_directory_symbol, delete_file_symbol, system_symbol, directory_to_list_symbol, file_mtime_symbol;
 #endif
   s7_pointer open_input_function_choices[S7_NUM_READ_CHOICES];
   s7_pointer closed_input_function, closed_output_function;
@@ -38390,29 +38390,6 @@ static bool file_probe(const char *arg)
 #endif
 }
 
-static bool file_exists_b_7p(s7_scheme *sc, s7_pointer filename)
-{
-  if (!is_string(filename))
-    sole_arg_wrong_type_error_nr(sc, sc->file_exists_symbol, filename, sc->type_names[T_STRING]);
-  if (string_length(filename) >= 2)
-    {
-      block_t *b = expand_filename(sc, string_value(filename));
-      if (b)
-	{
-	  bool result = file_probe((char *)block_data(b));
-	  liberate(sc, b);
-	  return(result);
-	}}
-  return(file_probe(string_value(filename)));
-}
-
-static s7_pointer g_file_exists(s7_scheme *sc, s7_pointer args)
-{
-  #define H_file_exists "(file-exists? filename) returns #t if the file exists"
-  #define Q_file_exists s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_string_symbol)
-  return(make_boolean(sc, file_exists_b_7p(sc, car(args))));
-}
-
 /* -------------------------------- delete-file -------------------------------- */
 static s7_pointer g_delete_file(s7_scheme *sc, s7_pointer args)
 {
@@ -73337,9 +73314,6 @@ static void init_choosers(s7_scheme *sc)
   set_function_chooser(sc->string_ci_gt_symbol, string_substring_chooser);
   set_function_chooser(sc->string_ci_lt_symbol, string_substring_chooser);
 #endif
-#if WITH_SYSTEM_EXTRAS
-  set_function_chooser(sc->file_exists_symbol, string_substring_chooser);
-#endif
 
   /* also: directory->list substring with-input-from-file with-input-from-string with-output-to-file open-output-file open-input-file
    *   system load getenv file-mtime gensym directory? call-with-output-file delete-file call-with-input-file call-with-input-string open-input-string
@@ -99679,7 +99653,6 @@ static void init_opt_functions(s7_scheme *sc)
 
 #if WITH_SYSTEM_EXTRAS
   s7_set_b_7p_function(sc, global_value(sc->is_directory_symbol), is_directory_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->file_exists_symbol), file_exists_b_7p);
 #endif
 
   s7_set_b_i_function(sc, global_value(sc->is_even_symbol), is_even_i);
@@ -100574,7 +100547,6 @@ static void init_rootlet(s7_scheme *sc)
 
 #if WITH_SYSTEM_EXTRAS
   sc->is_directory_symbol =          defun("directory?",	is_directory,		1, 0, false);
-  sc->file_exists_symbol =           defun("file-exists?",	file_exists,		1, 0, false);
   sc->delete_file_symbol =           defun("delete-file",	delete_file,		1, 0, false);
   sc->system_symbol =                defun("system",		system,			1, 1, false);
 #if !MS_WINDOWS
