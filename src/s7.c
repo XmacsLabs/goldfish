@@ -408,7 +408,7 @@
 #endif
 
 #include "s7.h"
-#include "s7_r7rs.h"
+#include "s7_scheme_inexact.h"
 
 /* there is also apparently __STDC_NO_COMPLEX__ */
 #if WITH_CLANG_PP
@@ -13197,7 +13197,7 @@ static bool is_positive(s7_scheme *sc, s7_pointer x);
 static bool is_negative(s7_scheme *sc, s7_pointer x);
 static s7_pointer make_ratio(s7_scheme *sc, s7_int a, s7_int b);
 
-/* is_NaN is declared in s7_r7rs.h and defined in s7_r7rs.c */
+/* is_NaN is declared in s7_scheme_inexact.h and defined in s7_scheme_inexact.c */
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
 
 #if defined(__sun) && defined(__SVR4)
@@ -98552,7 +98552,6 @@ static void change_scheme_version(s7_scheme *sc, s7_pointer val)
       /* need to check old and new curlet and whether we're coming from s7 or r5rs if envs match, and if either is rootlet, more headaches */
       /* if ((!sc->r7rs_inited) || (sc->curlet != sc->rootlet)) */ /* TODO: check multiple threads here, also if not rootlet before and not == now, call r7rs_init again (or don't set flag if local?) */
       r7rs_init(sc);
-      s7_load_c_string_with_environment(sc, r7rs_scm, strlen(r7rs_scm), sc->curlet);
       sc->args = args;
     }
   if ((val == sc->r7rs_symbol) || (val == sc->r5rs_symbol))

@@ -1,4 +1,4 @@
-/* s7_r7rs.c - R7RS specific implementations for s7 Scheme interpreter
+/* s7_scheme_inexact.c - inexact number implementations for s7 Scheme interpreter
  *
  * derived from s7, a Scheme interpreter
  * SPDX-License-Identifier: 0BSD
@@ -20,13 +20,11 @@
   #endif
 #endif
 
-#include "s7_r7rs.h"
+#include "s7_scheme_inexact.h"
 #include <string.h>
 #include <time.h>
 #include <math.h>
 
-/* R7RS Scheme code string */
-const char r7rs_scm[] = "";
 
 /* -------------------------------- sqrt -------------------------------- */
 /* Helper function to check for NaN */
