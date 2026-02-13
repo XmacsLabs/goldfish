@@ -103,7 +103,7 @@ target ("goldfish") do
     end
     add_files ("src/goldfish.cpp")
     add_files ("src/s7.c", {languages = "c11"})
-    add_files ("src/s7_r7rs.c", {languages = "c11"})
+    add_files ("src/s7_scheme_inexact.c", {languages = "c11"})
     add_packages("tbox")
     add_packages("argh")
     add_packages("cpr")
