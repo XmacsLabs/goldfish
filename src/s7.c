@@ -18955,91 +18955,6 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 
 
 
-/* -------------------------------- ceiling -------------------------------- */
-static s7_pointer ceiling_p_p(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_INTEGER:
-      return(x);
-    case T_RATIO:
-      {
-	s7_int val = numerator(x) / denominator(x);
-	return(make_integer(sc, (numerator(x) < 0) ? val : (val + 1)));
-      }
-    case T_REAL:
-      {
-	const s7_double z = real(x);
-	if (is_NaN(z))
-	  sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, x, it_is_nan_string);
-	if (is_inf(z))
-	  sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, x, it_is_infinite_string);
-#if WITH_GMP
-	if (fabs(z) > DOUBLE_TO_INT64_LIMIT)
-	  {
-	    mpfr_set_d(sc->mpfr_1, z, MPFR_RNDN);
-	    mpfr_get_z(sc->mpz_1, sc->mpfr_1, MPFR_RNDU);
-	    return(mpz_to_integer(sc, sc->mpz_1));
-	  }
-#else
-	if (fabs(z) > DOUBLE_TO_INT64_LIMIT)
-	  sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, x, it_is_too_large_string);
-#endif
-	return(make_integer(sc, (s7_int)ceil(real(x))));
-      }
-#if WITH_GMP
-    case T_BIG_INTEGER:
-      return(x);
-    case T_BIG_RATIO:
-      mpz_cdiv_q(sc->mpz_1, mpq_numref(big_ratio(x)), mpq_denref(big_ratio(x)));
-      return(mpz_to_integer(sc, sc->mpz_1));
-    case T_BIG_REAL:
-      if (mpfr_nan_p(big_real(x)))
-	sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, x, it_is_nan_string);
-      if (mpfr_inf_p(big_real(x)))
-	sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, x, it_is_infinite_string);
-      mpfr_get_z(sc->mpz_1, big_real(x), MPFR_RNDU);
-      return(mpz_to_integer(sc, sc->mpz_1));
-    case T_BIG_COMPLEX:
-#endif
-    case T_COMPLEX:
-      sole_arg_wrong_type_error_nr(sc, sc->ceiling_symbol, x, sc->type_names[T_REAL]);
-    default:
-      return(method_or_bust_p(sc, x, sc->ceiling_symbol, sc->type_names[T_REAL]));
-    }
-}
-
-static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
-{
-  #define H_ceiling "(ceiling x) returns the integer closest to x toward inf"
-  #define Q_ceiling s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_real_symbol)
-  return(ceiling_p_p(sc, car(args)));
-}
-
-static s7_int ceiling_i_i(s7_int i) {return(i);}
-static s7_pointer ceiling_p_i(s7_scheme *sc, s7_int x) {return(make_integer(sc, x));}
-
-#if !WITH_GMP
-static s7_int ceiling_i_7d(s7_scheme *sc, s7_double x)
-{
-  if (is_NaN(x))
-    sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, real_NaN, it_is_nan_string);
-  if ((is_inf(x)) ||
-      (x > DOUBLE_TO_INT64_LIMIT) || (x < -DOUBLE_TO_INT64_LIMIT))
-    sole_arg_out_of_range_error_nr(sc, sc->ceiling_symbol, wrap_real(sc, x), it_is_too_large_string);
-  return((s7_int)ceil(x));
-}
-
-static s7_int ceiling_i_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x)) return(integer(x));
-  if (is_t_real(x)) return(ceiling_i_7d(sc, real(x)));
-  if (is_t_ratio(x)) return((s7_int)(ceil((s7_double)fraction(x))));
-  return(s7_integer(method_or_bust_p(sc, x, sc->ceiling_symbol, sc->type_names[T_REAL])));
-}
-
-static s7_pointer ceiling_p_d(s7_scheme *sc, s7_double x) {return(make_integer(sc, ceiling_i_7d(sc, x)));}
-#endif
 
 
 /* -------------------------------- truncate -------------------------------- */
@@ -99801,7 +99716,7 @@ static void init_rootlet(s7_scheme *sc)
   sc->atanh_symbol =                 defun("atanh",		atanh,			1, 0, false);
   sc->sqrt_symbol =                  s7_define_typed_function(sc, "sqrt", g_sqrt, 1, 0, false, "(sqrt z) returns the square root of z", sc->pl_nn);
   sc->floor_symbol =                 s7_define_typed_function(sc, "floor", g_floor, 1, 0, false, "(floor x) returns the integer closest to x toward -inf", s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_real_symbol)); set_is_translucent(sc->floor_symbol);
-  sc->ceiling_symbol =               defun("ceiling",		ceiling,		1, 0, false); set_is_translucent(sc->ceiling_symbol);
+  sc->ceiling_symbol =               s7_define_typed_function(sc, "ceiling", g_ceiling, 1, 0, false, "(ceiling x) returns the integer closest to x toward inf", s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_real_symbol)); set_is_translucent(sc->ceiling_symbol);
   sc->truncate_symbol =              defun("truncate",		truncate,		1, 0, false); set_is_translucent(sc->truncate_symbol);
   sc->round_symbol =                 defun("round",		round,			1, 0, false); set_is_translucent(sc->round_symbol);
   sc->logand_symbol =                defun("logand",		logand,			0, 0, true);
