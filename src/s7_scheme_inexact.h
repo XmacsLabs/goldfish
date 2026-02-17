@@ -10,13 +10,12 @@
 #define S7_SCHEME_INEXACT_H
 
 #include "s7.h"
+#include "s7_scheme_base.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Helper function to check for NaN */
-bool is_NaN(s7_double x);
 
 /* inexact number function declarations */
 s7_pointer sqrt_p_p(s7_scheme *sc, s7_pointer num);

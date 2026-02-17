@@ -49,11 +49,6 @@
 
 
 /* -------------------------------- sqrt -------------------------------- */
-/* Helper function to check for NaN */
-bool is_NaN(s7_double x)
-{
-  return x != x;
-}
 
 /* Helper to create complex number with 0 imaginary part optimized */
 static s7_pointer make_complex_not_0i(s7_scheme *sc, double r, double i)

@@ -15,6 +15,9 @@
 extern "C" {
 #endif
 
+/* Helper function to check for NaN */
+bool is_NaN(s7_double x);
+
 /* floor function */
 s7_pointer floor_p_p(s7_scheme *sc, s7_pointer x);
 s7_pointer g_floor(s7_scheme *sc, s7_pointer args);

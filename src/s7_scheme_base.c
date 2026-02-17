@@ -11,7 +11,7 @@
 #include <math.h>
 
 /* Helper function to check for NaN */
-static bool is_NaN(s7_double x)
+bool is_NaN(s7_double x)
 {
   return x != x;
 }
