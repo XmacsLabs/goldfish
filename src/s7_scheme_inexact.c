@@ -407,3 +407,96 @@ s7_double asin_d_d(s7_double x)
 {
   return asin(x);
 }
+
+/* -------------------------------- acos -------------------------------- */
+
+static s7_pointer c_acos(s7_scheme *sc, s7_double x)
+{
+  s7_double absx = fabs(x);
+  s7_double recip;
+
+  if (absx <= 1.0) return s7_make_real(sc, acos(x));
+
+#if HAVE_COMPLEX_NUMBERS
+  /* else follow maxima again: */
+  recip = 1.0 / absx;
+  if (x > 0.0)
+    {
+      s7_complex result = s7_complex_i * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
+      return s7_make_complex(sc, creal(result), cimag(result));
+    }
+  else
+    {
+      s7_complex result = M_PI - s7_complex_i * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
+      return s7_make_complex(sc, creal(result), cimag(result));
+    }
+#else
+  /* without complex numbers, we can't handle |x| > 1 */
+  return s7_out_of_range_error(sc, "acos", 1, s7_make_real(sc, x), "no complex numbers");
+#endif
+}
+
+s7_pointer acos_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int iv = s7_integer(x);
+      if (iv == 1) return s7_make_integer(sc, 0);                    /* (acos 1) -> 0 */
+      return c_acos(sc, (s7_double)iv);
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      double frac = (double)s7_numerator(x) / (double)s7_denominator(x);
+      return c_acos(sc, frac);
+    }
+
+  if (s7_is_real(x))
+    {
+      return c_acos(sc, s7_real(x));
+    }
+
+  if (s7_is_complex(x))
+    {
+#if HAVE_COMPLEX_NUMBERS
+      double r = s7_real_part(x);
+      double i = s7_imag_part(x);
+      /* if either real or imag part is very large, use explicit formula, not cacos */
+      /*   this code taken from sbcl's src/code/irrat.lisp; break is around x+70000000i */
+      if ((fabs(r) > 1.0e7) || (fabs(i) > 1.0e7))
+        {
+          s7_complex sq1mz, sq1pz, z = r + i * _Complex_I;
+          sq1mz = csqrt(1.0 - z);
+          sq1pz = csqrt(1.0 + z);
+          /* creal(sq1pz) can be 0.0 */
+          if (creal(sq1pz) == 0.0)        /* so the atan arg will be inf, so the real part will be pi/2(?) */
+            return s7_make_complex(sc, M_PI / 2.0, asinh(cimag(sq1mz * conj(sq1pz))));
+          return s7_make_complex(sc, 2.0 * atan(creal(sq1mz) / creal(sq1pz)), asinh(cimag(sq1mz * conj(sq1pz))));
+        }
+      s7_complex z = r + i * _Complex_I;
+      s7_complex result = cacos(z);
+      return s7_make_complex(sc, creal(result), cimag(result));
+#else
+      return s7_out_of_range_error(sc, "acos", 1, x, "no complex numbers");
+#endif
+    }
+
+  return s7_wrong_type_arg_error(sc, "acos", 1, x, "a number");
+}
+
+s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_acos "(acos z) returns acos(z); (cos (acos 1)) = 1"
+  #define Q_acos sc->pl_nn
+  return acos_p_p(sc, s7_car(args));
+}
+
+s7_pointer acos_p_d(s7_scheme *sc, s7_double x)
+{
+  return c_acos(sc, x);
+}
+
+s7_double acos_d_d(s7_double x)
+{
+  return acos(x);
+}

@@ -17875,97 +17875,6 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
-
-
-
-
-
-/* -------------------------------- acos -------------------------------- */
-static s7_pointer c_acos(s7_scheme *sc, s7_double x)
-{
-  s7_double absx = fabs(x), recip;
-  s7_complex result;
-  if (absx <= 1.0)
-    return(make_real(sc, acos(x)));
-  /* else follow maxima again: */
-  recip = 1.0 / absx;
-  if (x > 0.0)
-    result = s7_complex_i * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
-  else result = M_PI - s7_complex_i * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
-  return(c_complex_to_s7(sc, result));
-}
-
-static s7_pointer acos_p_p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_real(x)) return(c_acos(sc, real(x)));
-  switch (type(x))
-    {
-    case T_INTEGER:
-      return((integer(x) == 1) ? int_zero : c_acos(sc, (s7_double)integer(x)));
-    case T_RATIO:
-      return(c_acos(sc, (s7_double)fraction(x)));
-    case T_COMPLEX:
-#if HAVE_COMPLEX_NUMBERS
-      /* if either real or imag part is very large, use explicit formula, not cacos */
-      /*   this code taken from sbcl's src/code/irrat.lisp */
-
-      if ((fabs(real_part(x)) > 1.0e7) ||
-	  (fabs(imag_part(x)) > 1.0e7))
-	{
-	  s7_complex sq1mz, sq1pz, z = to_c_complex(x);
-	  sq1mz = csqrt(1.0 - z);
-	  sq1pz = csqrt(1.0 + z);	  /* creal(sq1pz) can be 0.0 */
-	  if (creal(sq1pz) == 0.0)        /* so the atan arg will be inf, so the real part will be pi/2(?) */
-	    return(make_complex(sc, M_PI / 2.0, asinh(cimag(sq1mz * conj(sq1pz)))));
-	  return(make_complex(sc, 2.0 * atan(creal(sq1mz) / creal(sq1pz)), asinh(cimag(sq1mz * conj(sq1pz)))));
-	}
-      return(c_complex_to_s7(sc, cacos(s7_to_c_complex(x))));
-#else
-      out_of_range_error_nr(sc, sc->acos_symbol, int_one, x, no_complex_numbers_string);
-#endif
-
-#if WITH_GMP
-    case T_BIG_INTEGER:
-      mpfr_set_z(sc->mpfr_1, big_integer(x), MPFR_RNDN);
-      goto ACOS_BIG_REAL;
-    case T_BIG_RATIO:
-      mpfr_set_q(sc->mpfr_1, big_ratio(x), MPFR_RNDN);
-      goto ACOS_BIG_REAL;
-    case T_BIG_REAL:
-      if (mpfr_inf_p(big_real(x)))
-	{
-	  if (mpfr_cmp_ui(big_real(x), 0) < 0)
-	    return(make_complex_not_0i(sc, -NAN, -INFINITY)); /* match non-bignum choice */
-	  return(make_complex_not_0i(sc, -NAN, INFINITY));
-	}
-      mpfr_set(sc->mpfr_1, big_real(x), MPFR_RNDN);
-    ACOS_BIG_REAL:
-      mpfr_set_ui(sc->mpfr_2, 1, MPFR_RNDN);
-      if (mpfr_cmpabs(sc->mpfr_1, sc->mpfr_2) <= 0)
-	{
-	  mpfr_acos(sc->mpfr_1, sc->mpfr_1, MPFR_RNDN);
-	  return(mpfr_to_big_real(sc, sc->mpfr_1));
-	}
-      mpc_set_fr(sc->mpc_1, sc->mpfr_1, MPC_RNDNN);
-      mpc_acos(sc->mpc_1, sc->mpc_1, MPC_RNDNN);
-      return(mpc_to_number(sc, sc->mpc_1));
-    case T_BIG_COMPLEX:
-      mpc_acos(sc->mpc_1, big_complex(x), MPC_RNDNN);
-      return(mpc_to_number(sc, sc->mpc_1));
-#endif
-    default:
-      return(method_or_bust_p(sc, x, sc->acos_symbol, a_number_string));
-    }
-}
-
-static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
-{
-  #define H_acos "(acos z) returns acos(z); (cos (acos 1)) = 1"
-  #define Q_acos sc->pl_nn
-  return(acos_p_p(sc, car(args)));
-}
-
-
 /* -------------------------------- atan -------------------------------- */
 static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 {
@@ -98868,6 +98777,7 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_p_p_function(sc, global_value(sc->tan_symbol), tan_p_p);
   s7_set_p_d_function(sc, global_value(sc->asin_symbol), asin_p_d);
   s7_set_p_p_function(sc, global_value(sc->asin_symbol), asin_p_p);
+  s7_set_p_d_function(sc, global_value(sc->acos_symbol), acos_p_d);
   s7_set_p_p_function(sc, global_value(sc->acos_symbol), acos_p_p);
   s7_set_p_p_function(sc, global_value(sc->sinh_symbol), sinh_p_p);
   s7_set_p_p_function(sc, global_value(sc->cosh_symbol), cosh_p_p);
@@ -98878,6 +98788,7 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_d_d_function(sc, global_value(sc->sin_symbol), sin_d_d);
   s7_set_d_d_function(sc, global_value(sc->cos_symbol), cos_d_d);
   s7_set_d_d_function(sc, global_value(sc->asin_symbol), asin_d_d);
+  s7_set_d_d_function(sc, global_value(sc->acos_symbol), acos_d_d);
   s7_set_d_d_function(sc, global_value(sc->sinh_symbol), sinh_d_d);
   s7_set_p_d_function(sc, global_value(sc->sinh_symbol), sinh_p_d);
   s7_set_d_d_function(sc, global_value(sc->cosh_symbol), cosh_d_d);
@@ -100073,7 +99984,7 @@ static void init_rootlet(s7_scheme *sc)
   sc->cosh_symbol =                  defun("cosh",		cosh,			1, 0, false); set_all_float(sc->cosh_symbol);
   sc->tanh_symbol =                  defun("tanh",		tanh,			1, 0, false); set_all_float(sc->tanh_symbol);
   sc->asin_symbol =                  s7_define_typed_function(sc, "asin", g_asin, 1, 0, false, "(asin z) returns asin(z); (sin (asin x)) = x", sc->pl_nn);
-  sc->acos_symbol =                  defun("acos",		acos,			1, 0, false);
+  sc->acos_symbol =                  s7_define_typed_function(sc, "acos", g_acos, 1, 0, false, "(acos z) returns acos(z); (cos (acos 1)) = 1", sc->pl_nn);
   sc->atan_symbol =                  defun("atan",		atan,			1, 1, false);
   sc->asinh_symbol =                 defun("asinh",		asinh,			1, 0, false);
   sc->acosh_symbol =                 defun("acosh",		acosh,			1, 0, false);
