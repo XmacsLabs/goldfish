@@ -17875,102 +17875,6 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
-/* -------------------------------- atan -------------------------------- */
-static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
-{
-  #define H_atan "(atan z) returns atan(z), (atan y x) returns atan(y/x)"
-  #define Q_atan s7_make_signature(sc, 3, sc->is_number_symbol, sc->is_number_symbol, sc->is_real_symbol)
-  /* actually if there are two args, both should be real, but how to express that in the signature? */
-
-  const s7_pointer x = car(args);
-  s7_pointer y;
-  /* currently (atan inf.0 inf.0) -> 0.78539816339745, and (atan inf.0 -inf.0) -> 2.3561944901923 (etc) */
-
-  if (!is_pair(cdr(args)))
-    {
-      switch (type(x))
-	{
-	case T_INTEGER:  return((integer(x) == 0) ? int_zero : make_real(sc, atan((double)integer(x))));
-	case T_RATIO:    return(make_real(sc, atan((s7_double)fraction(x))));
-	case T_REAL:     return(make_real(sc, atan(real(x))));
-	case T_COMPLEX:
-#if HAVE_COMPLEX_NUMBERS
-	  return(c_complex_to_s7(sc, catan(to_c_complex(x))));
-#else
-	  out_of_range_error_nr(sc, sc->atan_symbol, int_one, x, no_complex_numbers_string);
-#endif
-
-#if WITH_GMP
-	case T_BIG_INTEGER:
-	  mpfr_set_z(sc->mpfr_1, big_integer(x), MPFR_RNDN);
-	  mpfr_atan(sc->mpfr_1, sc->mpfr_1, MPFR_RNDN);
-	  return(mpfr_to_big_real(sc, sc->mpfr_1));
-	case T_BIG_RATIO:
-	  mpfr_set_q(sc->mpfr_1, big_ratio(x), MPFR_RNDN);
-	  mpfr_atan(sc->mpfr_1, sc->mpfr_1, MPFR_RNDN);
-	  return(mpfr_to_big_real(sc, sc->mpfr_1));
-	case T_BIG_REAL:
-	  mpfr_atan(sc->mpfr_1, big_real(x), MPFR_RNDN);
-	  return(mpfr_to_big_real(sc, sc->mpfr_1));
-	case T_BIG_COMPLEX:
-	  mpc_atan(sc->mpc_1, big_complex(x), MPC_RNDNN);
-	  return(mpc_to_number(sc, sc->mpc_1));
-#endif
-	default:
-	  return(method_or_bust_p(sc, x, sc->atan_symbol, a_number_string));
-	}}
-
-  y = cadr(args);
-  /* this is one place where s7 notices -0.0 != 0.0 -- this is apparently built into atan2, so I guess I'll leave it, but:
-   *   (atan 0.0 0.0): 0.0, (atan 0.0 -0.0): pi, (atan 0 -0.0): pi, (atan 0 -0) 0.0, (atan 0 -0.0): pi.
-   *   so you can sneak up on 0.0 from the left, but you can't fool 0??
-   */
-  switch (type(x))
-    {
-    case T_INTEGER: case T_RATIO: case T_REAL:
-      if (is_small_real(y))
-	return(make_real(sc, atan2(s7_real(x), s7_real(y))));
-      if (!is_real(y))
-	return(method_or_bust(sc, y, sc->atan_symbol, args, sc->type_names[T_REAL], 2));
-#if !WITH_GMP
-      return(make_real(sc, atan2(s7_real(x), real(y))));
-#else
-      mpfr_set_d(sc->mpfr_1, s7_real(x), MPFR_RNDN);
-      goto ATAN2_BIG_REAL;
-    case T_BIG_INTEGER:
-      mpfr_set_z(sc->mpfr_1, big_integer(x), MPFR_RNDN);
-      goto ATAN2_BIG_REAL;
-    case T_BIG_RATIO:
-      mpfr_set_q(sc->mpfr_1, big_ratio(x), MPFR_RNDN);
-      goto ATAN2_BIG_REAL;
-    case T_BIG_REAL:
-      mpfr_set(sc->mpfr_1, big_real(x), MPFR_RNDN);
-      goto ATAN2_BIG_REAL;
-#endif
-    default:
-      return(method_or_bust(sc, x, sc->atan_symbol, args, sc->type_names[T_REAL], 1));
-    }
-#if WITH_GMP
- ATAN2_BIG_REAL:
-  if (is_small_real(y))
-    mpfr_set_d(sc->mpfr_2, s7_real(y), MPFR_RNDN);
-  else
-    if (is_t_big_real(y))
-      mpfr_set(sc->mpfr_2, big_real(y), MPFR_RNDN);
-    else
-      if (is_t_big_integer(y))
-	mpfr_set_z(sc->mpfr_2, big_integer(y), MPFR_RNDN);
-      else
-	if (is_t_big_ratio(y))
-	  mpfr_set_q(sc->mpfr_2, big_ratio(y), MPFR_RNDN);
-	else return(method_or_bust(sc, y, sc->atan_symbol, args, sc->type_names[T_REAL], 2));
-  mpfr_atan2(sc->mpfr_1, sc->mpfr_1, sc->mpfr_2, MPFR_RNDN);
-  return(mpfr_to_big_real(sc, sc->mpfr_1));
-#endif
-}
-
-static s7_double atan_d_d(s7_double x) {return(atan(x));}
-static s7_double atan_d_dd(s7_double x, s7_double y) {return(atan2(x, y));}
 
 
 /* -------------------------------- sinh -------------------------------- */
@@ -99985,7 +99889,7 @@ static void init_rootlet(s7_scheme *sc)
   sc->tanh_symbol =                  defun("tanh",		tanh,			1, 0, false); set_all_float(sc->tanh_symbol);
   sc->asin_symbol =                  s7_define_typed_function(sc, "asin", g_asin, 1, 0, false, "(asin z) returns asin(z); (sin (asin x)) = x", sc->pl_nn);
   sc->acos_symbol =                  s7_define_typed_function(sc, "acos", g_acos, 1, 0, false, "(acos z) returns acos(z); (cos (acos 1)) = 1", sc->pl_nn);
-  sc->atan_symbol =                  defun("atan",		atan,			1, 1, false);
+  sc->atan_symbol =                  s7_define_typed_function(sc, "atan", g_atan, 1, 1, false, "(atan z) returns atan(z), (atan y x) returns atan(y/x)", s7_make_signature(sc, 3, sc->is_number_symbol, sc->is_number_symbol, sc->is_real_symbol));
   sc->asinh_symbol =                 defun("asinh",		asinh,			1, 0, false);
   sc->acosh_symbol =                 defun("acosh",		acosh,			1, 0, false);
   sc->atanh_symbol =                 defun("atanh",		atanh,			1, 0, false);

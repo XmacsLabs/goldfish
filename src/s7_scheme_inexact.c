@@ -500,3 +500,91 @@ s7_double acos_d_d(s7_double x)
 {
   return acos(x);
 }
+
+/* -------------------------------- atan -------------------------------- */
+/* Helper function for single argument atan */
+static s7_pointer c_atan(s7_scheme *sc, s7_double x)
+{
+  if (x == 0.0) return s7_make_integer(sc, 0);
+  return s7_make_real(sc, atan(x));
+}
+
+s7_pointer atan_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int iv = s7_integer(x);
+      if (iv == 0) return s7_make_integer(sc, 0);
+      return s7_make_real(sc, atan((double)iv));
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      double frac = (double)s7_numerator(x) / (double)s7_denominator(x);
+      return s7_make_real(sc, atan(frac));
+    }
+
+  if (s7_is_real(x))
+    {
+      return c_atan(sc, s7_real(x));
+    }
+
+  if (s7_is_complex(x))
+    {
+#if HAVE_COMPLEX_NUMBERS
+      double r = s7_real_part(x);
+      double i = s7_imag_part(x);
+      s7_complex z = r + i * _Complex_I;
+      s7_complex result = catan(z);
+      return s7_make_complex(sc, creal(result), cimag(result));
+#else
+      return s7_out_of_range_error(sc, "atan", 1, x, "no complex numbers");
+#endif
+    }
+
+  return s7_wrong_type_arg_error(sc, "atan", 1, x, "a number");
+}
+
+s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
+{
+  #define H_atan "(atan z) returns atan(z), (atan y x) returns atan(y/x)"
+  #define Q_atan s7_make_signature(sc, 3, sc->is_number_symbol, sc->is_number_symbol, sc->is_real_symbol)
+  /* actually if there are two args, both should be real, but how to express that in the signature? */
+
+  const s7_pointer x = s7_car(args);
+  s7_pointer y;
+
+  if (!s7_is_pair(s7_cdr(args)))
+    {
+      return atan_p_p(sc, x);
+    }
+
+  y = s7_cadr(args);
+  /* this is one place where s7 notices -0.0 != 0.0 -- this is apparently built into atan2, so I guess I'll leave it, but:
+   *   (atan 0.0 0.0): 0.0, (atan 0.0 -0.0): pi, (atan 0 -0.0): pi, (atan 0 -0) 0.0, (atan 0 -0.0): pi.
+   *   so you can sneak up on 0.0 from the left, but you can't fool 0??
+   */
+
+  /* Check if both arguments are real numbers */
+  if (!s7_is_real(x))
+    return s7_wrong_type_arg_error(sc, "atan", 1, x, "a real number");
+  if (!s7_is_real(y))
+    return s7_wrong_type_arg_error(sc, "atan", 2, y, "a real number");
+
+  return s7_make_real(sc, atan2(s7_real(x), s7_real(y)));
+}
+
+s7_pointer atan_p_d(s7_scheme *sc, s7_double x)
+{
+  return c_atan(sc, x);
+}
+
+s7_double atan_d_d(s7_double x)
+{
+  return atan(x);
+}
+
+s7_double atan_d_dd(s7_double x, s7_double y)
+{
+  return atan2(x, y);
+}

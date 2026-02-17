@@ -51,6 +51,13 @@ s7_pointer g_acos(s7_scheme *sc, s7_pointer args);
 s7_pointer acos_p_d(s7_scheme *sc, s7_double x);
 s7_double acos_d_d(s7_double x);
 
+/* atan function */
+s7_pointer atan_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_atan(s7_scheme *sc, s7_pointer args);
+s7_pointer atan_p_d(s7_scheme *sc, s7_double x);
+s7_double atan_d_d(s7_double x);
+s7_double atan_d_dd(s7_double x, s7_double y);
+
 /* nan? function */
 bool s7_is_nan(s7_scheme *sc, s7_pointer x);
 s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args);
