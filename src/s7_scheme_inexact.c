@@ -193,3 +193,58 @@ s7_double sin_d_d(s7_double x)
 {
   return(sin(x));
 }
+
+/* -------------------------------- cos -------------------------------- */
+
+s7_pointer cos_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int iv = s7_integer(x);
+      if (iv == 0) return s7_make_integer(sc, 1); /* (cos 0) -> 1 */
+      return s7_make_real(sc, cos((double)iv));
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      double frac = (double)s7_numerator(x) / (double)s7_denominator(x);
+      return s7_make_real(sc, cos(frac));
+    }
+
+  if (s7_is_real(x))
+    {
+      return s7_make_real(sc, cos(s7_real(x)));
+    }
+
+  if (s7_is_complex(x))
+    {
+#if HAVE_COMPLEX_NUMBERS
+      double r = s7_real_part(x);
+      double i = s7_imag_part(x);
+      s7_complex z = r + i * _Complex_I;
+      s7_complex result = ccos(z);
+      return s7_make_complex(sc, creal(result), cimag(result));
+#else
+      return s7_out_of_range_error(sc, "cos", 1, x, "no complex numbers");
+#endif
+    }
+
+  return s7_wrong_type_arg_error(sc, "cos", 1, x, "a number");
+}
+
+s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cos "(cos z) returns cos(z)"
+  #define Q_cos sc->pl_nn
+  return(cos_p_p(sc, s7_car(args)));
+}
+
+s7_pointer cos_p_d(s7_scheme *sc, s7_double x)
+{
+  return(s7_make_real(sc, cos(x)));
+}
+
+s7_double cos_d_d(s7_double x)
+{
+  return(cos(x));
+}
