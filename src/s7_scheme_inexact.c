@@ -248,3 +248,58 @@ s7_double cos_d_d(s7_double x)
 {
   return(cos(x));
 }
+
+/* -------------------------------- tan -------------------------------- */
+#define TAN_LIMIT 1.0e18
+
+s7_pointer tan_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int iv = s7_integer(x);
+      if (iv == 0) return s7_make_integer(sc, 0); /* (tan 0) -> 0 */
+      return s7_make_real(sc, tan((double)iv));
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      double frac = (double)s7_numerator(x) / (double)s7_denominator(x);
+      return s7_make_real(sc, tan(frac));
+    }
+
+  if (s7_is_real(x))
+    {
+      return s7_make_real(sc, tan(s7_real(x)));
+    }
+
+  if (s7_is_complex(x))
+    {
+#if HAVE_COMPLEX_NUMBERS
+      double r = s7_real_part(x);
+      double i = s7_imag_part(x);
+      if (i > 350.0)
+        return s7_make_complex(sc, 0.0, 1.0);
+      if (i < -350.0)
+        return s7_make_complex(sc, 0.0, -1.0);
+      s7_complex z = r + i * _Complex_I;
+      s7_complex result = ctan(z);
+      return s7_make_complex(sc, creal(result), cimag(result));
+#else
+      return s7_out_of_range_error(sc, "tan", 1, x, "no complex numbers");
+#endif
+    }
+
+  return s7_wrong_type_arg_error(sc, "tan", 1, x, "a number");
+}
+
+s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
+{
+  #define H_tan "(tan z) returns tan(z)"
+  #define Q_tan sc->pl_nn
+  return(tan_p_p(sc, s7_car(args)));
+}
+
+s7_double tan_d_d(s7_double x)
+{
+  return(tan(x));
+}

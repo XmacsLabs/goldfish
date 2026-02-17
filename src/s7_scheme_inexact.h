@@ -34,6 +34,11 @@ s7_pointer g_cos(s7_scheme *sc, s7_pointer args);
 s7_pointer cos_p_d(s7_scheme *sc, s7_double x);
 s7_double cos_d_d(s7_double x);
 
+/* tan function */
+s7_pointer tan_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_tan(s7_scheme *sc, s7_pointer args);
+s7_double tan_d_d(s7_double x);
+
 /* nan? function */
 bool s7_is_nan(s7_scheme *sc, s7_pointer x);
 s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args);
