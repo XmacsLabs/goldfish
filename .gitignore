@@ -27,3 +27,4 @@ result*
 .envrc
 .direnv/
 tests/resources/hashlib-test-large-local.txt
+.claude/settings.local.json
