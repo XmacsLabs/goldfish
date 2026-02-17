@@ -136,3 +136,60 @@ s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
   #define Q_is_nan sc->pl_bt
   return s7_make_boolean(sc, s7_is_nan(sc, s7_car(args)));
 }
+
+/* -------------------------------- sin -------------------------------- */
+#define SIN_LIMIT 1.0e16
+#define SINH_LIMIT 20.0
+
+s7_pointer sin_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int iv = s7_integer(x);
+      if (iv == 0) return s7_make_integer(sc, 0);
+      return s7_make_real(sc, sin((double)iv));
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      double frac = (double)s7_numerator(x) / (double)s7_denominator(x);
+      return s7_make_real(sc, sin(frac));
+    }
+
+  if (s7_is_real(x))
+    {
+      return s7_make_real(sc, sin(s7_real(x)));
+    }
+
+  if (s7_is_complex(x))
+    {
+#if HAVE_COMPLEX_NUMBERS
+      double r = s7_real_part(x);
+      double i = s7_imag_part(x);
+      s7_complex z = r + i * _Complex_I;
+      s7_complex result = csin(z);
+      return s7_make_complex(sc, creal(result), cimag(result));
+#else
+      return s7_out_of_range_error(sc, "sin", 1, x, "no complex numbers");
+#endif
+    }
+
+  return s7_wrong_type_arg_error(sc, "sin", 1, x, "a number");
+}
+
+s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_sin "(sin z) returns sin(z)"
+  #define Q_sin sc->pl_nn
+  return(sin_p_p(sc, s7_car(args)));
+}
+
+s7_pointer sin_p_d(s7_scheme *sc, s7_double x)
+{
+  return(s7_make_real(sc, sin(x)));
+}
+
+s7_double sin_d_d(s7_double x)
+{
+  return(sin(x));
+}

@@ -22,6 +22,12 @@ bool is_NaN(s7_double x);
 s7_pointer sqrt_p_p(s7_scheme *sc, s7_pointer num);
 s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args);
 
+/* sin function */
+s7_pointer sin_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_sin(s7_scheme *sc, s7_pointer args);
+s7_pointer sin_p_d(s7_scheme *sc, s7_double x);
+s7_double sin_d_d(s7_double x);
+
 /* nan? function */
 bool s7_is_nan(s7_scheme *sc, s7_pointer x);
 s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args);
