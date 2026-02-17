@@ -27,6 +27,15 @@ s7_int floor_i_7p(s7_scheme *sc, s7_pointer x);
 s7_int floor_i_i(s7_int i);
 s7_pointer floor_p_i(s7_scheme *sc, s7_int x);
 
+/* ceiling function */
+s7_pointer ceiling_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args);
+s7_pointer ceiling_p_d(s7_scheme *sc, s7_double x);
+s7_int ceiling_i_7d(s7_scheme *sc, s7_double x);
+s7_int ceiling_i_7p(s7_scheme *sc, s7_pointer x);
+s7_int ceiling_i_i(s7_int i);
+s7_pointer ceiling_p_i(s7_scheme *sc, s7_int x);
+
 #ifdef __cplusplus
 }
 #endif
