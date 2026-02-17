@@ -20,10 +20,32 @@
   #endif
 #endif
 
+#ifndef M_PI
+  #define M_PI 3.1415926535897932384626433832795029L
+#endif
+
+#if HAVE_COMPLEX_NUMBERS
+  #if WITH_CLANG_PP
+    #define s7_complex_i ((double)1.0i)
+  #else
+  #if (defined(__GNUC__))
+    #define s7_complex_i 1.0i
+  #else
+    #define s7_complex_i (s7_complex)_Complex_I /* a float, but we want a double */
+  #endif
+  #endif
+#else
+  #define _Complex_I 1.0
+  #define s7_complex_i 1.0
+#endif
+
 #include "s7_scheme_inexact.h"
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#if HAVE_COMPLEX_NUMBERS
+  #include <complex.h>
+#endif
 
 
 /* -------------------------------- sqrt -------------------------------- */
@@ -302,4 +324,86 @@ s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 s7_double tan_d_d(s7_double x)
 {
   return(tan(x));
+}
+
+/* -------------------------------- asin -------------------------------- */
+
+static s7_pointer c_asin(s7_scheme *sc, s7_double x)
+{
+  s7_double absx = fabs(x);
+
+  if (absx <= 1.0) return s7_make_real(sc, asin(x));
+
+#if HAVE_COMPLEX_NUMBERS
+  /* otherwise use maxima code: */
+  s7_double recip = 1.0 / absx;
+  s7_complex result = (M_PI / 2.0) - (s7_complex_i * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
+  return s7_make_complex(sc, (x < 0.0) ? -creal(result) : creal(result), (x < 0.0) ? -cimag(result) : cimag(result));
+#else
+  /* without complex numbers, we can't handle |x| > 1 */
+  return s7_out_of_range_error(sc, "asin", 1, s7_make_real(sc, x), "no complex numbers");
+#endif
+}
+
+s7_pointer asin_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int iv = s7_integer(x);
+      if (iv == 0) return s7_make_integer(sc, 0);                    /* (asin 0) -> 0 */
+      /* in netBSD, (asin 2) returns 0.25383842987008+0.25383842987008i according to Peter Bex */
+      return c_asin(sc, (s7_double)iv);
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      double frac = (double)s7_numerator(x) / (double)s7_denominator(x);
+      return c_asin(sc, frac);
+    }
+
+  if (s7_is_real(x))
+    {
+      return c_asin(sc, s7_real(x));
+    }
+
+  if (s7_is_complex(x))
+    {
+#if HAVE_COMPLEX_NUMBERS
+      double r = s7_real_part(x);
+      double i = s7_imag_part(x);
+      /* if either real or imag part is very large, use explicit formula, not casin */
+      /*   this code taken from sbcl's src/code/irrat.lisp; break is around x+70000000i */
+      if ((fabs(r) > 1.0e7) || (fabs(i) > 1.0e7))
+        {
+          s7_complex sq1mz, sq1pz, z = r + i * _Complex_I;
+          sq1mz = csqrt(1.0 - z);
+          sq1pz = csqrt(1.0 + z);
+          return s7_make_complex(sc, atan(r / creal(sq1mz * sq1pz)), asinh(cimag(sq1pz * conj(sq1mz))));
+        }
+      s7_complex z = r + i * _Complex_I;
+      s7_complex result = casin(z);
+      return s7_make_complex(sc, creal(result), cimag(result));
+#else
+      return s7_out_of_range_error(sc, "asin", 1, x, "no complex numbers");
+#endif
+    }
+
+  return s7_wrong_type_arg_error(sc, "asin", 1, x, "a number");
+}
+
+s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_asin "(asin z) returns asin(z); (sin (asin x)) = x"
+  #define Q_asin sc->pl_nn
+  return asin_p_p(sc, s7_car(args));
+}
+
+s7_pointer asin_p_d(s7_scheme *sc, s7_double x)
+{
+  return c_asin(sc, x);
+}
+
+s7_double asin_d_d(s7_double x)
+{
+  return asin(x);
 }
