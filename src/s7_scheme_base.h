@@ -46,6 +46,57 @@ s7_int abs_i_7p(s7_scheme *sc, s7_pointer x);
 s7_int abs_i_i(s7_int i);
 s7_pointer abs_p_i(s7_scheme *sc, s7_int x);
 
+/* even? function */
+bool even_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer even_p_p(s7_scheme *sc, s7_pointer x);
+bool even_i(s7_int i1);
+s7_pointer g_even(s7_scheme *sc, s7_pointer args);
+
+/* odd? function */
+bool odd_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer odd_p_p(s7_scheme *sc, s7_pointer x);
+bool odd_i(s7_int i1);
+s7_pointer g_odd(s7_scheme *sc, s7_pointer args);
+
+/* zero? function */
+bool zero_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer zero_p_p(s7_scheme *sc, s7_pointer x);
+bool zero_i(s7_int i);
+bool zero_d(s7_double x);
+s7_pointer g_zero(s7_scheme *sc, s7_pointer args);
+
+/* positive? function */
+bool positive_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer positive_p_p(s7_scheme *sc, s7_pointer x);
+bool positive_i(s7_int i);
+bool positive_d(s7_double x);
+s7_pointer g_positive(s7_scheme *sc, s7_pointer args);
+
+/* negative? function */
+bool negative_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer negative_p_p(s7_scheme *sc, s7_pointer x);
+bool negative_i(s7_int p);
+bool negative_d(s7_double p);
+s7_pointer g_negative(s7_scheme *sc, s7_pointer args);
+
+/* exact? function */
+bool exact_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer exact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_exact(s7_scheme *sc, s7_pointer args);
+
+/* inexact? function */
+bool inexact_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer inexact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_inexact(s7_scheme *sc, s7_pointer args);
+
+/* exact->inexact function */
+s7_pointer exact_to_inexact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args);
+
+/* inexact->exact function */
+s7_pointer inexact_to_exact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args);
+
 #ifdef __cplusplus
 }
 #endif

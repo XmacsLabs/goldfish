@@ -24741,330 +24741,52 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* ---------------------------------------- even? odd?---------------------------------------- */
-static bool is_even_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return((integer(x) & 1) == 0);
-#if WITH_GMP
-  if (is_t_big_integer(x))
-    return(mpz_even_p(big_integer(x)));
-#endif
-  return(method_or_bust_p(sc, x, sc->is_even_symbol, sc->type_names[T_INTEGER]) != sc->F);
-}
-
-static s7_pointer is_even_p_p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return(make_boolean(sc, (integer(x) & 1) == 0));
-  return(make_boolean(sc, is_even_b_7p(sc, x)));
-}
-
-static bool is_even_i(s7_int i1) {return((i1 & 1) == 0);}
-
-static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_even "(even? int) returns #t if the integer int32_t is even"
-  #define Q_is_even s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
-  return(make_boolean(sc, is_even_b_7p(sc, car(args))));
-}
-
-
-static bool is_odd_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return((integer(x) & 1) == 1);
-#if WITH_GMP
-  if (is_t_big_integer(x))
-    return(mpz_odd_p(big_integer(x)));
-#endif
-  return(method_or_bust_p(sc, x, sc->is_odd_symbol, sc->type_names[T_INTEGER]) != sc->F);
-}
-
-static s7_pointer is_odd_p_p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return(make_boolean(sc, (integer(x) & 1) == 1));
-  return(make_boolean(sc, is_odd_b_7p(sc, x)));
-}
-
-static bool is_odd_i(s7_int i1) {return((i1 & 1) == 1);}
-
-static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_odd "(odd? int) returns #t if the integer int32_t is odd"
-  #define Q_is_odd s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
-  return(make_boolean(sc, is_odd_b_7p(sc, car(args))));
-}
-
 
 /* ---------------------------------------- zero? ---------------------------------------- */
+
 static bool is_zero(s7_pointer x)
 {
-  switch (type(x))
-    {
-    case T_INTEGER:     return(integer(x) == 0);
-    case T_REAL:        return(real(x) == 0.0);
-#if WITH_GMP
-    case T_BIG_INTEGER: return(mpz_cmp_ui(big_integer(x), 0) == 0);
-    case T_BIG_REAL:    return(mpfr_zero_p(big_real(x)));
-#endif
-    default:
-      return(false); /* ratios and complex numbers here are already collapsed into integers and reals */
-    }
+  if (s7_is_integer(x))
+    return s7_integer(x) == 0;
+  if (s7_is_real(x))
+    return s7_real(x) == 0.0;
+  return false; /* ratios and complex numbers here are already collapsed into integers and reals */
 }
 
-static bool is_zero_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x)) return(integer(x) == 0);
-  if (is_t_real(x))    return(real(x) == 0.0);
-#if WITH_GMP
-  if (is_number(x))    return(is_zero(x));
-#else
-  if (is_number(x))    return(false);
-#endif
-  return(method_or_bust_p(sc, x, sc->is_zero_symbol, a_number_string) != sc->F);
-}
-
-static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_zero "(zero? num) returns #t if the number num is zero"
-  #define Q_is_zero sc->pl_bn
-  return(make_boolean(sc, is_zero_b_7p(sc, car(args))));
-}
-
-static s7_pointer is_zero_p_p(s7_scheme *sc, s7_pointer x) {return(make_boolean(sc, is_zero_b_7p(sc, x)));}
-static bool is_zero_i(s7_int i) {return(i == 0);}
-static bool is_zero_d(s7_double x) {return(x == 0.0);}
-
-
-/* -------------------------------- positive? -------------------------------- */
 static bool is_positive(s7_scheme *sc, s7_pointer x)
 {
-  switch (type(x))
-    {
-    case T_INTEGER:     return(integer(x) > 0);
-    case T_RATIO:       return(numerator(x) > 0);
-    case T_REAL:        return(real(x) > 0.0);
-#if WITH_GMP
-    case T_BIG_INTEGER: return(mpz_cmp_ui(big_integer(x), 0) > 0);
-    case T_BIG_RATIO:   return(mpq_cmp_ui(big_ratio(x), 0, 1) > 0);
-    case T_BIG_REAL:    return(mpfr_cmp_ui(big_real(x), 0) > 0);
-#endif
-    default:
-      sole_arg_wrong_type_error_nr(sc, sc->is_positive_symbol, x, sc->type_names[T_REAL]);
-    }
-  return(false);
+  if (s7_is_integer(x))
+    return s7_integer(x) > 0;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return s7_numerator(x) > 0;
+  if (s7_is_real(x))
+    return s7_real(x) > 0.0;
+  s7_wrong_type_arg_error(sc, "positive?", 1, x, "a real number");
+  return false;
 }
 
-static bool is_positive_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x)) return(integer(x) > 0);
-  if (is_t_real(x))    return(real(x) > 0.0);
-#if WITH_GMP
-  if (is_number(x))    return(is_positive(sc, x));
-#else
-  if (is_t_ratio(x))   return(numerator(x) > 0);
-#endif
-  return(method_or_bust_p(sc, x, sc->is_positive_symbol, sc->type_names[T_REAL]) != sc->F);
-}
-
-static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_positive "(positive? num) returns #t if the real number num is positive (greater than 0)"
-  #define Q_is_positive s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol)
-  return(make_boolean(sc, is_positive_b_7p(sc, car(args))));
-}
-
-static s7_pointer is_positive_p_p(s7_scheme *sc, s7_pointer x) {return(make_boolean(sc, is_positive_b_7p(sc, x)));}
-static bool is_positive_i(s7_int i) {return(i > 0);}
-static bool is_positive_d(s7_double x) {return(x > 0.0);}
-
-
-/* -------------------------------- negative? -------------------------------- */
 static bool is_negative(s7_scheme *sc, s7_pointer x)
 {
-  switch (type(x))
-    {
-    case T_INTEGER:     return(integer(x) < 0);
-    case T_RATIO:       return(numerator(x) < 0);
-    case T_REAL:        return(real(x) < 0.0);
-#if WITH_GMP
-    case T_BIG_INTEGER: return(mpz_cmp_ui(big_integer(x), 0) < 0);
-    case T_BIG_RATIO:   return(mpq_cmp_ui(big_ratio(x), 0, 1) < 0);
-    case T_BIG_REAL:    return(mpfr_cmp_ui(big_real(x), 0) < 0);
-#endif
-    default:
-      sole_arg_wrong_type_error_nr(sc, sc->is_negative_symbol, x, sc->type_names[T_REAL]);
-    }
-  return(false);
+  if (s7_is_integer(x))
+    return s7_integer(x) < 0;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return s7_numerator(x) < 0;
+  if (s7_is_real(x))
+    return s7_real(x) < 0.0;
+  s7_wrong_type_arg_error(sc, "negative?", 1, x, "a real number");
+  return false;
 }
-
-static bool is_negative_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x)) return(integer(x) < 0);
-  if (is_t_real(x))    return(real(x) < 0.0);
-#if WITH_GMP
-  if (is_number(x))    return(is_negative(sc, x));
-#else
-  if (is_t_ratio(x))   return(numerator(x) < 0);
-#endif
-  return(method_or_bust_p(sc, x, sc->is_negative_symbol, sc->type_names[T_REAL]) != sc->F);
-}
-
-static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
-  #define Q_is_negative s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol)
-  return(make_boolean(sc, is_negative_b_7p(sc, car(args))));
-}
-
-static s7_pointer is_negative_p_p(s7_scheme *sc, s7_pointer x) {return(make_boolean(sc, is_negative_b_7p(sc, x)));}
-static bool is_negative_i(s7_int p) {return(p < 0);}
-static bool is_negative_d(s7_double p) {return(p < 0.0);}
-
 
 #if !WITH_PURE_S7
 /* ---------------------------------------- exact<->inexact exact? inexact? ---------------------------------------- */
-static s7_pointer exact_to_inexact_p_p(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_INTEGER:
-#if WITH_GMP
-      if ((integer(x) > INT64_TO_DOUBLE_LIMIT) || (integer(x) < -INT64_TO_DOUBLE_LIMIT))
-	return(s7_number_to_big_real(sc, x));
-#endif
-      return(make_real(sc, (s7_double)(integer(x))));
-
-    case T_RATIO:
-#if WITH_GMP
-      if ((numerator(x) > INT64_TO_DOUBLE_LIMIT) || (numerator(x) < -INT64_TO_DOUBLE_LIMIT) ||
- 	  (denominator(x) > INT64_TO_DOUBLE_LIMIT))  /* just a guess */
-	return(s7_number_to_big_real(sc, x));
-#endif
-      return(make_real(sc, (s7_double)(fraction(x))));
-
-#if WITH_GMP
-    case T_BIG_INTEGER:
-      return(big_integer_to_big_real(sc, x));
-    case T_BIG_RATIO:
-      return(big_ratio_to_big_real(sc, x));
-#endif
-    case T_REAL:    case T_BIG_REAL:
-    case T_COMPLEX: case T_BIG_COMPLEX:
-      return(x); /* apparently (exact->inexact 1+i) is not an error */
-    default:
-      return(method_or_bust_p(sc, x, sc->exact_to_inexact_symbol, a_number_string));
-    }
-}
-
-static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
-  #define Q_exact_to_inexact s7_make_signature(sc, 2, sc->is_number_symbol, sc->is_number_symbol)
-  /* arg can be complex -> itself! */
-  return(exact_to_inexact_p_p(sc, car(args)));
-}
-
-static s7_pointer inexact_to_exact_p_p(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_INTEGER: case T_BIG_INTEGER:
-    case T_RATIO:   case T_BIG_RATIO:
-      return(x);
-
-#if WITH_GMP
-    case T_BIG_REAL:
-      return(big_rationalize(sc, set_plist_1(sc, x)));
-#endif
-
-    case T_REAL:
-      {
-	s7_int numer = 0, denom = 1;
-	s7_double val = real(x);
-	if ((is_inf(val)) || (is_NaN(val)))
-	  sole_arg_wrong_type_error_nr(sc, sc->inexact_to_exact_symbol, x, a_normal_real_string);
-
-	if ((val > DOUBLE_TO_INT64_LIMIT) || (val < -(DOUBLE_TO_INT64_LIMIT)))
-	  {
-#if WITH_GMP
-	    return(big_rationalize(sc, set_plist_1(sc, x))); /* this can handle t_real as well as t_big_real */
-#else
-	    sole_arg_out_of_range_error_nr(sc, sc->inexact_to_exact_symbol, x, it_is_too_large_string);
-#endif
-	  }
-	/* c_rationalize limit is RATIONALIZE_LIMIT=1e12 currently so this is a tighter limit than DOUBLE_TO_INT64_LIMIT */
-	if (c_rationalize(val, sc->default_rationalize_error, &numer, &denom))
-	  return(make_simpler_ratio_or_integer(sc, numer, denom));
-      }
-
-    default:
-      return(method_or_bust_p(sc, x, sc->inexact_to_exact_symbol, sc->type_names[T_REAL]));
-    }
-  return(x);
-}
-
-static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
-  #define Q_inexact_to_exact s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol)
-  return(inexact_to_exact_p_p(sc, car(args)));
-}
-
-static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_exact "(exact? num) returns #t if num is exact (an integer or a ratio)"
-  #define Q_is_exact sc->pl_bn
-
-  const s7_pointer x = car(args);
-  switch (type(x))
-    {
-    case T_INTEGER: case T_BIG_INTEGER:
-    case T_RATIO:   case T_BIG_RATIO:
-      return(sc->T);
-    case T_REAL:    case T_BIG_REAL:
-    case T_COMPLEX: case T_BIG_COMPLEX:
-      return(sc->F);
-    default:
-      return(method_or_bust_p(sc, x, sc->is_exact_symbol, a_number_string));
-    }
-}
-
-static bool is_exact_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (!is_number(x))
-    return(method_or_bust_p(sc, x, sc->is_exact_symbol, a_number_string) != sc->F);
-  return(is_rational(x));
-}
 
 
-static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_inexact "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)"
-  #define Q_is_inexact sc->pl_bn
 
-  const s7_pointer x = car(args);
-  switch (type(x))
-    {
-    case T_INTEGER:  case T_BIG_INTEGER:
-    case T_RATIO:    case T_BIG_RATIO:
-      return(sc->F);
-    case T_REAL:     case T_BIG_REAL:
-    case T_COMPLEX:  case T_BIG_COMPLEX:
-      return(sc->T);
-    default:
-      return(method_or_bust_p(sc, x, sc->is_inexact_symbol, a_number_string));
-    }
-}
 
-static bool is_inexact_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (!is_number(x))
-    return(method_or_bust_p(sc, x, sc->is_inexact_symbol, a_number_string) != sc->F);
-  return(!is_rational(x));
-}
+
+
+
+
 
 
 /* ---------------------------------------- integer-length ---------------------------------------- */
@@ -55827,7 +55549,7 @@ static s7_pointer fx_floor_sqrt_s(s7_scheme *sc, s7_pointer arg)
       return(mpz_to_integer(sc, sc->mpz_1));
     }
 #else
-  if (!is_negative_b_7p(sc, p))
+  if (!negative_b_7p(sc, p))
     return(make_integer(sc, (s7_int)floor(sqrt(s7_number_to_real_with_location(sc, p, sc->sqrt_symbol)))));
 #endif
   return(floor_p_p(sc, sqrt_p_p(sc, p)));
@@ -55838,10 +55560,10 @@ static s7_pointer fx_is_positive_u(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer num = u_lookup(sc, cadr(arg), arg);
   if (is_t_integer(num)) return(make_boolean(sc, integer(num) > 0));
-  return(make_boolean(sc, is_positive_b_7p(sc, num)));
+  return(make_boolean(sc, positive_b_7p(sc, num)));
 }
 
-static s7_pointer fx_is_zero_u(s7_scheme *sc, s7_pointer arg) {return(make_boolean(sc, is_zero_b_7p(sc, u_lookup(sc, cadr(arg), arg))));}
+static s7_pointer fx_is_zero_u(s7_scheme *sc, s7_pointer arg) {return(make_boolean(sc, zero_b_7p(sc, u_lookup(sc, cadr(arg), arg))));}
 
 #define fx_real_part_s_any(Name, Lookup) \
   static s7_pointer Name(s7_scheme *sc, s7_pointer arg) \
@@ -56730,7 +56452,7 @@ static s7_pointer fx_is_zero_remainder_car(s7_scheme *sc, s7_pointer arg)
   u = (is_pair(u)) ? car(u) : g_car(sc, set_plist_1(sc, u)); /* g_car much less overhead than car_p_p or simple_error(?) */
   if ((is_t_integer(u)) && (is_t_integer(t)))
     return(make_boolean(sc, remainder_i_7ii(sc, integer(u), integer(t)) == 0));
-  return(make_boolean(sc, is_zero_b_7p(sc, remainder_p_pp(sc, u, t))));
+  return(make_boolean(sc, zero_b_7p(sc, remainder_p_pp(sc, u, t))));
 }
 
 static s7_pointer fx_is_zero_remainder_o(s7_scheme *sc, s7_pointer arg)
@@ -56739,7 +56461,7 @@ static s7_pointer fx_is_zero_remainder_o(s7_scheme *sc, s7_pointer arg)
   s7_pointer y = s_lookup(sc, opt1_sym(cdr(arg)), arg);
   if ((is_t_integer(x)) && (is_t_integer(y)))
     return(make_boolean(sc, remainder_i_7ii(sc, integer(x), integer(y)) == 0));
-  return(make_boolean(sc, is_zero_b_7p(sc, remainder_p_pp(sc, x, y))));
+  return(make_boolean(sc, zero_b_7p(sc, remainder_p_pp(sc, x, y))));
 }
 
 #define fx_c_opscq_any(Name, Lookup) \
@@ -56760,7 +56482,7 @@ static s7_pointer fx_is_zero_remainder_ti(s7_scheme *sc, s7_pointer arg)
   s7_pointer t = t_lookup(sc, car(larg), arg);
   s7_int u = integer(cadr(larg));
   if (is_t_integer(t)) return(make_boolean(sc, (integer(t) % u) == 0));
-  return(make_boolean(sc, is_zero_b_7p(sc, remainder_p_pi(sc, t, u))));
+  return(make_boolean(sc, zero_b_7p(sc, remainder_p_pi(sc, t, u))));
 }
 
 static s7_pointer fx_not_opscq(s7_scheme *sc, s7_pointer arg)
@@ -59930,7 +59652,7 @@ static bool fx_tree_in(s7_scheme *sc, const s7_pointer tree, const s7_pointer va
 	    if ((cadr(arg1) == var1) && (caddr(arg1) == var2)) return(with_fx(tree, fx_c_optuq_direct));
 	    if (caddr(arg1) == var1)
 	      {
-		if ((opt2_direct(cdr(p)) == (s7_pointer)is_zero_p_p) && (opt3_direct(cdr(p)) == (s7_pointer)remainder_p_pp) &&
+		if ((opt2_direct(cdr(p)) == (s7_pointer)zero_p_p) && (opt3_direct(cdr(p)) == (s7_pointer)remainder_p_pp) &&
 		    (!more_vars) && (o_var_ok(cadr(arg1), var1, var2, var3)))
 		  return(with_fx(tree, fx_is_zero_remainder_o));
 		return(with_fx(tree, fx_c_opstq_direct));
@@ -59945,7 +59667,7 @@ static bool fx_tree_in(s7_scheme *sc, const s7_pointer tree, const s7_pointer va
     case HOP_SAFE_C_opSCq:
       if (cadadr(p) == var1)
 	{
-	  if ((fn_proc(p) == g_is_zero) && (fn_proc(cadr(p)) == g_remainder) &&
+	  if ((fn_proc(p) == g_zero) && (fn_proc(cadr(p)) == g_remainder) &&
 	      (is_t_integer(caddadr(p))) && (integer(caddadr(p)) > 1))
 	    return(with_fx(tree, fx_is_zero_remainder_ti));
 	  return(with_fx(tree, fx_c_optcq)); /* there currently isn't any fx_c_opscq_direct */
@@ -64024,7 +63746,7 @@ static bool b_idp_ok(s7_scheme *sc, const s7_pointer s_func, const s7_pointer fo
 	    if (is_symbol(cadr(expr)))
 	      {
 		q_arg1(opc).p = s7_t_slot(sc, cadr(expr));
-		q_call(opc).fb = (bdf == is_positive_d) ? opt_b_d_s_is_positive : opt_b_d_s;
+		q_call(opc).fb = (bdf == positive_d) ? opt_b_d_s_is_positive : opt_b_d_s;
 		return_true(sc, expr);
 	      }
 	    q_func1_arg(opc).o1 = sc->opts[sc->pc];
@@ -98274,8 +97996,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_p_p_function(sc, global_value(sc->vector_to_list_symbol), vector_to_list_p_p);
   s7_set_p_p_function(sc, global_value(sc->string_to_list_symbol), string_to_list_p_p);
   s7_set_p_p_function(sc, global_value(sc->vector_length_symbol), vector_length_p_p);
-  s7_set_b_7p_function(sc, global_value(sc->is_exact_symbol), is_exact_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_inexact_symbol), is_inexact_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_exact_symbol), exact_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_inexact_symbol), inexact_b_7p);
   s7_set_p_p_function(sc, global_value(sc->exact_to_inexact_symbol), exact_to_inexact_p_p);
   s7_set_p_p_function(sc, global_value(sc->inexact_to_exact_symbol), inexact_to_exact_p_p);
 #endif
@@ -98477,8 +98199,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_p_pp_function(sc, global_value(sc->divide_symbol), divide_p_pp);
   s7_set_p_p_function(sc, global_value(sc->divide_symbol), invert_p_p);
   s7_set_p_p_function(sc, global_value(sc->subtract_symbol), negate_p_p);
-  s7_set_p_p_function(sc, global_value(sc->is_even_symbol), is_even_p_p);
-  s7_set_p_p_function(sc, global_value(sc->is_odd_symbol), is_odd_p_p);
+  s7_set_p_p_function(sc, global_value(sc->is_even_symbol), even_p_p);
+  s7_set_p_p_function(sc, global_value(sc->is_odd_symbol), odd_p_p);
 
   s7_set_p_p_function(sc, global_value(sc->random_symbol), random_p_p);
   s7_set_d_7d_function(sc, global_value(sc->random_symbol), random_d_7d);
@@ -98575,8 +98297,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_b_p_function(sc, global_value(sc->is_c_pointer_symbol), s7_is_c_pointer);
   s7_set_b_p_function(sc, global_value(sc->is_dilambda_symbol), s7_is_dilambda);
   s7_set_b_p_function(sc, global_value(sc->is_eof_object_symbol), is_eof_object_b_p);
-  s7_set_b_7p_function(sc, global_value(sc->is_even_symbol), is_even_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_odd_symbol), is_odd_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_even_symbol), even_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_odd_symbol), odd_b_7p);
   s7_set_b_p_function(sc, global_value(sc->is_float_symbol), is_float_b);
   s7_set_b_p_function(sc, global_value(sc->is_float_vector_symbol), s7_is_float_vector);
   s7_set_b_p_function(sc, global_value(sc->is_gensym_symbol), is_gensym_b_p);
@@ -98615,9 +98337,9 @@ static void init_opt_functions(s7_scheme *sc)
 
   s7_set_b_p_function(sc, global_value(sc->is_openlet_symbol), s7_is_openlet);
   s7_set_b_7p_function(sc, global_value(sc->iterator_is_at_end_symbol), iterator_is_at_end_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_zero_symbol), is_zero_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_negative_symbol), is_negative_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_positive_symbol), is_positive_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_zero_symbol), zero_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_negative_symbol), negative_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_positive_symbol), positive_b_7p);
   s7_set_b_7p_function(sc, global_value(sc->not_symbol), not_b_7p);
   s7_set_b_7p_function(sc, global_value(sc->is_provided_symbol), is_provided_b_7p);
   s7_set_b_7p_function(sc, global_value(sc->is_defined_symbol), is_defined_b_7p);
@@ -98675,21 +98397,21 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_b_7p_function(sc, global_value(sc->is_directory_symbol), is_directory_b_7p);
 #endif
 
-  s7_set_b_i_function(sc, global_value(sc->is_even_symbol), is_even_i);
-  s7_set_b_i_function(sc, global_value(sc->is_odd_symbol), is_odd_i);
-  s7_set_b_i_function(sc, global_value(sc->is_zero_symbol), is_zero_i);
-  s7_set_b_d_function(sc, global_value(sc->is_zero_symbol), is_zero_d);
-  s7_set_p_p_function(sc, global_value(sc->is_zero_symbol), is_zero_p_p);
-  s7_set_p_p_function(sc, global_value(sc->is_positive_symbol), is_positive_p_p);
-  s7_set_p_p_function(sc, global_value(sc->is_negative_symbol), is_negative_p_p);
+  s7_set_b_i_function(sc, global_value(sc->is_even_symbol), even_i);
+  s7_set_b_i_function(sc, global_value(sc->is_odd_symbol), odd_i);
+  s7_set_b_i_function(sc, global_value(sc->is_zero_symbol), zero_i);
+  s7_set_b_d_function(sc, global_value(sc->is_zero_symbol), zero_d);
+  s7_set_p_p_function(sc, global_value(sc->is_zero_symbol), zero_p_p);
+  s7_set_p_p_function(sc, global_value(sc->is_positive_symbol), positive_p_p);
+  s7_set_p_p_function(sc, global_value(sc->is_negative_symbol), negative_p_p);
   s7_set_p_p_function(sc, global_value(sc->real_part_symbol), real_part_p_p);
   s7_set_p_p_function(sc, global_value(sc->imag_part_symbol), imag_part_p_p);
   s7_set_d_7p_function(sc, global_value(sc->real_part_symbol), real_part_d_7p);
   s7_set_d_7p_function(sc, global_value(sc->imag_part_symbol), imag_part_d_7p); /* also angle, magnitude, but angle might return int etc */
-  s7_set_b_i_function(sc, global_value(sc->is_positive_symbol), is_positive_i);
-  s7_set_b_d_function(sc, global_value(sc->is_positive_symbol), is_positive_d);
-  s7_set_b_i_function(sc, global_value(sc->is_negative_symbol), is_negative_i);
-  s7_set_b_d_function(sc, global_value(sc->is_negative_symbol), is_negative_d);
+  s7_set_b_i_function(sc, global_value(sc->is_positive_symbol), positive_i);
+  s7_set_b_d_function(sc, global_value(sc->is_positive_symbol), positive_d);
+  s7_set_b_i_function(sc, global_value(sc->is_negative_symbol), negative_i);
+  s7_set_b_d_function(sc, global_value(sc->is_negative_symbol), negative_d);
 
   s7_set_p_pi_function(sc, global_value(sc->lt_symbol), lt_p_pi);
   s7_set_b_pi_function(sc, global_value(sc->lt_symbol), lt_b_pi);
@@ -99578,11 +99300,11 @@ static void init_rootlet(s7_scheme *sc)
   sc->imag_part_symbol =             defun("imag-part",	        imag_part,		1, 0, false);
   sc->numerator_symbol =             defun("numerator",	        numerator,		1, 0, false);
   sc->denominator_symbol =           defun("denominator",	denominator,		1, 0, false);
-  sc->is_even_symbol =               defun("even?",		is_even,		1, 0, false);
-  sc->is_odd_symbol =                defun("odd?",		is_odd,			1, 0, false);
-  sc->is_zero_symbol =               defun("zero?",		is_zero,		1, 0, false);
-  sc->is_positive_symbol =           defun("positive?",	        is_positive,		1, 0, false);
-  sc->is_negative_symbol =           defun("negative?",	        is_negative,		1, 0, false);
+  sc->is_even_symbol = s7_define_typed_function(sc, "even?", g_even, 1, 0, false, "(even? int) returns #t if the integer int32_t is even", s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol));
+  sc->is_odd_symbol = s7_define_typed_function(sc, "odd?", g_odd, 1, 0, false, "(odd? int) returns #t if the integer int32_t is odd", s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol));
+  sc->is_zero_symbol = s7_define_typed_function(sc, "zero?", g_zero, 1, 0, false, "(zero? num) returns #t if the number num is zero", sc->pl_bn);
+  sc->is_positive_symbol = s7_define_typed_function(sc, "positive?", g_positive, 1, 0, false, "(positive? num) returns #t if the real number num is positive (greater than 0)", s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol));
+  sc->is_negative_symbol = s7_define_typed_function(sc, "negative?", g_negative, 1, 0, false, "(negative? num) returns #t if the real number num is negative (less than 0)", s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol));
   sc->is_infinite_symbol =           defun("infinite?",	        is_infinite,		1, 0, false);
   sc->is_nan_symbol = s7_define_typed_function(sc, "nan?", g_is_nan, 1, 0, false, "(nan? obj) returns #t if obj is a NaN", sc->pl_bt);
   sc->complex_symbol =               defun("complex",	        complex,	        2, 0, false);
@@ -99642,10 +99364,10 @@ static void init_rootlet(s7_scheme *sc)
 
 #if !WITH_PURE_S7
   sc->integer_length_symbol =        defun("integer-length",	integer_length,		1, 0, false);
-  sc->inexact_to_exact_symbol =      defun("inexact->exact",	inexact_to_exact,	1, 0, false);
-  sc->exact_to_inexact_symbol =      defun("exact->inexact",	exact_to_inexact,	1, 0, false);
-  sc->is_exact_symbol =              defun("exact?",		is_exact,		1, 0, false);
-  sc->is_inexact_symbol =            defun("inexact?",		is_inexact,		1, 0, false);
+  sc->inexact_to_exact_symbol =      s7_define_typed_function(sc, "inexact->exact", g_inexact_to_exact, 1, 0, false, "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2", s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol));
+  sc->exact_to_inexact_symbol =      s7_define_typed_function(sc, "exact->inexact", g_exact_to_inexact, 1, 0, false, "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5", s7_make_signature(sc, 2, sc->is_number_symbol, sc->is_number_symbol));
+  sc->is_exact_symbol =              s7_define_typed_function(sc, "exact?", g_exact, 1, 0, false, "(exact? num) returns #t if num is exact (an integer or a ratio)", sc->pl_bn);
+  sc->is_inexact_symbol =            s7_define_typed_function(sc, "inexact?", g_inexact, 1, 0, false, "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)", sc->pl_bn);
   sc->make_polar_symbol =            defun("make-polar",        make_polar,	        2, 0, false);
 #endif
   sc->random_state_to_list_symbol =  defun("random-state->list", random_state_to_list,  0, 1, false);
