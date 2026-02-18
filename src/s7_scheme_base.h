@@ -58,6 +58,27 @@ s7_pointer odd_p_p(s7_scheme *sc, s7_pointer x);
 bool odd_i(s7_int i1);
 s7_pointer g_odd(s7_scheme *sc, s7_pointer args);
 
+/* zero? function */
+bool zero_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer zero_p_p(s7_scheme *sc, s7_pointer x);
+bool zero_i(s7_int i);
+bool zero_d(s7_double x);
+s7_pointer g_zero(s7_scheme *sc, s7_pointer args);
+
+/* positive? function */
+bool positive_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer positive_p_p(s7_scheme *sc, s7_pointer x);
+bool positive_i(s7_int i);
+bool positive_d(s7_double x);
+s7_pointer g_positive(s7_scheme *sc, s7_pointer args);
+
+/* negative? function */
+bool negative_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer negative_p_p(s7_scheme *sc, s7_pointer x);
+bool negative_i(s7_int p);
+bool negative_d(s7_double p);
+s7_pointer g_negative(s7_scheme *sc, s7_pointer args);
+
 #ifdef __cplusplus
 }
 #endif

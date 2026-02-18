@@ -337,3 +337,113 @@ s7_pointer g_odd(s7_scheme *sc, s7_pointer args)
   #define Q_odd s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
   return s7_make_boolean(sc, odd_b_7p(sc, s7_car(args)));
 }
+
+/* -------------------------------- zero? -------------------------------- */
+
+bool zero_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return s7_integer(x) == 0;
+  if (s7_is_real(x))
+    return s7_real(x) == 0.0;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return false; /* rational numbers with non-zero numerator are not zero */
+  if (s7_is_complex(x))
+    return (s7_real_part(x) == 0.0) && (s7_imag_part(x) == 0.0);
+  s7_wrong_type_arg_error(sc, "zero?", 1, x, "a number");
+  return false;
+}
+
+s7_pointer zero_p_p(s7_scheme *sc, s7_pointer x)
+{
+  return s7_make_boolean(sc, zero_b_7p(sc, x));
+}
+
+bool zero_i(s7_int i)
+{
+  return i == 0;
+}
+
+bool zero_d(s7_double x)
+{
+  return x == 0.0;
+}
+
+s7_pointer g_zero(s7_scheme *sc, s7_pointer args)
+{
+  #define H_zero "(zero? num) returns #t if the number num is zero"
+  #define Q_zero sc->pl_bn
+  return s7_make_boolean(sc, zero_b_7p(sc, s7_car(args)));
+}
+
+/* -------------------------------- positive? -------------------------------- */
+
+bool positive_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return s7_integer(x) > 0;
+  if (s7_is_real(x))
+    return s7_real(x) > 0.0;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return s7_numerator(x) > 0;
+  s7_wrong_type_arg_error(sc, "positive?", 1, x, "a real number");
+  return false;
+}
+
+s7_pointer positive_p_p(s7_scheme *sc, s7_pointer x)
+{
+  return s7_make_boolean(sc, positive_b_7p(sc, x));
+}
+
+bool positive_i(s7_int i)
+{
+  return i > 0;
+}
+
+bool positive_d(s7_double x)
+{
+  return x > 0.0;
+}
+
+s7_pointer g_positive(s7_scheme *sc, s7_pointer args)
+{
+  #define H_positive "(positive? num) returns #t if the real number num is positive (greater than 0)"
+  #define Q_positive s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol)
+  return s7_make_boolean(sc, positive_b_7p(sc, s7_car(args)));
+}
+
+/* -------------------------------- negative? -------------------------------- */
+
+bool negative_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return s7_integer(x) < 0;
+  if (s7_is_real(x))
+    return s7_real(x) < 0.0;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return s7_numerator(x) < 0;
+  s7_wrong_type_arg_error(sc, "negative?", 1, x, "a real number");
+  return false;
+}
+
+s7_pointer negative_p_p(s7_scheme *sc, s7_pointer x)
+{
+  return s7_make_boolean(sc, negative_b_7p(sc, x));
+}
+
+bool negative_i(s7_int p)
+{
+  return p < 0;
+}
+
+bool negative_d(s7_double p)
+{
+  return p < 0.0;
+}
+
+s7_pointer g_negative(s7_scheme *sc, s7_pointer args)
+{
+  #define H_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
+  #define Q_negative s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol)
+  return s7_make_boolean(sc, negative_b_7p(sc, s7_car(args)));
+}
