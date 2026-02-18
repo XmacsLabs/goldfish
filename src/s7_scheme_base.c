@@ -9,6 +9,11 @@
 #include "s7_scheme_base.h"
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
+
+#define S7_INT64_MAX 9223372036854775807LL
+/* #define S7_INT64_MIN -9223372036854775808LL */   /* why is this disallowed in C? "warning: integer constant is so large that it is unsigned" */
+#define S7_INT64_MIN (int64_t)(-S7_INT64_MAX - 1LL) /* in gcc 9 we had to assign this to an s7_int, then use that! */
 
 /* Helper function to check for NaN */
 bool is_NaN(s7_double x)
@@ -184,4 +189,93 @@ s7_int ceiling_i_7p(s7_scheme *sc, s7_pointer x)
 s7_pointer ceiling_p_d(s7_scheme *sc, s7_double x)
 {
   return s7_make_integer(sc, ceiling_i_7d(sc, x));
+}
+
+/* -------------------------------- abs -------------------------------- */
+
+s7_pointer abs_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int val = s7_integer(x);
+      if (val >= 0) return x;
+      if (val == S7_INT64_MIN)
+        return s7_out_of_range_error(sc, "abs", 1, x, "it is too large");
+      return s7_make_integer(sc, -val);
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      s7_int num = s7_numerator(x);
+      s7_int den = s7_denominator(x);
+      if (num >= 0) return x;
+      if (num == S7_INT64_MIN)
+        return s7_make_ratio(sc, S7_INT64_MAX, den); /* not rationalized, can't call s7_make_ratio */
+      return s7_make_ratio(sc, -num, den);
+    }
+
+  if (s7_is_real(x))
+    {
+      s7_double z = s7_real(x);
+      if (is_NaN(z))
+        {
+          /* (abs -nan.0) -> +nan.0, not -nan.0 */
+          /* nan_payload not available, just return NaN */
+          return s7_make_real(sc, -z); /* -NaN yields NaN? */
+        }
+      return (signbit(z)) ? s7_make_real(sc, -z) : x;
+    }
+
+  if (s7_is_complex(x))
+    return s7_wrong_type_arg_error(sc, "abs", 1, x, "a real number");
+
+  return s7_wrong_type_arg_error(sc, "abs", 1, x, "a number");
+}
+
+s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
+{
+  #define H_abs "(abs x) returns the absolute value of the real number x"
+  #define Q_abs s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol)
+  return abs_p_p(sc, s7_car(args));
+}
+
+s7_double abs_d_d(s7_double x) {return((signbit(x)) ? (-x) : x);}
+
+s7_int abs_i_i(s7_int i)
+{
+  return (i < 0) ? -i : i;
+}
+
+s7_pointer abs_p_i(s7_scheme *sc, s7_int x)
+{
+  return s7_make_integer(sc, (x < 0) ? -x : x);
+}
+
+s7_int abs_i_7d(s7_scheme *sc, s7_double x)
+{
+  if (is_NaN(x))
+    s7_out_of_range_error(sc, "abs", 1, s7_make_real(sc, x), "it is NaN");
+  return (s7_int)((x < 0) ? -x : x);
+}
+
+s7_int abs_i_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return s7_integer(x) >= 0 ? s7_integer(x) : -s7_integer(x);
+  if (s7_is_real(x))
+    return abs_i_7d(sc, s7_real(x));
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      s7_int num = s7_numerator(x);
+      s7_int den = s7_denominator(x);
+      s7_int val = num / den;  /* C '/' truncates toward zero */
+      /* For abs, we need absolute value of the rational number truncated toward zero */
+      return (val >= 0) ? val : -val;
+    }
+  s7_wrong_type_arg_error(sc, "abs", 1, x, "a real number"); return 0;
+}
+
+s7_pointer abs_p_d(s7_scheme *sc, s7_double x)
+{
+  return s7_make_real(sc, (x < 0) ? -x : x);
 }

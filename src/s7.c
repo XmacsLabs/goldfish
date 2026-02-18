@@ -408,6 +408,7 @@
 #endif
 
 #include "s7.h"
+#include "s7_scheme_base.h"
 #include "s7_scheme_inexact.h"
 #include "s7_scheme_base.h"
 
@@ -16884,96 +16885,8 @@ the optional 'radix' argument is ignored: (string->number \"#x11\" 2) -> 17 not 
 }
 
 
-/* -------------------------------- abs -------------------------------- */
-static inline s7_pointer abs_p_p(s7_scheme *sc, s7_pointer x)
-{
-#if !WITH_GMP
-  if (is_t_integer(x))
-    {
-      if (integer(x) >= 0) return(x);
-      if (integer(x) > S7_INT64_MIN) return(make_integer(sc, -integer(x)));
-    }
-  if (is_t_real(x))
-    {
-#if 0
-      if (is_NaN(real(x)))
-	return((nan_payload(real(x)) > 0) ? x : real_NaN);         /* (abs -nan.0) -> +nan.0?? */
-#endif
-      return((signbit(real(x))) ? make_real(sc, -real(x)) : x);
-    }
-#endif
-  switch (type(x))
-    {
-    case T_INTEGER:
-      if (integer(x) >= 0) return(x);
-#if WITH_GMP
-      if (integer(x) == S7_INT64_MIN)
-	{
-	  x = s7_int_to_big_integer(sc, integer(x));
-	  mpz_neg(big_integer(x), big_integer(x));
-	  return(x);
-	}
-#else
-      if (integer(x) == S7_INT64_MIN)
-	sole_arg_out_of_range_error_nr(sc, sc->abs_symbol, set_elist_1(sc, x), result_is_too_large_string);
-#endif
-      return(make_integer(sc, -integer(x)));
 
-    case T_RATIO:
-      if (numerator(x) >= 0) return(x);
-#if WITH_GMP && (!POINTER_32)
-      if (numerator(x) == S7_INT64_MIN)
-	{
-	  s7_pointer new_bgr;
-	  mpz_set_si(sc->mpz_1, S7_INT64_MIN);
-	  mpz_neg(sc->mpz_1, sc->mpz_1);
-	  mpz_set_si(sc->mpz_2, denominator(x));
-	  new_cell(sc, new_bgr, T_BIG_RATIO);
-	  big_ratio_bgr(new_bgr) = alloc_bigrat(sc);
-	  add_big_ratio(sc, new_bgr);
-	  mpq_set_num(big_ratio(new_bgr), sc->mpz_1);
-	  mpq_set_den(big_ratio(new_bgr), sc->mpz_2);
-	  return(new_bgr);
-	}
-#else
-      if (numerator(x) == S7_INT64_MIN)
-	return(make_ratio(sc, S7_INT64_MAX, denominator(x))); /* not rationalized, so can't call make_simpler_ratio */
-#endif
-      return(make_simpler_ratio(sc, -numerator(x), denominator(x)));
 
-    case T_REAL:
-      if (is_NaN(real(x)))                  /* (abs -nan.0) -> +nan.0, not -nan.0 */
-	return((nan_payload(real(x)) > 0) ? x : real_NaN);
-      return((signbit(real(x))) ? make_real(sc, -real(x)) : x); /* (abs -0.0) returns -0.0 -- Shiro Kawai */
-#if WITH_GMP
-    case T_BIG_INTEGER:
-      mpz_abs(sc->mpz_1, big_integer(x));
-      return(mpz_to_integer(sc, sc->mpz_1));
-    case T_BIG_RATIO:
-      mpq_abs(sc->mpq_1, big_ratio(x));
-      return(mpq_to_rational(sc, sc->mpq_1));
-    case T_BIG_REAL:
-      mpfr_abs(sc->mpfr_1, big_real(x), MPFR_RNDN);
-      return(mpfr_to_big_real(sc, sc->mpfr_1));
-#endif
-    default:
-      return(method_or_bust_p(sc, x, sc->abs_symbol, sc->type_names[T_REAL]));
-    }
-}
-
-static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
-{
-  #define H_abs "(abs x) returns the absolute value of the real number x"
-  #define Q_abs s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol)
-  return(abs_p_p(sc, car(args)));
-}
-
-#ifdef __TINYC__
-  static s7_double abs_d_d(s7_double x) {return((x < 0) ? (-x) : x);} /* signbit is very slow in tcc */
-#else
-  static s7_double abs_d_d(s7_double x) {return((signbit(x)) ? (-x) : x);}
-#endif
-static s7_int abs_i_i(s7_int x) {return((x < 0) ? (-x) : x);}
 /* (abs|magnitude -9223372036854775808) won't work here */
 
 
@@ -99698,8 +99611,7 @@ static void init_rootlet(s7_scheme *sc)
   sc->log_symbol =                   defun("log",		log,			1, 1, false);
   sc->ash_symbol =                   defun("ash",		ash,			2, 0, false);
   sc->exp_symbol =                   defun("exp",		exp,			1, 0, false); set_all_float(sc->exp_symbol);
-  sc->abs_symbol =                   defun("abs",		abs,			1, 0, false); set_all_integer_and_float(sc->abs_symbol);
-  set_is_translucent(sc->abs_symbol);
+  sc->abs_symbol =                   s7_define_typed_function(sc, "abs", g_abs, 1, 0, false, "(abs x) returns the absolute value of the real number x", s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol)); set_is_translucent(sc->abs_symbol);
   sc->magnitude_symbol =             defun("magnitude",	        magnitude,		1, 0, false); set_all_integer_and_float(sc->magnitude_symbol);
   sc->angle_symbol =                 defun("angle",		angle,			1, 0, false);
   sc->sin_symbol =                   s7_define_typed_function(sc, "sin", g_sin, 1, 0, false, "(sin z) returns sin(z)", sc->pl_nn); set_all_float(sc->sin_symbol);
