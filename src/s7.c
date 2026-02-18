@@ -24779,145 +24779,14 @@ static bool is_negative(s7_scheme *sc, s7_pointer x)
 
 #if !WITH_PURE_S7
 /* ---------------------------------------- exact<->inexact exact? inexact? ---------------------------------------- */
-static s7_pointer exact_to_inexact_p_p(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_INTEGER:
-#if WITH_GMP
-      if ((integer(x) > INT64_TO_DOUBLE_LIMIT) || (integer(x) < -INT64_TO_DOUBLE_LIMIT))
-	return(s7_number_to_big_real(sc, x));
-#endif
-      return(make_real(sc, (s7_double)(integer(x))));
-
-    case T_RATIO:
-#if WITH_GMP
-      if ((numerator(x) > INT64_TO_DOUBLE_LIMIT) || (numerator(x) < -INT64_TO_DOUBLE_LIMIT) ||
- 	  (denominator(x) > INT64_TO_DOUBLE_LIMIT))  /* just a guess */
-	return(s7_number_to_big_real(sc, x));
-#endif
-      return(make_real(sc, (s7_double)(fraction(x))));
-
-#if WITH_GMP
-    case T_BIG_INTEGER:
-      return(big_integer_to_big_real(sc, x));
-    case T_BIG_RATIO:
-      return(big_ratio_to_big_real(sc, x));
-#endif
-    case T_REAL:    case T_BIG_REAL:
-    case T_COMPLEX: case T_BIG_COMPLEX:
-      return(x); /* apparently (exact->inexact 1+i) is not an error */
-    default:
-      return(method_or_bust_p(sc, x, sc->exact_to_inexact_symbol, a_number_string));
-    }
-}
-
-static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
-  #define Q_exact_to_inexact s7_make_signature(sc, 2, sc->is_number_symbol, sc->is_number_symbol)
-  /* arg can be complex -> itself! */
-  return(exact_to_inexact_p_p(sc, car(args)));
-}
-
-static s7_pointer inexact_to_exact_p_p(s7_scheme *sc, s7_pointer x)
-{
-  switch (type(x))
-    {
-    case T_INTEGER: case T_BIG_INTEGER:
-    case T_RATIO:   case T_BIG_RATIO:
-      return(x);
-
-#if WITH_GMP
-    case T_BIG_REAL:
-      return(big_rationalize(sc, set_plist_1(sc, x)));
-#endif
-
-    case T_REAL:
-      {
-	s7_int numer = 0, denom = 1;
-	s7_double val = real(x);
-	if ((is_inf(val)) || (is_NaN(val)))
-	  sole_arg_wrong_type_error_nr(sc, sc->inexact_to_exact_symbol, x, a_normal_real_string);
-
-	if ((val > DOUBLE_TO_INT64_LIMIT) || (val < -(DOUBLE_TO_INT64_LIMIT)))
-	  {
-#if WITH_GMP
-	    return(big_rationalize(sc, set_plist_1(sc, x))); /* this can handle t_real as well as t_big_real */
-#else
-	    sole_arg_out_of_range_error_nr(sc, sc->inexact_to_exact_symbol, x, it_is_too_large_string);
-#endif
-	  }
-	/* c_rationalize limit is RATIONALIZE_LIMIT=1e12 currently so this is a tighter limit than DOUBLE_TO_INT64_LIMIT */
-	if (c_rationalize(val, sc->default_rationalize_error, &numer, &denom))
-	  return(make_simpler_ratio_or_integer(sc, numer, denom));
-      }
-
-    default:
-      return(method_or_bust_p(sc, x, sc->inexact_to_exact_symbol, sc->type_names[T_REAL]));
-    }
-  return(x);
-}
-
-static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
-  #define Q_inexact_to_exact s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol)
-  return(inexact_to_exact_p_p(sc, car(args)));
-}
-
-static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_exact "(exact? num) returns #t if num is exact (an integer or a ratio)"
-  #define Q_is_exact sc->pl_bn
-
-  const s7_pointer x = car(args);
-  switch (type(x))
-    {
-    case T_INTEGER: case T_BIG_INTEGER:
-    case T_RATIO:   case T_BIG_RATIO:
-      return(sc->T);
-    case T_REAL:    case T_BIG_REAL:
-    case T_COMPLEX: case T_BIG_COMPLEX:
-      return(sc->F);
-    default:
-      return(method_or_bust_p(sc, x, sc->is_exact_symbol, a_number_string));
-    }
-}
-
-static bool is_exact_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (!is_number(x))
-    return(method_or_bust_p(sc, x, sc->is_exact_symbol, a_number_string) != sc->F);
-  return(is_rational(x));
-}
 
 
-static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_inexact "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)"
-  #define Q_is_inexact sc->pl_bn
 
-  const s7_pointer x = car(args);
-  switch (type(x))
-    {
-    case T_INTEGER:  case T_BIG_INTEGER:
-    case T_RATIO:    case T_BIG_RATIO:
-      return(sc->F);
-    case T_REAL:     case T_BIG_REAL:
-    case T_COMPLEX:  case T_BIG_COMPLEX:
-      return(sc->T);
-    default:
-      return(method_or_bust_p(sc, x, sc->is_inexact_symbol, a_number_string));
-    }
-}
 
-static bool is_inexact_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (!is_number(x))
-    return(method_or_bust_p(sc, x, sc->is_inexact_symbol, a_number_string) != sc->F);
-  return(!is_rational(x));
-}
+
+
+
+
 
 
 /* ---------------------------------------- integer-length ---------------------------------------- */
@@ -98127,8 +97996,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_p_p_function(sc, global_value(sc->vector_to_list_symbol), vector_to_list_p_p);
   s7_set_p_p_function(sc, global_value(sc->string_to_list_symbol), string_to_list_p_p);
   s7_set_p_p_function(sc, global_value(sc->vector_length_symbol), vector_length_p_p);
-  s7_set_b_7p_function(sc, global_value(sc->is_exact_symbol), is_exact_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_inexact_symbol), is_inexact_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_exact_symbol), exact_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_inexact_symbol), inexact_b_7p);
   s7_set_p_p_function(sc, global_value(sc->exact_to_inexact_symbol), exact_to_inexact_p_p);
   s7_set_p_p_function(sc, global_value(sc->inexact_to_exact_symbol), inexact_to_exact_p_p);
 #endif
