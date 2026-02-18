@@ -24741,62 +24741,6 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* ---------------------------------------- even? odd?---------------------------------------- */
-static bool is_even_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return((integer(x) & 1) == 0);
-#if WITH_GMP
-  if (is_t_big_integer(x))
-    return(mpz_even_p(big_integer(x)));
-#endif
-  return(method_or_bust_p(sc, x, sc->is_even_symbol, sc->type_names[T_INTEGER]) != sc->F);
-}
-
-static s7_pointer is_even_p_p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return(make_boolean(sc, (integer(x) & 1) == 0));
-  return(make_boolean(sc, is_even_b_7p(sc, x)));
-}
-
-static bool is_even_i(s7_int i1) {return((i1 & 1) == 0);}
-
-static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_even "(even? int) returns #t if the integer int32_t is even"
-  #define Q_is_even s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
-  return(make_boolean(sc, is_even_b_7p(sc, car(args))));
-}
-
-
-static bool is_odd_b_7p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return((integer(x) & 1) == 1);
-#if WITH_GMP
-  if (is_t_big_integer(x))
-    return(mpz_odd_p(big_integer(x)));
-#endif
-  return(method_or_bust_p(sc, x, sc->is_odd_symbol, sc->type_names[T_INTEGER]) != sc->F);
-}
-
-static s7_pointer is_odd_p_p(s7_scheme *sc, s7_pointer x)
-{
-  if (is_t_integer(x))
-    return(make_boolean(sc, (integer(x) & 1) == 1));
-  return(make_boolean(sc, is_odd_b_7p(sc, x)));
-}
-
-static bool is_odd_i(s7_int i1) {return((i1 & 1) == 1);}
-
-static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_odd "(odd? int) returns #t if the integer int32_t is odd"
-  #define Q_is_odd s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
-  return(make_boolean(sc, is_odd_b_7p(sc, car(args))));
-}
-
 
 /* ---------------------------------------- zero? ---------------------------------------- */
 static bool is_zero(s7_pointer x)
@@ -98477,8 +98421,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_p_pp_function(sc, global_value(sc->divide_symbol), divide_p_pp);
   s7_set_p_p_function(sc, global_value(sc->divide_symbol), invert_p_p);
   s7_set_p_p_function(sc, global_value(sc->subtract_symbol), negate_p_p);
-  s7_set_p_p_function(sc, global_value(sc->is_even_symbol), is_even_p_p);
-  s7_set_p_p_function(sc, global_value(sc->is_odd_symbol), is_odd_p_p);
+  s7_set_p_p_function(sc, global_value(sc->is_even_symbol), even_p_p);
+  s7_set_p_p_function(sc, global_value(sc->is_odd_symbol), odd_p_p);
 
   s7_set_p_p_function(sc, global_value(sc->random_symbol), random_p_p);
   s7_set_d_7d_function(sc, global_value(sc->random_symbol), random_d_7d);
@@ -98575,8 +98519,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_b_p_function(sc, global_value(sc->is_c_pointer_symbol), s7_is_c_pointer);
   s7_set_b_p_function(sc, global_value(sc->is_dilambda_symbol), s7_is_dilambda);
   s7_set_b_p_function(sc, global_value(sc->is_eof_object_symbol), is_eof_object_b_p);
-  s7_set_b_7p_function(sc, global_value(sc->is_even_symbol), is_even_b_7p);
-  s7_set_b_7p_function(sc, global_value(sc->is_odd_symbol), is_odd_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_even_symbol), even_b_7p);
+  s7_set_b_7p_function(sc, global_value(sc->is_odd_symbol), odd_b_7p);
   s7_set_b_p_function(sc, global_value(sc->is_float_symbol), is_float_b);
   s7_set_b_p_function(sc, global_value(sc->is_float_vector_symbol), s7_is_float_vector);
   s7_set_b_p_function(sc, global_value(sc->is_gensym_symbol), is_gensym_b_p);
@@ -98675,8 +98619,8 @@ static void init_opt_functions(s7_scheme *sc)
   s7_set_b_7p_function(sc, global_value(sc->is_directory_symbol), is_directory_b_7p);
 #endif
 
-  s7_set_b_i_function(sc, global_value(sc->is_even_symbol), is_even_i);
-  s7_set_b_i_function(sc, global_value(sc->is_odd_symbol), is_odd_i);
+  s7_set_b_i_function(sc, global_value(sc->is_even_symbol), even_i);
+  s7_set_b_i_function(sc, global_value(sc->is_odd_symbol), odd_i);
   s7_set_b_i_function(sc, global_value(sc->is_zero_symbol), is_zero_i);
   s7_set_b_d_function(sc, global_value(sc->is_zero_symbol), is_zero_d);
   s7_set_p_p_function(sc, global_value(sc->is_zero_symbol), is_zero_p_p);
@@ -99578,8 +99522,8 @@ static void init_rootlet(s7_scheme *sc)
   sc->imag_part_symbol =             defun("imag-part",	        imag_part,		1, 0, false);
   sc->numerator_symbol =             defun("numerator",	        numerator,		1, 0, false);
   sc->denominator_symbol =           defun("denominator",	denominator,		1, 0, false);
-  sc->is_even_symbol =               defun("even?",		is_even,		1, 0, false);
-  sc->is_odd_symbol =                defun("odd?",		is_odd,			1, 0, false);
+  sc->is_even_symbol = s7_define_typed_function(sc, "even?", g_even, 1, 0, false, "(even? int) returns #t if the integer int32_t is even", s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol));
+  sc->is_odd_symbol = s7_define_typed_function(sc, "odd?", g_odd, 1, 0, false, "(odd? int) returns #t if the integer int32_t is odd", s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol));
   sc->is_zero_symbol =               defun("zero?",		is_zero,		1, 0, false);
   sc->is_positive_symbol =           defun("positive?",	        is_positive,		1, 0, false);
   sc->is_negative_symbol =           defun("negative?",	        is_negative,		1, 0, false);

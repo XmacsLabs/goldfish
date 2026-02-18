@@ -46,6 +46,18 @@ s7_int abs_i_7p(s7_scheme *sc, s7_pointer x);
 s7_int abs_i_i(s7_int i);
 s7_pointer abs_p_i(s7_scheme *sc, s7_int x);
 
+/* even? function */
+bool even_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer even_p_p(s7_scheme *sc, s7_pointer x);
+bool even_i(s7_int i1);
+s7_pointer g_even(s7_scheme *sc, s7_pointer args);
+
+/* odd? function */
+bool odd_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer odd_p_p(s7_scheme *sc, s7_pointer x);
+bool odd_i(s7_int i1);
+s7_pointer g_odd(s7_scheme *sc, s7_pointer args);
+
 #ifdef __cplusplus
 }
 #endif

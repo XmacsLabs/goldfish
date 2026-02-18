@@ -279,3 +279,61 @@ s7_pointer abs_p_d(s7_scheme *sc, s7_double x)
 {
   return s7_make_real(sc, (x < 0) ? -x : x);
 }
+
+/* -------------------------------- even? -------------------------------- */
+
+bool even_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return (s7_integer(x) & 1) == 0;
+  s7_wrong_type_arg_error(sc, "even?", 1, x, "an integer");
+  return false;
+}
+
+s7_pointer even_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return s7_make_boolean(sc, (s7_integer(x) & 1) == 0);
+  return s7_make_boolean(sc, even_b_7p(sc, x));
+}
+
+bool even_i(s7_int i1)
+{
+  return (i1 & 1) == 0;
+}
+
+s7_pointer g_even(s7_scheme *sc, s7_pointer args)
+{
+  #define H_even "(even? int) returns #t if the integer int32_t is even"
+  #define Q_even s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
+  return s7_make_boolean(sc, even_b_7p(sc, s7_car(args)));
+}
+
+/* -------------------------------- odd? -------------------------------- */
+
+bool odd_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return (s7_integer(x) & 1) == 1;
+  s7_wrong_type_arg_error(sc, "odd?", 1, x, "an integer");
+  return false;
+}
+
+s7_pointer odd_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return s7_make_boolean(sc, (s7_integer(x) & 1) == 1);
+  return s7_make_boolean(sc, odd_b_7p(sc, x));
+}
+
+bool odd_i(s7_int i1)
+{
+  return (i1 & 1) == 1;
+}
+
+s7_pointer g_odd(s7_scheme *sc, s7_pointer args)
+{
+  #define H_odd "(odd? int) returns #t if the integer int32_t is odd"
+  #define Q_odd s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_integer_symbol)
+  return s7_make_boolean(sc, odd_b_7p(sc, s7_car(args)));
+}
