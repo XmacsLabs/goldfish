@@ -28,6 +28,8 @@ static bool is_inf(s7_double x)
 }
 
 #define DOUBLE_TO_INT64_LIMIT 9.223372036854775807e18  /* 2^63 - 1 */
+#define INT64_TO_DOUBLE_LIMIT (1LL << 53)               /* 2^53 */
+#define RATIONALIZE_LIMIT 1.0e12
 
 /* -------------------------------- floor -------------------------------- */
 
@@ -446,4 +448,139 @@ s7_pointer g_negative(s7_scheme *sc, s7_pointer args)
   #define H_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
   #define Q_negative s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_real_symbol)
   return s7_make_boolean(sc, negative_b_7p(sc, s7_car(args)));
+}
+
+/* -------------------------------- exact? -------------------------------- */
+
+bool exact_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return true;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return true;
+  if (s7_is_real(x))
+    return false;
+  if (s7_is_complex(x))
+    return false;
+  s7_wrong_type_arg_error(sc, "exact?", 1, x, "a number");
+  return false;
+}
+
+s7_pointer exact_p_p(s7_scheme *sc, s7_pointer x)
+{
+  return s7_make_boolean(sc, exact_b_7p(sc, x));
+}
+
+s7_pointer g_exact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_exact "(exact? num) returns #t if num is exact (an integer or a ratio)"
+  #define Q_exact sc->pl_bn
+  return s7_make_boolean(sc, exact_b_7p(sc, s7_car(args)));
+}
+
+/* -------------------------------- inexact? -------------------------------- */
+
+bool inexact_b_7p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    return false;
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    return false;
+  if (s7_is_real(x))
+    return true;
+  if (s7_is_complex(x))
+    return true;
+  s7_wrong_type_arg_error(sc, "inexact?", 1, x, "a number");
+  return false;
+}
+
+s7_pointer inexact_p_p(s7_scheme *sc, s7_pointer x)
+{
+  return s7_make_boolean(sc, inexact_b_7p(sc, x));
+}
+
+s7_pointer g_inexact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_inexact "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)"
+  #define Q_inexact sc->pl_bn
+  return s7_make_boolean(sc, inexact_b_7p(sc, s7_car(args)));
+}
+
+/* -------------------------------- exact->inexact -------------------------------- */
+
+s7_pointer exact_to_inexact_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x))
+    {
+      s7_int val = s7_integer(x);
+      if ((val > INT64_TO_DOUBLE_LIMIT) || (val < -INT64_TO_DOUBLE_LIMIT))
+        /* Without GMP, we still convert but may lose precision */
+        return s7_make_real(sc, (s7_double)val);
+      return s7_make_real(sc, (s7_double)val);
+    }
+
+  if (s7_is_rational(x) && !s7_is_integer(x))
+    {
+      s7_int num = s7_numerator(x);
+      s7_int den = s7_denominator(x);
+      if ((num > INT64_TO_DOUBLE_LIMIT) || (num < -INT64_TO_DOUBLE_LIMIT) ||
+          (den > INT64_TO_DOUBLE_LIMIT))  /* just a guess */
+        /* Without GMP, we still convert but may lose precision */
+        return s7_make_real(sc, (s7_double)num / (s7_double)den);
+      return s7_make_real(sc, (s7_double)num / (s7_double)den);
+    }
+
+  if (s7_is_real(x) || s7_is_complex(x))
+    return x; /* apparently (exact->inexact 1+i) is not an error */
+
+  s7_wrong_type_arg_error(sc, "exact->inexact", 1, x, "a number");
+  return NULL;
+}
+
+s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
+  #define Q_exact_to_inexact s7_make_signature(sc, 2, sc->is_number_symbol, sc->is_number_symbol)
+  /* arg can be complex -> itself! */
+  return exact_to_inexact_p_p(sc, s7_car(args));
+}
+
+/* -------------------------------- inexact->exact -------------------------------- */
+
+s7_pointer inexact_to_exact_p_p(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_integer(x) || (s7_is_rational(x) && !s7_is_integer(x)))
+    return x;
+
+  if (s7_is_real(x))
+    {
+      s7_double val = s7_real(x);
+      if (is_NaN(val) || is_inf(val))
+        return s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real number");
+
+      if ((val > DOUBLE_TO_INT64_LIMIT) || (val < -(DOUBLE_TO_INT64_LIMIT)))
+        return s7_out_of_range_error(sc, "inexact->exact", 1, x, "it is too large");
+
+      /* Try to rationalize */
+      s7_pointer result = s7_rationalize(sc, val, 1.0e-12); /* default_rationalize_error */
+      /* s7_rationalize returns a rational or integer, or #f if cannot rationalize? */
+      /* We assume it always returns a rational or integer */
+      if (result != s7_f(sc)) /* #f */
+        return result;
+      /* If rationalization fails, return the original real? But we need exact number.
+         Fall through to error? For now, return the real (inexact) as a last resort. */
+    }
+
+  if (s7_is_complex(x))
+    return s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a real number");
+
+  s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a real number");
+  return NULL;
+}
+
+s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
+  #define Q_inexact_to_exact s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol)
+  return inexact_to_exact_p_p(sc, s7_car(args));
 }

@@ -99495,10 +99495,10 @@ static void init_rootlet(s7_scheme *sc)
 
 #if !WITH_PURE_S7
   sc->integer_length_symbol =        defun("integer-length",	integer_length,		1, 0, false);
-  sc->inexact_to_exact_symbol =      defun("inexact->exact",	inexact_to_exact,	1, 0, false);
-  sc->exact_to_inexact_symbol =      defun("exact->inexact",	exact_to_inexact,	1, 0, false);
-  sc->is_exact_symbol =              defun("exact?",		is_exact,		1, 0, false);
-  sc->is_inexact_symbol =            defun("inexact?",		is_inexact,		1, 0, false);
+  sc->inexact_to_exact_symbol =      s7_define_typed_function(sc, "inexact->exact", g_inexact_to_exact, 1, 0, false, "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2", s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_real_symbol));
+  sc->exact_to_inexact_symbol =      s7_define_typed_function(sc, "exact->inexact", g_exact_to_inexact, 1, 0, false, "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5", s7_make_signature(sc, 2, sc->is_number_symbol, sc->is_number_symbol));
+  sc->is_exact_symbol =              s7_define_typed_function(sc, "exact?", g_exact, 1, 0, false, "(exact? num) returns #t if num is exact (an integer or a ratio)", sc->pl_bn);
+  sc->is_inexact_symbol =            s7_define_typed_function(sc, "inexact?", g_inexact, 1, 0, false, "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)", sc->pl_bn);
   sc->make_polar_symbol =            defun("make-polar",        make_polar,	        2, 0, false);
 #endif
   sc->random_state_to_list_symbol =  defun("random-state->list", random_state_to_list,  0, 1, false);

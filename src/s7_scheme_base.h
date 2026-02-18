@@ -79,6 +79,24 @@ bool negative_i(s7_int p);
 bool negative_d(s7_double p);
 s7_pointer g_negative(s7_scheme *sc, s7_pointer args);
 
+/* exact? function */
+bool exact_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer exact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_exact(s7_scheme *sc, s7_pointer args);
+
+/* inexact? function */
+bool inexact_b_7p(s7_scheme *sc, s7_pointer x);
+s7_pointer inexact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_inexact(s7_scheme *sc, s7_pointer args);
+
+/* exact->inexact function */
+s7_pointer exact_to_inexact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args);
+
+/* inexact->exact function */
+s7_pointer inexact_to_exact_p_p(s7_scheme *sc, s7_pointer x);
+s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args);
+
 #ifdef __cplusplus
 }
 #endif
