@@ -313,7 +313,7 @@
     ;; ====================
 
     (define* (current-date (tz-offset 'TODO-GET-LOCAL-TZ-FROM-OS))
-      (error 'todo "TODO"))
+      (time-utc->date (current-time TIME-UTC) tz-offset))
 
     (define (current-julian-day)
       (error 'todo "TODO"))
