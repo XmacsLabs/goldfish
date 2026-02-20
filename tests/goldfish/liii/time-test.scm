@@ -1215,8 +1215,44 @@ string?
   (check-catch 'wrong-type-arg (date->string d 123))  ; format-string not a string
   (check-catch 'wrong-type-arg (date->string d 'symbol)))
 
+#|
+current-date
+获取当前日期对象。
+
+语法
+----
+(current-date [tz-offset])
+
+参数
+----
+tz-offset : integer? (可选)
+时区偏移（秒），默认应为本地时区（当前实现为 0）。
+
+返回值
+-----
+date?
+当前日期对象。
+
+说明
+----
+1. 当前实现默认使用 UTC（tz-offset=0）。
+2. 规范要求默认使用本地时区，后续需要补接口支持。
+
+错误处理
+--------
+wrong-type-arg
+当 tz-offset 不是整数时抛出错误。
+|#
+
 ;; Test that current date can be converted
-(check-catch 'todo (string? (date->string (current-date))))
-(check-catch 'todo (string? (date->string (current-date) "~Y年~m月~d日 ~H时~M分~S秒")))
+(check-true (date? (current-date 0)))
+(check-true (string? (date->string (current-date 0))))
+(check-true (string? (date->string (current-date 0) "~Y年~m月~d日 ~H时~M分~S秒")))
+
+;; current-date fixed date (Beijing, UTC+8)
+;; (let ((d (current-date 28800)))
+;;   (check (date-year d) => 2026)
+;;   (check (date-month d) => 2)
+;;   (check (date-day d) => 19))
 
 (check-report)
