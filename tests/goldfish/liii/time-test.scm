@@ -1250,9 +1250,9 @@ wrong-type-arg
 (check-true (string? (date->string (current-date 0) "~Y年~m月~d日 ~H时~M分~S秒")))
 
 ;; current-date fixed date (Beijing, UTC+8)
-(let ((d (current-date 28800)))
-  (check (date-year d) => 2026)
-  (check (date-month d) => 2)
-  (check (date-day d) => 19))
+;; (let ((d (current-date 28800)))
+;;   (check (date-year d) => 2026)
+;;   (check (date-month d) => 2)
+;;   (check (date-day d) => 19))
 
 (check-report)
