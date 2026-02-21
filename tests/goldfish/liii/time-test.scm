@@ -1264,7 +1264,7 @@ string?
   ;; Test CJK
   (check (date->string d "~Y年，第~V週。~H시~M분") => "2023年，第52週。14시30분"))
 
-  ;; Test error conditions
+;; Test error conditions
 (let ((d (make-date 0 0 0 0 1 1 1970 0)))
   (check-catch 'wrong-type-arg (date->string "not-a-date"))
   (check-catch 'wrong-type-arg (date->string d 123))  ; format-string not a string
