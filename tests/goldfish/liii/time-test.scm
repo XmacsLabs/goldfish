@@ -1236,6 +1236,43 @@ string?
 参考：https://srfi.schemers.org/srfi-19/srfi-19.html#:~:text=Table%201,-%3A%20DATE
 |#
 
+#|
+string->date
+将字符串按模板解析为日期对象。
+
+语法
+----
+(string->date input-string template-string)
+
+参数
+----
+input-string : string?
+需要解析的输入字符串。
+
+template-string : string?
+模板字符串，与 date->string 的格式说明符一致，用 ~ 引导。
+
+返回值
+-----
+date?
+解析得到的日期对象。
+
+说明
+----
+模板字符串中的 ~ 转义会触发解析规则，输入字符串需整体匹配模板。
+常见格式说明符：
+  ~Y ~y ~m ~d ~H ~M ~S
+  ~A ~a ~B ~b ~p ~z
+  ~D ~T ~c ~x ~X
+
+错误处理
+--------
+wrong-type-arg
+当参数不是字符串时抛出错误。
+value-error
+当输入字符串无法匹配模板时抛出错误。
+|#
+
 ;; Test date->string
 (let ((d (make-date 0 0 0 0 1 1 1970 0)))  ; Unix epoch in UTC
   (check (date->string d)            => "Thu Jan 01 00:00:00Z 1970")
@@ -1263,6 +1300,72 @@ string?
 
   ;; Test CJK
   (check (date->string d "~Y年，第~V週。~H시~M분") => "2023年，第52週。14시30분"))
+
+;; Roundtrip date->string -> string->date
+(let* ((d (make-date 0 45 30 14 25 12 2023 28800))
+       (fmt "~Y-~m-~d ~H:~M:~S~z")
+       (s (date->string d fmt))
+       (d2 (string->date s fmt)))
+  (check (date-year d2) => 2023)
+  (check (date-month d2) => 12)
+  (check (date-day d2) => 25)
+  (check (date-hour d2) => 14)
+  (check (date-minute d2) => 30)
+  (check (date-second d2) => 45)
+  (check (date-zone-offset d2) => 28800)
+  (check (date->string d2 fmt) => s))
+
+(let* ((d (make-date 0 59 59 23 31 12 1999 0))
+       (fmt "~A, ~B ~d, ~Y ~I:~M:~S ~p")
+       (s (date->string d fmt))
+       (d2 (string->date s fmt)))
+  (check (date-year d2) => 1999)
+  (check (date-month d2) => 12)
+  (check (date-day d2) => 31)
+  (check (date-hour d2) => 23)
+  (check (date-minute d2) => 59)
+  (check (date-second d2) => 59)
+  (check (date-zone-offset d2) => 0)
+  (check (date->string d2 fmt) => s))
+
+;; Test string->date
+(let* ((s "2023-12-25 14:30:45")
+       (d (string->date s "~Y-~m-~d ~H:~M:~S")))
+  (check (date-year d) => 2023)
+  (check (date-month d) => 12)
+  (check (date-day d) => 25)
+  (check (date-hour d) => 14)
+  (check (date-minute d) => 30)
+  (check (date-second d) => 45))
+
+(let* ((s "Friday, December 31, 1999 11:59:59 PM")
+       (d (string->date s "~A, ~B ~d, ~Y ~I:~M:~S ~p")))
+  (check (date-year d) => 1999)
+  (check (date-month d) => 12)
+  (check (date-day d) => 31)
+  (check (date-hour d) => 23)
+  (check (date-minute d) => 59)
+  (check (date-second d) => 59))
+
+(let* ((s "1970-01-01T00:00:00Z")
+       (d (string->date s "~4")))
+  (check (date-year d) => 1970)
+  (check (date-month d) => 1)
+  (check (date-day d) => 1)
+  (check (date-hour d) => 0)
+  (check (date-minute d) => 0)
+  (check (date-second d) => 0)
+  (check (date-zone-offset d) => 0))
+
+(let* ((s "2023-12-25 14:30:45.123456789")
+       (d (string->date s "~Y-~m-~d ~H:~M:~f")))
+  (check (date-second d) => 45)
+  (check (date-nanosecond d) => 123456789))
+
+;; Test string->date error conditions
+(check-catch 'wrong-type-arg (string->date 1 "~Y"))
+(check-catch 'wrong-type-arg (string->date "2020" 123))
+(check-catch 'value-error (string->date "2020-01-01" "~Y/~m/~d"))
 
 ;; Test error conditions
 (let ((d (make-date 0 0 0 0 1 1 1970 0)))
