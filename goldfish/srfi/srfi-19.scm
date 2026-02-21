@@ -67,7 +67,7 @@
     ;; Time comparison procedures
     time<=? time<? time=? time>=? time>?
     ;; Time arithmetic procedures
-    time-difference
+    add-duration subtract-duration time-difference
     ;; Current time and clock resolution
     current-date current-julian-day current-time time-resolution
     ;; Date object and accessors
@@ -210,6 +210,31 @@
 
     (define (time-difference time1 time2)
       (priv:time-difference time1 time2 (%make-time TIME-DURATION 0 0)))
+
+    (define (priv:time-arithmetic time1 time-duration op)
+      (unless (time? time1)
+        (error 'wrong-type-arg
+               "time arithmetic: time1 must be a time object"
+               (list time1 time-duration)))
+      (unless (and (time? time-duration)
+                   (eq? (time-type time-duration) TIME-DURATION))
+        (error 'wrong-type-arg
+               "time arithmetic: time-duration must be a TIME-DURATION object"
+               (list time1 time-duration)))
+      (receive (secs nanos)
+               (floor/ (op (priv:time->nanoseconds time1)
+                           (priv:time->nanoseconds time-duration))
+                       priv:NANO)
+        (let ((type (time-type time1)))
+          (if (eq? type TIME-DURATION)
+            (%make-time type nanos secs)
+            (make-time type nanos secs)))))
+
+    (define (add-duration time1 time-duration)
+      (priv:time-arithmetic time1 time-duration +))
+
+    (define (subtract-duration time1 time-duration)
+      (priv:time-arithmetic time1 time-duration -))
 
     ;; ====================
     ;; Current time and clock resolution
