@@ -79,7 +79,6 @@
     ;; Time/Date/Julian Day/Modified Julian Day Converters
     time-utc->time-tai time-tai->time-utc
     time-utc->date date->time-utc
-    time-tai->date date->time-tai 
     ;; Date to String/String to Date Converters
     date->string string->date)
   (begin
@@ -535,18 +534,6 @@
                            (date-second date)))
              (utc-sec (- local-sec (date-zone-offset date))))
         (make-time TIME-UTC (date-nanosecond date) utc-sec)))
-
-    ;; TODO: spec says default tz-offset should be local time zone.
-    ;; We don't have a local tz interface yet, so default is 0 (UTC).
-    (define* (time-tai->date time-tai (tz-offset 0))
-      (unless (and (time? time-tai) (eq? (time-type time-tai) TIME-TAI))
-        (error 'wrong-type-arg "time-tai->date: time-tai must be a TIME-TAI object" time-tai))
-      (unless (integer? tz-offset)
-        (error 'wrong-type-arg "time-tai->date: tz-offset must be an integer" tz-offset))
-      (time-utc->date (time-tai->time-utc time-tai) tz-offset))
-
-    (define (date->time-tai date)
-      (time-utc->time-tai (date->time-utc date)))
 
     ;; ====================
     ;; Date to String/String to Date Converters
