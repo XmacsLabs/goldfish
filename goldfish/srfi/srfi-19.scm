@@ -77,6 +77,7 @@
     date-year-day
     date-week-day date-week-number
     ;; Time/Date/Julian Day/Modified Julian Day Converters
+    time-utc->time-tai time-tai->time-utc
     time-utc->date date->time-utc
     ;; Date to String/String to Date Converters
     date->string string->date)
@@ -442,6 +443,33 @@
     ;; ====================
     ;; Time/Date/Julian Day/Modified Julian Day Converters
     ;; ====================
+
+    (define (priv:tai->utc-seconds tai-sec)
+      (let lp ((table priv:leap-second-table))
+        (cond
+          ((null? table) (- tai-sec 10))
+          (else
+            (let* ((utc-start (caar table))
+                   (delta (cdar table))
+                   (tai-start (+ utc-start delta)))
+              (if (>= tai-sec tai-start)
+                (- tai-sec delta)
+                (lp (cdr table))))))))
+
+    (define (time-utc->time-tai time-utc)
+      (unless (and (time? time-utc) (eq? (time-type time-utc) TIME-UTC))
+        (error 'wrong-type-arg "time-utc->time-tai: time-utc must be a TIME-UTC object" time-utc))
+      (make-time TIME-TAI
+                 (time-nanosecond time-utc)
+                 (+ (time-second time-utc)
+                    (priv:leap-second-delta (time-second time-utc)))))
+
+    (define (time-tai->time-utc time-tai)
+      (unless (and (time? time-tai) (eq? (time-type time-tai) TIME-TAI))
+        (error 'wrong-type-arg "time-tai->time-utc: time-tai must be a TIME-TAI object" time-tai))
+      (make-time TIME-UTC
+                 (time-nanosecond time-tai)
+                 (priv:tai->utc-seconds (time-second time-tai))))
 
     (define (priv:days-since-epoch year month day)
       ;; Howard Hinnant's days_from_civil algorithm, inverse of civil-from-days
