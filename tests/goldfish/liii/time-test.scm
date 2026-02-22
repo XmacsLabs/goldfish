@@ -999,12 +999,20 @@ time-utc->time-tai
 time-tai->time-utc
 将 TIME-TAI 时间对象转换为 TIME-UTC 时间对象。
 
+time-tai->date
+将 TIME-TAI 时间对象转换为日期对象。
+
+date->time-tai
+将日期对象转换为 TIME-TAI 时间对象。
+
 语法
 ----
 (time-utc->date time-utc [tz-offset])
 (date->time-utc date)
 (time-utc->time-tai time-utc)
 (time-tai->time-utc time-tai)
+(time-tai->date time-tai [tz-offset])
+(date->time-tai date)
 
 参数
 ----
@@ -1021,89 +1029,25 @@ date : date?
 -----
 time-utc->date : date?
 date->time-utc : time?
+time-utc->time-tai : time?
+time-tai->time-utc : time?
+time-tai->date : date?
+date->time-tai : time?
 
 说明
 ----
 1. time-utc->date 将 UTC 时间按 tz-offset 转换成本地日期。
 2. date->time-utc 将本地日期按 date 的 zone-offset 转回 UTC 时间。
-3. time-utc->time-tai/time-tai->time-utc 根据闰秒表进行转换。
+3. time-utc->time-tai 根据闰秒表进行转换。
+4. time-tai->time-utc 根据闰秒表进行转换。
+5. time-tai->date 先转为 UTC 再按 tz-offset 生成日期。
+6. date->time-tai 等价于 date->time-utc 后再转 TAI。
 
 错误处理
 --------
 wrong-type-arg
 当参数类型不正确，或 time-utc 不是 TIME-UTC 时抛出错误。
 |#
-
-;; time-utc->time-tai / time-tai->time-utc basic
-(let* ((t-utc (make-time TIME-UTC 123456789 1483228800))
-       (t-tai (time-utc->time-tai t-utc)))
-  (check (time-type t-tai) => TIME-TAI)
-  (check (time-second t-tai) => 1483228837)
-  (check (time-nanosecond t-tai) => 123456789)
-  (let ((t-utc2 (time-tai->time-utc t-tai)))
-    (check (time-type t-utc2) => TIME-UTC)
-    (check (time-second t-utc2) => 1483228800)
-    (check (time-nanosecond t-utc2) => 123456789)))
-
-;; Boundary: exactly at leap second effective instant (2017-01-01 00:00:00 UTC)
-(let* ((t-utc (make-time TIME-UTC 0 1483228800))
-       (t-tai (time-utc->time-tai t-utc)))
-  (check (time-type t-tai) => TIME-TAI)
-  (check (time-second t-tai) => 1483228837)
-  (check (time-nanosecond t-tai) => 0)
-  (let ((t-utc2 (time-tai->time-utc t-tai)))
-    (check (time-type t-utc2) => TIME-UTC)
-    (check (time-second t-utc2) => 1483228800)
-    (check (time-nanosecond t-utc2) => 0)))
-
-;; Boundary: just before leap second effective instant
-(let* ((t-utc (make-time TIME-UTC 999999999 1483228799))
-       (t-tai (time-utc->time-tai t-utc)))
-  (check (time-type t-tai) => TIME-TAI)
-  (check (time-second t-tai) => 1483228835)
-  (check (time-nanosecond t-tai) => 999999999)
-  (let ((t-utc2 (time-tai->time-utc t-tai)))
-    (check (time-type t-utc2) => TIME-UTC)
-    (check (time-second t-utc2) => 1483228799)
-    (check (time-nanosecond t-utc2) => 999999999)))
-
-;; Boundary: pre-1972 base offset (UTC epoch)
-(let* ((t-utc (make-time TIME-UTC 0 0))
-       (t-tai (time-utc->time-tai t-utc)))
-  (check (time-type t-tai) => TIME-TAI)
-  (check (time-second t-tai) => 10)
-  (check (time-nanosecond t-tai) => 0)
-  (let ((t-utc2 (time-tai->time-utc t-tai)))
-    (check (time-type t-utc2) => TIME-UTC)
-    (check (time-second t-utc2) => 0)
-    (check (time-nanosecond t-utc2) => 0)))
-
-;; Roundtrip time-utc->time-tai->time-utc
-(let* ((t-utc (make-time TIME-UTC 500000000 1435708800)) ; 2015-07-01
-       (t-utc2 (time-tai->time-utc (time-utc->time-tai t-utc))))
-  (check (time-type t-utc2) => TIME-UTC)
-  (check (time-second t-utc2) => 1435708800)
-  (check (time-nanosecond t-utc2) => 500000000))
-
-;; Roundtrip time-tai->time-utc->time-tai
-(let* ((t-tai (make-time TIME-TAI 250000000 1483228837)) ; 2017-01-01
-       (t-tai2 (time-utc->time-tai (time-tai->time-utc t-tai))))
-  (check (time-type t-tai2) => TIME-TAI)
-  (check (time-second t-tai2) => 1483228837)
-  (check (time-nanosecond t-tai2) => 250000000))
-
-;; time-utc->time-tai pre-1972 uses base offset 10
-(let* ((t-utc (make-time TIME-UTC 0 0))
-       (t-tai (time-utc->time-tai t-utc)))
-  (check (time-second t-tai) => 10)
-  (check (time-nanosecond t-tai) => 0)
-  (check (time-second (time-tai->time-utc t-tai)) => 0))
-
-;; converter error conditions
-(check-catch 'wrong-type-arg
-  (time-utc->time-tai (make-time TIME-TAI 0 0)))
-(check-catch 'wrong-type-arg
-  (time-tai->time-utc (make-time TIME-UTC 0 0)))
 
 ;; time-utc->date basic (UTC)
 (let* ((t (make-time TIME-UTC 0 0))
@@ -1266,6 +1210,116 @@ wrong-type-arg
   (time-utc->date (make-time TIME-UTC 0 0) "bad-offset"))
 (check-catch 'wrong-type-arg
   (date->time-utc "not-a-date"))
+
+;; time-utc->time-tai / time-tai->time-utc basic
+(let* ((t-utc (make-time TIME-UTC 123456789 1483228800))
+       (t-tai (time-utc->time-tai t-utc)))
+  (check (time-type t-tai) => TIME-TAI)
+  (check (time-second t-tai) => 1483228837)
+  (check (time-nanosecond t-tai) => 123456789)
+  (let ((t-utc2 (time-tai->time-utc t-tai)))
+    (check (time-type t-utc2) => TIME-UTC)
+    (check (time-second t-utc2) => 1483228800)
+    (check (time-nanosecond t-utc2) => 123456789)))
+
+;; Boundary: exactly at leap second effective instant (2017-01-01 00:00:00 UTC)
+(let* ((t-utc (make-time TIME-UTC 0 1483228800))
+       (t-tai (time-utc->time-tai t-utc)))
+  (check (time-type t-tai) => TIME-TAI)
+  (check (time-second t-tai) => 1483228837)
+  (check (time-nanosecond t-tai) => 0)
+  (let ((t-utc2 (time-tai->time-utc t-tai)))
+    (check (time-type t-utc2) => TIME-UTC)
+    (check (time-second t-utc2) => 1483228800)
+    (check (time-nanosecond t-utc2) => 0)))
+
+;; Boundary: just before leap second effective instant
+(let* ((t-utc (make-time TIME-UTC 999999999 1483228799))
+       (t-tai (time-utc->time-tai t-utc)))
+  (check (time-type t-tai) => TIME-TAI)
+  (check (time-second t-tai) => 1483228835)
+  (check (time-nanosecond t-tai) => 999999999)
+  (let ((t-utc2 (time-tai->time-utc t-tai)))
+    (check (time-type t-utc2) => TIME-UTC)
+    (check (time-second t-utc2) => 1483228799)
+    (check (time-nanosecond t-utc2) => 999999999)))
+
+;; Boundary: pre-1972 base offset (UTC epoch)
+(let* ((t-utc (make-time TIME-UTC 0 0))
+       (t-tai (time-utc->time-tai t-utc)))
+  (check (time-type t-tai) => TIME-TAI)
+  (check (time-second t-tai) => 10)
+  (check (time-nanosecond t-tai) => 0)
+  (let ((t-utc2 (time-tai->time-utc t-tai)))
+    (check (time-type t-utc2) => TIME-UTC)
+    (check (time-second t-utc2) => 0)
+    (check (time-nanosecond t-utc2) => 0)))
+
+;; Roundtrip time-utc->time-tai->time-utc
+(let* ((t-utc (make-time TIME-UTC 500000000 1435708800)) ; 2015-07-01
+       (t-utc2 (time-tai->time-utc (time-utc->time-tai t-utc))))
+  (check (time-type t-utc2) => TIME-UTC)
+  (check (time-second t-utc2) => 1435708800)
+  (check (time-nanosecond t-utc2) => 500000000))
+
+;; Roundtrip time-tai->time-utc->time-tai
+(let* ((t-tai (make-time TIME-TAI 250000000 1483228837)) ; 2017-01-01
+       (t-tai2 (time-utc->time-tai (time-tai->time-utc t-tai))))
+  (check (time-type t-tai2) => TIME-TAI)
+  (check (time-second t-tai2) => 1483228837)
+  (check (time-nanosecond t-tai2) => 250000000))
+
+;; time-utc->time-tai pre-1972 uses base offset 10
+(let* ((t-utc (make-time TIME-UTC 0 0))
+       (t-tai (time-utc->time-tai t-utc)))
+  (check (time-second t-tai) => 10)
+  (check (time-nanosecond t-tai) => 0)
+  (check (time-second (time-tai->time-utc t-tai)) => 0))
+
+;; converter error conditions
+(check-catch 'wrong-type-arg
+  (time-utc->time-tai (make-time TIME-TAI 0 0)))
+(check-catch 'wrong-type-arg
+  (time-tai->time-utc (make-time TIME-UTC 0 0)))
+
+;; time-tai->date basic (UTC epoch)
+(let* ((t (make-time TIME-TAI 0 10))
+       (d (time-tai->date t 0)))
+  (check (date-year d) => 1970)
+  (check (date-month d) => 1)
+  (check (date-day d) => 1)
+  (check (date-hour d) => 0)
+  (check (date-minute d) => 0)
+  (check (date-second d) => 0)
+  (check (date-zone-offset d) => 0))
+
+;; date->time-tai basic (UTC epoch)
+(let* ((d (make-date 0 0 0 0 1 1 1970 0))
+       (t (date->time-tai d)))
+  (check (time-type t) => TIME-TAI)
+  (check (time-second t) => 10)
+  (check (time-nanosecond t) => 0))
+
+;; round-trip date -> time-tai -> date with same tz-offset
+(let* ((d1 (make-date 123456789 45 30 14 25 12 2023 28800))
+       (t (date->time-tai d1))
+       (d2 (time-tai->date t (date-zone-offset d1))))
+  (check (date-year d2) => (date-year d1))
+  (check (date-month d2) => (date-month d1))
+  (check (date-day d2) => (date-day d1))
+  (check (date-hour d2) => (date-hour d1))
+  (check (date-minute d2) => (date-minute d1))
+  (check (date-second d2) => (date-second d1))
+  (check (date-nanosecond d2) => (date-nanosecond d1))
+  (check (date-zone-offset d2) => (date-zone-offset d1)))
+
+;; converter error conditions
+(check-catch 'wrong-type-arg
+  (time-tai->date (make-time TIME-UTC 0 0) 0))
+(check-catch 'wrong-type-arg
+  (time-tai->date (make-time TIME-TAI 0 0) "bad-offset"))
+(check-catch 'wrong-type-arg
+  (date->time-tai "not-a-date"))
 
 ;; ====================
 ;; Date to String/String to Date Converters
